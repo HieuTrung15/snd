@@ -1,0 +1,75 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-09-03 01:48:21.364077",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "content",
+  "column_break_kn0n",
+  "amount",
+  "actual_payment_amount",
+  "electronic_invoice_lookup_link",
+  "section_break_soms",
+  "note"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "content",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Content"
+  },
+  {
+   "fieldname": "column_break_kn0n",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 2,
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount",
+   "options": "Currency"
+  },
+  {
+   "fieldname": "actual_payment_amount",
+   "fieldtype": "Currency",
+   "label": "Actual Payment Amount",
+   "options": "Currency"
+  },
+  {
+   "fieldname": "electronic_invoice_lookup_link",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Electronic Invoice Lookup Link"
+  },
+  {
+   "fieldname": "section_break_soms",
+   "fieldtype": "Section Break"
+  },
+  {
+   "columns": 2,
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Note"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-09-03 01:55:40.070874",
+ "modified_by": "Administrator",
+ "module": "VNT Accounts",
+ "name": "VNT Payment Request Items",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
