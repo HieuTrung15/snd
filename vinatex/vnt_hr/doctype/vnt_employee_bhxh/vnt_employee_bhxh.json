@@ -1,0 +1,186 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-09-04 14:56:43.891739",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_dgiv",
+  "bhxh_number",
+  "bhxh_increase_date",
+  "base_salary",
+  "effective_date",
+  "column_break_wabr",
+  "coefficient",
+  "rank",
+  "grade",
+  "job_basic_salary_section",
+  "job_coefficient",
+  "job_rank",
+  "job_grade",
+  "job_effective_date",
+  "qu\u00e1_tr\u00ecnh_l\u01b0\u01a1ng_c\u01a1_b\u1ea3n_section",
+  "base_coefficient",
+  "base_rank",
+  "column_break_due4",
+  "base_grade",
+  "base_benifit_date",
+  "qu\u00e1_tr\u00ecnh_h\u1ee3p_\u0111\u1ed3ng_lao_\u0111\u1ed9ng_section",
+  "contract_type",
+  "column_break_ecfj",
+  "contract_from",
+  "contract_to"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_dgiv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "bhxh_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "BHXH Number"
+  },
+  {
+   "fieldname": "bhxh_increase_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "BHXH Increase Date"
+  },
+  {
+   "fieldname": "base_salary",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Base Salary"
+  },
+  {
+   "fieldname": "column_break_wabr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "coefficient",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Coefficient",
+   "precision": "2"
+  },
+  {
+   "fieldname": "rank",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Rank"
+  },
+  {
+   "fieldname": "grade",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Grade"
+  },
+  {
+   "fieldname": "effective_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Effective Date"
+  },
+  {
+   "fieldname": "job_basic_salary_section",
+   "fieldtype": "Section Break",
+   "label": "Job Basic Salary"
+  },
+  {
+   "fieldname": "job_coefficient",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Job Coefficient"
+  },
+  {
+   "fieldname": "job_rank",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Job Rank"
+  },
+  {
+   "fieldname": "job_grade",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Job Grade"
+  },
+  {
+   "fieldname": "job_effective_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Job Effective Date"
+  },
+  {
+   "fieldname": "qu\u00e1_tr\u00ecnh_l\u01b0\u01a1ng_c\u01a1_b\u1ea3n_section",
+   "fieldtype": "Section Break",
+   "label": "Qu\u00e1 tr\u00ecnh l\u01b0\u01a1ng c\u01a1 b\u1ea3n"
+  },
+  {
+   "fieldname": "base_coefficient",
+   "fieldtype": "Float",
+   "label": "Base Coefficient",
+   "precision": "2"
+  },
+  {
+   "fieldname": "base_rank",
+   "fieldtype": "Data",
+   "label": "Base Rank"
+  },
+  {
+   "fieldname": "column_break_due4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "base_grade",
+   "fieldtype": "Data",
+   "label": "Base Grade"
+  },
+  {
+   "fieldname": "base_benifit_date",
+   "fieldtype": "Date",
+   "label": "Base Benifit Date"
+  },
+  {
+   "fieldname": "qu\u00e1_tr\u00ecnh_h\u1ee3p_\u0111\u1ed3ng_lao_\u0111\u1ed9ng_section",
+   "fieldtype": "Section Break",
+   "label": "Qu\u00e1 tr\u00ecnh h\u1ee3p \u0111\u1ed3ng lao \u0111\u1ed9ng"
+  },
+  {
+   "fieldname": "contract_type",
+   "fieldtype": "Select",
+   "label": "Contract Type",
+   "options": "Kh\u00f4ng x\u00e1c \u0111\u1ecbnh th\u1eddi h\u1ea1n\nX\u00e1c \u0111\u1ecbnh th\u1eddi h\u1ea1n\nTh\u1eed vi\u1ec7c\nTh\u1eddi v\u1ee5"
+  },
+  {
+   "fieldname": "column_break_ecfj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "contract_from",
+   "fieldtype": "Date",
+   "label": "Contract From"
+  },
+  {
+   "fieldname": "contract_to",
+   "fieldtype": "Data",
+   "label": "Contract To"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-09-04 15:48:29.099684",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Employee BHXH",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

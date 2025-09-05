@@ -1,0 +1,60 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-09-04 15:51:18.848276",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_0nyf",
+  "name1",
+  "tax_number",
+  "birthday",
+  "relationship"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_0nyf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "name1",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tax_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tax number"
+  },
+  {
+   "fieldname": "birthday",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Birthday"
+  },
+  {
+   "fieldname": "relationship",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Relationship"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-09-04 15:54:25.654430",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Employee Tax",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
