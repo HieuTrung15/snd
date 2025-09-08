@@ -60,12 +60,16 @@
    "fieldtype": "Column Break"
   },
   {
+   "fetch_from": "employee.company",
+   "fetch_if_empty": 1,
    "fieldname": "company",
    "fieldtype": "Link",
    "label": "Company",
    "options": "Company"
   },
   {
+   "fetch_from": "employee.department",
+   "fetch_if_empty": 1,
    "fieldname": "department",
    "fieldtype": "Link",
    "label": "Department",
@@ -206,6 +210,7 @@
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Naming Series",
    "options": "DNTT-.MM.YY.-.####"
   },
@@ -233,7 +238,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-03 18:23:32.623619",
+ "modified": "2025-09-05 13:51:26.162805",
  "modified_by": "Administrator",
  "module": "VNT Accounts",
  "name": "VNT Payment Request",
