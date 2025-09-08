@@ -1,0 +1,46 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-09-08 11:05:18.003416",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_a54h",
+  "transport_mode",
+  "travel_route"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_a54h",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "transport_mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Transport Mode",
+   "options": "\nM\u00e1y bay\nT\u00e0u\nXe"
+  },
+  {
+   "fieldname": "travel_route",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": " Travel Route"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-09-08 14:09:32.345645",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Business Trip Request Transportation",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
