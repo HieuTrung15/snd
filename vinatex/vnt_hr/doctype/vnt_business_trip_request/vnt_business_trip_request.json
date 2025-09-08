@@ -25,11 +25,11 @@
   "column_break_dr5q",
   "approval_status",
   "amended_from",
-  "last_modified_on",
   "danh_s\u00e1ch_nh\u00e2n_vi\u00ean_\u0111i_c\u00f4ng_t\u00e1c_section",
   "items",
   "danh_s\u00e1ch_ph\u01b0\u01a1ng_ti\u1ec7n_di_chuy\u1ec3n_section",
-  "transportation"
+  "transportation",
+  "note"
  ],
  "fields": [
   {
@@ -147,15 +147,9 @@
   },
   {
    "fieldname": "created_on",
-   "fieldtype": "Datetime",
+   "fieldtype": "Date",
    "label": "Creation",
    "read_only": 1
-  },
-  {
-   "fetch_if_empty": 1,
-   "fieldname": "last_modified_on",
-   "fieldtype": "Read Only",
-   "label": "Modified"
   },
   {
    "fieldname": "section_break_vvh7",
@@ -164,13 +158,18 @@
   {
    "fieldname": "column_break_dr5q",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Note"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-08 13:45:15.321155",
+ "modified": "2025-09-08 14:26:08.909859",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request",
