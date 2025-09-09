@@ -42,8 +42,15 @@ app_license = "mit"
 # include js in page
 # page_js = {"page" : "public/js/file.js"}
 
+override_doctype_class = {
+    "Leave Application": "vinatex.vinatex.doctype.overrides.leave_application.CustomLeaveApplication"
+}
+
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+    # "doctype" : "public/js/doctype.js"
+    "Leave Application": "vinatex/doctype/overrides/leave_application.js"
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
