@@ -1,0 +1,206 @@
+<style>
+  .print-format table, .print-format tr, .print-format th, 
+  .print-format td, .print-format p {
+    font-family: Times, sans-serif;
+    line-height: 150%;
+    padding: 2px !important;
+    vertical-align: middle;
+    font-size: 14px;
+    text-align: left;
+  }
+  .print-format table { border-collapse: collapse; border-spacing: 0; width: 100%; margin-top:6px; margin-bottom:6px; }
+  .print-format h1, .print-format h2, .print-format p { margin: 0; }
+  img { max-width: 100px; }
+  td, tr, th { border: 1px solid black; }
+  @media screen {
+    .print-format { width: 210mm; padding: 15mm; }
+  }
+</style>
+
+{%- set cur = doc.currency or "VND" -%}
+{%- set prec = 0 if cur == "VND" else 2 -%}
+
+{# Tính toán server-side, không SQL #}
+{%- set total = (doc.items | sum(attribute='amount')) | float -%}
+{%- set adv   = (doc.advance_payment_made or 0) | float -%}
+{%- set diff  = (total - adv) | float -%}
+{%- set diff_abs = (diff if diff >= 0 else -diff) -%}
+
+{%- set letter_head = frappe.get_all('Letter Head', filters={'name': 'Default Letter Head Tập đoàn'}, pluck='content') -%}
+
+<div class="pf-wrap">
+  {{ (letter_head and letter_head[0]) or '' | safe }}
+
+  <table style="border:none">
+    <tbody style="border:none">
+      <tr style="border:none">
+        <td style="width:15%; border:none"></td>
+        <td style="border:none">
+          <h2 style="font-family:Times; margin:0;"><b><center>GIẤY ĐỀ NGHỊ THANH TOÁN</center></b></h2>
+        </td>
+        <td style="width:14%; border:none">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ doc.name }}" />
+          <div style="font-size:15px;"><center><b>{{ doc.name.replace("DNTT-", "") }}</b></center></div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<table style="border:none">
+  <tbody>
+    <tr style="border:none">
+      <td style="width:20%; text-align:left; border:none;"><b>&nbsp;Số:</b></td>
+      <td style="width:80%; text-align:right; border:none;">&nbsp;Ngày: ..............................</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td style="text-align:left; width:20%; border-right:none;"><b>Kính gửi:</b></td>
+      <td style="text-align:left; border-left:none;"><b>Ban Lãnh đạo Tập đoàn {{ doc.company }}</b></td>
+    </tr>
+    <tr>
+      <td style="text-align:left; border-right:none; border-top:none;"><b>Tên tôi là:</b></td>
+      <td style="text-align:left; border-left:none; border-top:none;"><b>{{ doc.employee_name }}</b></td>
+    </tr>
+    <tr>
+      <td style="text-align:left; border-right:none; border-top:none;"><b>Phòng ban:</b></td>
+      <td style="text-align:left; border-left:none; border-top:none;"><b>{{ doc.department }}</b></td>
+    </tr>
+    <tr>
+      <td style="text-align:left; border-right:none; border-top:none;"><b>Kính đề nghị:</b></td>
+      <td style="text-align:left; border-left:none; border-top:none;">
+        Ban Lãnh đạo Tập đoàn cho tôi thanh toán về việc: {{ doc.payment_request_content or '' }}
+      </td>
+    </tr>
+
+    {# Hình thức thanh toán #}
+    {%- set pm = doc.payment_method or '' -%}
+    <tr>
+      <td colspan="2" style="text-align:left;">
+        <b>Hình thức thanh toán:</b>&ensp;&ensp;
+        Tiền mặt <input type="radio" {{ 'checked' if pm == 'Cash' else '' }}>
+        &ensp;&ensp; Chuyển khoản <input type="radio" {{ 'checked' if pm == 'Bank Transfer' else '' }}>
+        &ensp;&ensp; Bù trừ công nợ <input type="radio" {{ 'checked' if pm == 'Debit Offset' else '' }}>
+        &ensp;&ensp; Hoàn ứng <input type="radio" {{ 'checked' if pm not in ['Cash','Bank Transfer','Debit Offset'] else '' }}>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr><td colspan="10"><b>Nội dung thanh toán:</b></td></tr>
+    <tr>
+      <td style="width:5%; text-align:center;"><b>STT</b></td>
+      <td style="width:35%; text-align:center;"><b>Nội dung</b></td>
+      <td style="width:15%; text-align:center;"><b>Số tiền</b></td>
+      <td style="width:30%; text-align:center;"><b>Chứng từ</b></td>
+      <td style="width:15%; text-align:center;"><b>Ghi chú</b></td>
+    </tr>
+
+    {%- for r in doc.items -%}
+      {%- set idx = loop.index -%}
+      {%- set amt = frappe.utils.fmt_money(r.amount or 0, currency='', precision=prec) -%}
+      <tr>
+        <td style="text-align:center;">{{ idx }}</td>
+        <td style="text-align:left;">{{ (r.content or '') | replace('\n','<br>') }}</td>
+        <td style="text-align:right;"><b>{{ amt }}</b></td>
+        <td style="max-width:30%;"></td>
+        <td style="text-align:center;">{{ (r.note or '') | replace('\n','<br>') }}</td>
+      </tr>
+    {%- endfor -%}
+
+    {%- set total_fmt = frappe.utils.fmt_money(total, currency='', precision=prec) -%}
+    {%- set adv_fmt   = frappe.utils.fmt_money(adv,   currency='', precision=prec) -%}
+    {%- set diff_fmt  = frappe.utils.fmt_money(diff,  currency='', precision=prec) -%}
+    {%- set diff_abs_fmt = frappe.utils.fmt_money(diff_abs, currency='', precision=prec) -%}
+
+    <tr>
+      <td></td>
+      <td><b>Tổng cộng:</b></td>
+      <td style="text-align:right;"><b>{{ total_fmt }}</b></td>
+      <td><b>{{ cur }}</b></td>
+      <td rowspan="3"><b>{{ doc.note or '' }}</b></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><b>Đã tạm ứng:</b></td>
+      <td style="text-align:right;"><b>{{ adv_fmt }}</b></td>
+      <td><b>{{ cur }}</b></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><b>Còn phải thanh toán/hoàn ứng:</b></td>
+      <td style="text-align:right;"><b>{{ diff_fmt }}</b></td>
+      <td><b>{{ cur }}</b></td>
+    </tr>
+
+    <tr>
+      <td colspan="5" style="text-align:left;">
+        <i>Số tiền bằng chữ: {{ number_to_words(number = (doc.total - doc.advance_payment_made), currency='VND') }}
+          <br>
+        </i>
+        Hạn thanh toán:
+        {{ frappe.utils.getdate(doc.due_date).strftime("%d-%m-%Y") if doc.due_date else '' }}
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td style="width:30%; text-align:left; border-right:none;"><b>Thông tin thanh toán<br>Người/Đơn vị thụ hưởng:</b></td>
+      <td style="width:70%; text-align:left; border-left:none;"><br>{{ doc.supplier or '' }}</td>
+    </tr>
+    <tr>
+      <td style="text-align:left; border-right:none; border-top:none;"><b>Số tài khoản:</b></td>
+      <td style="text-align:left; border-left:none; border-top:none;">{{ doc.beneficiary_account_number or '' }}</td>
+    </tr>
+    <tr>
+      <td style="text-align:left; border-right:none; border-top:none;"><b>Ngân hàng:</b></td>
+      <td style="text-align:left; border-left:none; border-top:none;">{{ doc.bank_name or '' }}</td>
+    </tr>
+    {%- if doc.swift_code -%}
+    <tr>
+      <td style="text-align:left; border-right:none; border-top:none;"><b>SWIFT code</b></td>
+      <td style="text-align:left; border-left:none; border-top:none;">{{ doc.swift_code }}</td>
+    </tr>
+    {%- endif -%}
+    <tr>
+      <td style="text-align:left; border-right:none; border-top:none;"><b>Thông tin khác:</b></td>
+      <td style="text-align:left; border-left:none; border-top:none;">{{ doc.notepayment or '' }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<table style="margin-top:20px; border:none; width:100%;">
+    <tbody>
+        <tr>
+            <td style="text-align:center; border:none; width:25%;">
+                <b>Người đề nghị</b><br>
+                <i>(Ký, ghi rõ họ tên)</i>
+            </td>
+        <td style="text-align:center; border:none; width:25%;">
+            <b>Lãnh đạo Phòng/Ban</b><br>
+            <i>(Ký, ghi rõ họ tên)</i>
+        </td>
+        <td style="text-align:center; border:none; width:25%;">
+            <b>Lãnh đạo TCKT</b><br>
+            <i>(Ký, ghi rõ họ tên)</i>
+        </td>
+        <td style="text-align:center; border:none; width:25%;">
+            <b>Lãnh đạo Tập đoàn</b><br>
+            <i>(Ký, ghi rõ họ tên)</i>
+        </td>
+        <tr style="height:100px;">
+            <td style="border:none;"></td>
+            <td style="border:none;"></td>
+            <td style="border:none;"></td>
+        </tr>
+    </tbody>
+</table>
