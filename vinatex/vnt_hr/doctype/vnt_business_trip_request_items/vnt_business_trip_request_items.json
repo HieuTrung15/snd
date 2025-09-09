@@ -10,7 +10,8 @@
   "employee",
   "employee_name",
   "department",
-  "desgination"
+  "desgination",
+  "salutation"
  ],
  "fields": [
   {
@@ -45,13 +46,19 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Desgination"
+  },
+  {
+   "fetch_from": "employee.salutation",
+   "fieldname": "salutation",
+   "fieldtype": "Data",
+   "label": "Salutation"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-08 14:09:02.690832",
+ "modified": "2025-09-09 10:19:59.343564",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request Items",
