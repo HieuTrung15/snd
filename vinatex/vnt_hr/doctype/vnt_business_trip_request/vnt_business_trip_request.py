@@ -1,75 +1,133 @@
 import frappe
 from frappe.model.document import Document
-from frappe.utils import getdate, date_diff
+from frappe.utils import date_diff
 
 class VNTBusinessTripRequest(Document):
 
     def on_submit(self):
         leave_type = "Công tác"
 
-        for item in self.items:
-            employee = item.employee
-            from_date = self.from_date
-            to_date = self.to_date
+        # Kiểm tra allow_over_allocation của leave type
+        leave_type_doc = frappe.get_doc("Leave Type", leave_type)
+        allow_over_allocation = leave_type_doc.allow_over_allocation
+
+        for emp in self.items:  # bảng nhân viên
+            employee = emp.employee
             company = self.company
 
-            days_required = date_diff(to_date, from_date) + 1
+            for t in self.time_leave:  # bảng thời gian
+                from_date = t.from_date
+                to_date = t.to_date
+                type_leave = t.type_leave
 
-            # Lấy tất cả Leave Allocation đã submit cho employee
-            allocations = frappe.get_all(
-                "Leave Allocation",
-                filters={
-                    "employee": employee,
-                    "leave_type": leave_type,
-                    "docstatus": 1
-                },
-                order_by="creation asc",
-                fields=["name", "from_date", "to_date", "total_leaves_allocated"]
-            )
+                days_required = date_diff(to_date, from_date) + 1
+                allocation_to_use = None
 
-            allocation_to_use = None
-            balance = 0
+                # Nếu không cho phép over allocation thì check balance
+                if not allow_over_allocation:
+                    # Tính tổng ngày đã dùng
+                    leave_apps = frappe.get_all(
+                        "Leave Application",
+                        filters={
+                            "employee": employee,
+                            "leave_type": leave_type,
+                            "status": "Approved",
+                            "docstatus": 1
+                        },
+                        fields=["from_date", "to_date"]
+                    )
 
-            for a in allocations:
-                # Tính tổng số leave đã sử dụng cho allocation này
-                leaves_taken = frappe.db.sql("""
-                    SELECT SUM(total_leave_days) 
-                    FROM `tabLeave Application`
-                    WHERE leave_allocation=%s AND docstatus=1
-                """, a["name"])[0][0] or 0
+                    leaves_taken = sum(date_diff(la["to_date"], la["from_date"]) + 1 for la in leave_apps)
 
-                a_balance = a["total_leaves_allocated"] - leaves_taken
-                if a_balance >= days_required:
-                    allocation_to_use = a["name"]
-                    balance = a_balance
-                    break
-                balance += a_balance
+                    # Lấy allocation hiện có để tính balance
+                    allocations = frappe.get_all(
+                        "Leave Allocation",
+                        filters={
+                            "employee": employee,
+                            "leave_type": leave_type,
+                            "docstatus": 1
+                        },
+                        order_by="creation asc",
+                        fields=["name", "from_date", "to_date", "total_leaves_allocated"]
+                    )
 
-            # Nếu không đủ, tạo allocation mới
-            if not allocation_to_use or balance < days_required:
-                allocation_doc = frappe.get_doc({
-                    "doctype": "Leave Allocation",
+                    allocation_to_use = None
+                    balance = 0
+                    for a in allocations:
+                        a_balance = a["total_leaves_allocated"] - leaves_taken
+                        if a_balance >= days_required:
+                            allocation_to_use = a["name"]
+                            balance = a_balance
+                            break
+                        balance += a_balance
+
+                    # Nếu không đủ balance, tạo allocation mới
+                    if not allocation_to_use or balance < days_required:
+                        allocation_doc = frappe.get_doc({
+                            "doctype": "Leave Allocation",
+                            "employee": employee,
+                            "leave_type": leave_type,
+                            "from_date": from_date,
+                            "to_date": to_date,
+                            "new_leaves_allocated": days_required,
+                            "company": company
+                        })
+                        allocation_doc.insert()
+                        allocation_doc.submit()
+                        allocation_to_use = allocation_doc.name
+
+                # Tạo Leave Application
+                leave_doc = frappe.get_doc({
+                    "doctype": "Leave Application",
                     "employee": employee,
                     "leave_type": leave_type,
                     "from_date": from_date,
                     "to_date": to_date,
-                    "new_leaves_allocated": days_required,
-                    "company": company
+                    "status": "Approved",
+                    "leave_allocation": allocation_to_use  # có thể None nếu allow over allocation
                 })
-                allocation_doc.insert()
-                allocation_doc.submit()
-                allocation_to_use = allocation_doc.name
 
-            # Tạo Leave Application
-            leave_doc = frappe.get_doc({
-                "doctype": "Leave Application",
-                "employee": employee,
-                "leave_type": leave_type,
-                "from_date": from_date,
-                "to_date": to_date,
-                "status": "Approved",
-                "leave_allocation": allocation_to_use
-            })
-            leave_doc.insert()
-            leave_doc.submit()
-            frappe.msgprint(f"Leave Application created for {employee}: {from_date} to {to_date}")
+                # Nếu type_leave = Sáng/Chiều thì set half-day
+                if type_leave in ["Sáng", "Chiều"]:
+                    leave_doc.half_day = 1
+                    leave_doc.half_day_date = from_date
+                else:
+                    leave_doc.half_day = 0
+
+                leave_doc.insert()
+                leave_doc.submit()
+
+                frappe.msgprint(
+                    f"Leave Application created for {employee}: {from_date} → {to_date}, {type_leave}"
+                )
+                
+    def on_cancel(self):
+        leave_type = "Công tác"
+
+        for emp in self.items:  # bảng nhân viên
+            employee = emp.employee
+
+            for t in self.time_leave:  # bảng thời gian
+                from_date = t.from_date
+                to_date = t.to_date
+
+                # Tìm Leave Application đã tạo
+                leave_apps = frappe.get_all(
+                    "Leave Application",
+                    filters={
+                        "employee": employee,
+                        "leave_type": leave_type,
+                        "from_date": from_date,
+                        "to_date": to_date,
+                        "status": "Approved",
+                        "docstatus": 1
+                    },
+                    fields=["name"]
+                )
+
+                for la in leave_apps:
+                    leave_doc = frappe.get_doc("Leave Application", la["name"])
+                    leave_doc.cancel()
+                    frappe.msgprint(
+                        f"Leave Application cancelled for {employee}: {from_date} → {to_date}"
+                    )

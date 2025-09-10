@@ -29,6 +29,9 @@
   "items",
   "danh_s\u00e1ch_ph\u01b0\u01a1ng_ti\u1ec7n_di_chuy\u1ec3n_section",
   "transportation",
+  "th\u1eddi_gian_\u0111i_c\u00f4ng_t\u00e1c_section",
+  "time_leave",
+  "section_break_wgca",
   "note"
  ],
  "fields": [
@@ -163,13 +166,27 @@
    "fieldname": "note",
    "fieldtype": "Small Text",
    "label": "Note"
+  },
+  {
+   "fieldname": "th\u1eddi_gian_\u0111i_c\u00f4ng_t\u00e1c_section",
+   "fieldtype": "Section Break",
+   "label": "Th\u1eddi gian \u0111i c\u00f4ng t\u00e1c"
+  },
+  {
+   "fieldname": "time_leave",
+   "fieldtype": "Table",
+   "options": "VNT Leave Application Time"
+  },
+  {
+   "fieldname": "section_break_wgca",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-08 15:15:34.488598",
+ "modified": "2025-09-10 16:00:47.488479",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request",
