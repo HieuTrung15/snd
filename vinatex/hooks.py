@@ -43,7 +43,8 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 override_doctype_class = {
-    "Leave Application": "vinatex.vinatex.doctype.overrides.leave_application.CustomLeaveApplication"
+    "Leave Application": "vinatex.vinatex.doctype.overrides.leave_application.VntLeaveApplication",
+    "Leave Allowcation": "vinatex.vinatex.doctype.overrides.leave_allowcation.VntLeaveAllocation"
 }
 
 # include js in doctype views
@@ -159,23 +160,29 @@ jinja = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"vinatex.tasks.all"
-# 	],
-# 	"daily": [
-# 		"vinatex.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"vinatex.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"vinatex.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"vinatex.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+    "cron": {
+        "0 4 1 1 *": [
+            "vinatex.vinatex.doctype.overrides.allocate_leave.allocate_leave"
+        ]
+    }
+
+	# "all": [
+	# 	"vinatex.tasks.all"
+	# ],
+	# "daily": [
+	# 	"vinatex.tasks.daily"
+	# ],
+	# "hourly": [
+	# 	"vinatex.tasks.hourly"
+	# ],
+	# "weekly": [
+	# 	"vinatex.tasks.weekly"
+	# ],
+	# "monthly": [
+	# 	"vinatex.tasks.monthly"
+	# ],
+}
 
 # Testing
 # -------
