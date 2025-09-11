@@ -1,0 +1,95 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:device_name",
+ "creation": "2025-09-11 08:59:29.455793",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_88fv",
+  "company",
+  "abbr",
+  "device_name",
+  "is_active",
+  "column_break_498g",
+  "ip",
+  "port",
+  "comm_key"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_88fv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "C\u00f4ng ty",
+   "options": "Company"
+  },
+  {
+   "fieldname": "ip",
+   "fieldtype": "Data",
+   "label": "IP"
+  },
+  {
+   "fieldname": "port",
+   "fieldtype": "Int",
+   "label": "Port"
+  },
+  {
+   "fieldname": "column_break_498g",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active"
+  },
+  {
+   "fetch_from": "company.abbr",
+   "fieldname": "abbr",
+   "fieldtype": "Data",
+   "label": "T\u00ean vi\u1ebft t\u1eaft"
+  },
+  {
+   "fieldname": "device_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean thi\u1ebft b\u1ecb",
+   "unique": 1
+  },
+  {
+   "fieldname": "comm_key",
+   "fieldtype": "Data",
+   "label": "COMM_KEY"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-09-11 10:54:12.190934",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "Timekeeper Config",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
