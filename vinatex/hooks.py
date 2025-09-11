@@ -164,7 +164,11 @@ scheduler_events = {
     "cron": {
         "0 4 1 1 *": [
             "vinatex.vinatex.doctype.overrides.allocate_leave.allocate_leave"
-        ]
+        ],
+        "0 5 2 * *": [#5 gio sang ngay 2 hang thang
+			"vinatex.vinatex.doctype.overrides.chamcong.get_cham_cong",
+		],
+
     }
 
 	# "all": [
