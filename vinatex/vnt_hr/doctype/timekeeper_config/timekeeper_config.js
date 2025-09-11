@@ -3,17 +3,6 @@
 
 frappe.ui.form.on("Timekeeper Config", {
 	refresh(frm) {
-        frm.add_custom_button(__('Get Data from Device'), function() {
-            frappe.call({
-                method: "vinatex.vinatex.doctype.overrides.chamcong.get_cham_cong",
-                args: {
-                },
-                callback: function(r) {
-                    if(r.message) {
-                        console.log("a",r.message);
-                    }
-                }
-            });
-        })
+        
 	},
 });

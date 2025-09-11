@@ -1,70 +1,74 @@
 import frappe
 from frappe import _
 from hrms.hr.doctype.employee_checkin.employee_checkin import EmployeeCheckin
-from frappe.utils import get_date_str
-import datetime
-from dateutil.relativedelta import relativedelta 
-from datetime import date
-import sys
+from datetime import datetime, time, timedelta
+from frappe.utils import today, getdate
 
 class VntEmployeeCheckin(EmployeeCheckin):
     pass
 
-
 DEVICE_IP   = "192.168.1.44"
 DEVICE_PORT = 4370
-COMM_KEY    = 123456       # mật khẩu/comm-key của thiết bị
-TIMEOUT_S   = 10
-
+COMM_KEY    = 123456
+TIMEOUT_S   = 5
 
 @frappe.whitelist()
 def get_cham_cong():
-    current_date = datetime.datetime.now() - datetime.timedelta(days=1)
-    start_datetime = datetime.datetime(day= current_date.day, month = current_date.month, 
-        year = current_date.year)
-    end_datetime = datetime.datetime(day = current_date.day, month = current_date.month,
-        year = current_date.year)+ relativedelta(days=1)
-    start_datetime_format = ""
-    end_datetime_format = ""
-    
-    start_dt, end_dt = start_datetime, end_datetime
-    try:
-        from zk import ZK
-    except ImportError:
-        print("Chưa cài pyzk. Hãy chạy: pip install pyzk")
-        sys.exit(1)
+    # Lấy ngày hôm nay dưới dạng date
+    d = getdate(today())  # datetime.date(...)
+    # Tạo khoảng thời gian theo datetime
+    start_dt = datetime.combine(d, time.min)  # 00:00:00
+    end_dt   = datetime.combine(d, time.max)  # 23:59:59.999999
 
-    zk = ZK(
-        DEVICE_IP,
-        port=DEVICE_PORT,
-        timeout=TIMEOUT_S,
-        password=COMM_KEY, 
-        force_udp=False,
-        ommit_ping=False
-    )
+    from zk import ZK
+    zk = ZK(DEVICE_IP, port=DEVICE_PORT, timeout=TIMEOUT_S, password=COMM_KEY,
+            force_udp=False, ommit_ping=False)
 
     conn = zk.connect()
-    # Khuyến nghị khóa tạm khi đọc
+        # Khóa tạm trong lúc đọc (nếu thiết bị hỗ trợ)
     try:
         conn.disable_device()
     except Exception:
         pass
-    # Thiết bị không filter theo thời gian được; ta kéo hết rồi lọc
-    raw_logs = conn.get_attendance() or []
 
-    rows = []
+    raw_logs = conn.get_attendance() or []
     for att in raw_logs:
-        ts = getattr(att, "timestamp", None)
+        ts = getattr(att, "timestamp", None)  # kiểu datetime từ lib pyzk
         if not ts:
             continue
-        if start_dt <= ts <= end_dt:
-            rows.append({
-                "user_id": getattr(att, "user_id", ""),
-                "timestamp": ts.strftime("%Y-%m-%d %H:%M:%S"),
-                "status": getattr(att, "status", ""),
-                "punch": getattr(att, "punch", ""),
-                "device_ip": DEVICE_IP
-            })
 
-    rows.sort(key=lambda r: (r["user_id"], r["timestamp"]))
-    frappe.throw(f"{rows}")
+        # (Tùy thiết bị) nếu ts có tz, chuẩn hóa về naive:
+        # if getattr(ts, "tzinfo", None) is not None:
+        #     ts = ts.astimezone().replace(tzinfo=None)
+
+        if start_dt <= ts <= end_dt:
+            emp = frappe.get_all(
+                "Employee",
+                filters={"attendance_device_id": str(getattr(att, "user_id", ""))},
+                fields=["name", "employee_name", "custom_timekeeper_device"],
+                limit=1,
+            )
+            if emp:
+                frappe.get_doc({
+                    "doctype": "Employee Checkin",
+                    "employee": emp[0]["name"],
+                    "employee_name": emp[0]["employee_name"],
+                    "time": ts.strftime("%Y-%m-%d %H:%M:%S"),
+                    "log_type": in_out(ts),  # truyền datetime trực tiếp
+                }).insert(ignore_permissions=True)
+    frappe.db.commit()
+
+CUTOFF = time(11, 30, 0)
+
+def in_out(ts):
+    """
+    ts: datetime | 'YYYY-MM-DD HH:MM:SS' | 'HH:MM:SS'
+    rule: time >= 11:30:00 -> 'OUT', ngược lại -> 'IN'
+    """
+    if isinstance(ts, datetime):
+        t = ts.time()
+    else:
+        s = str(ts).strip()
+        fmt = "%Y-%m-%d %H:%M:%S" if " " in s else "%H:%M:%S"
+        t = datetime.strptime(s, fmt).time()
+    return "OUT" if t >= CUTOFF else "IN"
