@@ -165,7 +165,7 @@ scheduler_events = {
         "0 4 1 1 *": [
             "vinatex.vinatex.doctype.overrides.allocate_leave.allocate_leave"
         ],
-        "0 5 2 * *": [#5 gio sang ngay 2 hang thang
+        "0 9,19 * * *": [
 			"vinatex.vinatex.doctype.overrides.chamcong.get_cham_cong",
 		],
 
