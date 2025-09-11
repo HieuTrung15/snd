@@ -1,6 +1,8 @@
 import frappe
 from frappe.model.document import Document
 from frappe.utils import date_diff
+from frappe.utils import getdate
+from datetime import timedelta
 
 class VNTBusinessTripRequest(Document):
 
@@ -60,21 +62,33 @@ class VNTBusinessTripRequest(Document):
                             balance = a_balance
                             break
                         balance += a_balance
+                    from_date = getdate(t.from_date)
+                    to_date = getdate(t.to_date)
 
+                    # Nếu nửa ngày thì coi là cùng 1 ngày
+                    if type_leave in ["Sáng", "Chiều"] or from_date == to_date:
+                        to_date_for_allocation = from_date + timedelta(days=1)
+                    else:
+                        to_date_for_allocation = to_date
+
+                    if date_diff(to_date, from_date) < 0:
+                        frappe.throw(f"Invalid leave period for {employee}: {from_date} → {to_date}")
                     # Nếu không đủ balance, tạo allocation mới
+                    from_date = getdate(t.from_date)
+                    to_date = getdate(t.to_date)
                     if not allocation_to_use or balance < days_required:
-                        allocation_doc = frappe.get_doc({
-                            "doctype": "Leave Allocation",
-                            "employee": employee,
-                            "leave_type": leave_type,
-                            "from_date": from_date,
-                            "to_date": to_date,
-                            "new_leaves_allocated": days_required,
-                            "company": company
-                        })
+                        allocation_doc = frappe.new_doc("Leave Allocation")
+                        allocation_doc.employee = employee
+                        allocation_doc.leave_type = leave_type
+                        allocation_doc.from_date = from_date
+                        allocation_doc.to_date = to_date_for_allocation  # cộng thêm 1 ngày nếu cùng ngày
+                        allocation_doc.new_leaves_allocated = days_required
+                        allocation_doc.total_leaves_allocated = days_required  # quan trọng
+                        allocation_doc.company = company
                         allocation_doc.insert()
                         allocation_doc.submit()
                         allocation_to_use = allocation_doc.name
+
 
                 # Tạo Leave Application
                 leave_doc = frappe.get_doc({
