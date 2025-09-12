@@ -1,7 +1,7 @@
 import frappe
 from frappe import _
 from hrms.hr.doctype.employee_checkin.employee_checkin import EmployeeCheckin
-from datetime import datetime, time
+from datetime import datetime, time, date
 from frappe.utils import today, getdate
 from zk import ZK
 
@@ -16,6 +16,10 @@ def get_cham_cong():
     start_dt = datetime.combine(d_month_start, time.min)  # 00:00:00 ngày 01
     end_dt   = datetime.combine(d_today, time.max)     # 23:59:59.999999 hôm nay
     # lay ra thong tin may cham cong
+    # get_today = date.today()
+    # start_today = datetime.combine(get_today, time.min)
+    # end_today = datetime.combine(get_today, time.max)
+
     devices = _device_list()
     for d in devices:
         rows.extend(_fetch_from_device(
