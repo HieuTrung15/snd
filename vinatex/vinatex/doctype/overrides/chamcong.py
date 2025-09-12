@@ -3,14 +3,10 @@ from frappe import _
 from hrms.hr.doctype.employee_checkin.employee_checkin import EmployeeCheckin
 from datetime import datetime, time
 from frappe.utils import today, getdate
+from zk import ZK
 
 class VntEmployeeCheckin(EmployeeCheckin):
     pass
-
-DEVICE_IP   = "192.168.1.44"
-DEVICE_PORT = 4370
-COMM_KEY    = 123456
-TIMEOUT_S   = 5
 
 @frappe.whitelist()
 def get_cham_cong():
@@ -19,82 +15,86 @@ def get_cham_cong():
 
     start_dt = datetime.combine(d_month_start, time.min)  # 00:00:00 ngày 01
     end_dt   = datetime.combine(d_today, time.max)     # 23:59:59.999999 hôm nay
+    # lay ra thong tin may cham cong
+    devices = _device_list()
+    for d in devices:
+        rows.extend(_fetch_from_device(
+            ip=d["ip"],
+            port=d["port"],
+            comm_key=d.get("comm_key") or 0,
+            start_dt=start_dt,
+            end_dt=end_dt,
+            device_name=d["name"]
+        ))
+    # loc emp theo may cham cong
+    rows = []
+    if not rows:
+        frappe.msgprint(_("Không có dữ liệu chấm công nào được lấy từ máy chấm công."))
+        return
+    for row in rows:
+        emp = frappe.get_value(
+            "Employee",
+            {
+                "attendance_device_id": row["user_id"],
+                "custom_timekeeper_device": row["device_name"]
+            },
+            ["name", "employee_name"],
+            as_dict=True,
+        )
+        if not emp:
+            continue
 
-    # Kết nối và đọc dữ liệu từ thiết bị chấm công
+        row_time = datetime.strptime(row["timestamp"], "%Y-%m-%d %H:%M:%S")
+        log_type = _in_out(row_time)
+        # insert vào employee checkin
+        doc = frappe.new_doc("Employee Checkin")
+        doc.employee = emp.name
+        doc.employee_name = emp.employee_name
+        doc.time = row_time
+        doc.log_type = log_type
+        doc.insert(ignore_permissions=True)
+
+    frappe.db.commit()
+
+
+def _device_list():
+    return frappe.get_all('Timekeeper Config', filters={'is_active': 1}, fields=['ip', 'port', 'comm_key', 'name'])
+
+
+def _fetch_from_device(ip: str, port: int, comm_key: int, start_dt: datetime, end_dt: datetime, device_name: str):
+    """Kết nối 1 thiết bị và trả về list rows đã lọc theo khoảng thời gian."""
     from zk import ZK
-    zk = ZK(DEVICE_IP, port=DEVICE_PORT, timeout=TIMEOUT_S, password=COMM_KEY,
-            force_udp=False, ommit_ping=False)
-
-    conn = None
+    zk = ZK(ip, port=port, timeout=5, password=comm_key, force_udp=False, ommit_ping=False)
+    conn, out = None, []
     try:
         conn = zk.connect()
         raw_logs = conn.get_attendance() or []
-        rows = []
         for att in raw_logs:
             ts = getattr(att, "timestamp", None)
             if not ts:
                 continue
             if start_dt <= ts <= end_dt:
-                rows.append({
+                out.append({
                     "user_id": str(getattr(att, "user_id", "")),
                     "timestamp": ts.strftime("%Y-%m-%d %H:%M:%S"),
                     "status": getattr(att, "status", ""),
                     "punch": getattr(att, "punch", ""),
-                    "device_ip": DEVICE_IP,
+                    "device_ip": ip,
+                    "device_name": device_name
                 })
-
-        rows.sort(key=lambda r: (r["user_id"], r["timestamp"]))
-
-        for row in rows:
-            emp = frappe.get_value(
-                "Employee",
-                {"attendance_device_id": row["user_id"]},
-                ["name", "employee_name"],
-                as_dict=True,
-            )
-            if not emp:
-                continue
-
-            row_time = datetime.strptime(row["timestamp"], "%Y-%m-%d %H:%M:%S")
-            day_start = datetime.combine(row_time.date(), time.min)
-            day_end   = datetime.combine(row_time.date(), time.max)
-            log_type = in_out(row_time)
-
-            #Nếu đã có bản ghi cùng employee + log_type trong NGÀY -> bỏ qua
-            exists = frappe.db.get_value(
-                "Employee Checkin",
-                {
-                    "employee": emp.name,
-                    "log_type": log_type,
-                    "time": ["between", [day_start, day_end]],
-                },
-                "name",
-            )
-            if exists:
-                continue
-
-            # Chưa có -> tạo mới
-            doc = frappe.new_doc("Employee Checkin")
-            doc.employee = emp.name
-            doc.employee_name = emp.employee_name
-            doc.time = row_time
-            doc.log_type = log_type
-            doc.insert(ignore_permissions=True)
-
-        frappe.db.commit()
-
     except Exception as e:
-        frappe.log_error(f"Lỗi khi kết nối/đọc dữ liệu: {e}", "get_cham_cong")
+        frappe.log_error(f"[{ip}] Lỗi khi kết nối/đọc dữ liệu: {e}", "get_cham_cong_multi")
     finally:
         if conn:
             try: conn.enable_device()
             except Exception: pass
             try: conn.disconnect()
             except Exception: pass
+    return out
+
 
 CUTOFF = time(11, 30, 0)
-
-def in_out(ts):
+def _in_out(ts):
     """
     ts: datetime | 'YYYY-MM-DD HH:MM:SS' | 'HH:MM:SS'
     rule: time >= 11:30:00 -> 'OUT', ngược lại -> 'IN'
