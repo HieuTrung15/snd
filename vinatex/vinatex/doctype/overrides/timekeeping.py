@@ -9,7 +9,7 @@ class VntEmployeeCheckin(EmployeeCheckin):
     pass
 
 @frappe.whitelist()
-def get_cham_cong():
+def get_timekeeping_data():
     d_today = getdate(today())                 # ngày hôm nay (date)
     d_month_start = d_today.replace(day=1)     # ngày đầu tháng (date)
 
@@ -19,7 +19,7 @@ def get_cham_cong():
     # get_today = date.today()
     # start_today = datetime.combine(get_today, time.min)
     # end_today = datetime.combine(get_today, time.max)
-
+    rows = []
     devices = _device_list()
     for d in devices:
         rows.extend(_fetch_from_device(
@@ -31,7 +31,6 @@ def get_cham_cong():
             device_name=d["name"]
         ))
     # loc emp theo may cham cong
-    rows = []
     if not rows:
         frappe.msgprint(_("Không có dữ liệu chấm công nào được lấy từ máy chấm công."))
         return

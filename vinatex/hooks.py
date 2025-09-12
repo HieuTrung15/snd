@@ -166,7 +166,7 @@ scheduler_events = {
             "vinatex.vinatex.doctype.overrides.allocate_leave.allocate_leave"
         ],
         "0 9,19 * * *": [
-			"vinatex.vinatex.doctype.overrides.chamcong.get_cham_cong",
+			"vinatex.vinatex.doctype.overrides.timekeeping.get_timekeeping_data",
 		],
 
     }
