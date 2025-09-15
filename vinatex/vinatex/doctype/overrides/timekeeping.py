@@ -39,7 +39,6 @@ def get_timekeeping_data():
             "Employee",
             {
                 "attendance_device_id": row["user_id"],
-                "custom_timekeeper_device": row["device_name"]
             },
             ["name", "employee_name"],
             as_dict=True,
