@@ -28,7 +28,6 @@ def get_timekeeping_data():
             comm_key=d.get("comm_key") or 0,
             start_dt=start_dt,
             end_dt=end_dt,
-            device_name=d["name"]
         ))
     # loc emp theo may cham cong
     if not rows:
@@ -47,6 +46,13 @@ def get_timekeeping_data():
             continue
 
         row_time = datetime.strptime(row["timestamp"], "%Y-%m-%d %H:%M:%S")
+        exists = frappe.db.exists(
+            "Employee Checkin",
+            {"employee": emp.name, "time": row_time}
+        )
+        if exists:
+            continue
+
         log_type = _in_out(row_time)
         # insert vào employee checkin
         doc = frappe.new_doc("Employee Checkin")
@@ -63,7 +69,7 @@ def _device_list():
     return frappe.get_all('Timekeeper Config', filters={'is_active': 1}, fields=['ip', 'port', 'comm_key', 'name'])
 
 
-def _fetch_from_device(ip: str, port: int, comm_key: int, start_dt: datetime, end_dt: datetime, device_name: str):
+def _fetch_from_device(ip: str, port: int, comm_key: int, start_dt: datetime, end_dt: datetime):
     """Kết nối 1 thiết bị và trả về list rows đã lọc theo khoảng thời gian."""
     from zk import ZK
     zk = ZK(ip, port=port, timeout=5, password=comm_key, force_udp=False, ommit_ping=False)
@@ -82,7 +88,6 @@ def _fetch_from_device(ip: str, port: int, comm_key: int, start_dt: datetime, en
                     "status": getattr(att, "status", ""),
                     "punch": getattr(att, "punch", ""),
                     "device_ip": ip,
-                    "device_name": device_name
                 })
     except Exception as e:
         frappe.log_error(f"[{ip}] Lỗi khi kết nối/đọc dữ liệu: {e}", "get_cham_cong_multi")
