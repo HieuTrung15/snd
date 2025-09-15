@@ -13,7 +13,8 @@
   "column_break_oqsc",
   "position",
   "email",
-  "phone"
+  "phone",
+  "amended_from"
  ],
  "fields": [
   {
@@ -67,18 +68,41 @@
    "fieldtype": "Phone",
    "in_list_view": 1,
    "label": "S\u0110T"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Company Representative",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
- "istable": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2025-09-15 15:45:24.502097",
+ "modified": "2025-09-15 15:50:46.089811",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "Company Representative",
  "owner": "Administrator",
- "permissions": [],
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
