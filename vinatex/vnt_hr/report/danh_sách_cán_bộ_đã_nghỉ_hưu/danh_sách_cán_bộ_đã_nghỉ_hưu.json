@@ -1,0 +1,36 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2025-09-16 09:05:07.207033",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letter_head": "Default Letter Head T\u1eadp \u0110o\u00e0n",
+ "letterhead": null,
+ "modified": "2025-09-16 09:27:34.432851",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "DANH S\u00c1CH C\u00c1N B\u1ed8 \u0110\u00c3 NGH\u1ec8 H\u01afU",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Employee",
+ "report_name": "DANH S\u00c1CH C\u00c1N B\u1ed8 \u0110\u00c3 NGH\u1ec8 H\u01afU",
+ "report_script": "def execute(filters=None):\r\n    columns = [\r\n        {\"label\": \"STT\", \"fieldname\": \"stt\", \"fieldtype\": \"Int\", \"width\": 40},\r\n        {\"label\": \"M\u00e3 nh\u00e2n vi\u00ean\", \"fieldname\": \"ma_nv\", \"fieldtype\": \"Data\", \"width\": 120},\r\n        {\"label\": \"H\u1ecd v\u00e0 t\u00ean\", \"fieldname\": \"ho_ten\", \"fieldtype\": \"Data\", \"width\": 200},\r\n        {\"label\": \"Ng\u00e0y sinh\", \"fieldname\": \"ngay_sinh\", \"fieldtype\": \"Date\", \"width\": 120},\r\n        {\"label\": \"Gi\u1edbi t\u00ednh\", \"fieldname\": \"gioi_tinh\", \"fieldtype\": \"Data\", \"width\": 80},\r\n        {\"label\": \"Ch\u1ee9c v\u1ee5 tr\u01b0\u1edbc khi ngh\u1ec9 h\u01b0u\", \"fieldname\": \"chuc_vu\", \"fieldtype\": \"Data\", \"width\": 200},\r\n        {\"label\": \"Ng\u00e0y ngh\u1ec9 h\u01b0u\", \"fieldname\": \"ngay_nghi_huu\", \"fieldtype\": \"Date\", \"width\": 120},\r\n        {\"label\": \"\u0110\u1ecba ch\u1ec9 li\u00ean h\u1ec7\", \"fieldname\": \"dia_chi\", \"fieldtype\": \"Data\", \"width\": 300},\r\n        {\"label\": \"\u0110i\u1ec7n tho\u1ea1i li\u00ean l\u1ea1c\", \"fieldname\": \"dien_thoai\", \"fieldtype\": \"Data\", \"width\": 140},\r\n    ]\r\n\r\n    data = []\r\n    employees = frappe.get_all(\r\n        \"Employee\",\r\n        fields=[\r\n            \"name\", \"employee_number\", \"employee_name\", \"date_of_birth\",\r\n            \"gender\", \"designation\", \"relieving_date\", \"permanent_address\",\r\n            \"mobile_no\", \"cell_number\", \"phone\"\r\n        ],\r\n        filters={\"status\": \"Left\"},\r\n        order_by=\"relieving_date asc\"\r\n    )\r\n\r\n    for idx, e in enumerate(employees, start=1):\r\n        data.append({\r\n            \"stt\": idx,\r\n            \"ma_nv\": e.employee_number or e.name,\r\n            \"ho_ten\": e.employee_name,\r\n            \"ngay_sinh\": e.date_of_birth,\r\n            \"gioi_tinh\": e.gender,\r\n            \"chuc_vu\": e.designation,\r\n            \"ngay_nghi_huu\": e.relieving_date,\r\n            \"dia_chi\": e.permanent_address,\r\n            \"dien_thoai\": e.cell_number or e.mobile_no or e.phone\r\n        })\r\n\r\n    return columns, data\r\n",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Employee"
+  },
+  {
+   "role": "HR User"
+  },
+  {
+   "role": "HR Manager"
+  }
+ ],
+ "timeout": 0
+}
