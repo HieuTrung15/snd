@@ -264,3 +264,8 @@ scheduler_events = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
+# override_doctype_class = {
+#     "Leave Application": "vinatex.vinatex.doctype.overrides.leave_application.VntLeaveApplication",
+#     "Leave Allocation": "vinatex.vinatex.doctype.overrides.leave_allocation.VntLeaveAllocation"
+# }
+
