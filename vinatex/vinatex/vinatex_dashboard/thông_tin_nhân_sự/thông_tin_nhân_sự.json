@@ -1,0 +1,54 @@
+{
+ "cards": [
+  {
+   "card": "Nh\u00e2n vi\u00ean \u0111ang l\u00e0m vi\u1ec7c"
+  },
+  {
+   "card": "Tuy\u1ec3n d\u1ee5ng m\u1edbi"
+  },
+  {
+   "card": "Ngh\u1ec9 vi\u1ec7c(Trong n\u0103m)"
+  },
+  {
+   "card": "Nh\u00e2n vi\u00ean m\u1edbi(Trong qu\u00fd)"
+  },
+  {
+   "card": "Nh\u00e2n vi\u00ean ngh\u1ec9 vi\u1ec7c(Trong qu\u00fd)"
+  }
+ ],
+ "chart_options": "",
+ "charts": [
+  {
+   "chart": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo \u0111\u1ed9 tu\u1ed5i",
+   "width": "Full"
+  },
+  {
+   "chart": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo gi\u1edbi t\u00ednh",
+   "width": "Half"
+  },
+  {
+   "chart": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo lo\u1ea1i h\u1ee3p \u0111\u1ed3ng",
+   "width": "Half"
+  },
+  {
+   "chart": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo ch\u1ee9c danh",
+   "width": "Half"
+  },
+  {
+   "chart": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo ph\u00f2ng ban",
+   "width": "Half"
+  }
+ ],
+ "creation": "2025-09-17 09:52:53.010413",
+ "dashboard_name": "Th\u00f4ng tin nh\u00e2n s\u1ef1",
+ "docstatus": 0,
+ "doctype": "Dashboard",
+ "idx": 0,
+ "is_default": 0,
+ "is_standard": 1,
+ "modified": "2025-09-17 10:19:02.625070",
+ "modified_by": "Administrator",
+ "module": "vinatex",
+ "name": "Th\u00f4ng tin nh\u00e2n s\u1ef1",
+ "owner": "Administrator"
+}
