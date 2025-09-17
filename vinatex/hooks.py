@@ -169,7 +169,9 @@ scheduler_events = {
         "0 9,22 * * *": [
 			"vinatex.vinatex.doctype.overrides.timekeeping.get_timekeeping_data",
 		],
-
+		"0 23 * * *": [
+			"vinatex.vinatex.doctype.overrides.attendance.create_attendance_from_checkin",
+		],
     }
 
 	# "all": [
