@@ -44,7 +44,8 @@ app_license = "mit"
 
 override_doctype_class = {
     "Leave Application": "vinatex.vinatex.doctype.overrides.leave_application.VntLeaveApplication",
-    "Leave Allowcation": "vinatex.vinatex.doctype.overrides.leave_allowcation.VntLeaveAllocation"
+    "Leave Allowcation": "vinatex.vinatex.doctype.overrides.leave_allowcation.VntLeaveAllocation",
+	"Attendance": "vinatex.vinatex.doctype.overrides.attendance.VntAttendance"
 }
 
 # include js in doctype views
