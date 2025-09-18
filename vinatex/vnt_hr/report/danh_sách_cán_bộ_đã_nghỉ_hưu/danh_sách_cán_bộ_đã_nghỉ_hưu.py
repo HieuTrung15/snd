@@ -50,7 +50,7 @@ def execute(filters=None):
 
     employees = frappe.db.sql(f"""
         SELECT
-            employee_number AS ma_nv,
+            name AS ma_nv,
             employee_name AS ho_ten,
             date_of_birth AS ngay_sinh,
             gender AS gioi_tinh,

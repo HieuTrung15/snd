@@ -19,13 +19,13 @@ frappe.query_reports["DANH SÁCH CÁN BỘ ĐÃ NGHỈ HƯU"] = {
         },
         {
             "fieldname": "retirement_from",
-            "label": __("Từ ngày nghỉ hưu"),
+            "label": __("Từ ngày"),
             "fieldtype": "Date",
             "reqd": 0
         },
         {
             "fieldname": "retirement_to",
-            "label": __("Đến ngày nghỉ hưu"),
+            "label": __("Đến ngày"),
             "fieldtype": "Date",
             "reqd": 0
         },
