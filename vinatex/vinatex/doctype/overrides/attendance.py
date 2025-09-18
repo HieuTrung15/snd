@@ -30,7 +30,7 @@ def create_attendance_from_checkin():
 	# Lấy danh sách employee active
 	employees = frappe.get_all('Employee', filters={'status': 'Active'}, fields=['name', 'employee_name', 'company', 'department'])
 	if not employees:
-		frappe.msgprint("Không tìm thấy employee active nào!")
+		# frappe.msgprint("Không tìm thấy employee active nào!")
 		return
 	
 	# Loop qua từng ngày từ đầu tháng đến end_date
@@ -66,7 +66,7 @@ def create_attendance_from_checkin():
 				'docstatus': 1
 			})
 			if existing_att:
-				frappe.throw(f"Employee {emp['name']} ngày {current_date}: Attendance đã tồn tại")
+				# frappe.throw(f"Employee {emp['name']} ngày {current_date}: Attendance đã tồn tại")
 				current_date += timedelta(days=1)
 				continue
 			in_time, out_time = _get_employee_checkin(emp['name'], current_date)
