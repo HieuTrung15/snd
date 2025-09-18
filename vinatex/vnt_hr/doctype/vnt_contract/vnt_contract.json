@@ -17,7 +17,23 @@
   "employee",
   "salutation",
   "designation",
-  "validity"
+  "validity",
+  "job_title",
+  "sign_reason",
+  "signer",
+  "designation_of_signer",
+  "sign_status",
+  "section_break_sa5g",
+  "salary_decision_num",
+  "salary_beneficiary",
+  "effective_date",
+  "salary_scale_name",
+  "column_break_nccz",
+  "salary_grade",
+  "salary_step",
+  "salary_coefficient",
+  "basic_salary",
+  "concurrent_allowance"
  ],
  "fields": [
   {
@@ -104,13 +120,95 @@
    "fieldname": "designation",
    "fieldtype": "Data",
    "label": "Ch\u1ee9c v\u1ee5"
+  },
+  {
+   "fieldname": "job_title",
+   "fieldtype": "Data",
+   "label": "V\u1ecb tr\u00ed c\u00f4ng vi\u1ec7c"
+  },
+  {
+   "fieldname": "sign_reason",
+   "fieldtype": "Select",
+   "label": "L\u00fd do k\u00fd",
+   "options": "\nThay \u0111\u1ed5i th\u1eddi h\u1ea1n H\u0110L\u0110\nK\u1ebft th\u00fac H\u0110L\u0110 c\u0169\nChuy\u1ec3n \u0111\u1ed5i lo\u1ea1i H\u0110L\u0110\nK\u00fd m\u1edbi H\u0110L\u0110"
+  },
+  {
+   "fieldname": "signer",
+   "fieldtype": "Link",
+   "label": "Ng\u01b0\u1eddi k\u00fd",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "designation_of_signer",
+   "fieldtype": "Link",
+   "label": "Ch\u1ee9c danh ng\u01b0\u1eddi k\u00fd",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "sign_status",
+   "fieldtype": "Data",
+   "label": "Tr\u1ea1ng th\u00e1i k\u00fd"
+  },
+  {
+   "fieldname": "section_break_sa5g",
+   "fieldtype": "Section Break",
+   "options": " "
+  },
+  {
+   "fieldname": "salary_decision_num",
+   "fieldtype": "Data",
+   "label": "S\u1ed1 quy\u1ebft \u0111\u1ecbnh l\u01b0\u01a1ng c\u01a1 b\u1ea3n"
+  },
+  {
+   "fieldname": "salary_beneficiary",
+   "fieldtype": "Data",
+   "label": "\u0110\u1ed1i t\u01b0\u1ee3ng l\u01b0\u01a1ng"
+  },
+  {
+   "fieldname": "effective_date",
+   "fieldtype": "Data",
+   "label": "Ng\u00e0y hi\u1ec7u l\u1ef1c"
+  },
+  {
+   "fieldname": "salary_scale_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean thang b\u1ea3ng l\u01b0\u01a1ng"
+  },
+  {
+   "fieldname": "salary_step",
+   "fieldtype": "Data",
+   "label": "B\u1eadc l\u01b0\u01a1ng"
+  },
+  {
+   "fieldname": "salary_coefficient",
+   "fieldtype": "Data",
+   "label": "H\u1ec7 s\u1ed1"
+  },
+  {
+   "fieldname": "basic_salary",
+   "fieldtype": "Data",
+   "label": "L\u01b0\u01a1ng c\u01a1 b\u1ea3n"
+  },
+  {
+   "fieldname": "concurrent_allowance",
+   "fieldtype": "Data",
+   "label": "Ph\u1ee5 c\u1ea5p ki\u00eam nhi\u1ec7m"
+  },
+  {
+   "fieldname": "column_break_nccz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "salary_grade",
+   "fieldtype": "Data",
+   "label": "Ng\u1ea1ch l\u01b0\u01a1ng"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-18 09:40:58.629536",
+ "modified": "2025-09-18 16:26:36.603012",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Contract",

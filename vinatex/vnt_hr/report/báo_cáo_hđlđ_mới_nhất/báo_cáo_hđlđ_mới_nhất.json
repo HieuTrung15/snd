@@ -1,0 +1,38 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2025-09-18 09:25:59.094407",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letter_head": "Default Letter Head T\u1eadp \u0111o\u00e0n",
+ "letterhead": null,
+ "modified": "2025-09-18 09:52:02.547291",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "B\u00e1o c\u00e1o H\u0110L\u0110 m\u1edbi nh\u1ea5t",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Employee",
+ "report_name": "B\u00e1o c\u00e1o H\u0110L\u0110 m\u1edbi nh\u1ea5t",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Employee"
+  },
+  {
+   "role": "HR Manager"
+  },
+  {
+   "role": "HR User"
+  },
+  {
+   "role": "Employee Self Service"
+  }
+ ],
+ "timeout": 0
+}
