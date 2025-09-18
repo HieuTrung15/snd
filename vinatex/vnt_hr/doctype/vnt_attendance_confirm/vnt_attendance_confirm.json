@@ -1,0 +1,157 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-09-18 21:12:44.660032",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_zun9",
+  "amended_from",
+  "company",
+  "department",
+  "column_break_qvgh",
+  "from_date",
+  "to_date",
+  "section_break_kkv3",
+  "employee",
+  "employee_name",
+  "column_break_l43u",
+  "email",
+  "section_break_tuyt",
+  "approver",
+  "approver_name",
+  "column_break_wijp",
+  "tr\u1ea1ng_th\u00e1i",
+  "chi_ti\u1ebft_section",
+  "items"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_zun9",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VNT Attendance Confirm",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "C\u00f4ng ty",
+   "options": "Company"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Ph\u00f2ng ban",
+   "options": "Department"
+  },
+  {
+   "fieldname": "column_break_qvgh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "T\u1eeb ng\u00e0y"
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "\u0110\u1ebfn ng\u00e0y"
+  },
+  {
+   "fieldname": "section_break_kkv3",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Nh\u00e2n vi\u00ean",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean nh\u00e2n vi\u00ean"
+  },
+  {
+   "fieldname": "column_break_l43u",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email"
+  },
+  {
+   "fieldname": "section_break_tuyt",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "approver",
+   "fieldtype": "Link",
+   "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
+   "options": "User"
+  },
+  {
+   "fieldname": "approver_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean ng\u01b0\u1eddi ph\u00ea duy\u1ec7t"
+  },
+  {
+   "fieldname": "column_break_wijp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tr\u1ea1ng_th\u00e1i",
+   "fieldtype": "Select",
+   "label": "Tr\u1ea1ng th\u00e1i",
+   "options": "Nh\u00e1p\nPh\u00ea duy\u1ec7t\nT\u1eeb ch\u1ed1i\nH\u1ee7y"
+  },
+  {
+   "fieldname": "chi_ti\u1ebft_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Chi ti\u1ebft ch\u1ea5m c\u00f4ng",
+   "options": "VNT Attendance Confirm Item"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-09-18 21:53:10.511853",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Attendance Confirm",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,81 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-09-18 21:36:38.607250",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_au89",
+  "week_day",
+  "date",
+  "time_in",
+  "time_out",
+  "type",
+  "\u0111i\u1ec1u_ch\u1ec9nh",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_au89",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "week_day",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Th\u1ee9"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Ng\u00e0y"
+  },
+  {
+   "fieldname": "time_in",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Gi\u1edd \u0111\u1ebfn"
+  },
+  {
+   "fieldname": "time_out",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Gi\u1edd v\u1ec1"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Lo\u1ea1i gi\u1ea3i tr\u00ecnh",
+   "options": "Qu\u00ean ch\u1ea5m c\u00f4ng\n\u0110i mu\u1ed9n\nV\u1ec1 s\u1edbm"
+  },
+  {
+   "fieldname": "\u0111i\u1ec1u_ch\u1ec9nh",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "\u0110i\u1ec1u ch\u1ec9nh",
+   "options": "C\u00f3 m\u1eb7t\n\u0110i c\u00f4ng t\u00e1c\n\u0110i mu\u1ed9n\nV\u1ec1 s\u1edbm\nQu\u00ean ch\u1ea5m c\u00f4ng\n\u0110\u00e3 t\u1ea1o \u0111\u01a1n ch\u1edd duy\u1ec7t"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Note"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-09-18 21:55:21.647499",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Attendance Confirm Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
