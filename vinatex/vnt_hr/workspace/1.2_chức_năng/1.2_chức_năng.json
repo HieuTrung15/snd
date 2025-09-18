@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"type\":\"header\",\"data\":{\"text\":\"1.2 Ch\u1ee9c n\u0103ng\"}}]",
+ "content": "[{\"id\":\"wc-o9uWJJ5\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">1.2 Ch\u1ee9c n\u0103ng</span>\",\"col\":12}},{\"id\":\"P5EUZTzYGE\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Danh s\u00e1ch nh\u00e2n vi\u00ean\",\"col\":4}},{\"id\":\"OdEdx8esYm\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Danh s\u00e1ch c\u00f4ng ty/ \u0111\u01a1n v\u1ecb th\u00e0nh vi\u00ean\",\"col\":4}},{\"id\":\"7DljDijfm5\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Danh s\u00e1ch \u0111\u0103ng k\u00fd ngh\u1ec9 ph\u00e9p/ c\u00f4ng t\u00e1c\",\"col\":4}},{\"id\":\"8MG5pyBD57\",\"type\":\"card\",\"data\":{\"card_name\":\"H\u1ed3 s\u01a1\",\"col\":4}},{\"id\":\"cGpCwxrI0b\",\"type\":\"card\",\"data\":{\"card_name\":\"T\u1ed5 ch\u1ee9c\",\"col\":4}},{\"id\":\"pCOgYMBcai\",\"type\":\"card\",\"data\":{\"card_name\":\"Ch\u1ea5m c\u00f4ng\",\"col\":4}},{\"id\":\"07d-eLfJR2\",\"type\":\"card\",\"data\":{\"card_name\":\"B\u00e1o c\u00e1o h\u1ed3 s\u01a1\",\"col\":4}},{\"id\":\"4V5vRc3IZo\",\"type\":\"card\",\"data\":{\"card_name\":\"B\u00e1o c\u00e1o t\u1ed5 ch\u1ee9c\",\"col\":4}},{\"id\":\"-Gw1eCSDOL\",\"type\":\"card\",\"data\":{\"card_name\":\"B\u00e1o c\u00e1o ch\u1ea5m c\u00f4ng\",\"col\":4}}]",
  "creation": "2025-09-18 14:10:27.236032",
  "custom_blocks": [],
  "docstatus": 0,
@@ -12,8 +12,233 @@
  "indicator_color": "green",
  "is_hidden": 0,
  "label": "1.2 Ch\u1ee9c n\u0103ng",
- "links": [],
- "modified": "2025-09-18 14:11:57.821114",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "T\u1ed5 ch\u1ee9c",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Danh s\u00e1ch c\u00f4ng ty/\u0110VTV",
+   "link_count": 0,
+   "link_to": "Company",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Danh s\u00e1ch ph\u00f2ng/ban",
+   "link_count": 0,
+   "link_to": "Department",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Ch\u1ea5m c\u00f4ng",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Danh s\u00e1ch ch\u1ea5m c\u00f4ng",
+   "link_count": 0,
+   "link_to": "Employee Checkin",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "\u0110\u01a1n \u0111\u0103ng k\u00fd c\u00f4ng t\u00e1c",
+   "link_count": 0,
+   "link_to": "VNT Business Trip Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "\u0110\u01a1n \u0111\u0103ng k\u00fd ngh\u1ec9 ph\u00e9p",
+   "link_count": 0,
+   "link_to": "Leave Application",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "H\u1ed3 s\u01a1",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Th\u00f4ng tin nh\u00e2n vi\u00ean",
+   "link_count": 0,
+   "link_to": "Employee",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Th\u00f4ng tin ch\u1ee9c danh",
+   "link_count": 0,
+   "link_to": "Designation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Th\u00f4ng tin lo\u1ea1i H\u0110L\u0110",
+   "link_count": 0,
+   "link_to": "Employment Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Th\u00f4ng tin h\u1ee3p \u0111\u1ed3ng",
+   "link_count": 0,
+   "link_to": "Contract",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "B\u00e1o c\u00e1o h\u1ed3 s\u01a1",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "B\u00e1o c\u00e1o t\u00ecnh h\u00ecnh s\u1eed d\u1ee5ng L\u0110",
+   "link_count": 0,
+   "link_to": "B\u00c1O C\u00c1O T\u00ccNH H\u00ccNH S\u1eec D\u1ee4NG LAO \u0110\u1ed8NG",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "B\u00e1o c\u00e1o t\u1ed5 ch\u1ee9c",
+   "link_count": 6,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "B\u00e1o c\u00e1o t\u00ecnh h\u00ecnh s\u1eed d\u1ee5ng lao \u0111\u1ed9ng",
+   "link_count": 0,
+   "link_to": "B\u00c1O C\u00c1O T\u00ccNH H\u00ccNH S\u1eec D\u1ee4NG LAO \u0110\u1ed8NG",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Danh s\u00e1ch c\u00e1n b\u1ed9 \u0111\u00e3 ngh\u1ec9 h\u01b0u",
+   "link_count": 0,
+   "link_to": "DANH S\u00c1CH C\u00c1N B\u1ed8 \u0110\u00c3 NGH\u1ec8 H\u01afU",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "B\u00e1o c\u00e1o lao \u0111\u1ed9ng b\u00ecnh qu\u00e2n",
+   "link_count": 0,
+   "link_to": "B\u00c1O C\u00c1O LAO \u0110\u1ed8NG B\u00ccNH QU\u00c2N",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "B\u00e1o c\u00e1o c\u00e1n b\u1ed9 \u0111\u01b0\u1ee3c b\u1ea7u b\u1ed5 nhi\u1ec7m",
+   "link_count": 0,
+   "link_to": "THEO D\u00d5I C\u00c1N B\u1ed8 \u0110\u01af\u1ee2C B\u1ed4 NHI\u1ec6M GI\u1eee CH\u1ee8C V\u1ee4",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "B\u00e1o c\u00e1o bi\u1ebfn \u0111\u1ed9ng t\u0103ng - gi\u1ea3m L\u0110",
+   "link_count": 0,
+   "link_to": "B\u00c1O C\u00c1O BI\u1ebeN \u0110\u1ed8NG T\u0102NG GI\u1ea2M L\u0110",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "B\u00e1o c\u00e1o c\u01a1 c\u1ea5u L\u0110 theo nh\u00f3m tu\u1ed5i",
+   "link_count": 0,
+   "link_to": "B\u00c1O C\u00c1O C\u01a0 C\u1ea4U LAO \u0110\u1ed8NG THEO NH\u00d3M TU\u1ed4I",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "B\u00e1o c\u00e1o ch\u1ea5m c\u00f4ng",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "B\u00e1o c\u00e1o ch\u1ea5m c\u00f4ng th\u00e1ng",
+   "link_count": 0,
+   "link_to": "Monthly Attendance Sheet",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2025-09-18 15:59:46.745749",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "1.2 Ch\u1ee9c n\u0103ng",
@@ -21,7 +246,23 @@
  "owner": "Administrator",
  "parent_page": "01. Nh\u00e2n s\u1ef1",
  "public": 1,
- "quick_lists": [],
+ "quick_lists": [
+  {
+   "document_type": "Employee",
+   "label": "Danh s\u00e1ch nh\u00e2n vi\u00ean",
+   "quick_list_filter": "[]"
+  },
+  {
+   "document_type": "Company",
+   "label": "Danh s\u00e1ch c\u00f4ng ty/ \u0111\u01a1n v\u1ecb th\u00e0nh vi\u00ean",
+   "quick_list_filter": "[]"
+  },
+  {
+   "document_type": "Leave Application",
+   "label": "Danh s\u00e1ch \u0111\u0103ng k\u00fd ngh\u1ec9 ph\u00e9p/ c\u00f4ng t\u00e1c",
+   "quick_list_filter": "[]"
+  }
+ ],
  "roles": [],
  "sequence_id": 42.0,
  "shortcuts": [],
