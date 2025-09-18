@@ -5,7 +5,7 @@ frappe.query_reports["BÁO CÁO CƠ CẤU LAO ĐỘNG THEO NHÓM TUỔI"] = {
 	"filters": [
         {
             "fieldname": "to_date",
-            "label": __("Tính đến ngày"),
+            "label": __("Đến ngày"),
             "fieldtype": "Date",
             "default": frappe.datetime.get_today(),
             "reqd": 1
@@ -21,7 +21,7 @@ frappe.query_reports["BÁO CÁO CƠ CẤU LAO ĐỘNG THEO NHÓM TUỔI"] = {
             "fieldname": "gender",
             "label": __("Giới tính"),
             "fieldtype": "Select",
-            "options": "\nMale\nFemale",
+            "options": "\nNam\nNữ",
             "reqd": 0
         }
 	]
