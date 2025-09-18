@@ -89,6 +89,57 @@ def create_attendance_from_checkin():
 			att.docstatus = 1  # Submit luôn
 			att.save()
 			current_date += timedelta(days=1)
+
+	emp_not_checkin = frappe.get_all('Employee', filters={'status': 'Active', 'custom_need_check': 1}, fields=['name', 'employee_name', 'company', 'department', 'holiday_list'])
+	if not emp_not_checkin:
+		return
+	for emp in emp_not_checkin:
+		leave_apps = frappe.get_all('Leave Application', 
+			filters={
+				'employee': emp['name'],
+				'docstatus': 1,  # Chỉ lấy các đơn đã được duyệt
+				'from_date': ['<=', date],
+				'to_date': ['>=', start_date]
+			},
+			fields=['from_date', 'to_date']
+		)
+		holidays = frappe.get_all('Holiday', filters={'parent': emp['holiday_list']}, pluck='holiday_date')
+		current_date = start_date
+		
+		while current_date <= date:
+			if current_date in holidays:
+				continue
+			is_leave_day = False
+			for leave in leave_apps:
+				leave_from = getdate(leave['from_date'])
+				leave_to = getdate(leave['to_date'])
+				if leave_from <= current_date <= leave_to:
+					is_leave_day = True
+					break
+			if is_leave_day:
+				# Bỏ qua ngày này nếu nhân viên đang trong kỳ nghỉ phép
+				current_date += timedelta(days=1)
+				continue
+			# Check exists Attendance
+			existing_att = frappe.db.exists('Attendance', {
+				'employee': emp['name'],
+				'attendance_date': current_date,
+				'docstatus': 1
+			})
+			if existing_att:
+				current_date += timedelta(days=1)
+				continue
+			# Tạo Attendance
+			att = frappe.new_doc('Attendance')
+			att.employee = emp['name']
+			att.employee_name = emp['employee_name']
+			att.company = emp['company']
+			att.attendance_date = current_date
+			att.status = 'Present'
+			att.shift = 'Hành chính'
+			att.docstatus = 1
+			att.save()
+			current_date += timedelta(days=1)
 	return
 
 def _get_employee_checkin(employee, date=None):
