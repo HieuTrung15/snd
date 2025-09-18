@@ -5,14 +5,14 @@ frappe.query_reports["DANH SÁCH CÁN BỘ ĐÃ NGHỈ HƯU"] = {
 	"filters": [
 		{
             "fieldname": "company",
-            "label": __("Company"),
+            "label": __("Công ty"),
             "fieldtype": "Link",
             "options": "Company",
             "reqd": 0
         },
         {
             "fieldname": "department",
-            "label": __("Department"),
+            "label": __("Phòng ban"),
             "fieldtype": "Link",
             "options": "Department",
             "reqd": 0

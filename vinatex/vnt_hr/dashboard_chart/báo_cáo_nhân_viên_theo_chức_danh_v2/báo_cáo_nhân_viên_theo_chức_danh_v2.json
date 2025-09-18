@@ -1,0 +1,39 @@
+{
+ "chart_name": "B\u00e1o c\u00e1o nh\u00e2n vi\u00ean theo ch\u1ee9c danh v2",
+ "chart_type": "Report",
+ "creation": "2025-09-18 11:11:51.105748",
+ "currency": "",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart",
+ "dynamic_filters_json": "{}",
+ "filters_json": "{}",
+ "group_by_type": "Count",
+ "idx": 0,
+ "is_public": 1,
+ "is_standard": 1,
+ "modified": "2025-09-18 14:29:21.724793",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "B\u00e1o c\u00e1o nh\u00e2n vi\u00ean theo ch\u1ee9c danh v2",
+ "number_of_groups": 0,
+ "owner": "Administrator",
+ "report_name": "B\u00e1o c\u00e1o nh\u00e2n vi\u00ean theo ch\u1ee9c danh",
+ "roles": [],
+ "show_values_over_chart": 0,
+ "time_interval": "Yearly",
+ "timeseries": 0,
+ "timespan": "Last Year",
+ "type": "Bar",
+ "use_report_chart": 0,
+ "x_field": "designation",
+ "y_axis": [
+  {
+   "color": "#4F9DD9",
+   "y_field": "employee_count"
+  },
+  {
+   "color": "#761ACB",
+   "y_field": "avg_age"
+  }
+ ]
+}
