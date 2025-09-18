@@ -14,6 +14,9 @@
   "contract_term",
   "from_date",
   "to_date",
+  "employee",
+  "salutation",
+  "designation",
   "validity"
  ],
  "fields": [
@@ -63,7 +66,7 @@
    "fieldname": "to_date",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "label": "To_date"
+   "label": "\u0110\u1ebfn ng\u00e0y"
   },
   {
    "columns": 1,
@@ -78,20 +81,36 @@
    "fieldname": "location",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "\u0110\u1ecba \u0111i\u1ec3m",
+   "label": "\u0110\u1ecba \u0111i\u1ec3m k\u00fd",
    "options": "Location"
   },
   {
    "fieldname": "place_of_contract",
    "fieldtype": "Data",
    "label": "N\u01a1i t\u1ea1o H\u0110"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Data",
+   "label": "Ng\u01b0\u1eddi \u0111\u1ea1i di\u1ec7n"
+  },
+  {
+   "fieldname": "salutation",
+   "fieldtype": "Link",
+   "label": "Danh x\u01b0ng",
+   "options": "Salutation"
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Data",
+   "label": "Ch\u1ee9c v\u1ee5"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-16 15:40:14.707889",
+ "modified": "2025-09-18 09:40:58.629536",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Contract",
