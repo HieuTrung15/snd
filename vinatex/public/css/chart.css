@@ -1,0 +1,17 @@
+div[chart_name="Biểu đồ nhân viên theo phòng ban"] .widget.dashboard-widget-box {
+  overflow-x: auto;
+}
+
+div[chart_name="Biểu đồ nhân viên theo phòng ban"] .widget.dashboard-widget-box .widget-body {
+  width: 2000px;
+  overflow-x: auto;
+}
+
+div[chart_name="Biểu đồ nhân viên theo chức danh"] .widget.dashboard-widget-box {
+  overflow-x: auto;
+}
+
+div[chart_name="Biểu đồ nhân viên theo chức danh"] .widget.dashboard-widget-box .widget-body {
+  width: 2000px;
+  overflow-x: auto;
+}
