@@ -1,0 +1,103 @@
+<style>
+  .report-table {
+    width:100%;
+    border:1px solid #000;
+    border-collapse:collapse;
+    font-family:"Times New Roman", serif;
+    font-size:13px;
+    color:#000;
+  }
+  .report-table th, .report-table td {
+    border:1px solid #000;
+    padding:4px;
+    text-align:center;       /* căn giữa ngang */
+    vertical-align:middle;   /* căn giữa dọc */
+  }
+  .report-table th {
+    font-weight:800;
+  }
+</style>
+
+<h5 style="font-family:Times; margin:0; text-align: center;"><b>BÁO CÁO TÌNH HÌNH SỬ DỤNG LAO ĐỘNG <br> Từ ngày {{doc.from_date}} đến ngày {{doc.to_date}}</b></h5>
+
+{%- set idx = namespace(value=0) -%}
+{%- set department = frappe.db.get_all('Department', filters={'company': doc.company}, fields=['department_name', 'name']) -%}
+
+
+<table class="report-table">
+  <thead>
+    <!-- Hàng 1 -->
+    <tr>
+      <th rowspan="4" style="width:40px;">STT</th>
+      <th rowspan="4" class="text-left" style="width:180px;">Bộ phận</th>
+      <th colspan="16">Tình hình sử dụng lao động</th>
+    </tr>
+    <!-- Hàng 2 -->
+    <tr>
+      <th colspan="2">Số lao động đầu kỳ</th>
+      <th colspan="2">Số lao động tăng trong kỳ</th>
+      <th colspan="5">Số lao động giảm trong kỳ</th>
+      <th colspan="7">Số lao động cuối kỳ</th>
+    </tr>
+    <!-- Hàng 3 -->
+    <tr>
+      <!-- Đầu kỳ -->
+      <th rowspan="2">Tổng số</th>
+      <th rowspan="2">Trong đó nữ</th>
+      <!-- Tăng trong kỳ -->
+      <th rowspan="2">Tổng số</th>
+      <th rowspan="2">Trong đó nữ</th>
+      <!-- Giảm trong kỳ -->
+      <th rowspan="2">Số lao động giảm</th>
+      <th colspan="4">Trong đó</th>
+      <!-- Cuối kỳ -->
+      <th rowspan="2">Tổng số</th>
+      <th rowspan="2">Trong đó nữ</th>
+      <th colspan="5">Loại hợp đồng lao động</th>
+    </tr>
+    <!-- Hàng 4 -->
+    <tr>
+      <!-- Giảm trong kỳ - Trong đó -->
+      <th>Nghỉ hưu</th>
+      <th>Chấm dứt HĐLĐ</th>
+      <th>Điều động nội bộ</th>
+      <th>Điều chuyển công tác</th>
+      <!-- Cuối kỳ - Loại HĐLĐ -->
+      <th>Không xác định thời hạn</th>
+      <th>Xác định thời hạn</th>
+      <th>Thử việc</th>
+      <th>Không giao kết HĐLĐ</th>
+      <th>Khác</th>
+    </tr>
+  </thead>
+<tbody>
+    {%- for row in department -%}
+        {%- set idx.value = idx.value + 1 -%}
+        {%- set emp_list = frappe.db.get_all('Employee', filters={'department':row.name}, fields=['name']) -%}
+        <tr>
+            <td>{{idx.value}}</td>
+            <td>{{row.department_name}}</td>
+            <!-- Đầu kỳ -->
+            <td>{{emp_list | length}} </td>
+            <td></td>
+            <!-- Tăng trong kỳ -->
+            <td></td>
+            <td></td>
+            <!-- Giảm trong kỳ -->
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <!-- Cuối kỳ -->
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+    {%- endfor -%}
+  </tbody>
+</table>
