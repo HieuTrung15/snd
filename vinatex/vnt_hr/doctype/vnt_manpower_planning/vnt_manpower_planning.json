@@ -1,0 +1,106 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{manpower_plan}",
+ "creation": "2025-09-19 08:10:17.997469",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "employee_fullname",
+  "date",
+  "qty",
+  "column_break_k8ce",
+  "company",
+  "department",
+  "year",
+  "manpower_plan",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Ng\u01b0\u1eddi l\u1eadp",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fetch_if_empty": 1,
+   "fieldname": "employee_fullname",
+   "fieldtype": "Data",
+   "label": "T\u00ean ng\u01b0\u1eddi l\u1eadp"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y l\u1eadp"
+  },
+  {
+   "fieldname": "column_break_k8ce",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "C\u00f4ng ty",
+   "options": "Company"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Ph\u00f2ng/ban \u0111\u1ecbnh bi\u00ean",
+   "options": "Department"
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Float",
+   "label": "N\u0103m",
+   "precision": "0"
+  },
+  {
+   "fieldname": "manpower_plan",
+   "fieldtype": "Data",
+   "label": "T\u00ean \u0111\u1ecbnh bi\u00ean"
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "label": "SL \u0111\u1ecbnh bi\u00ean",
+   "precision": "0"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Ghi ch\u00fa"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-09-19 08:23:20.532667",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Manpower Planning",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
