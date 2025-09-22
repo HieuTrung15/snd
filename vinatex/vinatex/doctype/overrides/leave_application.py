@@ -56,7 +56,7 @@ class VntLeaveApplication(LeaveApplication):
         
         # Xóa Attendance mặc định nếu employee phiếu không nằm trong items
         leave_employee = self.employee
-        items_employees = [emp.employee for emp in self.items]
+        items_employees = [emp.employee for emp in self.custom_items]
         if leave_employee not in items_employees:
             attendance_records = frappe.get_all(
                 "Attendance",
@@ -70,16 +70,16 @@ class VntLeaveApplication(LeaveApplication):
             )
             for ar in attendance_records:
                 att_doc = frappe.get_doc("Attendance", ar["name"])
-                if att_doc.docstatus == 1:
+                # if att_doc.docstatus == 1:
                     # Nếu Attendance đã submit, cancel trước
-                    att_doc.cancel()
+                    # att_doc.cancel()
                 # att_doc.delete()
-                frappe.msgprint(f"Cancel default attendance for leave employee {leave_employee} on {att_doc.attendance_date}")
-        for emp in self.items:  # bảng nhân viên
+                # frappe.msgprint(f"Cancel default attendance for leave employee {leave_employee} on {att_doc.attendance_date}")
+        for emp in self.custom_items:  # bảng nhân viên
             employee = emp.employee
             company = self.company
 
-            for t in self.time_leave:  # bảng thời gian
+            for t in self.custom_time_leave:  # bảng thời gian
                 from_date = t.from_date
                 to_date = t.to_date
                 type_leave = t.type_leave
@@ -192,9 +192,9 @@ class VntLeaveApplication(LeaveApplication):
                     attendance_doc.submit()
                     day += timedelta(days=1)
 
-        frappe.msgprint(
-            f"Đã xử lý Leave Application (Công tác) cho {employee}: {from_date} → {to_date}"
-        )
+        # frappe.msgprint(
+        #     f"Đã xử lý Leave Application (Công tác) cho {employee}: {from_date} → {to_date}"
+        # )
 
 
 
@@ -205,10 +205,10 @@ class VntLeaveApplication(LeaveApplication):
         if self.leave_type != leave_type:
             return
 
-        for emp in self.items:  # bảng nhân viên
+        for emp in self.custom_items:  # bảng nhân viên
             employee = emp.employee
 
-            for t in self.time_leave:  # bảng thời gian
+            for t in self.custom_time_leave:  # bảng thời gian
                 from_date = t.from_date
                 to_date = t.to_date
 
