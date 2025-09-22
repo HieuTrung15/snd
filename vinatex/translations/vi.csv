@@ -105,16 +105,73 @@ Leave Application, Đơn xin nghỉ phép
 Attendance Request, Yêu cầu điều chỉnh chấm công
 Attendance, Chấm công
 Leave Allocation, Phân bổ nghỉ phép
-
-
-
-
-
-
-
-
-
-
-
-
-
+Filter By, Lọc theo
+Assigned To, Được giao cho
+Created By, Được tạo bởi
+Edit Filters, Chỉnh sửa bộ lọc
+Tags, Các lần đánh dấu
+My Profile, Hồ sơ của tôi
+My Settings, Cài đặt của tôi
+Session Defaults, Giá trị mặc định phiên làm việc
+Reload, Tải lại
+Apps, Ứng dụng
+Toggle Full Width, Mở rộng/Thu gọn chiều rộng
+Toggle Theme, Chuyển đổi giao diện
+Log out, Đăng xuất
+List View, Chế độ xem danh sách
+Report View, Chế độ xem báo cáo
+Dashboard View, Chế độ xem Dashboard
+Kanban View, Chế độ xem Kanban
+Roles & Permissions, Vai trò & Phân quyền
+Set User Permissions, Thiết lập quyền người dùng
+Phone, Số điện thoại bàn
+Bio, Tiểu sử/ Giới thiệu ngắn
+Desk Settings, Cài đặt màn hình chính
+Desk Theme, Giao diện màn hình chính
+Light, Giao diện sáng
+Dark, Giao diện tối
+Automatic, Tự động
+Banner Image, Ảnh biểu ngữ
+Clear, Xóa bỏ
+Reload File, Tải lại tập tin
+Navigation Settings, Cài đặt điều hướng
+Search Bar, Thanh tìm kiếm
+Sidebar, Thanh bên
+Bulk Actions, Thao tác hàng loạt
+View Switcher, Bộ chuyển đổi chế độ xem
+Timeline, Dòng thời gian
+Dashboard, Bảng điều khiển
+Set New Password, Đặt mật khẩu mới
+Allowed In Mentions, Được phép trong nhắc đến
+Awaiting Password, Đang chờ mật khẩu
+Used OAuth, Đã dùng OAuth
+Enable Outgoing, Bật gửi đi / Cho phép gửi đi
+Workspace, Không gian làm việc
+Default Workspace, Không gian làm việc mặc định
+"If left empty, the default workspace will be the last visited workspace","Nếu để trống, không gian làm việc mặc định sẽ là không gian làm việc được truy cập gần nhất."
+App,Ứng dụng
+Default App,Ứng dụng mặc định
+Redirect to the selected app after login, Chuyển hướng đến ứng dụng đã chọn sau khi đăng nhập
+Security Settings,Cài đặt bảo mật
+Simultaneous Sessions,Phiên đăng nhập đồng thời
+Login After,Đăng nhập sau
+User Type,Loại người dùng
+"If the user has any role checked, then the user becomes a "System User". "System User" has access to the desktop","Nếu người dùng được gán bất kỳ vai trò nào, thì người đó sẽ trở thành “Người dùng hệ thống”. “Người dùng hệ thống” có quyền truy cập vào màn hình chính (Desktop)."
+Login Before,Đăng nhập trước
+Last Login,Lần đăng nhập gần nhất
+Last Active, Hoạt động gần nhất
+Last IP, Địa chỉ IP gần nhất
+Third Party Authentication, Xác thực bên thứ ba
+Social Logins,Đăng nhập mạng xã hội
+"Click here to learn about token-based authentication","Nhấn vào đây để tìm hiểu về xác thực dựa trên token"
+Note,Ghi chú
+Comments,Các bình luận
+"Type a reply / comment","Nhập phản hồi / bình luận"
+Copy to Clipboard,Sao chép  vào bộ nhớ tạm
+Remind Me, Nhắc tôi
+Undo, Hoàn tác
+Redo,Làm lại
+New User,Người dùng mới
+No activities to show,Không có hoạt động để hiển thị
+Monthly Rank, Xếp hạng theo tháng
+Rank,Xếp hạng
