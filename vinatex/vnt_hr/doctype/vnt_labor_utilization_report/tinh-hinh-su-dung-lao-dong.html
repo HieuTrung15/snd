@@ -74,29 +74,131 @@
     {%- for row in department -%}
         {%- set idx.value = idx.value + 1 -%}
         {%- set emp_list = frappe.db.get_all('Employee', filters={'department':row.name}, fields=['name']) -%}
+        <!-- Đầu kỳ -->
+        {%- set start_f_null = frappe.db.get_all('Employee',
+          filters=[
+            ['Employee','department','=',row.name],
+            ['Employee','gender','=','Nữ'],
+            ['Employee','date_of_joining','<=',doc.to_date],
+            ['Employee','date_of_retirement','in',[None,'']]
+          ],
+          pluck='name') -%}
+
+        {%- set start_f_ge = frappe.db.get_all('Employee',
+              filters=[
+                ['Employee','department','=',row.name],
+                ['Employee','gender','=','Nữ'],
+                ['Employee','date_of_joining','<=',doc.to_date],
+                ['Employee','date_of_retirement','>=',doc.from_date]
+              ],
+              pluck='name') -%}
+
+        {%- set start_female = (start_f_null|length) + (start_f_ge|length) -%}
+        <!-- Tăng trong kỳ -->
+        {%- set join_total = frappe.db.get_all('Employee',
+          filters=[
+            ['Employee','department','=',row.name],
+            ['Employee','date_of_joining','>',doc.from_date],
+            ['Employee','date_of_joining','<=',doc.to_date]
+          ],
+          pluck='name') -%}
+       {%- set join_female = frappe.db.get_all('Employee',
+          filters=[
+            ['Employee','department','=',row.name],
+            ['Employee','gender','=','Nữ'],
+            ['Employee','date_of_joining','>',doc.from_date],
+            ['Employee','date_of_joining','<=',doc.to_date]
+          ],
+          pluck='name') -%}
+        <!-- Giảm trong kỳ -->
+        {%- set leave_retirement = frappe.db.get_all('Employee',
+          filters=[
+            ['Employee','department','=',row.name],
+            ['Employee','date_of_retirement','>=',doc.from_date],
+            ['Employee','date_of_retirement','<=',doc.to_date]
+          ],
+          pluck='name') -%}
+        {%- set leave_total = (leave_retirement|length)-%}
+        <!-- Số lao động cuối kỳ -->
+        {%- set end_null = frappe.db.get_all('Employee',
+          filters=[
+            ['Employee','department','=',row.name],
+            ['Employee','date_of_joining','<=',doc.to_date],
+            ['Employee','relieving_date','in',[None,'']]
+          ],
+          pluck='name') -%}
+        {%- set end_ge   = frappe.db.get_all('Employee',
+              filters=[
+                ['Employee','department','=',row.name],
+                ['Employee','date_of_joining','<=',doc.to_date],
+                ['Employee','relieving_date','>=',doc.to_date]
+              ],
+              pluck='name') -%}
+        {%- set end_total = (end_null|length) + (end_ge|length) -%}
+
+        {%- set end_f_null = frappe.db.get_all('Employee',
+              filters=[
+                ['Employee','department','=',row.name],
+                ['Employee','gender','=','Nữ'],
+                ['Employee','date_of_joining','<=',doc.to_date],
+                ['Employee','relieving_date','in',[None,'']]
+              ],
+              pluck='name') -%}
+        {%- set end_f_ge   = frappe.db.get_all('Employee',
+              filters=[
+                ['Employee','department','=',row.name],
+                ['Employee','gender','=','Nữ'],
+                ['Employee','date_of_joining','<=',doc.to_date],
+                ['Employee','relieving_date','>=',doc.to_date]
+              ],
+              pluck='name') -%}
+        {%- set end_female = (end_f_null|length) + (end_f_ge|length) -%}
+        {# Danh sách NV còn hiệu lực tại to_date (dùng lại end_null, end_ge) #}
+        {%- set active_names = (end_null + end_ge) -%}
+
+        {# Đếm theo employment_type như yêu cầu #}
+        {%- set cnt_indef = frappe.db.count('Employee', filters=[
+              ['Employee','name','in',active_names],
+              ['Employee','employment_type','in',['Không xác định thời hạn']]
+            ]) -%}
+        {%- set cnt_fixed = frappe.db.count('Employee', filters=[
+              ['Employee','name','in',active_names],
+              ['Employee','employment_type','in',['Hợp đồng xác định thời hạn']]
+            ]) -%}
+        {%- set cnt_prob = frappe.db.count('Employee', filters=[
+              ['Employee','name','in',active_names],
+              ['Employee','employment_type','in',['Hợp đồng thử việc']]
+            ]) -%}
+        {%- set cnt_none = frappe.db.count('Employee', filters=[
+              ['Employee','name','in',active_names],
+              ['Employee','employment_type','in',['Không giao kết HĐLĐ']]
+            ]) -%}
+
+        {# Khác = tổng cuối kỳ - 4 nhóm trên (chấp nhận gồm cả None/giá trị lạ) #}
+        {%- set cnt_other = end_total - (cnt_indef + cnt_fixed + cnt_prob + cnt_none) -%} 
         <tr>
             <td>{{idx.value}}</td>
             <td>{{row.department_name}}</td>
             <!-- Đầu kỳ -->
             <td>{{emp_list | length}} </td>
-            <td></td>
+            <td>{{start_female}}</td>
             <!-- Tăng trong kỳ -->
-            <td></td>
-            <td></td>
+            <td>{{join_total | length}}</td>
+            <td>{{join_female | length}}</td>
             <!-- Giảm trong kỳ -->
-            <td></td>
-            <td></td>
+            <td>{{leave_total}}</td>
+            <td>{{leave_retirement|length}}</td>
             <td></td>
             <td></td>
             <td></td>
             <!-- Cuối kỳ -->
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td>{{end_total}}</td>
+            <td>{{end_female}}</td>
+            <td>{{cnt_indef}}</td>
+            <td>{{cnt_fixed}}</td>
+            <td>{{cnt_prob}}</td>
+            <td>{{cnt_none}}</td>
+            <td>{{cnt_other}}</td>
         </tr>
     {%- endfor -%}
   </tbody>
