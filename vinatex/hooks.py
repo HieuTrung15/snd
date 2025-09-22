@@ -166,8 +166,11 @@ scheduler_events = {
         "0 4 1 1 *": [
             "vinatex.vinatex.doctype.overrides.allocate_leave.allocate_leave"
         ],
-        "0 9,22 * * *": [
-			"vinatex.vinatex.doctype.overrides.timekeeping.get_timekeeping_data",
+        "0 9 * * *": [
+			"vinatex.vinatex.doctype.overrides.timekeeping.get_timekeeping_data_morning",
+		],
+        "0 22 * * *": [
+			"vinatex.vinatex.doctype.overrides.timekeeping.get_timekeeping_data_evening",
 		],
 		"0 23 * * *": [
 			"vinatex.vinatex.doctype.overrides.attendance.create_attendance_from_checkin",
