@@ -47,7 +47,6 @@ def get_data(filters):
     for d in departments:
         dept_name = d.name
 
-        # --- Demo cách đếm nhân sự, bạn sẽ phải thay bằng query thực tế ---
         begin_total = frappe.db.count("Employee", {
             "department": dept_name,
             "status": "Active",
@@ -70,7 +69,6 @@ def get_data(filters):
             "gender": "Female"
         })
 
-        # Giả sử bạn có custom field "leaving_reason"
         decreases = frappe.db.get_all("Employee", 
             filters={
                 "department": dept_name,
@@ -88,12 +86,6 @@ def get_data(filters):
         end_total = begin_total + increase_total - decrease_total
         end_female = begin_female + increase_female - decrease_female
 
-        # Demo phân loại hợp đồng (giả sử có field contract_type trong Employee)
-        # contract_indef = frappe.db.count("Employee", {"department": dept_name, "contract_type": "Không xác định thời hạn"})
-        # contract_def = frappe.db.count("Employee", {"department": dept_name, "contract_type": "Xác định thời hạn"})
-        # contract_probation = frappe.db.count("Employee", {"department": dept_name, "contract_type": "Thử việc"})
-        # contract_none = frappe.db.count("Employee", {"department": dept_name, "contract_type": "Không giao kết"})
-        # contract_other = frappe.db.count("Employee", {"department": dept_name, "contract_type": "Khác"})
 
         data.append({
             "department": dept_name,

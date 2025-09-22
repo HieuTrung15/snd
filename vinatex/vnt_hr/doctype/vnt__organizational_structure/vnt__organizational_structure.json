@@ -1,0 +1,98 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{org_name}",
+ "creation": "2025-09-19 14:25:23.657224",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_liag",
+  "lft",
+  "rgt",
+  "is_group",
+  "old_parent",
+  "parent_vnt__organizational_structure",
+  "org_name",
+  "level"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_liag",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "lft",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Left",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "rgt",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Right",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_group",
+   "fieldtype": "Check",
+   "label": "Is Group"
+  },
+  {
+   "fieldname": "old_parent",
+   "fieldtype": "Link",
+   "label": "Old Parent",
+   "options": "VNT  Organizational Structure"
+  },
+  {
+   "fieldname": "parent_vnt__organizational_structure",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "Parent VNT  Organizational Structure",
+   "options": "VNT  Organizational Structure"
+  },
+  {
+   "fieldname": "org_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean"
+  },
+  {
+   "fieldname": "level",
+   "fieldtype": "Data",
+   "label": "C\u1ea5p"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_tree": 1,
+ "links": [],
+ "modified": "2025-09-19 15:30:13.920173",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT  Organizational Structure",
+ "naming_rule": "Expression",
+ "nsm_parent_field": "parent_vnt__organizational_structure",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
