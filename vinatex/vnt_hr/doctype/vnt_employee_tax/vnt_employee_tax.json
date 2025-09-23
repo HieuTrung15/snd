@@ -10,7 +10,8 @@
   "name1",
   "tax_number",
   "birthday",
-  "relationship"
+  "relationship",
+  "is_dependent"
  ],
  "fields": [
   {
@@ -41,13 +42,20 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Relationship"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_dependent",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Dependent"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-04 15:54:25.654430",
+ "modified": "2025-09-23 08:30:06.681915",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Employee Tax",
