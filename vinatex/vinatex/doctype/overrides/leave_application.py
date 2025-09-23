@@ -192,9 +192,6 @@ class VntLeaveApplication(LeaveApplication):
                     attendance_doc.submit()
                     day += timedelta(days=1)
 
-        # frappe.msgprint(
-        #     f"Đã xử lý Leave Application (Công tác) cho {employee}: {from_date} → {to_date}"
-        # )
 
 
 
@@ -250,11 +247,6 @@ class VntLeaveApplication(LeaveApplication):
                 for alloc in allocations:
                     allocation_doc = frappe.get_doc("Leave Allocation", alloc["name"])
                     allocation_doc.cancel()
-                    frappe.msgprint(
-                        f"Leave Allocation cancelled for {employee}: {allocation_doc.from_date} → {allocation_doc.to_date}"
-                    )
-
-        frappe.msgprint(f"Leave Application cancelled for {self.employee}")
 
     
 
