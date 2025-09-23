@@ -30,4 +30,20 @@ frappe.ui.form.on('VNT Business Trip Request', {
                 frm.set_value("created_on", frappe.datetime.get_today());
             }
     },
+    refresh(frm) {
+        frm.add_custom_button(__('Sync'), function() {
+            frappe.call({
+                method: "vinatex.vnt_hr.doctype.vnt_business_trip_request.vnt_business_trip_request.allocate_leave_for_all",
+                // method: "vinatex.vinatex.doctype.overrides.timekeeping.get_timekeeping_data",
+                // args: {
+                //     "year": 2025,
+                //     "month": 9,
+                //     "employee": "VGT00065"
+                // },
+                callback: function(r) {
+                    console.log("r", r.message);
+                }
+            });
+        });
+    },
 });
