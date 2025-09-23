@@ -110,10 +110,6 @@ class VNTBusinessTripRequest(Document):
 
                 leave_doc.insert()
                 leave_doc.submit()
-
-                frappe.msgprint(
-                    f"Leave Application created for {employee}: {from_date} → {to_date}, {type_leave}"
-                )
                 
     def on_cancel(self):
         leave_type = "Công tác"
@@ -142,6 +138,3 @@ class VNTBusinessTripRequest(Document):
                 for la in leave_apps:
                     leave_doc = frappe.get_doc("Leave Application", la["name"])
                     leave_doc.cancel()
-                    frappe.msgprint(
-                        f"Leave Application cancelled for {employee}: {from_date} → {to_date}"
-                    )
