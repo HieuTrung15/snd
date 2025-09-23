@@ -46,13 +46,15 @@ app_include_css = "/assets/vinatex/css/theme.css"
 override_doctype_class = {
     "Leave Application": "vinatex.vinatex.doctype.overrides.leave_application.VntLeaveApplication",
     "Leave Allowcation": "vinatex.vinatex.doctype.overrides.leave_allowcation.VntLeaveAllocation",
-	"Attendance": "vinatex.vinatex.doctype.overrides.attendance.VntAttendance"
+	"Attendance": "vinatex.vinatex.doctype.overrides.attendance.VntAttendance",
+    "Employee": "vinatex.vinatex.doctype.overrides.employee.VntEmployee",
 }
 
 # include js in doctype views
 doctype_js = {
     # "doctype" : "public/js/doctype.js"
-    "Leave Application": "vinatex/doctype/overrides/leave_application.js"
+    "Leave Application": "vinatex/doctype/overrides/leave_application.js",
+    "Employee": "vinatex/doctype/overrides/employee.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -176,6 +178,9 @@ scheduler_events = {
 		"0 23 * * *": [
 			"vinatex.vinatex.doctype.overrides.attendance.create_attendance_from_checkin",
 		],
+        "59 23 * * *": [
+            "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.make_attendance_confirm"
+        ]
     }
 
 	# "all": [
