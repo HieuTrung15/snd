@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{contract_no}",
+ "creation": "2025-09-22 16:42:16.817741",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_wofy",
+  "contract_no",
+  "contract_date",
+  "location",
+  "place_of_contract",
+  "type",
+  "contract_term",
+  "from_date",
+  "to_date",
+  "employee"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_wofy",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "contract_no",
+   "fieldtype": "Data",
+   "label": "S\u1ed1 H\u0110"
+  },
+  {
+   "fieldname": "contract_date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y k\u00fd"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "label": "\u0110\u1ecba \u0111i\u1ec3m k\u00fd"
+  },
+  {
+   "fieldname": "place_of_contract",
+   "fieldtype": "Data",
+   "label": "N\u01a1i t\u1ea1o H\u0110"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Data",
+   "label": "Lo\u1ea1i H\u0110"
+  },
+  {
+   "fieldname": "contract_term",
+   "fieldtype": "Data",
+   "label": "Th\u1eddi h\u1ea1n H\u0110 (th\u00e1ng)"
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "T\u1eeb ng\u00e0y"
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "\u0110\u1ebfn ng\u00e0y"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Ng\u01b0\u1eddi \u0111\u1ea1i di\u1ec7n",
+   "options": "Employee"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-09-22 17:12:40.113475",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Employee Contract",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
