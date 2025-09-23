@@ -11,7 +11,9 @@
   "tax_number",
   "birthday",
   "relationship",
-  "is_dependent"
+  "is_dependent",
+  "birth_year",
+  "detail"
  ],
  "fields": [
   {
@@ -48,14 +50,24 @@
    "fieldname": "is_dependent",
    "fieldtype": "Check",
    "in_list_view": 1,
-   "label": "Is Dependent"
+   "label": "C\u00f3 ph\u1ee5 thu\u1ed9c kh\u00f4ng"
+  },
+  {
+   "fieldname": "birth_year",
+   "fieldtype": "Data",
+   "label": "N\u0103m sinh"
+  },
+  {
+   "fieldname": "detail",
+   "fieldtype": "Data",
+   "label": "Qu\u00ea qu\u00e1n,ngh\u1ec1 nghi\u1ec7p"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-23 08:30:06.681915",
+ "modified": "2025-09-23 17:42:14.654598",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Employee Tax",
