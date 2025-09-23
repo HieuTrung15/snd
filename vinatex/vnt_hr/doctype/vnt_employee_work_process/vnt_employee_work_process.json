@@ -1,0 +1,62 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-09-23 16:24:06.613076",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "full_name",
+  "t\u1eeb_ng\u00e0y",
+  "\u0111\u1ebfn_ng\u00e0y",
+  "\u0111\u01a1n_v\u1ecb_c\u00f4ng_t\u00e1c",
+  "ch\u1ee9c_v\u1ee5",
+  "t\u00ednh_th\u00e2m_ni\u00ean"
+ ],
+ "fields": [
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "label": "H\u1ecd v\u00e0 t\u00ean"
+  },
+  {
+   "fieldname": "t\u1eeb_ng\u00e0y",
+   "fieldtype": "Date",
+   "label": "T\u1eeb ng\u00e0y"
+  },
+  {
+   "fieldname": "\u0111\u1ebfn_ng\u00e0y",
+   "fieldtype": "Data",
+   "label": "\u0110\u1ebfn ng\u00e0y"
+  },
+  {
+   "fieldname": "\u0111\u01a1n_v\u1ecb_c\u00f4ng_t\u00e1c",
+   "fieldtype": "Data",
+   "label": "\u0110\u01a1n v\u1ecb c\u00f4ng t\u00e1c"
+  },
+  {
+   "fieldname": "ch\u1ee9c_v\u1ee5",
+   "fieldtype": "Small Text",
+   "label": "Ch\u1ee9c v\u1ee5"
+  },
+  {
+   "fieldname": "t\u00ednh_th\u00e2m_ni\u00ean",
+   "fieldtype": "Data",
+   "label": "T\u00ednh th\u00e2m ni\u00ean"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-09-23 16:31:06.580353",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Employee Work Process",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,49 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-09-23 17:46:21.377917",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_jypa",
+  "date",
+  "rank",
+  "coefficient"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_jypa",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Th\u00e1ng/n\u0103m"
+  },
+  {
+   "fieldname": "rank",
+   "fieldtype": "Data",
+   "label": "Ng\u1ea1ch/b\u1eadc"
+  },
+  {
+   "fieldname": "coefficient",
+   "fieldtype": "Data",
+   "label": "H\u1ec7 s\u1ed1 l\u01b0\u01a1ng"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-09-23 17:47:37.873769",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Employee Salary Process",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
