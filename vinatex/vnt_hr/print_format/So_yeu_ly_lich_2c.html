@@ -1,0 +1,320 @@
+<style>
+  .print-format, .print-format * { box-sizing: border-box; }
+  .print-format {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 0mm 5mm;  /* lề vừa phải */
+    font-family: "Times New Roman", Times, serif;
+    font-size: 17px;
+    color: #000;
+    line-height: 1.5;
+  }
+  .center { text-align: center; }
+  .right { text-align: right; }
+  .bold { font-weight: bold; }
+  .row { display: flex; justify-content: space-between; }
+  .photo {
+    width: 35mm;
+    height: 45mm;
+    border: 1px solid #000;
+    text-align: center;
+    font-size: 12px;
+    padding-top: 18mm;
+    margin-right: 10mm;
+  }
+  .content { flex: 1; }
+  .mb-2 { margin-bottom: 2mm; }
+</style>
+
+<div class="print-format">
+
+  <!-- Header -->
+  <div class="row">
+    <div style="text-align:center;">
+      TẬP ĐOÀN<br>
+      DỆT MAY VIỆT NAM
+    </div>
+    <div style="text-align:center; flex:1;">
+      <div class="bold" style="font-size:16px;">SƠ YẾU LÝ LỊCH</div>
+    </div>
+    <div style="text-align:right;">
+      Mẫu 2C/TCTW-98
+    </div>
+  </div>
+
+  <br>
+{% set date_of_birth = frappe.db.get_value("Employee", doc.name, "date_of_birth") %}
+<!-- Ảnh và nội dung -->
+<div class="row">
+  <div class="photo">Ảnh 4 x 6</div>
+  <div class="content">
+    <!-- Họ tên + Giới tính -->
+    <div style="display:flex;">
+      <div style="flex:1;">
+       <br> 1) Họ và tên khai sinh: <b>{{ doc.employee_name }}</b>
+      </div>
+      <div style="width:60mm;">
+       <br> Nam, nữ: {{ doc.gender }}
+      </div>
+    </div>
+    <p>2) Các tên gọi khác: {{ doc.other_name or "Không có" }}</p>
+    <p>3) Cấp uỷ hiện tại: .................................... , Cấp uỷ kiêm: ....................................</p>
+    <p>Chức vụ  <span style="font-size:13px;">(Đảng, đoàn thể, Chính quyền, kể cả chức vụ kiêm nhiệm)</span>: {{ doc.designation }}</p>
+    <p>{{ doc.company }}</p>
+    <p>4) Sinh ngày: ngày {{ date_of_birth.strftime("%d") }} tháng {{ date_of_birth.strftime("%m") }} năm {{ date_of_birth.strftime("%Y") }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5) Nơi sinh: bss</p>
+  </div>
+</div>
+
+<p>6) Quê quán <span style="font-size:13px;">(xã, phường)</span>: BSS <span style="font-size:13px;">(huyện, quận)</span>: BSS <span style="font-size:12px;">(tỉnh, TP)</span>: BSS</p>
+<p>7) Nơi ở hiện nay<span style="font-size:13px;"> (Xã, huyện, tỉnh hoặc số nhà, đường phố, TP)</span>: {{ doc.current_address }}. Đ/Thoại: {{ doc.cell_number }}</p>
+<p>8) Dân tộc<span style="font-size:13px;"> (Kinh, Tày, Mông, Ê đê...)</span>: {{doc.custom_ethnic_group}} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 9) Tôn giáo: BSS </p>
+<p>10) Thành phần gia đình xuất thân: <br><span style="font-size:13px; float:right;">(Ghi là công nhân, nông dân, cán bộ, công chức, trí thức, quân nhân, dân nghèo thành thị, tiểu thương, tiểu chủ, tư sản ...)</span></b>
+<p><br>11) Nghề nghiệp bản thân trước khi được tuyển dụng: <br>
+    <span style="font-size:13px; float:right;">(Ghi nghề được đào tạo hoặc công nhân (thợ gì), làm ruộng, buôn bàn, học sinh, ...)</span></p>
+<p><br>12) Ngày được tuyển dụng: {{ frappe.utils.formatdate(doc.date_of_joining, "dd-MM-yyyy") }}, Vào cơ quan nào, ở đâu: Tập đoàn Dệt May Việt Nam, 41A Lý Thái Tổ, phường Hoàn Kiếm, Hà Nội.</p>
+<p>13) Ngày vào cơ quan hiện đang công tác: {{ frappe.utils.formatdate(doc.date_of_joining, "dd-MM-yyyy") }}, <span style="float:right;">Ngày tham gia cách mạng: ...../...../.....</span></p>
+<p>14) Ngày vào Đảng Cộng sản Việt Nam: ......... / .......... / ........ <span style="float:right;">Ngày chính thức: ........ / .......... / .............. </span></p>
+<p>15) Ngày tham gia các tổ chức chính trị, xã hội: bss
+    <br>
+    <span style="font-size:13px; float:right;"> (Ngày vào Đoàn TNCSHCM, Công đoàn, Hội .........  ) </span>
+</p>
+
+<p><br>16) Ngày nhập ngũ: ... / ... / ....  Ngày xuất ngũ: ... / ... / .....  Quân hàm, chức vụ cao nhất (năm): ............................</p>
+<p>
+    17)<u>Trình độ học vấn</u>:<span style="font-size:13px;">Giáo dục phổ thông</span>: 12/12 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Học hàm, học vị cao nhất: BSS</span>
+    <br>
+    <span style="font-size:13px; float:right;">(Lớp mấy)  &nbsp;&nbsp;&nbsp;&nbsp;	(GS, PGS, TS, PTS, Thạc sĩ, Cử nhân, Kỹ sư ... năm nào, chuyên ngành gì)</span><br>
+    - Lý luận chính trị: ....  &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;- Ngoại ngữ:</span>
+    <br>
+    <span style="font-size:13px;">(Cử nhân, Cao cấp, Trung cấp, Sơ cấp) &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;	(Anh (A/B/C/D)      Nga (A/B/C/D)      Pháp (A/B/C/D) ...)  </span>
+</p>
+<p>
+    18) Công tác chính đang làm: Văn phòng
+</p>
+<p>
+    19) Ngạch công chức: ..................... (mã số: .................) 	<span style="font-size:13px; float:right;">Bậc lương: ..., hệ số: 1,5  từ tháng 07 /2022</span>
+</p>
+<p>
+    20) Danh hiệu được phong <span style="font-size:13px;">(năm nào)</span>: Không
+    <br>
+    <span style="font-size:13px; float:right;">(Anh hùng lao động, anh hùng lực lượng vũ trang, nhà giáo, thấy thuốc, nghệ sĩ nhân dân, ưu tú)</span>
+</p>
+<p>
+    21) Sở trường công tác: Không <span style="float:right;">Công việc đã làm lâu nhất: Chuyên viên Văn phòng</span>
+</p>
+<p>
+    22) Khen thưởng: Không
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp;	<span style="font-size:13px;">(Huân, huy chương, năm nào)  </span>
+</p>
+<p>
+    23) Kỷ luật  <span style="font-size:13px;">(Đảng, Chính quyền, Đoàn thể, Cấp quyết định, năm nào, lý do, hình thức, ...)</span>: Không
+</p>
+<p>
+    24) Tình trạng sức khỏe: BSS  <span style="font-size:13px; float:right;">Cao: BSS, Cân nặng: (kg), Nhóm máu:</span>
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp;<span style="font-size:13px;">(tốt, bình thường, yếu hoặc có bệnh mãn tính gì)</span>
+</p>
+<p>
+    25) Số chứng minh nhân dân: {{doc.custom_id_card}} &nbsp;&nbsp;&nbsp;&nbsp; Thương binh loại:....... Gia đình liệt sĩ:....
+</p>
+
+<div class="page-break"></div>
+
+<p>
+    26) ĐÀO TẠO, BỒI DƯỠNG VỀ CHUYÊN MÔN, NGHIỆP VỤ, LÝ LUẬN CHÍNH TRỊ, NGOẠI NGỮ
+</p>
+
+<table style="margin-top:20px; width:100%; border:1px solid #000; border-collapse:collapse;">
+    <tbody>
+        <tr>
+            <td style="text-align:center; width:20%; border:1px solid #000;">
+                Tên trường
+            </td>
+            <td style="text-align:center; width:15%; border:1px solid #000;">
+                Ngành học hoặc tên lớp học
+            </td>
+            <td style="text-align:center; width:20%; border:1px solid #000;">
+            Thời gian học
+            </td>
+            <td style="text-align:center; width:20%; border:1px solid #000;">
+            Hình thức học
+            </td>
+            <td style="text-align:center; width:15%; border:1px solid #000;">
+            Văn bằng, chứng chỉ, trình độ gì
+            </td>
+        </tr>
+    </tbody>
+</table>
+<p>
+    <span style="font-size:13px;"><u><i>Ghi chú:</i></u> Hình thức học: Chính quy, tại chức, chuyên tu, bồi dưỡng .../  Văn bằng: Tiến sĩ, Phó tiến sĩ, Thạc sĩ, Cử nhân, Kỹ sư ...</span>
+</p>
+
+<p style="text-align: center;">
+    27) TÓM TẮT QUÁ TRÌNH CÔNG TÁC
+</p>
+
+<table style="margin-top:20px; width:100%; border:1px solid #000; border-collapse:collapse;">
+  <tbody>
+    <tr>
+      <td style="text-align:center; width:35%; border:1px solid #000;">
+        Từ tháng, năm <br>đến tháng, năm
+      </td>
+      <td style="text-align:center; width:65%; border:1px solid #000;">
+        Chức danh, chức vụ, đơn vị công tác (Đảng, Chính quyền, Đoàn thể)
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="text-align: center;">
+    28) ĐẶC ĐIỂM LỊCH SỬ BẢN THÂN
+</p>
+<p>
+    a) Khai rõ: bị bắt, bị tù <span style="font-size:13px;">(từ ngày tháng năm nào đến ngày tháng năm nào, ở đâu)</span>, đã khai báo cho ai, những vấn đề gì 
+    <br>
+    Điền nội dung
+</p>
+
+<p>
+    b) Bản thân có làm việc trong chế độ cũ <span style="font-size:13px;">(Cơ quan, đơn vị nào, địa điểm, chức danh, chức vụ, thời gian làm việc ...) </span>
+    <br>
+    Điền nội dung
+</p>
+
+<p style="text-align: center;">
+    29) QUAN HỆ VỚI NƯỚC NGOÀI
+</p>
+<p>
+   - Tham gia hoặc có quan hệ với các tổ chức chính trị, kinh tế, xã hội nào ở nước ngoài <span style="font-size:13px;">(làm gì, tổ chức nào, đặt trụ sở ở đâu...?)</span>:
+    <br>
+    Điền nội dung
+</p>
+
+<p>
+    - Có thân nhân <span style="font-size:13px;">(Bố, mẹ, vợ, chồng, con, anh chị em ruột) ở nước ngoài (làm gì, địa chỉ ):  </span>
+    <br>
+    Điền nội dung
+</p>
+
+<div class="page-break"></div>
+
+<p style="text-align: center;">
+    30) QUAN HỆ GIA ĐÌNH
+</p>
+
+<p style="text-align: center;">
+    <b>a) Về bản thân:  Bố, Mẹ, Vợ</b> (chồng),<b> các con, anh chị em ruột</b>
+</p>
+
+<table style="margin-top:20px; width:100%; border:1px solid #000; border-collapse:collapse;">
+    <tbody>
+        <tr>
+            <td style="text-align:center; width:7%; border:1px solid #000;">
+                Quan hệ
+            </td>
+            <td style="text-align:center; width:15%; border:1px solid #000;">
+                Họ và tên
+            </td>
+            <td style="text-align:center; width:5%; border:1px solid #000;">
+            Năm sinh
+            </td>
+            <td style="text-align:center; width:73%; border:1px solid #000;">
+           Quê quán, nghề nghiệp, chức danh, chức vụ, đơn vị, công tác, học tập, nơi ở (trong, ngoài nước); thành viên các tổ chức chính trị-xã hội 
+            </td>
+            
+        </tr>
+    </tbody>
+</table>
+
+<p style="text-align: center;">
+    <b>b) Bố, Mẹ, anh chị em ruột</b> (bên vợ hoặc chồng):
+</p>
+
+<table style="margin-top:20px; width:100%; border:1px solid #000; border-collapse:collapse;">
+    <tbody>
+        <tr>
+            <td style="text-align:center; width:7%; border:1px solid #000;">
+                Quan hệ
+            </td>
+            <td style="text-align:center; width:15%; border:1px solid #000;">
+                Họ và tên
+            </td>
+            <td style="text-align:center; width:5%; border:1px solid #000;">
+            Năm sinh
+            </td>
+            <td style="text-align:center; width:73%; border:1px solid #000;">
+           Quê quán, nghề nghiệp, chức danh, chức vụ, đơn vị, công tác, học tập, nơi ở (trong, ngoài nước); thành viên các tổ chức chính trị-xã hội 
+            </td>
+            
+        </tr>
+    </tbody>
+</table>
+
+<p style="text-align: center;">
+    31) HOÀN CẢNH KINH TẾ GIA ĐÌNH
+</p>
+<p>
+    <b>- Quá trình lương của bản thân: </b>
+</p>
+
+<table style="border:2px solid #000; border-collapse:collapse; width:70%; margin:0 auto; text-align:center;">
+  <tr>
+    <td style="border:2px solid #000; width:25%; text-align:left;"><b>Tháng/năm:</b></td>
+    <td style="border:2px solid #000;">01/2017</td>
+    <td style="border:2px solid #000;">01/2020</td>
+    <td style="border:2px solid #000;">07/2022</td>
+  </tr>
+  <tr>
+    <td style="border:2px solid #000; text-align:left;"><b>Ngạch/bậc:</b></td>
+    <td style="border:2px solid #000;"></td>
+    <td style="border:2px solid #000;"></td>
+    <td style="border:2px solid #000;"></td>
+  </tr>
+  <tr>
+    <td style="border:2px solid #000; text-align:left;"><b>Hệ số lương:</b></td>
+    <td style="border:2px solid #000;"></td>
+    <td style="border:2px solid #000;"></td>
+    <td style="border:2px solid #000;"></td>
+  </tr>
+</table>
+<p>
+    <b>
+        - Nguồn thu nhập chính của gia đình
+    </b>
+     (hàng năm): + lương ..... đồng/năm
+</p>
+
+<p>
+    + Các nguồn khác: Không
+</p>
+<p>
+    -<u>Nhà ở</u>:     
+    <br>
+   &nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp; + Được cấp, được thuê, loại nhà: Không, tổng diện tích sử dụng: ........... m2 <br>
+   &nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp; + Nhà tự mua, tự xây, loại nhà: Không, tổng diện tích sử dụng: ........... m2
+</p>
+
+<p>
+    -<u>Đất ở</u>:     
+   &nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp; + Đất được cấp: ........... m2
+   &nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp; + Đất tự mua: ........... m2
+</p>
+
+<p>
+    - Đất sản xuất, kinh doanh: (Tổng diện tích đất được cấp, tự mua, tự khai phá ...) Không
+</p>
+
+<table style="margin-top:20px; border:none; width:100%;">
+    <tbody>
+        <tr>
+            <td style="text-align:center; border:none; width:50%;">
+                <b>Người khai</b><br>
+                Tôi xin cam đoan những <br>lời khai trên đây là đúng sự thật<br> (Ký tên)
+            </td>
+        <td style="text-align:center; border:none; width:50%;">
+            <i>Ngày  &nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp  Tháng  &nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp    Năm     </i><br>
+            <b>Xác nhận của cơ quan quản lý</b>
+        </td>
+    </tbody>
+</table>
