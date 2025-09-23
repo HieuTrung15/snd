@@ -38,7 +38,7 @@
  "is_hidden": 0,
  "label": "1.1 Dashboard",
  "links": [],
- "modified": "2025-09-18 14:43:46.210788",
+ "modified": "2025-09-23 08:47:59.417838",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "1.1 Dashboard",
@@ -65,7 +65,7 @@
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 41.0,
+ "sequence_id": 35.0,
  "shortcuts": [],
  "title": "1.1 Dashboard"
 }

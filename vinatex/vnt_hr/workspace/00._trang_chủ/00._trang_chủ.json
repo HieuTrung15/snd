@@ -1,0 +1,114 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"dVW8D2aZ-J\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">00. Trang ch\u1ee7</span>\",\"col\":12}},{\"id\":\"oOpfUuVJYu\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"C\u00f4ng vi\u1ec7c c\u1ea7n th\u1ef1c hi\u1ec7n\",\"col\":6}},{\"id\":\"U7eK00ZeTi\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Ph\u00ea duy\u1ec7t\",\"col\":6}},{\"id\":\"QwFhgne3tQ\",\"type\":\"card\",\"data\":{\"card_name\":\"Th\u00f4ng tin h\u1ed3 s\u01a1\",\"col\":4}},{\"id\":\"yOOvS0woo8\",\"type\":\"card\",\"data\":{\"card_name\":\"Th\u00f4ng tin chung\",\"col\":4}},{\"id\":\"y96a81Hp8F\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"\ud83d\udc65 S\u1ed1 ng\u00e0y ph\u00e9p c\u00f2n l\u1ea1i\",\"col\":4}},{\"id\":\"Ht3RCH5FSh\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"S\u1ed1 ng\u00e0y ph\u00e9p c\u00f2n l\u1ea1i\",\"col\":3}}]",
+ "creation": "2025-09-22 13:34:41.363480",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "number-card",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "00. Trang ch\u1ee7",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Th\u00f4ng tin h\u1ed3 s\u01a1",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Th\u00f4ng tin t\u00e0i kho\u1ea3n",
+   "link_count": 0,
+   "link_to": "User",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "H\u1ed3 s\u01a1 nh\u00e2n s\u1ef1",
+   "link_count": 0,
+   "link_to": "Employee",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Th\u00f4ng tin chung",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "S\u1ed1 ng\u00e0y ph\u00e9p c\u00f2n l\u1ea1i",
+   "link_count": 0,
+   "link_to": "Leave Allocation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Th\u00f4ng tin h\u1ee3p \u0111\u1ed3ng",
+   "link_count": 0,
+   "link_to": "Contract",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2025-09-22 17:10:02.864196",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "00. Trang ch\u1ee7",
+ "number_cards": [
+  {
+   "label": "\ud83d\udc65 S\u1ed1 ng\u00e0y ph\u00e9p c\u00f2n l\u1ea1i",
+   "number_card_name": "S\u1ed1 ng\u00e0y ph\u00e9p c\u00f2n l\u1ea1i"
+  }
+ ],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [
+  {
+   "document_type": "ToDo",
+   "label": "C\u00f4ng vi\u1ec7c c\u1ea7n th\u1ef1c hi\u1ec7n",
+   "quick_list_filter": "[]"
+  },
+  {
+   "document_type": "Workflow",
+   "label": "Ph\u00ea duy\u1ec7t",
+   "quick_list_filter": "[]"
+  }
+ ],
+ "roles": [],
+ "sequence_id": 33.0,
+ "shortcuts": [
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "format": "{} Submit",
+   "label": "S\u1ed1 ng\u00e0y ph\u00e9p c\u00f2n l\u1ea1i",
+   "link_to": "Leave Allocation",
+   "stats_filter": "[[\"Leave Allocation\",\"leave_type\",\"=\",\"Ngh\u1ec9 ph\u00e9p n\u0103m\",false],[\"Leave Allocation\",\"to_date\",\"Timespan\",\"this year\",false]]",
+   "type": "DocType"
+  }
+ ],
+ "title": "00. Trang ch\u1ee7"
+}
