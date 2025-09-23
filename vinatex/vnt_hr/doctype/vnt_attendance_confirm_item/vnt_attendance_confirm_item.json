@@ -3,6 +3,7 @@
  "allow_rename": 1,
  "creation": "2025-09-18 21:36:38.607250",
  "doctype": "DocType",
+ "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "section_break_au89",
@@ -10,8 +11,9 @@
   "date",
   "time_in",
   "time_out",
+  "column_break_appj",
+  "status",
   "type",
-  "\u0111i\u1ec1u_ch\u1ec9nh",
   "note"
  ],
  "fields": [
@@ -20,55 +22,68 @@
    "fieldtype": "Section Break"
   },
   {
+   "columns": 1,
    "fieldname": "week_day",
    "fieldtype": "Data",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Th\u1ee9"
   },
   {
+   "columns": 1,
    "fieldname": "date",
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Ng\u00e0y"
   },
   {
+   "columns": 1,
    "fieldname": "time_in",
-   "fieldtype": "Time",
+   "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Gi\u1edd \u0111\u1ebfn"
+   "label": "Gi\u1edd \u0111\u1ebfn",
+   "read_only": 1
   },
   {
+   "columns": 1,
    "fieldname": "time_out",
-   "fieldtype": "Time",
+   "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Gi\u1edd v\u1ec1"
+   "label": "Gi\u1edd v\u1ec1",
+   "read_only": 1
   },
   {
+   "columns": 2,
    "fieldname": "type",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Lo\u1ea1i gi\u1ea3i tr\u00ecnh",
-   "options": "Qu\u00ean ch\u1ea5m c\u00f4ng\n\u0110i mu\u1ed9n\nV\u1ec1 s\u1edbm"
+   "options": "VNT Type Of Explain"
   },
   {
-   "fieldname": "\u0111i\u1ec1u_ch\u1ec9nh",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "\u0110i\u1ec1u ch\u1ec9nh",
-   "options": "C\u00f3 m\u1eb7t\n\u0110i c\u00f4ng t\u00e1c\n\u0110i mu\u1ed9n\nV\u1ec1 s\u1edbm\nQu\u00ean ch\u1ea5m c\u00f4ng\n\u0110\u00e3 t\u1ea1o \u0111\u01a1n ch\u1edd duy\u1ec7t"
-  },
-  {
+   "columns": 2,
    "fieldname": "note",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "in_list_view": 1,
    "label": "Note"
+  },
+  {
+   "columns": 2,
+   "fieldname": "status",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tr\u1ea1ng th\u00e1i"
+  },
+  {
+   "fieldname": "column_break_appj",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-18 21:55:21.647499",
+ "modified": "2025-09-23 16:19:44.022520",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Attendance Confirm Item",

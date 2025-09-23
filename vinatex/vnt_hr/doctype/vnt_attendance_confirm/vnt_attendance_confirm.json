@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "format:{employee}-{employee_name}-{YY}{MM}-{####}",
  "creation": "2025-09-18 21:12:44.660032",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -43,12 +44,14 @@
   {
    "fieldname": "company",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "C\u00f4ng ty",
    "options": "Company"
   },
   {
    "fieldname": "department",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Ph\u00f2ng ban",
    "options": "Department"
   },
@@ -73,6 +76,7 @@
   {
    "fieldname": "employee",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Nh\u00e2n vi\u00ean",
    "options": "Employee"
   },
@@ -132,13 +136,15 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-19 08:49:42.224667",
+ "modified": "2025-09-23 16:40:25.547046",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Attendance Confirm",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
+   "cancel": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
