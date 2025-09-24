@@ -13,7 +13,8 @@
   "relationship",
   "is_dependent",
   "birth_year",
-  "detail"
+  "detail",
+  "check"
  ],
  "fields": [
   {
@@ -61,13 +62,19 @@
    "fieldname": "detail",
    "fieldtype": "Data",
    "label": "Qu\u00ea qu\u00e1n,ngh\u1ec1 nghi\u1ec7p"
+  },
+  {
+   "default": "0",
+   "fieldname": "check",
+   "fieldtype": "Check",
+   "label": "B\u00ean v\u1ee3/ch\u1ed3ng"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-23 17:42:14.654598",
+ "modified": "2025-09-24 02:03:07.260801",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Employee Tax",

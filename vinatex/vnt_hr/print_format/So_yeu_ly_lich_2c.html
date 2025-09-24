@@ -1,4 +1,12 @@
 <style>
+    @media print {
+    .print-format,
+    .print-format * {
+      font-family: "Times New Roman", Times, serif !important;
+    }
+  }
+  body .print-format,
+  body .print-format * { font-family: "Times New Roman", Times, serif !important; }
   .print-format, .print-format * { box-sizing: border-box; }
   .print-format {
     width: 210mm;
@@ -44,6 +52,15 @@
 
   <br>
 {% set date_of_birth = frappe.db.get_value("Employee", doc.name, "date_of_birth") %}
+{% set highest_diploma = "" %}
+{% for e in doc.employee_education %}
+    {% if e.custom_check == 1 %}
+        {% set highest_diploma = e.custom_diploma_level %}
+    {% endif %}
+{% endfor %}
+
+Bằng cấp cao nhất: {{ highest_diploma or '' }}
+
 <!-- Ảnh và nội dung -->
 <div class="row">
   <div class="photo">Ảnh 4 x 6</div>
@@ -58,33 +75,33 @@
       </div>
     </div>
     <p>2) Các tên gọi khác: {{ doc.other_name or "Không có" }}</p>
-    <p>3) Cấp uỷ hiện tại: .................................... , Cấp uỷ kiêm: ....................................</p>
+    <p>3) Cấp uỷ hiện tại: {{doc.custom_current_party_committee or "Không có" }} , Cấp uỷ kiêm: {{doc.custom_party_committee_cum or "Không có"}}</p>
     <p>Chức vụ  <span style="font-size:13px;">(Đảng, đoàn thể, Chính quyền, kể cả chức vụ kiêm nhiệm)</span>: {{ doc.designation }}</p>
     <p>{{ doc.company }}</p>
-    <p>4) Sinh ngày: ngày {{ date_of_birth.strftime("%d") }} tháng {{ date_of_birth.strftime("%m") }} năm {{ date_of_birth.strftime("%Y") }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5) Nơi sinh: bss</p>
+    <p>4) Sinh ngày: ngày {{ date_of_birth.strftime("%d") }} tháng {{ date_of_birth.strftime("%m") }} năm {{ date_of_birth.strftime("%Y") }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5) Nơi sinh: {{doc.custom_place_of_birth or ""}}</p>
   </div>
 </div>
 
-<p>6) Quê quán <span style="font-size:13px;">(xã, phường)</span>: BSS <span style="font-size:13px;">(huyện, quận)</span>: BSS <span style="font-size:12px;">(tỉnh, TP)</span>: BSS</p>
+<p>6) Quê quán <span style="font-size:13px;">(xã, phường)</span>: {{doc.custom_ward}} <span style="font-size:13px;">(huyện, quận)</span>: {{doc.custom_district}} <span style="font-size:12px;">(tỉnh, TP)</span>: {{doc.custom_city}}</p>
 <p>7) Nơi ở hiện nay<span style="font-size:13px;"> (Xã, huyện, tỉnh hoặc số nhà, đường phố, TP)</span>: {{ doc.current_address }}. Đ/Thoại: {{ doc.cell_number }}</p>
-<p>8) Dân tộc<span style="font-size:13px;"> (Kinh, Tày, Mông, Ê đê...)</span>: {{doc.custom_ethnic_group}} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 9) Tôn giáo: BSS </p>
-<p>10) Thành phần gia đình xuất thân: <br><span style="font-size:13px; float:right;">(Ghi là công nhân, nông dân, cán bộ, công chức, trí thức, quân nhân, dân nghèo thành thị, tiểu thương, tiểu chủ, tư sản ...)</span></b>
-<p><br>11) Nghề nghiệp bản thân trước khi được tuyển dụng: <br>
+<p>8) Dân tộc<span style="font-size:13px;"> (Kinh, Tày, Mông, Ê đê...)</span>: {{doc.custom_ethnic_group}} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 9) Tôn giáo: Không </p>
+<p>10) Thành phần gia đình xuất thân: {{doc.custom_family_background}}<br><span style="font-size:13px; float:right;">(Ghi là công nhân, nông dân, cán bộ, công chức, trí thức, quân nhân, dân nghèo thành thị, tiểu thương, tiểu chủ, tư sản ...)</span></b>
+<p><br>11) Nghề nghiệp bản thân trước khi được tuyển dụng: {{doc.custom_occupation_before_recruitment}}<br>
     <span style="font-size:13px; float:right;">(Ghi nghề được đào tạo hoặc công nhân (thợ gì), làm ruộng, buôn bàn, học sinh, ...)</span></p>
 <p><br>12) Ngày được tuyển dụng: {{ frappe.utils.formatdate(doc.date_of_joining, "dd-MM-yyyy") }}, Vào cơ quan nào, ở đâu: Tập đoàn Dệt May Việt Nam, 41A Lý Thái Tổ, phường Hoàn Kiếm, Hà Nội.</p>
 <p>13) Ngày vào cơ quan hiện đang công tác: {{ frappe.utils.formatdate(doc.date_of_joining, "dd-MM-yyyy") }}, <span style="float:right;">Ngày tham gia cách mạng: ...../...../.....</span></p>
-<p>14) Ngày vào Đảng Cộng sản Việt Nam: ......... / .......... / ........ <span style="float:right;">Ngày chính thức: ........ / .......... / .............. </span></p>
-<p>15) Ngày tham gia các tổ chức chính trị, xã hội: bss
+<p>14) Ngày vào Đảng Cộng sản Việt Nam: {{doc.custom_sub_date or "../../../"}} <span style="float:right;">Ngày chính thức: {{doc.custom_add_date or "........ / .......... / .............."}} </span></p>
+<p>15) Ngày tham gia các tổ chức chính trị, xã hội: {{doc.custom_date_of_joining_political_organization or ".... / .... / ...."}} <span style="float:right;">Tổ chức: Đoàn TNCSHCM</span>
     <br>
     <span style="font-size:13px; float:right;"> (Ngày vào Đoàn TNCSHCM, Công đoàn, Hội .........  ) </span>
 </p>
 
-<p><br>16) Ngày nhập ngũ: ... / ... / ....  Ngày xuất ngũ: ... / ... / .....  Quân hàm, chức vụ cao nhất (năm): ............................</p>
+<p><br>16) Ngày nhập ngũ: {{doc.custom_enlistment_date or ".... / .... / ...."}}  Ngày xuất ngũ: {{doc.custom_demobilization_date or ".... / .... / ...."}}  Quân hàm, chức vụ cao nhất (năm): {{doc.custom_military_rank or ""}}</p>
 <p>
-    17)<u>Trình độ học vấn</u>:<span style="font-size:13px;">Giáo dục phổ thông</span>: 12/12 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Học hàm, học vị cao nhất: BSS</span>
+    17)<u>Trình độ học vấn</u>:<span style="font-size:13px;">Giáo dục phổ thông</span>: 12/12 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Học hàm, học vị cao nhất: {{highest_diploma or ''}}</span>
     <br>
     <span style="font-size:13px; float:right;">(Lớp mấy)  &nbsp;&nbsp;&nbsp;&nbsp;	(GS, PGS, TS, PTS, Thạc sĩ, Cử nhân, Kỹ sư ... năm nào, chuyên ngành gì)</span><br>
-    - Lý luận chính trị: ....  &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;- Ngoại ngữ:</span>
+    - Lý luận chính trị: {{doc.custom_political_theory}}  &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;- Ngoại ngữ:</span>
     <br>
     <span style="font-size:13px;">(Cử nhân, Cao cấp, Trung cấp, Sơ cấp) &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;	(Anh (A/B/C/D)      Nga (A/B/C/D)      Pháp (A/B/C/D) ...)  </span>
 </p>
@@ -95,28 +112,28 @@
     19) Ngạch công chức: ..................... (mã số: .................) 	<span style="font-size:13px; float:right;">Bậc lương: ..., hệ số: 1,5  từ tháng 07 /2022</span>
 </p>
 <p>
-    20) Danh hiệu được phong <span style="font-size:13px;">(năm nào)</span>: Không
+    20) Danh hiệu được phong <span style="font-size:13px;">(năm nào)</span>: {{doc.custom_title_conferred or "Không"}}
     <br>
     <span style="font-size:13px; float:right;">(Anh hùng lao động, anh hùng lực lượng vũ trang, nhà giáo, thấy thuốc, nghệ sĩ nhân dân, ưu tú)</span>
 </p>
 <p>
-    21) Sở trường công tác: Không <span style="float:right;">Công việc đã làm lâu nhất: Chuyên viên Văn phòng</span>
+    21) Sở trường công tác: {{doc.custom_work_forte or "Không"}} <span style="float:right;">Công việc đã làm lâu nhất: {{doc.custom_longest_work or ""}}</span>
 </p>
 <p>
-    22) Khen thưởng: Không
+    22) Khen thưởng: {{doc.custom_reward or "Không"}}
     <br>
     &nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp;	<span style="font-size:13px;">(Huân, huy chương, năm nào)  </span>
 </p>
 <p>
-    23) Kỷ luật  <span style="font-size:13px;">(Đảng, Chính quyền, Đoàn thể, Cấp quyết định, năm nào, lý do, hình thức, ...)</span>: Không
+    23) Kỷ luật  <span style="font-size:13px;">(Đảng, Chính quyền, Đoàn thể, Cấp quyết định, năm nào, lý do, hình thức, ...)</span>: {{doc.custom_discipline or "Không"}}
 </p>
 <p>
-    24) Tình trạng sức khỏe: BSS  <span style="font-size:13px; float:right;">Cao: BSS, Cân nặng: (kg), Nhóm máu:</span>
+    24) Tình trạng sức khỏe: Tốt  <span style="font-size:13px; float:right;">Cao: {{doc.custom_height}}, Cân nặng: {{doc.custom_weight}} (kg), Nhóm máu:</span>
     <br>
     &nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp;<span style="font-size:13px;">(tốt, bình thường, yếu hoặc có bệnh mãn tính gì)</span>
 </p>
 <p>
-    25) Số chứng minh nhân dân: {{doc.custom_id_card}} &nbsp;&nbsp;&nbsp;&nbsp; Thương binh loại:....... Gia đình liệt sĩ:....
+    25) Số chứng minh nhân dân: {{doc.custom_id_card}} &nbsp;&nbsp;&nbsp;&nbsp; Thương binh loại:{{doc.custom_wounded_soldiers_type or "....... "}} Gia đình liệt sĩ:{{ "Có" if doc.custom_martyr_family == 1 else "Không" }} &nbsp;&nbsp;&nbsp;&nbsp; Ngày cấp: {{frappe.utils.formatdate(doc.custom_id_card_issue_date, "dd-MM-yyyy")}} &nbsp;&nbsp;&nbsp;&nbsp; Nơi cấp: {{doc.custom_id_card_issued_place or "............."}}
 </p>
 
 <div class="page-break"></div>
@@ -145,6 +162,22 @@
             </td>
         </tr>
     </tbody>
+     <tbody>
+        {% for row in doc.education %}
+        <tr>
+            <td style="border:1px solid #000;">{{ row.school_univ or '' }}</td>
+            <td style="border:1px solid #000;">{{ row.maj_opt_subj or '' }}</td>
+            <td style="border:1px solid #000;"> {{ (row.custom_year_start|default('', true)) ~ ((' - ' ~ row.year_of_passing) if row.year_of_passing else '') }}</td>
+            <td style="border:1px solid #000;">{{ row.custom_form_of_learning or '' }}</td>
+            <td style="border:1px solid #000;">{{ row.custom_diploma_level or '' }}</td>
+        </tr>
+        {% endfor %}
+        {% if not doc.custom_training %}
+        <tr>
+            <td style="border:1px solid #000;" colspan="5">&nbsp;</td>
+        </tr>
+        {% endif %}
+    </tbody>
 </table>
 <p>
     <span style="font-size:13px;"><u><i>Ghi chú:</i></u> Hình thức học: Chính quy, tại chức, chuyên tu, bồi dưỡng .../  Văn bằng: Tiến sĩ, Phó tiến sĩ, Thạc sĩ, Cử nhân, Kỹ sư ...</span>
@@ -165,6 +198,19 @@
       </td>
     </tr>
   </tbody>
+  <tbody>
+        {% for row in doc.custom_work_process %}
+        <tr>
+            <td style="border:1px solid #000;">{{ row.từ_ngày + ' - ' + row.đến_ngày or '' }}</td>
+            <td style="border:1px solid #000;">{{ row.chức_vụ or '' }}</td>
+        </tr>
+        {% endfor %}
+        {% if not doc.custom_work_process %}
+        <tr>
+            <td style="border:1px solid #000;" colspan="5">&nbsp;</td>
+        </tr>
+        {% endif %}
+    </tbody>
 </table>
 
 <p style="text-align: center;">
@@ -173,13 +219,13 @@
 <p>
     a) Khai rõ: bị bắt, bị tù <span style="font-size:13px;">(từ ngày tháng năm nào đến ngày tháng năm nào, ở đâu)</span>, đã khai báo cho ai, những vấn đề gì 
     <br>
-    Điền nội dung
+    {{doc.custom_declared or "Không"}}
 </p>
 
 <p>
     b) Bản thân có làm việc trong chế độ cũ <span style="font-size:13px;">(Cơ quan, đơn vị nào, địa điểm, chức danh, chức vụ, thời gian làm việc ...) </span>
     <br>
-    Điền nội dung
+    {{doc.custom_work_old_regime or "Không"}}
 </p>
 
 <p style="text-align: center;">
@@ -188,13 +234,13 @@
 <p>
    - Tham gia hoặc có quan hệ với các tổ chức chính trị, kinh tế, xã hội nào ở nước ngoài <span style="font-size:13px;">(làm gì, tổ chức nào, đặt trụ sở ở đâu...?)</span>:
     <br>
-    Điền nội dung
+    {{doc.custom_foreign_organization or "Không"}}
 </p>
 
 <p>
     - Có thân nhân <span style="font-size:13px;">(Bố, mẹ, vợ, chồng, con, anh chị em ruột) ở nước ngoài (làm gì, địa chỉ ):  </span>
     <br>
-    Điền nội dung
+    {{doc.custom_foreign_relatives or "Không"}}
 </p>
 
 <div class="page-break"></div>
@@ -225,6 +271,21 @@
             
         </tr>
     </tbody>
+     <tbody>
+        {% for row in doc.custom_vnt_employee_tax %}
+        <tr>
+            <td style="border:1px solid #000;">{{ row.relationship or '' }}</td>
+            <td style="border:1px solid #000;">{{ row.name1 or '' }}</td>
+            <td style="border:1px solid #000;">{{ row.birth_year or '' }}</td>
+            <td style="border:1px solid #000;">{{ row.detail or '' }}</td>
+        </tr>
+        {% endfor %}
+        {% if not doc.custom_vnt_employee_tax %}
+        <tr>
+            <td style="border:1px solid #000;" colspan="5">&nbsp;</td>
+        </tr>
+        {% endif %}
+    </tbody>
 </table>
 
 <p style="text-align: center;">
@@ -249,6 +310,21 @@
             
         </tr>
     </tbody>
+    <tbody>
+        {% for row in doc.custom_vnt_employee_tax %}
+        <tr>
+            <td style="border:1px solid #000;">{{ row.relationship or '' }}</td>
+            <td style="border:1px solid #000;">{{ row.name1 or '' }}</td>
+            <td style="border:1px solid #000;">{{ row.birth_year or '' }}</td>
+            <td style="border:1px solid #000;">{{ row.detail or '' }}</td>
+        </tr>
+        {% endfor %}
+        {% if not doc.custom_vnt_employee_tax %}
+        <tr>
+            <td style="border:1px solid #000;" colspan="5">&nbsp;</td>
+        </tr>
+        {% endif %}
+    </tbody>
 </table>
 
 <p style="text-align: center;">
@@ -258,24 +334,36 @@
     <b>- Quá trình lương của bản thân: </b>
 </p>
 
-<table style="border:2px solid #000; border-collapse:collapse; width:70%; margin:0 auto; text-align:center;">
+<table style="border:2px 0 0 0 solid #000; border-collapse:collapse; width:70%; margin:0 auto; text-align:center;">
   <tr>
     <td style="border:2px solid #000; width:25%; text-align:left;"><b>Tháng/năm:</b></td>
-    <td style="border:2px solid #000;">01/2017</td>
-    <td style="border:2px solid #000;">01/2020</td>
-    <td style="border:2px solid #000;">07/2022</td>
+        {% for row in doc.custom_salary_process %}
+        <td style="border:2px solid #000; width:25%; text-align:left;">
+            {{ frappe.utils.formatdate(frappe.utils.getdate(row.date), "MM/yyyy") if row.date else "" }}
+        </td>
+        {% endfor %}
+        {% if not doc.custom_salary_process %}
+        <td style="border:1px solid #000;" colspan="5">&nbsp;</td>
+        {% endif %}
+    </td>
   </tr>
   <tr>
     <td style="border:2px solid #000; text-align:left;"><b>Ngạch/bậc:</b></td>
-    <td style="border:2px solid #000;"></td>
-    <td style="border:2px solid #000;"></td>
-    <td style="border:2px solid #000;"></td>
+        {% for row in doc.custom_salary_process %}
+            <td style="border:2px solid #000; width:25%; text-align:left;">{{ row.rank or '' }}</td>
+        {% endfor %}
+        {% if not doc.custom_salary_process %}
+            <td style="border:1px solid #000;" colspan="5">&nbsp;</td>
+        {% endif %}
   </tr>
   <tr>
     <td style="border:2px solid #000; text-align:left;"><b>Hệ số lương:</b></td>
-    <td style="border:2px solid #000;"></td>
-    <td style="border:2px solid #000;"></td>
-    <td style="border:2px solid #000;"></td>
+        {% for row in doc.custom_salary_process %}
+            <td style="border:2px solid #000; width:25%; text-align:left;">{{ row.coefficient or '' }}</td>
+        {% endfor %}
+        {% if not doc.custom_salary_process %}
+            <td style="border:1px solid #000;" colspan="5">&nbsp;</td>
+        {% endif %}
   </tr>
 </table>
 <p>
