@@ -41,7 +41,7 @@ def execute(filters=None):
 
 def get_columns():
     return [
-        {"label": "Mã NV", "fieldname": "employee", "fieldtype": "Link", "options": "Employee", "width": 110},
+        {"label": "Mã NV", "fieldname": "employee", "fieldtype": "Data", "options": "Employee", "width": 110},
         {"label": "Họ và tên", "fieldname": "employee_name", "fieldtype": "Data", "width": 180},
         {"label": "Giới tính", "fieldname": "gender", "fieldtype": "Data", "width": 80},
         {"label": "Ngày sinh", "fieldname": "date_of_birth", "fieldtype": "Date", "width": 110},
@@ -50,8 +50,8 @@ def get_columns():
         {"label": "Ngày đến tuổi nghỉ hưu", "fieldname": "retirement_date", "fieldtype": "Date", "width": 160},
         {"label": "Còn lại (ngày)", "fieldname": "days_until", "fieldtype": "Int", "width": 110},
         {"label": "Chức danh", "fieldname": "designation", "fieldtype": "Data", "width": 150},
-        {"label": "Phòng ban", "fieldname": "department", "fieldtype": "Link", "options": "Department", "width": 160},
-        {"label": "Công ty", "fieldname": "company", "fieldtype": "Link", "options": "Company", "width": 160},
+        {"label": "Phòng ban", "fieldname": "department", "fieldtype": "Data", "options": "Department", "width": 160},
+        {"label": "Công ty", "fieldname": "company", "fieldtype": "Data", "options": "Company", "width": 160},
         {"label": "Ghi chú", "fieldname": "note", "fieldtype": "Data", "width": 180},
     ]
 
