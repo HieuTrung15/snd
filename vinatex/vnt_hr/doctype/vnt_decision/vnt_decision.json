@@ -1,0 +1,227 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{decision_number}",
+ "creation": "2025-09-25 08:30:00.439755",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "th\u00f4ng_tin_chung_section",
+  "employee",
+  "employee_name",
+  "date",
+  "column_break_aifx",
+  "department",
+  "company",
+  "attach",
+  "section_break_bvpe",
+  "decision_type",
+  "decision_number",
+  "from_date",
+  "to_date",
+  "column_break_mjzn",
+  "decision_content",
+  "check",
+  "th\u00f4ng_tin_ng\u01b0\u1eddi_k\u00fd_q\u0111_section",
+  "signer",
+  "signer_name",
+  "column_break_am5t",
+  "desination",
+  "company_signer",
+  "th\u00f4ng_tin_nh\u00e2n_s\u1ef1_li\u00ean_quan_section",
+  "items",
+  "note",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Ng\u01b0\u1eddi t\u1ea1o",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fetch_if_empty": 1,
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean ng\u01b0\u1eddi t\u1ea1o"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Ng\u00e0y t\u1ea1o",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_aifx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.department",
+   "fetch_if_empty": 1,
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Ph\u00f2ng/Ban ng\u01b0\u1eddi t\u1ea1o phi\u1ebfu",
+   "options": "Department"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fetch_if_empty": 1,
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "C\u00f4ng ty ng\u01b0\u1eddi t\u1ea1o Q\u0110 \u0111ang l\u00e0m vi\u1ec7c",
+   "options": "Company"
+  },
+  {
+   "fieldname": "decision_number",
+   "fieldtype": "Data",
+   "label": "S\u1ed1 quy\u1ebft \u0111\u1ecbnh",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_bvpe",
+   "fieldtype": "Section Break",
+   "label": "TH\u00d4NG TIN QUY\u1ebeT \u0110\u1ecaNH"
+  },
+  {
+   "fieldname": "decision_type",
+   "fieldtype": "Link",
+   "label": "Lo\u1ea1i quy\u1ebft \u0111\u1ecbnh",
+   "options": "VNT Decision Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_mjzn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "Hi\u1ec7u l\u1ef1c Q\u0110 t\u1eeb ng\u00e0y",
+   "reqd": 1
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "\u0110\u1ebfn ng\u00e0y"
+  },
+  {
+   "fieldname": "th\u00f4ng_tin_chung_section",
+   "fieldtype": "Section Break",
+   "label": "TH\u00d4NG TIN CHUNG"
+  },
+  {
+   "fieldname": "th\u00f4ng_tin_ng\u01b0\u1eddi_k\u00fd_q\u0111_section",
+   "fieldtype": "Section Break",
+   "label": "TH\u00d4NG TIN NG\u01af\u1edcI K\u00dd Q\u0110"
+  },
+  {
+   "fieldname": "signer",
+   "fieldtype": "Link",
+   "label": "Ng\u01b0\u1eddi k\u00fd",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "signer.employee_name",
+   "fetch_if_empty": 1,
+   "fieldname": "signer_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean ng\u01b0\u1eddi k\u00fd"
+  },
+  {
+   "fieldname": "column_break_am5t",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "desination",
+   "fieldtype": "Link",
+   "label": "Ch\u1ee9c danh",
+   "options": "Designation",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company_signer",
+   "fieldtype": "Link",
+   "label": "C\u00f4ng ty",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "decision_content",
+   "fieldtype": "Small Text",
+   "label": "N\u1ed9i dung ch\u00ednh Q\u0110",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "check",
+   "fieldtype": "Check",
+   "label": "C\u1ea7n k\u00fd l\u1ea1i"
+  },
+  {
+   "fieldname": "th\u00f4ng_tin_nh\u00e2n_s\u1ef1_li\u00ean_quan_section",
+   "fieldtype": "Section Break",
+   "label": "TH\u00d4NG TIN NH\u00c2N S\u1ef0 LI\u00caN QUAN"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "options": "VNT Decision Item"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Ghi ch\u00fa"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VNT Decision",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "attach",
+   "fieldtype": "Attach",
+   "label": "\u0110\u00ednh k\u00e8m file Q\u0110",
+   "make_attachment_public": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-09-25 09:02:58.101861",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Decision",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
