@@ -7,22 +7,20 @@
  "field_order": [
   "contract_no",
   "contract_date",
-  "location",
-  "place_of_contract",
   "type",
-  "column_break_0rga",
+  "job_title",
   "contract_term",
   "from_date",
   "to_date",
-  "employee",
+  "column_break_0rga",
+  "location",
+  "place_of_contract",
   "salutation",
+  "employee",
   "designation",
-  "validity",
-  "job_title",
   "sign_reason",
-  "signer",
-  "designation_of_signer",
   "sign_status",
+  "validity",
   "section_break_sa5g",
   "salary_decision_num",
   "salary_beneficiary",
@@ -133,18 +131,6 @@
    "options": "\nThay \u0111\u1ed5i th\u1eddi h\u1ea1n H\u0110L\u0110\nK\u1ebft th\u00fac H\u0110L\u0110 c\u0169\nChuy\u1ec3n \u0111\u1ed5i lo\u1ea1i H\u0110L\u0110\nK\u00fd m\u1edbi H\u0110L\u0110"
   },
   {
-   "fieldname": "signer",
-   "fieldtype": "Link",
-   "label": "Ng\u01b0\u1eddi k\u00fd",
-   "options": "Employee"
-  },
-  {
-   "fieldname": "designation_of_signer",
-   "fieldtype": "Link",
-   "label": "Ch\u1ee9c danh ng\u01b0\u1eddi k\u00fd",
-   "options": "Employee"
-  },
-  {
    "fieldname": "sign_status",
    "fieldtype": "Data",
    "label": "Tr\u1ea1ng th\u00e1i k\u00fd"
@@ -208,7 +194,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-18 16:26:36.603012",
+ "modified": "2025-09-25 14:08:15.646495",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Contract",
