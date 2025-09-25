@@ -27,9 +27,9 @@ def execute(filters=None):
 def get_columns():
     return [
         {"label": "Trạng thái", "fieldname": "status", "fieldtype": "Data", "width": 110},
-        {"label": "Mã", "fieldname": "employee", "fieldtype": "Link", "options": "Employee", "width": 110},
+        {"label": "Mã", "fieldname": "employee", "fieldtype": "Data", "options": "Employee", "width": 110},
         {"label": "Họ tên", "fieldname": "employee_name", "fieldtype": "Data", "width": 180},
-        {"label": "Bộ phận", "fieldname": "department", "fieldtype": "Link", "options": "Department", "width": 180},
+        {"label": "Bộ phận", "fieldname": "department", "fieldtype": "Data", "options": "Department", "width": 180},
         {"label": "Vị trí công việc", "fieldname": "designation", "fieldtype": "Data", "width": 180},
         {"label": "Loại", "fieldname": "decision_type_name", "fieldtype": "Data", "width": 220},
         {"label": "Số quyết định", "fieldname": "decision_number", "fieldtype": "Data", "width": 150},
@@ -37,7 +37,7 @@ def get_columns():
         {"label": "Hiệu lực đến hết ngày", "fieldname": "to_date", "fieldtype": "Date", "width": 150},
         {"label": "Đơn vị ban hành (header)", "fieldname": "header_department", "fieldtype": "Data", "width": 180},
         {"label": "Ghi chú (item)", "fieldname": "item_note", "fieldtype": "Data", "width": 200},
-        {"label": "Số QĐ (header)", "fieldname": "decision_name", "fieldtype": "Link", "options": "VNT Decision", "width": 150},
+        {"label": "Số QĐ (header)", "fieldname": "decision_name", "fieldtype": "Data", "options": "VNT Decision", "width": 150},
     ]
 
 
@@ -136,7 +136,7 @@ def get_data(filters):
         ORDER BY d.from_date DESC, d.name DESC, di.idx ASC
     """
 
-    # ghép params theo IN (nếu có)
+    # ghép params theo IN 
     if params_list:
         # frappe.db.sql không nhận dict + LIST cho IN mixing đơn giản, nên tách thủ công:
         # build full params tuple theo thứ tự: params dict trước, rồi các item cho IN
