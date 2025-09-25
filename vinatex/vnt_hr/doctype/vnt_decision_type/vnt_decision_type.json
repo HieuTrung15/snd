@@ -6,7 +6,8 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "decision_type"
+  "decision_type",
+  "type"
  ],
  "fields": [
   {
@@ -15,12 +16,17 @@
    "in_list_view": 1,
    "label": "Lo\u1ea1i quy\u1ebft \u0111\u1ecbnh",
    "reqd": 1
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Data",
+   "label": "Type"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-25 08:35:05.441191",
+ "modified": "2025-09-25 10:16:57.180567",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Decision Type",

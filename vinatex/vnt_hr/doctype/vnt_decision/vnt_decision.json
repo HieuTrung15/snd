@@ -25,6 +25,7 @@
   "th\u00f4ng_tin_ng\u01b0\u1eddi_k\u00fd_q\u0111_section",
   "signer",
   "signer_name",
+  "position",
   "column_break_am5t",
   "desination",
   "company_signer",
@@ -193,13 +194,18 @@
    "fieldtype": "Attach",
    "label": "\u0110\u00ednh k\u00e8m file Q\u0110",
    "make_attachment_public": 1
+  },
+  {
+   "fieldname": "position",
+   "fieldtype": "Data",
+   "label": "V\u1ecb tr\u00ed c\u00f4ng vi\u1ec7c ng\u01b0\u1eddi k\u00fd"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-25 09:02:58.101861",
+ "modified": "2025-09-25 10:17:49.366619",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Decision",
