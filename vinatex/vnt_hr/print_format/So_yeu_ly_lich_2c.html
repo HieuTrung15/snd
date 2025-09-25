@@ -272,7 +272,7 @@ Bằng cấp cao nhất: {{ highest_diploma or '' }}
         </tr>
     </tbody>
      <tbody>
-        {% for row in doc.custom_vnt_employee_tax %}
+        {% for row in doc.custom_vnt_employee_tax if row.check|int == 0 %}
         <tr>
             <td style="border:1px solid #000;">{{ row.relationship or '' }}</td>
             <td style="border:1px solid #000;">{{ row.name1 or '' }}</td>
@@ -280,7 +280,7 @@ Bằng cấp cao nhất: {{ highest_diploma or '' }}
             <td style="border:1px solid #000;">{{ row.detail or '' }}</td>
         </tr>
         {% endfor %}
-        {% if not doc.custom_vnt_employee_tax %}
+        {% if not (doc.custom_vnt_employee_tax and (doc.custom_vnt_employee_tax|selectattr('check','equalto',0)|list)) %}
         <tr>
             <td style="border:1px solid #000;" colspan="5">&nbsp;</td>
         </tr>
@@ -311,7 +311,7 @@ Bằng cấp cao nhất: {{ highest_diploma or '' }}
         </tr>
     </tbody>
     <tbody>
-        {% for row in doc.custom_vnt_employee_tax %}
+        {% for row in doc.custom_vnt_employee_tax if row.check|int == 1 %}
         <tr>
             <td style="border:1px solid #000;">{{ row.relationship or '' }}</td>
             <td style="border:1px solid #000;">{{ row.name1 or '' }}</td>
@@ -319,7 +319,10 @@ Bằng cấp cao nhất: {{ highest_diploma or '' }}
             <td style="border:1px solid #000;">{{ row.detail or '' }}</td>
         </tr>
         {% endfor %}
-        {% if not doc.custom_vnt_employee_tax %}
+        {% if not (doc.custom_vnt_employee_tax and (doc.custom_vnt_employee_tax|selectattr('check','equalto',1)|list)) %}
+        <tr>
+            <td style="border:1px solid #000;" colspan="5">&nbsp;</td>
+        </tr>
         <tr>
             <td style="border:1px solid #000;" colspan="5">&nbsp;</td>
         </tr>
@@ -377,20 +380,31 @@ Bằng cấp cao nhất: {{ highest_diploma or '' }}
     + Các nguồn khác: Không
 </p>
 <p>
-    -<u>Nhà ở</u>:     
+    -<u>Nhà ở</u>:
     <br>
-   &nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp; + Được cấp, được thuê, loại nhà: Không, tổng diện tích sử dụng: ........... m2 <br>
-   &nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp; + Nhà tự mua, tự xây, loại nhà: Không, tổng diện tích sử dụng: ........... m2
+    {% if doc.custom_house_rent|int == 1 %}
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ Được cấp, được thuê, loại nhà: {{ doc.custom_house_type or "........" }}, tổng diện tích sử dụng: {{ doc.custom_house_acreage or "........" }} m2 <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ Nhà tự mua, tự xây, loại nhà: Không, tổng diện tích sử dụng: ........ m2
+    {% else %}
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ Được cấp, được thuê, loại nhà: Không, tổng diện tích sử dụng: ........ m2 <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ Nhà tự mua, tự xây, loại nhà: {{ doc.custom_house_type or "........" }}, tổng diện tích sử dụng: {{ doc.custom_house_acreage or "........" }} m2
+    {% endif %}
+
 </p>
 
 <p>
-    -<u>Đất ở</u>:     
-   &nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp; + Đất được cấp: ........... m2
+    -<u>Đất ở</u>:
+    {% if doc.custom_land_rent|int == 1 %}     
+   &nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp; + Đất được cấp: {{ doc.custom_land_acreage or "........" }} m2
    &nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp; + Đất tự mua: ........... m2
+   {% else %}
+       &nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp; + Đất được cấp: ........... m2
+       &nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp; + Đất tự mua: {{ doc.custom_land_acreage or "........" }} m2
+   {% endif %}
 </p>
 
 <p>
-    - Đất sản xuất, kinh doanh: (Tổng diện tích đất được cấp, tự mua, tự khai phá ...) Không
+    - Đất sản xuất, kinh doanh: (Tổng diện tích đất được cấp, tự mua, tự khai phá ...) {{ (doc.custom_land_for_business ~ " m2") if doc.custom_land_for_business else "Không" }}
 </p>
 
 <table style="margin-top:20px; border:none; width:100%;">

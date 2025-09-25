@@ -2,27 +2,49 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe.utils import getdate
+from frappe.utils import getdate, today
 
 def execute(filters=None):
     if not filters:
         filters = {}
 
+    # default to_date = hôm nay nếu chưa truyền
+    if not filters.get("to_date"):
+        filters["to_date"] = today()
+
+    # validate from_date <= to_date
+    if filters.get("from_date") and filters.get("to_date"):
+        if getdate(filters["from_date"]) > getdate(filters["to_date"]):
+            frappe.throw("“Từ ngày” không được lớn hơn “Đến ngày”.")
+
     columns = get_columns()
     data = []
 
-    increases = get_increased(filters)
-    decreases = get_decreased(filters)
+    change = (filters.get("change") or "Tất cả").strip()
 
-    # đánh số TT và ghép thành 1 dataset
-    idx = 1
-    for row in increases:
-        row["change_type"] = "Lao động tăng"
-        data.append(row)
+    # Tùy loại biến động để lấy dữ liệu
+    if change in ("Tất cả", ""):
+        increases = get_increased(filters)
+        for row in increases:
+            row["change_type"] = "Lao động tăng"
+            data.append(row)
 
-    for row in decreases:
-        row["change_type"] = "Lao động giảm"
-        data.append(row)
+        decreases = get_decreased(filters)
+        for row in decreases:
+            row["change_type"] = "Lao động giảm"
+            data.append(row)
+
+    elif change == "Lao động tăng":
+        increases = get_increased(filters)
+        for row in increases:
+            row["change_type"] = "Lao động tăng"
+            data.append(row)
+
+    elif change == "Lao động giảm":
+        decreases = get_decreased(filters)
+        for row in decreases:
+            row["change_type"] = "Lao động giảm"
+            data.append(row)
 
     return columns, data
 
@@ -35,7 +57,7 @@ def get_columns():
         {"label": "Ngày tháng năm sinh", "fieldname": "date_of_birth", "fieldtype": "Date", "width": 120},
         {"label": "Giới tính", "fieldname": "gender", "fieldtype": "Data", "width": 80},
         {"label": "Trình độ học vấn", "fieldname": "education", "fieldtype": "Data", "width": 150},
-        {"label": "Thời gian bắt đầu làm việc/nghỉ việc", "fieldname": "change_date", "fieldtype": "Date", "width": 150},
+        {"label": "Thời gian bắt đầu làm việc/nghỉ việc", "fieldname": "change_date", "fieldtype": "Date", "width": 180},
         {"label": "Chức danh", "fieldname": "designation", "fieldtype": "Data", "width": 150},
         {"label": "Bộ phận công tác", "fieldname": "department", "fieldtype": "Data", "width": 150},
         {"label": "Lý do tăng/giảm", "fieldname": "reason", "fieldtype": "Data", "width": 200},
@@ -97,5 +119,3 @@ def get_decreased(filters):
         ORDER BY e.relieving_date ASC
     """
     return frappe.db.sql(sql, filters, as_dict=True)
-
-
