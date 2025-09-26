@@ -179,10 +179,12 @@ a {
 }
 
 .form-grid .grid-row .data-row {
- flex-wrap: unset;
+ /* flex-wrap: wrap; */
+  /* display: flex; */
 }
 .form-grid .grid-row .data-row .col {
- min-width: 3rem;
+ /* min-width: 3rem; */
+ /* flex:1 1 0; */
  border-bottom: 1px solid rgba(5, 0, 0, 0.23);
 }
 
@@ -192,8 +194,8 @@ a {
 
 .form-grid {
  border: 1px solid rgba(5, 0, 0, 0.23);
- overflow-x: auto;
- overflow-y: hidden;
+ overflow-x: hidden;
+ overflow-y: auto;
  padding-bottom: 2px;
 }
 
@@ -383,16 +385,16 @@ input[type=file]::-webkit-file-upload-button{
 }
 
 .form-grid .grid-heading-row {
- width: fit-content;
- min-width: 100%;
+ /* width: fit-content; */
+ /* min-width: 100%; */
 }
 .form-grid .grid-body {
- width: fit-content;
- min-width: 100%;
+ /* width: fit-content; */
+ /* min-width: 100%; */
 }
 
 
-.form-grid .col-1,
+/* .form-grid .col-1,
 .form-grid .col-xs-1 {
  flex: unset;
  max-width: calc(5 * 1rem) !important;
@@ -463,11 +465,11 @@ input[type=file]::-webkit-file-upload-button{
  flex: unset;
  max-width: calc(92 * 0.8rem) !important;
  min-width: calc(92 * 0.8rem) !important;
-}
+} */
 
-.form-in-grid {
+/* .form-in-grid {
  max-width: 75vw;
-}
+} */
 
 .navbar-expand {
  background-color: #3288f1;
@@ -507,7 +509,7 @@ input[type=file]::-webkit-file-upload-button{
  background-size: 50px;
  }
 
- .form-grid .col-1,
+ /* .form-grid .col-1,
  .form-grid .col-xs-1 {
  flex: unset;
  max-width: calc(6 * 1rem) !important;
@@ -579,7 +581,7 @@ input[type=file]::-webkit-file-upload-button{
  max-width: calc(92 * 0.8rem) !important;
  min-width: calc(92 * 0.8rem) !important;
  }
-}
+} */
 
 @media screen and (min-width: 1600px) {
  .navbar-expand {
@@ -608,7 +610,7 @@ input[type=file]::-webkit-file-upload-button{
  background-size: 50px;
  }
 
- .form-grid .col-1,
+ /* .form-grid .col-1,
  .form-grid .col-xs-1 {
  flex: unset;
  max-width: calc(8 * 1rem) !important;
@@ -680,7 +682,7 @@ input[type=file]::-webkit-file-upload-button{
  max-width: calc(99 * 0.8rem) !important;
  min-width: calc(99 * 0.8rem) !important;
  }
-}
+} */
 
 .nx-side-menu {
  position: fixed;
