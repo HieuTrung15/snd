@@ -1,7 +1,7 @@
 // Copyright (c) 2025, vinatex and contributors
 // For license information, please see license.txt
 
-// frappe.ui.form.on("VNT  Organizational Structure", {
+// frappe.ui.form.on("VNT Organizational Structure", {
 // 	refresh(frm) {
 
 // 	},

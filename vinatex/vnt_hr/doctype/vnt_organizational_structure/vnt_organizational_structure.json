@@ -73,7 +73,7 @@
  "modified": "2025-09-19 15:30:13.920173",
  "modified_by": "Administrator",
  "module": "VNT HR",
- "name": "VNT  Organizational Structure",
+ "name": "VNT Organizational Structure",
  "naming_rule": "Expression",
  "nsm_parent_field": "parent_vnt__organizational_structure",
  "owner": "Administrator",
