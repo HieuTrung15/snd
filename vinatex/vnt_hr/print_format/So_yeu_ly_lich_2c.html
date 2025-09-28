@@ -172,11 +172,11 @@ Bằng cấp cao nhất: {{ highest_diploma or '' }}
             <td style="border:1px solid #000;">{{ row.custom_diploma_level or '' }}</td>
         </tr>
         {% endfor %}
-        {% if not doc.custom_training %}
+        <!-- {% if not doc.custom_training %}
         <tr>
             <td style="border:1px solid #000;" colspan="5">&nbsp;</td>
         </tr>
-        {% endif %}
+        {% endif %} -->
     </tbody>
 </table>
 <p>
@@ -205,11 +205,6 @@ Bằng cấp cao nhất: {{ highest_diploma or '' }}
             <td style="border:1px solid #000;">{{ row.chức_vụ or '' }}</td>
         </tr>
         {% endfor %}
-        {% if not doc.custom_work_process %}
-        <tr>
-            <td style="border:1px solid #000;" colspan="5">&nbsp;</td>
-        </tr>
-        {% endif %}
     </tbody>
 </table>
 
@@ -319,14 +314,6 @@ Bằng cấp cao nhất: {{ highest_diploma or '' }}
             <td style="border:1px solid #000;">{{ row.detail or '' }}</td>
         </tr>
         {% endfor %}
-        {% if not (doc.custom_vnt_employee_tax and (doc.custom_vnt_employee_tax|selectattr('check','equalto',1)|list)) %}
-        <tr>
-            <td style="border:1px solid #000;" colspan="5">&nbsp;</td>
-        </tr>
-        <tr>
-            <td style="border:1px solid #000;" colspan="5">&nbsp;</td>
-        </tr>
-        {% endif %}
     </tbody>
 </table>
 
