@@ -46,9 +46,9 @@ def get_data(filters):
     ]
     params = {"decision_types": DECISION_TYPES}
 
-    if docstatus is not None:
-        conds.append("d.docstatus = %(docstatus)s")
-        params["docstatus"] = docstatus
+    # if docstatus is not None:
+    #     conds.append("d.docstatus = %(docstatus)s")
+    #     params["docstatus"] = docstatus
 
     if filters.get("company"):
         conds.append("COALESCE(di.cur_company, di.company) = %(company)s")
@@ -94,6 +94,7 @@ def get_data(filters):
               JOIN `tabVNT Decision Item` di
                 ON di.parent = d.name AND di.parenttype = 'VNT Decision'
               WHERE {where}
+              AND d.docstatus < 2
             ) x
             WHERE x.rn = 1
             ORDER BY x.decision_date DESC, x.employee
@@ -119,6 +120,7 @@ def get_data(filters):
         JOIN `tabVNT Decision Item` di
           ON di.parent = d.name AND di.parenttype = 'VNT Decision'
         WHERE {where}
+        AND d.docstatus < 2
         ORDER BY d.date DESC, d.modified DESC, d.name DESC, di.employee
     """
     return frappe.db.sql(sql, params, as_dict=True)
