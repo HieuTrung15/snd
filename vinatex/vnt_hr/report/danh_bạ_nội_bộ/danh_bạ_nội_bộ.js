@@ -30,16 +30,6 @@ frappe.query_reports["Danh bạ nội bộ"] = {
 				}
 				};
 			}
-        },
-		{
-            "fieldname":"type",
-            "label": __("Chế độ xem"),
-            "fieldtype": "Select",
-            "options": [
-				"Danh bạ nội bộ",
-				"Người đại diện",
-				"Kế toán trưởng"
-			].join("\n")
-        },
+        }
 	]
 };
