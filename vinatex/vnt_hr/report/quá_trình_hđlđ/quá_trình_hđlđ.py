@@ -10,7 +10,6 @@ def execute(filters=None):
             filters = {}
         columns = get_columns(filters)
         data = get_data(filters)
-        # chart = get_chart_data(data)       
         return columns, data, None
 
 def get_columns(filters=None):
@@ -184,12 +183,8 @@ def get_data(filters=None):
 #customize: Lọc dữ liệu
 def get_filter_conditions(filters):
     conditions = ""   
-    # if filters.get("employee"):
-    #     conditions += " and emp.employee = '%s' " % (filters.get("employee"))
-    # if filters.get("company"):
-    #     conditions += " and emp.company = '%s' " % (filters.get("company"))
-    # if filters.get("department"):
-    #     conditions += " and emp.department = '%s' " % (filters.get("department"))
-	# if filters.get("type"):
-	# 	conditions += " and emp.department = '%s' " % (filters.get("department"))
+    if filters.get("employee"):
+        conditions += " and emp.employee = '%s' " % (filters.get("employee"))
+    if filters.get("department"):
+        conditions += " and emp.department = '%s' " % (filters.get("department"))
     return conditions 
