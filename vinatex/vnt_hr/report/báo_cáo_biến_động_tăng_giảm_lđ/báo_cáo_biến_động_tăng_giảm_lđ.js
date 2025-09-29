@@ -8,9 +8,10 @@ frappe.query_reports["BÁO CÁO BIẾN ĐỘNG TĂNG GIẢM LĐ"] = {
             "label": "Từ ngày",
             "fieldtype": "Date",
             "reqd": 1,
-            "on_change": function(query_report) {
-                validate_dates(query_report);
-            }
+            "default": frappe.datetime.get_today(),
+            // "on_change": function(query_report) {
+            //     validate_dates(query_report);
+            // }
         },
         {
             "fieldname": "to_date",
@@ -18,9 +19,9 @@ frappe.query_reports["BÁO CÁO BIẾN ĐỘNG TĂNG GIẢM LĐ"] = {
             "fieldtype": "Date",
             "reqd": 1,
             "default": frappe.datetime.get_today(),
-            "on_change": function(query_report) {
-                validate_dates(query_report);
-            }
+            // "on_change": function(query_report) {
+            //     validate_dates(query_report);
+            // }
         },
         {
             "fieldname": "change",
@@ -32,12 +33,12 @@ frappe.query_reports["BÁO CÁO BIẾN ĐỘNG TĂNG GIẢM LĐ"] = {
         }
     ],
 
-    "onload": function(report) {
-        // bảo đảm to_date luôn có mặc định nếu user xóa tay
-        if (!report.get_values().to_date) {
-            report.set_filter_value("to_date", frappe.datetime.get_today());
-        }
-    }
+    // "onload": function(report) {
+    //     // bảo đảm to_date luôn có mặc định nếu user xóa tay
+    //     if (!report.get_values().to_date) {
+    //         report.set_filter_value("to_date", frappe.datetime.get_today());
+    //     }
+    // }
 };
 
 function validate_dates(query_report) {

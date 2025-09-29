@@ -12,11 +12,6 @@ def execute(filters=None):
     if not filters.get("to_date"):
         filters["to_date"] = today()
 
-    # validate from_date <= to_date
-    if filters.get("from_date") and filters.get("to_date"):
-        if getdate(filters["from_date"]) > getdate(filters["to_date"]):
-            frappe.throw("“Từ ngày” không được lớn hơn “Đến ngày”.")
-
     columns = get_columns()
     data = []
 
@@ -82,7 +77,8 @@ def get_increased(filters):
         FROM `tabEmployee` e
         LEFT JOIN `tabEmployee Education` edu 
             ON edu.parent = e.name
-        WHERE e.date_of_joining BETWEEN %(from_date)s AND %(to_date)s
+        WHERE ( %(from_date)s IS NULL OR e.date_of_joining >= %(from_date)s )
+            AND ( %(to_date)s   IS NULL OR e.date_of_joining <= %(to_date)s )
           AND (edu.year_of_passing IS NULL OR edu.year_of_passing = (
                 SELECT MAX(edu2.year_of_passing)
                 FROM `tabEmployee Education` edu2
@@ -110,7 +106,8 @@ def get_decreased(filters):
         FROM `tabEmployee` e
         LEFT JOIN `tabEmployee Education` edu 
             ON edu.parent = e.name
-        WHERE e.relieving_date BETWEEN %(from_date)s AND %(to_date)s
+        WHERE ( %(from_date)s IS NULL OR e.date_of_joining >= %(from_date)s )
+            AND ( %(to_date)s   IS NULL OR e.date_of_joining <= %(to_date)s )
           AND (edu.year_of_passing IS NULL OR edu.year_of_passing = (
                 SELECT MAX(edu2.year_of_passing)
                 FROM `tabEmployee Education` edu2

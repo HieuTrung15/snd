@@ -286,12 +286,3 @@ def allocate_leave_for_all(
  
     print(f"Done: total employees={len(employees)} | created={created} | amended={amended} | updated={updated} | skipped={skipped}")
     print(f"Leave Type='{leave_type}', target_days={target_days}, period={from_date}→{to_date}")
- 
-# ===== Ví dụ chạy nhanh =====
-# allocate_leave_for_all()  # mặc định: 'Công tác', 100 ngày, năm hiện tại, mọi nhân viên Active
-# allocate_leave_for_all(company="Vinatex")                  # chỉ 1 company
-# allocate_leave_for_all(department="Kinh Doanh")            # lọc theo phòng ban
-# allocate_leave_for_all(employee_names=["EMP-0001","EMP-0007"])  # chỉ vài người
-# allocate_leave_for_all(target_days=120, year=2025)         # kỳ 2025 với 120 ngày
-# allocate_leave_for_all(from_date="2025-04-01", to_date="2026-03-31")  # kỳ tùy chỉnh (ví dụ năm tài chính)
-# allocate_leave_for_all(dry_run=True)                       # xem trước, không ghi DB
