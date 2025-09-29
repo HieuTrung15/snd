@@ -20,6 +20,7 @@ def get_timekeeping_data_morning():
     start_dt = datetime.combine(d_month_start, time.min)  # 00:00:00 ngày 01
     end_dt   = datetime.combine(d_today, time.max)     # 23:59:59.999999 hôm nay
 
+
     # get_today = date.today()
     # start_dt = datetime.combine(get_today, time.min)
     # end_dt = datetime.combine(get_today, time.max)
@@ -37,7 +38,17 @@ def get_timekeeping_data_morning():
     if not rows:
         frappe.msgprint(_("Không có dữ liệu chấm công nào được lấy từ máy chấm công."))
         return
+        
+    processed = 0
+    skipped_no_emp = 0
+    skipped_exists = 0
+    inserted = 0
+    marked_in = 0
+
+    # Gom nhóm theo employee + date
+    emp_date_map = {}
     for row in rows:
+        processed += 1
         emp = frappe.get_value(
             "Employee",
             {
@@ -48,24 +59,55 @@ def get_timekeeping_data_morning():
             as_dict=True,
         )
         if not emp:
+            skipped_no_emp += 1
             continue
 
         row_time = datetime.strptime(row["timestamp"], "%Y-%m-%d %H:%M:%S")
-        exists = frappe.db.exists(
-            "Employee Checkin",
-            {"employee": emp.name, "log_type": "IN"}
-        )
-        if exists:
+        if frappe.db.exists("Employee Checkin", {"employee": emp.name, "time": row_time}):
+            skipped_exists += 1
             continue
 
-        # insert vào employee checkin
-        doc = frappe.new_doc("Employee Checkin")
-        doc.employee = emp.name
-        doc.employee_name = emp.employee_name
-        doc.time = row_time
-        doc.log_type = "IN"
-        doc.save()
-    
+        date_key = row_time.date()
+        emp_key = emp.name
+        emp_date_map.setdefault(emp_key, {}).setdefault(date_key, []).append((row_time, emp))
+
+    for emp_key, dates in emp_date_map.items():
+        for date_key, entries in dates.items():
+            if not entries:
+                continue
+            entries.sort(key=lambda x: x[0])
+            first_ts = entries[0][0]
+            first_assigned = False
+            for ts, emp in entries:
+                doc = frappe.new_doc("Employee Checkin")
+                doc.employee = emp.name
+                doc.employee_name = emp.employee_name
+                doc.time = ts
+                # Chỉ gán IN cho timestamp đầu tiên trong ngày nếu chưa tồn tại IN nào trước đó trong ngày
+                if not first_assigned:
+                    # Kiểm tra đã có IN trong ngày này chưa
+                    day_start = datetime.combine(date_key, time.min)
+                    day_end = datetime.combine(date_key, time.max)
+                    existing_in = frappe.get_all(
+                        "Employee Checkin",
+                        filters={
+                            "employee": emp.name,
+                            "log_type": "IN",
+                            "time": ["between", [day_start, day_end]],
+                        },
+                        limit=1,
+                    )
+                    if not existing_in and ts == first_ts:
+                        doc.log_type = "IN"
+                        first_assigned = True
+                        marked_in += 1
+                    else:
+                        doc.log_type = ""
+                else:
+                    doc.log_type = ""
+                doc.save()
+                inserted += 1
+
 
 @frappe.whitelist()
 def get_timekeeping_data_evening():
@@ -74,10 +116,7 @@ def get_timekeeping_data_evening():
 
     start_dt = datetime.combine(d_month_start, time.min)  # 00:00:00 ngày 01
     end_dt   = datetime.combine(d_today, time.max)     # 23:59:59.999999 hôm nay
-    # lay ra thong tin may cham cong
-    # get_today = date.today()
-    # start_dt = datetime.combine(get_today, time.min)
-    # end_dt = datetime.combine(get_today, time.max)
+    # Lấy dữ liệu mới từ thiết bị
     rows = []
     devices = _device_list()
     for d in devices:
@@ -88,12 +127,22 @@ def get_timekeeping_data_evening():
             start_dt=start_dt,
             end_dt=end_dt,
         ))
-    # loc emp theo may cham cong
     if not rows:
         frappe.msgprint(_("Không có dữ liệu chấm công nào được lấy từ máy chấm công."))
         return
-    emp_date_timestamps = {}
+
+    # biến đếm
+    processed = 0
+    skipped_no_emp = 0
+    created = 0
+    updated_out = 0
+    updated_in = 0
+    unchanged = 0
+
+    # Gom nhóm timestamp mới theo employee + date
+    new_emp_date = {}
     for row in rows:
+        processed += 1
         emp = frappe.get_value(
             "Employee",
             {
@@ -104,42 +153,84 @@ def get_timekeeping_data_evening():
             as_dict=True,
         )
         if not emp:
+            skipped_no_emp += 1
             continue
+        ts = datetime.strptime(row["timestamp"], "%Y-%m-%d %H:%M:%S")
+        new_emp_date.setdefault(emp.name, {}).setdefault(ts.date(), set()).add(ts)
 
-        row_time = datetime.strptime(row["timestamp"], "%Y-%m-%d %H:%M:%S")
-        exists = frappe.db.exists(
-            "Employee Checkin",
-            {"employee": emp.name, "time": row_time}
-        )
-        if exists:
-            continue
+    # Với mỗi employee + date có dữ liệu mới: lấy lại toàn bộ checkin hiện có trong ngày để xác định first/last tại thời điểm hiện tại
+    for emp_name, dates in new_emp_date.items():
+        for d_date, new_ts_set in dates.items():
+            # Lấy checkin đã có trong DB của ngày
+            day_start = datetime.combine(d_date, time.min)
+            day_end = datetime.combine(d_date, time.max)
+            existing = frappe.get_all(
+                "Employee Checkin",
+                filters={
+                    "employee": emp_name,
+                    "time": ["between", [day_start, day_end]],
+                },
+                fields=["name", "time", "log_type"],
+                order_by="time asc"
+            )
+            existing_map = {ec.time: ec for ec in existing}
 
-        # nhóm lại timestamps theo employee và date
-        date_key = row_time.date()
-        emp_key = emp.name
-        if emp_key not in emp_date_timestamps:
-            emp_date_timestamps[emp_key] = {}
-        if date_key not in emp_date_timestamps[emp_key]:
-            emp_date_timestamps[emp_key][date_key] = []
-        emp_date_timestamps[emp_key][date_key].append((row_time, row, emp))
-    
-    for emp_key, dates in emp_date_timestamps.items():
-        for date_key, entries in dates.items():
-            if not entries:
+            # Tập timestamp hợp nhất
+            all_ts = set(existing_map.keys()) | new_ts_set
+            ordered = sorted(all_ts)
+            if not ordered:
                 continue
-            # tìm thời gian lớn nhất và nhỏ nhất trong ngày
-            timestamps = [entry[0] for entry in entries]
-            min_ts = min(timestamps)
-            max_ts = max(timestamps)
-            for row_time, row, emp in entries:
-                log_type = _in_out(row_time, min_ts, max_ts)
-                # insert vào employee checkin
+            first_ts = ordered[0]
+            last_ts = ordered[-1]
+
+            # gán IN cho first_ts => chỉ khi chưa có IN nào trong ngày
+            first_doc = existing_map.get(first_ts)
+            if first_doc:
+                if first_doc.log_type not in ("IN",):
+                    frappe.db.set_value("Employee Checkin", first_doc.name, "log_type", "IN")
+                    updated_in += 1
+            else:
+                emp_doc = frappe.get_doc("Employee", emp_name)
                 doc = frappe.new_doc("Employee Checkin")
-                doc.employee = emp.name
-                doc.employee_name = emp.employee_name
-                doc.time = row_time
-                doc.log_type = log_type
+                doc.employee = emp_name
+                doc.employee_name = emp_doc.employee_name
+                doc.time = first_ts
+                doc.log_type = "IN"
                 doc.save()
+                created += 1
+
+            # gán OUT cho last_ts (chỉ nếu khác first_ts) => chỉ khi chưa có OUT nào trong ngày
+            if last_ts != first_ts:
+                last_doc = existing_map.get(last_ts)
+                if last_doc:
+                    if last_doc.log_type != "OUT":
+                        frappe.db.set_value("Employee Checkin", last_doc.name, "log_type", "OUT")
+                        updated_out += 1
+                else:
+                    emp_doc = frappe.get_doc("Employee", emp_name)
+                    doc = frappe.new_doc("Employee Checkin")
+                    doc.employee = emp_name
+                    doc.employee_name = emp_doc.employee_name
+                    doc.time = last_ts
+                    doc.log_type = "OUT"
+                    doc.save()
+                    created += 1
+
+            # Các timestamp giữa: tạo nếu chưa có (log_type giữ rỗng)
+            middle_ts = [ts for ts in ordered if ts not in (first_ts, last_ts)]
+            for mts in middle_ts:
+                if mts in existing_map:
+                    unchanged += 1
+                    continue
+                emp_doc = frappe.get_doc("Employee", emp_name)
+                doc = frappe.new_doc("Employee Checkin")
+                doc.employee = emp_name
+                doc.employee_name = emp_doc.employee_name
+                doc.time = mts
+                doc.log_type = ""
+                doc.save()
+                created += 1
+
 
 
 def _device_list():
@@ -148,7 +239,6 @@ def _device_list():
 
 def _fetch_from_device(ip: str, port: int, comm_key: int, start_dt: datetime, end_dt: datetime):
     """Kết nối 1 thiết bị và trả về list rows đã lọc theo khoảng thời gian."""
-    from zk import ZK
     zk = ZK(ip, port=port, timeout=5, password=comm_key, force_udp=False, ommit_ping=False)
     conn, out = None, []
     try:
@@ -170,10 +260,14 @@ def _fetch_from_device(ip: str, port: int, comm_key: int, start_dt: datetime, en
         frappe.log_error(f"[{ip}] Lỗi khi kết nối/đọc dữ liệu: {e}", "get_cham_cong_multi")
     finally:
         if conn:
-            try: conn.enable_device()
-            except Exception: pass
-            try: conn.disconnect()
-            except Exception: pass
+            try:
+                conn.enable_device()
+            except Exception:
+                pass
+            try:
+                conn.disconnect()
+            except Exception:
+                pass
     return out
 
 
