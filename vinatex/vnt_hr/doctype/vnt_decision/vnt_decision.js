@@ -33,7 +33,7 @@ frappe.ui.form.on("VNT Decision", {
                 limit_page_length: 0,
             },
             freeze: true,
-            freeze_message: __('Đang nạp nhân sự...'),
+            freeze_message: __('Đang lấy danh sách nhân sự...'),
         }).then(r => {
         const rows = r.message || [];
         rows.forEach(row => {
