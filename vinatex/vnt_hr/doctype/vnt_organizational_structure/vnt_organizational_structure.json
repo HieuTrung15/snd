@@ -9,10 +9,14 @@
   "section_break_liag",
   "lft",
   "rgt",
-  "is_group",
-  "old_parent",
-  "parent_vnt__organizational_structure",
   "org_name",
+  "column_break_txtm",
+  "is_group",
+  "disabled",
+  "section_break_ruqu",
+  "old_parent",
+  "parent_vnt_organizational_structure",
+  "column_break_1hcb",
   "level"
  ],
  "fields": [
@@ -46,36 +50,54 @@
    "fieldname": "old_parent",
    "fieldtype": "Link",
    "label": "Old Parent",
-   "options": "VNT  Organizational Structure"
-  },
-  {
-   "fieldname": "parent_vnt__organizational_structure",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "label": "Parent VNT  Organizational Structure",
-   "options": "VNT  Organizational Structure"
+   "options": "VNT Organizational Structure"
   },
   {
    "fieldname": "org_name",
    "fieldtype": "Data",
-   "label": "T\u00ean"
+   "label": "T\u00ean t\u1ed5 ch\u1ee9c/ \u0110\u01a1n v\u1ecb"
   },
   {
    "fieldname": "level",
    "fieldtype": "Data",
    "label": "C\u1ea5p"
+  },
+  {
+   "fieldname": "column_break_txtm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_ruqu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_1hcb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "fieldname": "parent_vnt_organizational_structure",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "Parent VNT Organizational Structure",
+   "options": "VNT Organizational Structure"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_tree": 1,
  "links": [],
- "modified": "2025-09-19 15:30:13.920173",
+ "modified": "2025-09-29 09:05:34.689336",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Organizational Structure",
  "naming_rule": "Expression",
- "nsm_parent_field": "parent_vnt__organizational_structure",
+ "nsm_parent_field": "parent_vnt_organizational_structure",
  "owner": "Administrator",
  "permissions": [
   {
