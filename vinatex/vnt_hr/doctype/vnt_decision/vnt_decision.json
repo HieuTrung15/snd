@@ -19,7 +19,13 @@
   "decision_number",
   "from_date",
   "to_date",
+  "awardee",
+  "year_awardee",
+  "issuing_authority",
   "column_break_mjzn",
+  "status",
+  "reward_type",
+  "reward_amount",
   "decision_content",
   "check",
   "th\u00f4ng_tin_ng\u01b0\u1eddi_k\u00fd_q\u0111_section",
@@ -109,6 +115,7 @@
    "reqd": 1
   },
   {
+   "depends_on": "eval: doc.decision_type != \"Quy\u1ebft \u0111\u1ecbnh khen th\u01b0\u1edfng\"",
    "fieldname": "to_date",
    "fieldtype": "Date",
    "label": "\u0110\u1ebfn ng\u00e0y",
@@ -164,6 +171,7 @@
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.decision_type != \"Quy\u1ebft \u0111\u1ecbnh khen th\u01b0\u1edfng\"",
    "description": "Tick v\u00e0o \u0111\u00e2y trong tr\u01b0\u1eddng h\u1ee3p Q\u0110 n\u00e0y c\u1ea7n k\u00fd l\u1ea1i khi h\u1ebft hi\u1ec7u l\u1ef1c.",
    "fieldname": "check",
    "fieldtype": "Check",
@@ -219,13 +227,52 @@
   {
    "fieldname": "section_break_nntr",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Data",
+   "label": "Tr\u1ea1ng th\u00e1i Q\u0110"
+  },
+  {
+   "depends_on": "eval: doc.decision_type == \"Quy\u1ebft \u0111\u1ecbnh khen th\u01b0\u1edfng\"",
+   "fieldname": "awardee",
+   "fieldtype": "Data",
+   "label": "\u0110\u1ed1i t\u01b0\u1ee3ng khen th\u01b0\u1edfng"
+  },
+  {
+   "depends_on": "eval: doc.decision_type == \"Quy\u1ebft \u0111\u1ecbnh khen th\u01b0\u1edfng\"",
+   "fieldname": "year_awardee",
+   "fieldtype": "Float",
+   "label": "N\u0103m khen th\u01b0\u1edfng",
+   "precision": "0"
+  },
+  {
+   "fieldname": "issuing_authority",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "C\u01a1 quan/\u0110\u01a1n v\u1ecb ra quy\u1ebft \u0111\u1ecbnh",
+   "mandatory_depends_on": "eval: doc.decision_type == \"Quy\u1ebft \u0111\u1ecbnh khen th\u01b0\u1edfng\"",
+   "options": "Company"
+  },
+  {
+   "depends_on": "eval: doc.decision_type == \"Quy\u1ebft \u0111\u1ecbnh khen th\u01b0\u1edfng\"",
+   "fieldname": "reward_type",
+   "fieldtype": "Data",
+   "label": "H\u00ecnh th\u1ee9c/Danh hi\u1ec7u khen th\u01b0\u1edfng"
+  },
+  {
+   "depends_on": "eval: doc.decision_type == \"Quy\u1ebft \u0111\u1ecbnh khen th\u01b0\u1edfng\"",
+   "fieldname": "reward_amount",
+   "fieldtype": "Float",
+   "label": "M\u1ee9c th\u01b0\u1edfng",
+   "precision": "0"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-29 12:01:54.345293",
+ "modified": "2025-09-29 13:58:56.112312",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Decision",
