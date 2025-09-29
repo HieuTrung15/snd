@@ -25,7 +25,7 @@
    "label": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo ch\u1ee9c danh"
   }
  ],
- "content": "[{\"id\":\"fh0GaQxcmG\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">1.1 Dashboard</span>\",\"col\":12}},{\"id\":\"iqsgZB_jVp\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"NH\u00c2N VI\u00caN \u0110ANG L\u00c0M VI\u1ec6C\",\"col\":3}},{\"id\":\"4v_SzN3k8D\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"NGH\u1ec8 VI\u1ec6C TRONG QU\u00dd\",\"col\":3}},{\"id\":\"iQIdm0voAQ\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"TUY\u1ec2N D\u1ee4NG M\u1edaI\",\"col\":3}},{\"id\":\"3TCbzfSnga\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"NH\u00c2N VI\u00caN M\u1edaI TRONG QU\u00dd\",\"col\":3}},{\"id\":\"6H9ncXDvCa\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo gi\u1edbi t\u00ednh\",\"col\":6}},{\"id\":\"QXdjl_-Z3Y\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo chi nh\u00e1nh\",\"col\":6}},{\"id\":\"RBTBVY9yHD\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo \u0111\u1ed9 tu\u1ed5i\",\"col\":12}},{\"id\":\"10lUn4RmFi\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo ph\u00f2ng ban\",\"col\":6}},{\"id\":\"AfwVlpQ_vd\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo ch\u1ee9c danh\",\"col\":6}},{\"id\":\"6kIYO9Pp_A\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo lo\u1ea1i h\u1ee3p \u0111\u1ed3ng\",\"col\":12}}]",
+ "content": "[{\"id\":\"fh0GaQxcmG\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">1.1 Dashboard</span>\",\"col\":12}},{\"id\":\"iqsgZB_jVp\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"NH\u00c2N VI\u00caN \u0110ANG L\u00c0M VI\u1ec6C\",\"col\":3}},{\"id\":\"4v_SzN3k8D\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"NGH\u1ec8 VI\u1ec6C TRONG QU\u00dd\",\"col\":3}},{\"id\":\"iQIdm0voAQ\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"TUY\u1ec2N D\u1ee4NG M\u1edaI\",\"col\":3}},{\"id\":\"3TCbzfSnga\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"NH\u00c2N VI\u00caN M\u1edaI TRONG QU\u00dd\",\"col\":3}},{\"id\":\"6H9ncXDvCa\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo gi\u1edbi t\u00ednh\",\"col\":6}},{\"id\":\"QXdjl_-Z3Y\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo chi nh\u00e1nh\",\"col\":6}},{\"id\":\"RBTBVY9yHD\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo \u0111\u1ed9 tu\u1ed5i\",\"col\":12}},{\"id\":\"6kIYO9Pp_A\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo lo\u1ea1i h\u1ee3p \u0111\u1ed3ng\",\"col\":12}},{\"id\":\"10lUn4RmFi\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo ph\u00f2ng ban\",\"col\":6}},{\"id\":\"NT2bSolouW\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 s\u1ed1 l\u01b0\u1ee3ng nh\u00e2n vi\u00ean theo ph\u00f2ng ban\",\"col\":12}},{\"id\":\"AfwVlpQ_vd\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo ch\u1ee9c danh\",\"col\":6}}]",
  "creation": "2025-09-18 14:08:30.876025",
  "custom_blocks": [],
  "docstatus": 0,
@@ -38,8 +38,8 @@
  "is_hidden": 0,
  "label": "1.1 Dashboard",
  "links": [],
- "modified": "2025-09-23 08:47:59.417838",
- "modified_by": "Administrator",
+ "modified": "2025-09-26 14:39:10.656843",
+ "modified_by": "sonph@vinatex.com.vn",
  "module": "VNT HR",
  "name": "1.1 Dashboard",
  "number_cards": [
@@ -65,7 +65,7 @@
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 35.0,
+ "sequence_id": 38.0,
  "shortcuts": [],
  "title": "1.1 Dashboard"
 }
