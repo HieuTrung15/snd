@@ -208,3 +208,12 @@ Travel Route, Tuyến đường
 From date,Từ ngày
 To date,Đến ngày
 Type leave,Hình thức nghỉ
+Default Currency,Loại tiền tệ mặc định
+Country,Quốc gia
+Domain,Lĩnh vực/Ngành
+Default Holiday List,Danh sách ngày nghỉ mặc định
+Company Representative,Người đại diện
+Enabled,Đang hoạt động
+Leave Block List,Danh sách chặn nghỉ phép
+Days for which Holidays are blocked for this department.,Các ngày nghỉ không được phép áp dụng cho phòng/ban này.
+Leaves,Nghỉ phép
