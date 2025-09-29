@@ -277,12 +277,14 @@
    "label": "Ng\u00e0y k\u00fd"
   },
   {
+   "depends_on": "eval: doc.decision_type == \"Quy\u1ebft \u0111\u1ecbnh khen th\u01b0\u1edfng\"",
    "fieldname": "approver",
    "fieldtype": "Link",
    "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
    "options": "Employee"
   },
   {
+   "depends_on": "eval: doc.decision_type == \"Quy\u1ebft \u0111\u1ecbnh khen th\u01b0\u1edfng\"",
    "fetch_from": "approver.employee_name",
    "fetch_if_empty": 1,
    "fieldname": "approver_name",
@@ -290,6 +292,7 @@
    "label": "T\u00ean ng\u01b0\u1eddi ph\u00ea duy\u1ec7t"
   },
   {
+   "depends_on": "eval: doc.decision_type == \"Quy\u1ebft \u0111\u1ecbnh khen th\u01b0\u1edfng\"",
    "fieldname": "approver_date",
    "fieldtype": "Date",
    "label": "Ng\u00e0y ph\u00ea duy\u1ec7t"
@@ -299,7 +302,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-29 16:46:13.019104",
+ "modified": "2025-09-29 16:51:52.975565",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Decision",
