@@ -22,12 +22,16 @@
   "awardee",
   "year_awardee",
   "issuing_authority",
-  "column_break_mjzn",
-  "status",
   "reward_type",
   "reward_amount",
+  "column_break_mjzn",
+  "status",
+  "date_sign",
   "decision_content",
   "check",
+  "approver",
+  "approver_name",
+  "approver_date",
   "th\u00f4ng_tin_ng\u01b0\u1eddi_k\u00fd_q\u0111_section",
   "signer",
   "signer_name",
@@ -266,13 +270,39 @@
    "fieldtype": "Float",
    "label": "M\u1ee9c th\u01b0\u1edfng",
    "precision": "0"
+  },
+  {
+   "fieldname": "date_sign",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y k\u00fd"
+  },
+  {
+   "depends_on": "eval: doc.decision_type == \"Quy\u1ebft \u0111\u1ecbnh khen th\u01b0\u1edfng\"",
+   "fieldname": "approver",
+   "fieldtype": "Link",
+   "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
+   "options": "Employee"
+  },
+  {
+   "depends_on": "eval: doc.decision_type == \"Quy\u1ebft \u0111\u1ecbnh khen th\u01b0\u1edfng\"",
+   "fetch_from": "approver.employee_name",
+   "fetch_if_empty": 1,
+   "fieldname": "approver_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean ng\u01b0\u1eddi ph\u00ea duy\u1ec7t"
+  },
+  {
+   "depends_on": "eval: doc.decision_type == \"Quy\u1ebft \u0111\u1ecbnh khen th\u01b0\u1edfng\"",
+   "fieldname": "approver_date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y ph\u00ea duy\u1ec7t"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-29 13:58:56.112312",
+ "modified": "2025-09-29 16:51:52.975565",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Decision",
