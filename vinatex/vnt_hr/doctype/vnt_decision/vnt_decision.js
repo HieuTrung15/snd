@@ -16,4 +16,35 @@ frappe.ui.form.on("VNT Decision", {
             frm.set_value("date", frappe.datetime.get_today());
         }
 	},
+    button(frm) {
+        if (!frm.doc.department_re) {
+            frappe.msgprint(__("Hãy chọn Phòng/Ban cần lấy danh sách nhân sự trước."));
+            return;
+        }
+        frappe.call ({
+            method: 'frappe.client.get_list',
+            args: {
+                doctype: 'Employee',
+                fields: ['name', 'employee_name', 'department', 'designation'],
+                filters: {
+                    status: 'Active',
+                    department: frm.doc.department_re
+                },
+                limit_page_length: 0,
+            },
+            freeze: true,
+            freeze_message: __('Đang nạp nhân sự...'),
+        }).then(r => {
+        const rows = r.message || [];
+        rows.forEach(row => {
+            const d = frm.add_child('items');
+            d.employee = row.name;             
+            d.cur_department = row.department;  
+            d.cur_designation = row.designation;
+        });
+
+        frm.refresh_field('items');
+        frappe.show_alert({ message: __('Đã lấy {0} nhân sự', [rows.length]), indicator: 'green' });
+        });
+    },
 });

@@ -30,6 +30,9 @@
   "desination",
   "company_signer",
   "th\u00f4ng_tin_nh\u00e2n_s\u1ef1_li\u00ean_quan_section",
+  "department_re",
+  "button",
+  "section_break_nntr",
   "items",
   "note",
   "amended_from"
@@ -54,7 +57,7 @@
    "fieldname": "date",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "label": "Ng\u00e0y t\u1ea1o",
+   "label": "Ng\u00e0y t\u1ea1o Q\u0110",
    "reqd": 1
   },
   {
@@ -66,7 +69,7 @@
    "fetch_if_empty": 1,
    "fieldname": "department",
    "fieldtype": "Link",
-   "label": "Ph\u00f2ng/Ban ng\u01b0\u1eddi t\u1ea1o phi\u1ebfu",
+   "label": "Ph\u00f2ng/Ban ng\u01b0\u1eddi t\u1ea1o Q\u0110",
    "options": "Department"
   },
   {
@@ -108,7 +111,8 @@
   {
    "fieldname": "to_date",
    "fieldtype": "Date",
-   "label": "\u0110\u1ebfn ng\u00e0y"
+   "label": "\u0110\u1ebfn ng\u00e0y",
+   "mandatory_depends_on": "eval: doc.check == 1"
   },
   {
    "fieldname": "th\u00f4ng_tin_chung_section",
@@ -141,14 +145,14 @@
   {
    "fieldname": "desination",
    "fieldtype": "Link",
-   "label": "Ch\u1ee9c danh",
+   "label": "Ch\u1ee9c danh ng\u01b0\u1eddi k\u00fd",
    "options": "Designation",
    "reqd": 1
   },
   {
    "fieldname": "company_signer",
    "fieldtype": "Link",
-   "label": "C\u00f4ng ty",
+   "label": "C\u00f4ng ty ng\u01b0\u1eddi k\u00fd l\u00e0m vi\u1ec7c",
    "options": "Company",
    "reqd": 1
   },
@@ -160,6 +164,7 @@
   },
   {
    "default": "0",
+   "description": "Tick v\u00e0o \u0111\u00e2y trong tr\u01b0\u1eddng h\u1ee3p Q\u0110 n\u00e0y c\u1ea7n k\u00fd l\u1ea1i khi h\u1ebft hi\u1ec7u l\u1ef1c.",
    "fieldname": "check",
    "fieldtype": "Check",
    "label": "C\u1ea7n k\u00fd l\u1ea1i"
@@ -199,13 +204,28 @@
    "fieldname": "position",
    "fieldtype": "Data",
    "label": "V\u1ecb tr\u00ed c\u00f4ng vi\u1ec7c ng\u01b0\u1eddi k\u00fd"
+  },
+  {
+   "fieldname": "button",
+   "fieldtype": "Button",
+   "label": "L\u1ea5y danh s\u00e1ch nh\u00e2n vi\u00ean theo ph\u00f2ng/ban"
+  },
+  {
+   "fieldname": "department_re",
+   "fieldtype": "Link",
+   "label": "Ph\u00f2ng/ban c\u1ea7n l\u1ea5y danh s\u00e1ch",
+   "options": "Department"
+  },
+  {
+   "fieldname": "section_break_nntr",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-29 09:56:31.964988",
+ "modified": "2025-09-29 12:01:54.345293",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Decision",
