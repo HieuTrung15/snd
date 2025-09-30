@@ -10,26 +10,10 @@ frappe.query_reports["Danh sách khen thưởng"] = {
             "options": "Employee"
         },
 		{
-            "fieldname":"company",
-            "label": __("Công ty"),
-            "fieldtype": "Link",
-            "options": "Company",
-            "default": frappe.defaults.get_user_default("Company")
-        },
-		{
             "fieldname":"department",
             "label": __("Phòng/Ban"),
             "fieldtype": "Link",
-            "options": "Department",
-			"get_query": function() {
-				const company = frappe.query_report.get_filter_value("company");
-				return {
-				filters: {
-					...(company ? { company } : {}),
-					is_group: 0
-				}
-				};
-			}
+            "options": "Department"        
         }
 	]
 };
