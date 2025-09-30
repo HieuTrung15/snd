@@ -66,6 +66,7 @@ def get_data(filters=None):
         FROM `tabVNT Decision` de
 		LEFT JOIN `tabVNT Decision Item` de_item ON de.name = de_item.parent
         WHERE de.docstatus < 2
+        AND decision_type = 'Quyết định khen thưởng'
             {where_sql}
     """
     return frappe.db.sql(sql, params, as_dict=True)
@@ -74,28 +75,13 @@ def build_emp_conditions(filters=None):
     conds = []
     params = {}
 
-    # if filters.get("employee"):
-    #     conds.append("AND emp.name = %(employee)s")   
-    #     params["employee"] = filters["employee"]
-
-    # if filters.get("company"):
-    #     conds.append("AND emp.company = %(company)s")
-    #     params["company"] = filters["company"]
-
-    # if filters.get("department"):
-    #     conds.append("AND emp.department = %(department)s")
-    #     params["department"] = filters["department"]
+    if filters.get("employee"):
+        conds.append("AND de_item.employee = %(employee)s")   
+        params["employee"] = filters["employee"]
+    if filters.get("department"):
+        conds.append("AND de_item.cur_department = %(department)s")
+        params["department"] = filters["department"]
 
     where_sql = " ".join(conds)
     return where_sql, params
 
-def build_cpn_conditions(filters):
-    conds = []
-    params = {}
-
-    if filters.get("company"):
-        conds.append("cpn.name = %(company)s")
-        params["company"] = filters["company"]
-
-    where_sql = f"WHERE {' AND '.join(conds)}" if conds else ""
-    return where_sql, params
