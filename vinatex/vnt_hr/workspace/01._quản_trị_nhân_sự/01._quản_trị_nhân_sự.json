@@ -1,6 +1,11 @@
 {
- "charts": [],
- "content": "[{\"type\":\"header\",\"data\":{\"text\":\"01. Nh\u00e2n s\u1ef1\"}}]",
+ "charts": [
+  {
+   "chart_name": "ns tuy\u1ec3n vs ngh\u1ec9",
+   "label": "ns tuy\u1ec3n vs ngh\u1ec9"
+  }
+ ],
+ "content": "[{\"id\":\"nI8L22oeyE\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">01. Nh\u00e2n s\u1ef1</span>\",\"col\":12}},{\"id\":\"zfZra0Bt4-\",\"type\":\"chart\",\"data\":{\"chart_name\":\"ns tuy\u1ec3n vs ngh\u1ec9\",\"col\":12}}]",
  "creation": "2025-09-18 14:06:49.771864",
  "custom_blocks": [],
  "docstatus": 0,
@@ -13,7 +18,7 @@
  "is_hidden": 0,
  "label": "01. Qu\u1ea3n tr\u1ecb Nh\u00e2n s\u1ef1",
  "links": [],
- "modified": "2025-09-26 17:00:22.459822",
+ "modified": "2025-09-30 13:57:46.846144",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "01. Qu\u1ea3n tr\u1ecb Nh\u00e2n s\u1ef1",
