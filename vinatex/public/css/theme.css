@@ -175,7 +175,7 @@ a {
 }
 
 .form-grid .grid-row .data-row .sortable-handle {
- max-width: 3rem;
+ /* max-width: 3rem; */
 }
 
 .form-grid .grid-row .data-row {
@@ -189,14 +189,14 @@ a {
 }
 
 .form-grid .grid-row .data-row .search {
- max-width: 3rem;
+ /* max-width: 3rem; */
 }
 
 .form-grid {
- border: 1px solid rgba(5, 0, 0, 0.23);
+ /* border: 1px solid rgba(5, 0, 0, 0.23);
  overflow-x: hidden;
  overflow-y: auto;
- padding-bottom: 2px;
+ padding-bottom: 2px; */
 }
 
 .std-form-layout .btn-default {
@@ -695,7 +695,7 @@ input[type=file]::-webkit-file-upload-button{
 .nx-menu-items {
  background: white;
  width: 200px;
- overflow-y: auto;
+ /* overflow-y: auto; */
  overflow-x: hidden;
  max-height: 99vh;
  z-index: 9999;
