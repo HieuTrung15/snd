@@ -54,8 +54,7 @@ def allocate_leave():
             exist_allocate = frappe.get_all("Leave Allocation",filters={'employee':emp.name,'leave_type':leave_type.name, 'from_date':['Between',[from_date,to_date]],'docstatus':1}) \
                         + frappe.get_all("Leave Allocation",filters={'employee':emp.name,'leave_type':leave_type.name,'to_date':['Between',[from_date,to_date]],'docstatus':1}) 
             if exist_allocate:
-                continue
-
+                return
             leave_allocation = frappe.get_all(
                 "Leave Allocation",
                 filters={
