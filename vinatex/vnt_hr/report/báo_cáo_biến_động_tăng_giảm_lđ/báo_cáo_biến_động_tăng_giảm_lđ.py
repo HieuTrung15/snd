@@ -106,8 +106,8 @@ def get_decreased(filters):
         FROM `tabEmployee` e
         LEFT JOIN `tabEmployee Education` edu 
             ON edu.parent = e.name
-        WHERE ( %(from_date)s IS NULL OR e.date_of_joining >= %(from_date)s )
-            AND ( %(to_date)s   IS NULL OR e.date_of_joining <= %(to_date)s )
+        WHERE ( %(from_date)s IS NULL OR e.relieving_date >= %(from_date)s )
+            AND ( %(to_date)s   IS NULL OR e.relieving_date <= %(to_date)s )
           AND (edu.year_of_passing IS NULL OR edu.year_of_passing = (
                 SELECT MAX(edu2.year_of_passing)
                 FROM `tabEmployee Education` edu2

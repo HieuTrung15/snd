@@ -184,8 +184,38 @@ Bằng cấp cao nhất: {{ highest_diploma or '' }}
 </p>
 
 <p style="text-align: center;">
-    27) TÓM TẮT QUÁ TRÌNH CÔNG TÁC
+  27) TÓM TẮT QUÁ TRÌNH CÔNG TÁC
 </p>
+
+{% set rows = [] %}
+
+{# ----- INTERNAL WORK HISTORY ----- #}
+{% for r in (doc.internal_work_history or []) %}
+  {% set _from = r.from_date %}
+  {% set _to   = r.to_date %}
+  {% set _title = (r.designation or '') ~ (' - ' ~ (doc.company or '') if (doc.company) else '') %}
+  {% set _ = rows.append({
+      'from': _from,
+      'to': _to,
+      'title': _title
+  }) %}
+{% endfor %}
+
+{# ----- EXTERNAL WORK HISTORY ----- #}
+{% for r in (doc.external_work_history or []) %}
+  {% set _from = r.custom_from_date %}
+  {% set _to   = r.custom_to_date %}
+  {% set company_name = r.company or r.organization or r.employer %}
+  {% set _title = ( r.designation or '') ~ ((' - ' ~ r.company_name) if r.company_name else '') %}
+  {% set _ = rows.append({
+      'from': _from,
+      'to': _to,
+      'title': _title
+  }) %}
+{% endfor %}
+
+{# Sắp xếp theo 'from' (tăng dần) #}
+{% set rows = rows | sort(attribute='from') %}
 
 <table style="margin-top:20px; width:100%; border:1px solid #000; border-collapse:collapse;">
   <tbody>
@@ -197,16 +227,22 @@ Bằng cấp cao nhất: {{ highest_diploma or '' }}
         Chức danh, chức vụ, đơn vị công tác (Đảng, Chính quyền, Đoàn thể)
       </td>
     </tr>
+
+    {% for item in rows %}
+      {% set from_txt = frappe.utils.formatdate(item.from, "MM-yyyy") if item.from else "" %}
+      {% set to_txt = frappe.utils.formatdate(item.to, "MM-yyyy") if item.to else "đến nay" %}
+      <tr>
+        <td style="border:1px solid #000;">
+          {{ (from_txt ~ " - " ~ to_txt).strip() }}
+        </td>
+        <td style="border:1px solid #000;">
+          {{ item.title or "" }}
+        </td>
+      </tr>
+    {% endfor %}
   </tbody>
-  <tbody>
-        {% for row in doc.custom_work_process %}
-        <tr>
-            <td style="border:1px solid #000;">{{ row.từ_ngày + ' - ' + row.đến_ngày or '' }}</td>
-            <td style="border:1px solid #000;">{{ row.chức_vụ or '' }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
 </table>
+
 
 <p style="text-align: center;">
     28) ĐẶC ĐIỂM LỊCH SỬ BẢN THÂN
