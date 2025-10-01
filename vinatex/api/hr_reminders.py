@@ -9,30 +9,32 @@ def get_hr_reminders(days_ahead: int = 30, limit: int = 100):
     start = getdate(today())
     end = getdate(add_days(start, days_ahead))
 
-    # --- HỢP ĐỒNG: VNT Contract ---
-    contracts = []
-    
+    # --- HỢP ĐỒNG SẮP HẾT HẠN: lấy từ tabEmployee ---
+    # end_date = min(contract_end_date, date_of_retirement) (nếu có cả 2)
     contracts = frappe.db.sql(
         """
         SELECT
-            vc.name,
-            vc.employee,
+            e.name AS employee,
             e.employee_name,
             e.department,
-            vc.to_date AS end_date
-        FROM `tabVNT Contract` vc
-        LEFT JOIN `tabEmployee` e ON e.name = vc.employee
-        WHERE vc.validity = 1 
-
-        ORDER BY vc.to_date ASC
-        LIMIT %(limit)s
+            CASE
+                WHEN e.contract_end_date IS NOT NULL AND e.date_of_retirement IS NOT NULL
+                    THEN IF(e.contract_end_date <= e.date_of_retirement, e.contract_end_date, e.date_of_retirement)
+                WHEN e.contract_end_date IS NOT NULL THEN e.contract_end_date
+                WHEN e.date_of_retirement IS NOT NULL THEN e.date_of_retirement
+                ELSE NULL
+            END AS end_date
+        FROM `tabEmployee` e
+        WHERE e.status = 'Active'
+          AND (e.contract_end_date IS NOT NULL OR e.date_of_retirement IS NOT NULL)
+        HAVING end_date BETWEEN %(start)s AND %(end)s
+        ORDER BY end_date ASC
         """,
-        {"start": start, "end": end, "limit": limit},
+        {"start": start, "end": end},
         as_dict=True,
     )
-    
 
-    # --- SINH NHẬT (như trước) ---
+    # --- SINH NHẬT (giữ nguyên) ---
     birthdays = frappe.db.sql(
         """
         SELECT
@@ -49,13 +51,13 @@ def get_hr_reminders(days_ahead: int = 30, limit: int = 100):
         WHERE e.status = 'Active' AND e.date_of_birth IS NOT NULL
         HAVING next_birthday BETWEEN %(start)s AND %(end)s
         ORDER BY next_birthday ASC
-        LIMIT %(limit)s
         """,
-        {"start": start, "end": end, "limit": limit},
+        {"start": start, "end": end},
         as_dict=True,
     )
 
-    # --- NGHỈ HƯU (như trước) ---
+    # --- NGHỈ HƯU ---
+    # retirement_date = COALESCE(date_of_retirement, date_of_birth + retirement_age năm)
     retirement_age = frappe.db.get_single_value("HR Settings", "retirement_age") or 60
     retirements = frappe.db.sql(
         """
@@ -64,19 +66,21 @@ def get_hr_reminders(days_ahead: int = 30, limit: int = 100):
             e.employee_name,
             e.department,
             e.date_of_birth,
-            DATE_ADD(e.date_of_birth, INTERVAL %(ret_age)s YEAR) AS retirement_date
+            COALESCE(
+                e.date_of_retirement,
+                DATE_ADD(e.date_of_birth, INTERVAL %(ret_age)s YEAR)
+            ) AS retirement_date
         FROM `tabEmployee` e
         WHERE e.status = 'Active' AND e.date_of_birth IS NOT NULL
         HAVING retirement_date BETWEEN %(start)s AND %(end)s
         ORDER BY retirement_date ASC
-        LIMIT %(limit)s
         """,
-        {"ret_age": int(retirement_age), "start": start, "end": end, "limit": limit},
+        {"ret_age": int(retirement_age), "start": start, "end": end},
         as_dict=True,
     )
 
     return {
-        "params": {"start": str(start), "end": str(end), "days_ahead": days_ahead, "limit": limit},
+        "params": {"start": str(start), "end": str(end), "days_ahead": days_ahead},
         "counts": {
             "contracts": len(contracts),
             "birthdays": len(birthdays),
