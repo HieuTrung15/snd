@@ -15,7 +15,7 @@ def get_columns():
         {"label": "Chức danh", "fieldname": "designation", "fieldtype": "Data", "options": "Designation", "width": 180},
 
         {"label": "Ngày hết hạn HĐ", "fieldname": "contract_end_date", "fieldtype": "Date", "width": 200},
-        {"label": "Ngày nghỉ hưu", "fieldname": "date_of_retirement", "fieldtype": "Date", "width": 130},
+        # {"label": "Ngày nghỉ hưu", "fieldname": "date_of_retirement", "fieldtype": "Date", "width": 130},
 
         {"label": "Còn (ngày)", "fieldname": "days_to_expiry", "fieldtype": "Int", "width": 100},
 
@@ -28,7 +28,7 @@ def _get_window(filters):
     """Xác định khoảng ngày để lọc.
     - Nếu có from_date & to_date: dùng đúng khoảng đó
     - Ngược lại nếu có days_ahead: từ hôm nay → hôm nay + days_ahead
-    - Mặc định: 60 ngày tới
+    - Mặc định: 30 ngày tới
     """
     if filters.get("from_date") and filters.get("to_date"):
         return getdate(filters["from_date"]), getdate(filters["to_date"])
@@ -43,10 +43,7 @@ def get_data(filters):
     # Biểu thức chọn ngày hết hạn gần nhất giữa contract_end_date và date_of_retirement
     expiry_expr = """
         CASE
-            WHEN emp.contract_end_date IS NOT NULL AND emp.date_of_retirement IS NOT NULL
-                THEN IF(emp.contract_end_date <= emp.date_of_retirement, emp.contract_end_date, emp.date_of_retirement)
             WHEN emp.contract_end_date IS NOT NULL THEN emp.contract_end_date
-            WHEN emp.date_of_retirement IS NOT NULL THEN emp.date_of_retirement
             ELSE NULL
         END
     """
@@ -82,13 +79,10 @@ def get_data(filters):
             emp.department,
             emp.designation,
             emp.contract_end_date,
-            emp.date_of_retirement,
             {expiry_expr} AS expiry_date,
             CASE
-                WHEN emp.contract_end_date IS NOT NULL AND (emp.date_of_retirement IS NULL OR emp.contract_end_date <= emp.date_of_retirement)
+                WHEN emp.contract_end_date 
                     THEN 'contract_end_date'
-                WHEN emp.date_of_retirement IS NOT NULL AND (emp.contract_end_date IS NULL OR emp.date_of_retirement < emp.contract_end_date)
-                    THEN 'date_of_retirement'
                 ELSE NULL
             END AS expiry_source,
             DATEDIFF({expiry_expr}, CURDATE()) AS days_to_expiry,
