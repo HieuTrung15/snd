@@ -35,15 +35,18 @@ def get_data(filters):
 
     where_clause = ""
     if conditions:
-        where_clause = "WHERE " + " AND ".join(conditions)
+        where_clause = " AND ".join(conditions)
 
     # SQL truy vấn nhóm theo nhóm chức danh
     sql = f"""
         SELECT
-            employee.custom_designation_group AS designation_group,
+        CASE WHEN employee.custom_designation_group IS NULL OR employee.custom_designation_group = '' THEN '(Không có)'
+                ELSE employee.custom_designation_group
+            END AS designation_group,
             COUNT(*) AS employee_count
         FROM
             `tabEmployee` employee
+        WHERE employee.status = 'Active'
         {where_clause}
         GROUP BY
             employee.custom_designation_group
@@ -51,9 +54,6 @@ def get_data(filters):
             COUNT(*) DESC
     """
     rows = frappe.db.sql(sql, as_dict=True)
-    for r in rows:
-        if not r.designation_group:
-            r.designation_group = _("(Không có)")
     return rows
 
 def get_chart_data(data):

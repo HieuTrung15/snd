@@ -3,7 +3,7 @@ from frappe.utils import nowdate, getdate
 
 def execute(filters=None):
     filters = filters or {}
-    the_date = getdate(filters.get("date") or nowdate())
+    the_date = getdate(nowdate())
     employee = filters.get("employee")
     department = filters.get("department")
 
@@ -44,12 +44,14 @@ def get_columns():
             "label": "Giờ checkout",
             "fieldname": "last_out",
             "fieldtype": "Datetime",
+            "hidden": 1,
             "width": 200
         },
         {
             "label": "Số lần chấm công",
             "fieldname": "checkins",
             "fieldtype": "Int",
+            "hidden": 1,
             "width": 100
         },
         {
