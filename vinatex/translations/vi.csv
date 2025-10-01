@@ -187,7 +187,7 @@ Reason,Lý do
 From Time,Từ giờ
 To Time,Đến giờ
 Approval,Phê duyệt
-Leave Approver Name,Tên người phê duyệt nghỉ phépHalf Day Date
+Leave Approver Name,Tên người phê duyệt nghỉ phép
 Half Day Date,Ngày nghỉ nửa ngày
 Half Shift,Ca làm nửa ngày
 First half of shift,Nửa ca đầu
@@ -310,3 +310,7 @@ VNT Bussiness Trip Reaquest, Đề nghị đi công tác
 Active, Đang hoạt động
 Left, Nghỉ việc
 Short text Employee Type, Tên viết tắt loại HĐ
+Submit this Leave Application to confirm., Xác nhận gửi đơn xin nghỉ phép này để Trưởng/Phó Ban duyệt.
+Employee Leave Balance, Số ngày phép còn lại
+Allocated Leaves, Ngày phép đã được Cấp
+No leaves have been allocated., Chưa có ngày phép nào được cấp.
