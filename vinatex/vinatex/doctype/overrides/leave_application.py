@@ -27,6 +27,8 @@ from hrms.hr.doctype.leave_application.leave_application import (
 )
 from hrms.hr.doctype.leave_ledger_entry.leave_ledger_entry import delete_ledger_entry
 from hrms.hr.utils import get_holiday_dates_for_employee
+from frappe.utils.data import get_url_to_form
+from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 
 # from eupapp.eup_hr.doctype.xac_nhan_cham_cong.xac_nhan_cham_cong import update_event
 # from eupapp.eupapp.doctype.overrides.workflow import gen_approve_channel
@@ -34,12 +36,21 @@ from hrms.hr.utils import get_holiday_dates_for_employee
 
 class VntLeaveApplication(LeaveApplication):
     LEAVE_TYPE = "Công tác"
+    
+    def save(self):
+        super().save()
+        notify(self, self.employee_name, self.leave_approver)
 
     def on_submit(self):
         super().on_submit()
         if self.leave_type == self.LEAVE_TYPE:
             self._on_submit_leave_application()
-
+            
+			
+    def before_submit(self):
+        self.status = "Approved"
+        
+    
     def on_cancel(self):
         super().on_cancel()
         if self.leave_type == self.LEAVE_TYPE:
@@ -404,4 +415,20 @@ def get_leave_type(
                     )
 
     return vals
+
+
+def system_notification(message, doctype, docname, emails=''):
+    subject = {
+        "type": "Alert",
+                "subject": message,
+                'document_type': doctype,
+                'document_name': docname
+    }
+    make_notification_logs(subject, emails)
+    
+    
+def notify(self, actor, receiver):
+    # url = get_url_to_form(self.doctype, self.name)
+    message = _(f"Phiếu đăng ký nghỉ phép") + " của " + actor
+    system_notification(message, self.doctype, self.name, receiver)
 

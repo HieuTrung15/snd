@@ -29,10 +29,13 @@ def allocate_leave():
         frappe.msgprint("Không tìm thấy Leave Policy cấu hình", alert=True, indicator="Red")
         return 0
 
-    # Lấy giá trị annual_allocation từ Leave Policy Detail (lấy bản ghi đầu tiên nếu có)
-    lp_detail = frappe.get_all('Leave Policy Detail', filters={'parent': leave_policy_name}, fields=['annual_allocation'], limit_page_length=1)
-    # annual_allocation = lp_detail[0]['annual_allocation'] if lp_detail else 0
-
+    # Lấy giá trị annual_allocation từ Leave Policy Detail (map theo leave_type)
+    lp_details = frappe.get_all(
+        'Leave Policy Detail',
+        filters={'parent': leave_policy_name},
+        fields=['leave_type', 'annual_allocation']
+    )
+    policy_annual_map = {d['leave_type']: flt(d.get('annual_allocation', 0)) for d in lp_details}
     # tạo / lấy leave period cho cả năm
     leave_period = create_leave_period(from_date, to_date, Config.COMPANY)
 
@@ -58,30 +61,42 @@ def allocate_leave():
             pluck='name'
         )
         if existing_lpa:
-            continue
-
+            return
         # Tạo Leave Policy Assignment
-        try:
-            lpa = frappe.new_doc('Leave Policy Assignment')
-            lpa.employee = emp_name
-            lpa.assignment_based_on = "Leave Period"
-            lpa.leave_policy = leave_policy_name
-            lpa.effective_from = leave_period.from_date
-            lpa.effective_to = leave_period.to_date
-            # lpa.carry_forward = 1
-            lpa.leave_period = leave_period.name
-            lpa.docstatus = 1  # mark as submitted
-            lpa.insert(ignore_permissions=True)
-            # mark as submitted/docstatus = 1 and set leaves_allocated to a sensible default (1 như trước nếu cần)
-            frappe.db.set_value('Leave Policy Assignment', lpa.name, {'docstatus': 1, 'leaves_allocated': 1})
-            created_count += 1
-        except Exception as e:
-            frappe.log_error(f"Error creating Leave Policy Assignment for {emp_name}: {str(e)}", "Allocate Leave Error")
-            continue
+        lpa = frappe.new_doc('Leave Policy Assignment')
+        lpa.employee = emp_name
+        lpa.assignment_based_on = "Leave Period"
+        lpa.leave_policy = leave_policy_name
+        lpa.effective_from = leave_period.from_date
+        lpa.effective_to = leave_period.to_date
+        # lpa.carry_forward = 1
+        lpa.leave_period = leave_period.name
+        lpa.docstatus = 1  # mark as submitted
+        lpa.insert(ignore_permissions=True)
+        frappe.db.commit()
+        # mark as submitted/docstatus = 1 and set leaves_allocated to a sensible default (1 như trước nếu cần)
+        frappe.db.set_value('Leave Policy Assignment', lpa.name, {'docstatus': 1, 'leaves_allocated': 1})
+        created_count += 1
+
+        # --- NEW: cập nhật Leave Allocation(s) sinh ra bởi lpa, gán annual_allocation -> new_leaves_allocated ---
+        allocations = frappe.get_all(
+            'Leave Allocation',
+            filters={'leave_policy_assignment': lpa.name, 'docstatus': 1},
+            fields=['name', 'leave_type']
+        )
+        # frappe.throw(f"{allocations}")
+        if allocations:
+            for alloc in allocations:
+                ann = policy_annual_map.get(alloc['leave_type'], 0)
+                # cập nhật cả new_leaves_allocated và total_leaves_allocated để đồng bộ
+                frappe.db.set_value('Leave Allocation', alloc['name'],
+                                {'new_leaves_allocated': ann})
+                # commit optional
+                frappe.db.commit()
     # phân bổ leave allocation cho nhân viên sẽ tính từ ngày joining để tính số ngày phép còn lại, những nhân viên vào từ năm 
     # ngoái sẽ 12 ngày phép
-    frappe.msgprint(f'Hoàn tất phân bổ: đã tạo {created_count} bản ghi cho {Config.LEAVE_POLICY_TITLE}', alert=True, indicator='Green')
-    return created_count
+    # frappe.msgprint(f'Hoàn tất phân bổ: đã tạo {created_count} bản ghi cho {Config.LEAVE_POLICY_TITLE}', alert=True, indicator='Green')
+    # return created_count
 
 
 def create_leave_period(from_date, to_date, company):

@@ -1,5 +1,12 @@
 frappe.ui.form.on("Leave Application", {
+	after_save (frm) {
+		if (frm.is_new()) {
+			frm.set_value("status", "Approved");
+			frm.refresh_field("status");
+		}
+	},
 	onload(frm) {
+		frm.set_value("follow_via_email", 0);
 		// Ignore cancellation of doctype on cancel all.
 		frm.ignore_doctypes_on_cancel_all = ["Leave Ledger Entry"];
 
@@ -93,16 +100,18 @@ frappe.ui.form.on("Leave Application", {
 			} else {
 				frm.set_value("custom_leave_extra_day", total_leave_days);
 			}
-			frm.set_value("custom_leave_extra", "Nghỉ không lương");
-			frm.refresh_field("custom_leave_extra_day");
-			frm.refresh_field("custom_leave_extra");
-			frm.refresh_field("custom_leave_application_details");
-		} else {
-			frm.set_value("custom_leave_extra_day", 0);
-			frm.set_value("custom_leave_extra", "");
-			frm.refresh_field("custom_leave_extra_day");
-			frm.refresh_field("custom_leave_extra");
-		}
+			frm.set_value("custom_leave_extra", "Nghỉ không hưởng lương");
+			// frm.refresh_field("custom_leave_extra_day");
+			// frm.refresh_field("custom_leave_extra");
+			// frm.refresh_field("custom_leave_application_details");
+		} 
+		// khi tạo nghỉ phép 1 ngày đầu tháng thì hiển thị leave extra là nghỉ ko hưởng lương => cmt
+		// else {
+		// 	frm.set_value("custom_leave_extra_day", 0);
+		// 	frm.set_value("custom_leave_extra", "");
+		// 	frm.refresh_field("custom_leave_extra_day");
+		// 	frm.refresh_field("custom_leave_extra");
+		// }
 	},
 
 	get_leave_type(frm) {
