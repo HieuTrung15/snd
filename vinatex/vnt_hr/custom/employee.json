@@ -2900,7 +2900,7 @@
    "fetch_from": null,
    "fetch_if_empty": 0,
    "fieldname": "custom_main_income",
-   "fieldtype": "Float",
+   "fieldtype": "Data",
    "hidden": 0,
    "hide_border": 0,
    "hide_days": 0,
