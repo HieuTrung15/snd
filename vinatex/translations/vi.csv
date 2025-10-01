@@ -211,7 +211,7 @@ Type leave,Hình thức nghỉ
 Default Currency,Loại tiền tệ mặc định
 Country,Quốc gia
 Domain,Lĩnh vực/Ngành
-Default Holiday List,Danh sách ngày nghỉ mặc định
+Default Holiday List,Danh sách ngày nghỉ lễ mặc định
 Company Representative,Người đại diện
 Enabled,Đang hoạt động
 Leave Block List,Danh sách chặn nghỉ phép
@@ -219,3 +219,91 @@ Days for which Holidays are blocked for this department.,Các ngày nghỉ khôn
 Leaves,Nghỉ phép
 Hiring Count,Số NS tuyển mới
 Attrition Count,Số NS nghỉ
+Collapse,Thu gọn
+Buying and Selling, Mua hàng và bán hàng
+HR & Payroll, Nhân sự & Tiền lương
+Buying & Selling Settings, Cài đặt mua hàng và bán hàng
+HR & Payroll Settings, Cài đặt nhân sự và tiền lương
+Default Payroll Payable Account, Tài khoản phải trả lương mặc định
+Default Employee Advance Account, Tài khoản ứng lương nhân viên mặc định
+Default Expense Claim Payable Account, Tài khoản phải trả mặc định cho các khoản hoàn ứng/đề nghị thanh toán chi phí
+Stock and Manufacturing, Kho và Sản xuất
+Stock Settings, Cài đặt kho
+Enable Perpetual Inventory, Bật chế độ hạch toán tồn kho liên tục
+Enable Provisional Accounting For Non Stock Items,Bật hạch toán tạm thời cho các mặt hàng không quản lý tồn kho
+Default Inventory Account, Tài khoản tồn kho mặc định
+Stock Adjustment Account, Tài khoản điều chỉnh hàng tồn kho
+Default In-Transit Warehouse, Kho trung chuyển mặc định
+Stock Received But Not Billed, Hàng đã nhận nhưng chưa lập hóa đơn
+Default Provisional Account, Tài khoản hach toán tạm thời mặc định
+Expenses Included In Valuation, Chi phí đưa vào giá vốn hàng tồn kho
+Default Operating Cost Account, Tài khoản chi phí hoạt động mặc định
+Dashboard, Dashboard
+Chart of Accounts, Sơ đồ tài khoản
+Create Chart Of Accounts Based On, Tạo hệ thống tài khoản dựa trên
+Standard Template, 
+Allow Account Creation Against Child Company, Cho phép tạo tài khoản đối với công ty con
+Default Cash Account, Tài khoản tiền mặt mặc định
+Default Receivable Account, Tài khoản phải thu mặc định
+Default Payable Account, Tài khoản phải trả mặc định
+Write Off Account, Tài khoản xoá nợ
+Unrealized Profit / Loss Account, Tài khoản lãi/lỗ chưa thực hiện
+Default Cost of Goods Sold Account, Tài khoản giá vốn hàng bán mặc định
+Default Income Account, Tài khoản doanh thu mặc định
+Default Payment Discount Account, Tài khoản chiết khấu thanh toán mặc định
+Default Payment Terms Template, Mẫu điều khoản thanh toán mặc định
+Default Cost Center, Trung tâm chi phí mặc định
+Default Finance Book, Sổ tài chính mặc định
+Exchange Gain / Loss, Lãi / lỗ tỷ giá hối đoái
+Exchange Gain / Loss Account, Tải khoản lãi / lỗ tỷ giá hối đoái
+Unrealized Exchange Gain/Loss Account, Tài khoản lãi/lỗ tỷ giá hối đoái chưa thực hiện
+Round Off Account, Tài khoản làm tròn số
+Round Off Cost Center, Trung tâm chi phí cho khoản làm tròn số
+Round Off for Opening, Làm tròn số cho số dư đầu kỳ
+Deferred Accounting, Kế toán dồn tích (hoãn ghi nhận)
+Default Deferred Revenue Account,Tài khoản doanh thu chưa thực hiện mặc định
+Default Deferred Expense Account, Tài khoản chi phí trả trước mặc định
+Book Advance Payments in Separate Party Account, Hạch toán các khoản trả trước vào tài khoản riêng cho từng đối tượng
+Default Advance Received Account , Tài khoản nhận trước mặc định
+Only 'Payment Entries' made against this advance account are supported., Chỉ các chứng từ thanh toán (Payment Entry) được hạch toán vào tài khoản ứng trước này mới được hỗ trợ.
+Default Advance Paid Account , Tài khoản trả trước mặc định
+Only 'Payment Entries' made against this advance account are supported., Chỉ các chứng từ thanh toán (Payment Entry) được hạch toán vào tài khoản ứng trước này mới được hỗ trợ.
+Reconciliation Takes Effect On, Đối chiếu có hiệu lực từ ngày
+Advance Payment Date, Ngày thanh toán ứng trước
+Oldest Of Invoice Or Advance, Ngày cũ nhất giữa hóa đơn hoặc ứng trước
+Reconciliation Date, Ngày đối chiếu
+"Enabling this option will allow you to record - <br><br> 1. Advances Received in a <b>Liability Account</b> instead of the <b>Asset Account</b><br><br>2. Advances Paid in an <b>Asset Account</b> instead of the <b> Liability Account</b>","Bật tùy chọn này sẽ cho phép bạn ghi nhận – <br><br>1. Các khoản ứng trước nhận được vào Tài khoản Nợ phải trả thay vì Tài khoản Tài sản<br><br>2. Các khoản ứng trước đã trả vào Tài khoản Tài sản thay vì Tài khoản Nợ phải trả"
+Exchange Rate Revaluation Settings, Thiết lập đánh giá lại tỷ giá hối đoái
+Auto Create Exchange Rate Revaluation, Tự động tạo bút toán đánh giá lại tỷ giá hối đoái
+Frequency, Tần suất
+Submit ERR Journals?, Tự động ghi sổ bút toán đánh giá lại tỷ giá hối đoái?
+"Upon enabling this, the JV will be submitted for a different exchange rate.", "Khi bật tùy chọn này, bút toán nhật ký sẽ được ghi sổ theo một tỷ giá hối đoái khác."
+Budget Detail, Chi tiết ngân sách
+Exception Budget Approver Role, Vai trò phê duyệt vượt ngân sách
+Fixed Asset Defaults, Thiết lập mặc định cho tài sản cố định
+Accumulated Depreciation Account, Tài khoản khấu hao lũy kế
+Depreciation Expense Account, Tài khoản chi phí khấu hao
+Series for Asset Depreciation Entry (Journal Entry), Ký hiệu (Series) cho bút toán khấu hao tài sản (Journal Entry)
+Expenses Included In Asset Valuation,Chi phí được tính vào giá trị tài sản
+Gain/Loss Account on Asset Disposal, Tài khoản lãi/lỗ khi thanh lý tài sản
+Asset Depreciation Cost Center,Trung tâm chi phí khấu hao tài sản
+Capital Work In Progress Account, Tài khoản xây dựng cơ bản dở dang
+Asset Received But Not Billed, Tài sản đã nhận nhưng chưa có hóa đơn
+Default Warehouse for Sales Return, Kho mặc định cho hàng bán bị trả lại
+Pre Sales, Hoạt động trước bán hàng
+Manage,Quản lý
+Cost Center,Trung tâm chi phí
+Chart of Accounts, Hệ thống tài khoản kế toán
+Sales Tax Template, Mẫu thuế bán hàng
+Purchase Tax Template, Mẫu thuế mua hàng
+Create Tax Template, Tạo mẫu thuế
+Delete Transactions, Xóa giao dịch
+VNT Desgination Group, Nhóm chức danh
+VNT Decision, Quyết định
+VNT Decision Type, Loại quyết định
+VNT Attendance Confirm, Xác nhận chấm công
+VNT Organizational Structure, Cơ cấu tổ chức
+VNT Type Or Explain, Loại giải trình
+VNT Labor Utillzation Report, Tình hình sử dụng lao động
+VNT Timekeeper Config, Cấu hình chấm công
+VNT Bussiness Trip Reaquest, Đề nghị đi công tác
