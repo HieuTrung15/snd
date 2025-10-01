@@ -14,7 +14,7 @@ Payment deadline, Hạn thanh toán
 Bank Transfer, Chuyển khoản
 Debit Offset, Bù trừ công nợ
 Advance Payment, Thanh toán trước
-Submit, Chốt
+Submit, Xác nhận
 Payment Request Content, Nội dung đề nghị thanh toán
 Payment Order Type, Loại đề nghị thanh toán
 Payment Information, Thông tin thanh toán
@@ -307,3 +307,6 @@ VNT Type Or Explain, Loại giải trình
 VNT Labor Utillzation Report, Tình hình sử dụng lao động
 VNT Timekeeper Config, Cấu hình chấm công
 VNT Bussiness Trip Reaquest, Đề nghị đi công tác
+Active, Đang hoạt động
+Left, Nghỉ việc
+Short text Employee Type, Tên viết tắt loại HĐ
