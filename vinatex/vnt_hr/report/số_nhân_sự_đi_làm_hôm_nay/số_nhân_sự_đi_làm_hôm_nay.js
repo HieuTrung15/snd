@@ -3,12 +3,6 @@
 
 frappe.query_reports["Số nhân sự đi làm hôm nay"] = {
 	"filters": [
-		 {
-            fieldname: "Date",
-            label: __("Ngày"),
-            fieldtype: "Date",
-            default: frappe.datetime.get_today()
-        },
         {
             fieldname: "employee",
             label: __("Mã/Tên nhân sự"),
