@@ -314,3 +314,8 @@ Submit this Leave Application to confirm., Xác nhận gửi đơn xin nghỉ ph
 Employee Leave Balance, Số ngày phép còn lại
 Allocated Leaves, Ngày phép đã được Cấp
 No leaves have been allocated., Chưa có ngày phép nào được cấp.
+Permanently Submit,"Xác nhận gửi, không thể hoàn tác"
+Application period cannot be outside leave allocation period, Thời gian xin nghỉ không được nằm ngoài thời gian phân bổ nghỉ phép
+"Only Leave Applications with status 'Approved' and 'Rejected' can be submitted", "Chỉ những đơn xin nghỉ phép/công tác có trạng thái 'Đã duyệt' hoặc 'Bị từ chối' mới có thể xác nhận."
+Please setup default outgoing Email Account from Tools > Email Account, Vui lòng thiết lập tài khoản email gửi đi mặc định từ Công cụ > Tài khoản Email
+
