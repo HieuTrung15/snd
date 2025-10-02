@@ -62,14 +62,11 @@ def get_hr_reminders(days_ahead: int = 30, limit: int = 100):
             e.employee_name,
             e.department,
             e.date_of_birth,
-            COALESCE(
-                e.date_of_retirement,
-                DATE_ADD(e.date_of_birth, INTERVAL %(ret_age)s YEAR)
-            ) AS retirement_date
+            e.date_of_retirement
         FROM `tabEmployee` e
         WHERE e.status = 'Active' AND e.date_of_birth IS NOT NULL
-        HAVING retirement_date BETWEEN %(start)s AND %(end)s
-        ORDER BY retirement_date ASC
+        AND e.date_of_retirement BETWEEN %(start)s AND %(end)s
+        ORDER BY e.date_of_retirement ASC
         """,
         {"ret_age": int(retirement_age), "start": start, "end": end},
         as_dict=True,
