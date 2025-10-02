@@ -13,7 +13,7 @@ def get_leave_days_business_and_annual(filters=None):
 
     # Map user -> employee
     employee = filters.get("employee") or frappe.db.get_value(
-        "Employee", {"user_id": frappe.session.user, "status": "Active"}, "name"
+        "Employee", {"user_id": frappe.session.user, "status": "Active"}, "name", ignore_permissions=True
     )
     if not employee:
         return 0.0
