@@ -9,89 +9,30 @@ def execute(filters=None):
 
 def get_columns():
     return [
-        {"label": "Mã NV", "fieldname": "employee", "fieldtype": "Data", "options": "Employee", "width": 120},
-        {"label": "Tên nhân viên", "fieldname": "employee_name", "fieldtype": "Data", "width": 220},
-        {"label": "Phòng ban", "fieldname": "department", "fieldtype": "Data", "options": "Department", "width": 220},
-        {"label": "Chức danh", "fieldname": "designation", "fieldtype": "Data", "options": "Designation", "width": 180},
-
-        {"label": "Ngày hết hạn HĐ", "fieldname": "contract_end_date", "fieldtype": "Date", "width": 200},
-        # {"label": "Ngày nghỉ hưu", "fieldname": "date_of_retirement", "fieldtype": "Date", "width": 130},
-
-        {"label": "Còn (ngày)", "fieldname": "days_to_expiry", "fieldtype": "Int", "width": 100},
-
-        {"label": "Trạng thái", "fieldname": "status", "fieldtype": "Data", "width": 110},
-        {"label": "Email", "fieldname": "email", "fieldtype": "Data", "width": 180},
-        {"label": "SĐT", "fieldname": "phone", "fieldtype": "Data", "width": 120},
+        {"label": "Mã NV",            "fieldname": "employee",           "fieldtype": "Link", "options": "Employee",   "width": 120},
+        {"label": "Tên nhân viên",    "fieldname": "employee_name",      "fieldtype": "Data",                           "width": 220},
+        {"label": "Phòng ban",        "fieldname": "department",         "fieldtype": "Link", "options": "Department", "width": 220},
+        {"label": "Chức danh",        "fieldname": "designation",        "fieldtype": "Link", "options": "Designation","width": 180},
+        {"label": "Ngày hết hạn HĐ",  "fieldname": "contract_end_date",  "fieldtype": "Date",                           "width": 150},
+        {"label": "Còn (ngày)",       "fieldname": "days_to_expiry",     "fieldtype": "Int",                             "width": 100},
+        {"label": "Email",            "fieldname": "company_email",      "fieldtype": "Data",                            "width": 180},
+        {"label": "SĐT",              "fieldname": "cell_number",        "fieldtype": "Data",                            "width": 120},
     ]
 
-def _get_window(filters):
-    """Xác định khoảng ngày để lọc.
-    - Nếu có from_date & to_date: dùng đúng khoảng đó
-    - Ngược lại nếu có days_ahead: từ hôm nay → hôm nay + days_ahead
-    - Mặc định: 30 ngày tới
-    """
-    if filters.get("from_date") and filters.get("to_date"):
-        return getdate(filters["from_date"]), getdate(filters["to_date"])
-    days = int(filters.get("days_ahead") or 60)
-    start = getdate(filters.get("base_date") or today())
-    end = getdate(add_days(start, days))
-    return start, end
-
 def get_data(filters):
-    start_date, end_date = _get_window(filters)
-
-    # Biểu thức chọn ngày hết hạn gần nhất giữa contract_end_date và date_of_retirement
-    expiry_expr = """
-        CASE
-            WHEN emp.contract_end_date IS NOT NULL THEN emp.contract_end_date
-            ELSE NULL
-        END
-    """
-
-    conditions = []
-    params = [start_date, end_date]
-
-    # Lọc theo khoảng ngày của "ngày xét hết hạn"
-    conditions.append(f"({expiry_expr}) BETWEEN %s AND %s")
-
-    # Các bộ lọc tùy chọn
-    if filters.get("department"):
-        conditions.append("emp.department = %s")
-        params.append(filters["department"])
-
-    if filters.get("employee"):
-        conditions.append("emp.name = %s")
-        params.append(filters["employee"])
-
-    #  filter status
-    if filters.get("status"):
-        conditions.append("emp.status = %s")
-        params.append(filters["status"])
-    else:
-        conditions.append("emp.status = 'Active'")
-
-    where_clause = " AND ".join(conditions)
-
     sql = f"""
         SELECT
-            emp.name AS employee,
-            emp.employee_name,
-            emp.department,
-            emp.designation,
-            emp.contract_end_date,
-            {expiry_expr} AS expiry_date,
-            CASE
-                WHEN emp.contract_end_date 
-                    THEN 'contract_end_date'
-                ELSE NULL
-            END AS expiry_source,
-            DATEDIFF({expiry_expr}, CURDATE()) AS days_to_expiry,
-            emp.status,
-            emp.personal_email AS email,
-            emp.cell_number AS phone
-        FROM `tabEmployee` emp
-        WHERE {where_clause}
-        ORDER BY expiry_date ASC, employee_name ASC
+            e.employee               AS employee,
+            e.employee_name          AS employee_name,
+            e.department             AS department,
+            e.designation            AS designation,
+            c.to_date                AS contract_end_date,
+            DATEDIFF(c.to_date, CURDATE()) AS days_to_expiry,
+            e.company_email          AS email,
+            e.cell_number            AS phone
+        FROM `tabVNT Contract` c
+        LEFT JOIN `tabEmployee` e ON e.name = c.parent
+        WHERE c.validity = 1
+        ORDER BY c.to_date ASC, e.employee_name ASC
     """
-
-    return frappe.db.sql(sql, params, as_dict=True)
+    return frappe.db.sql(sql, as_dict=True)
