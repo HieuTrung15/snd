@@ -43,8 +43,6 @@ def get_data(filters):
     if filters.get("department"):
         emp_filters["department"] = filters.department
 
-    # Count theo department (kể cả None)
-    # Dùng SQL để gom nhóm cả các bản ghi department is null
     conditions, values = build_conditions(emp_filters)
 
     query = f"""
@@ -55,6 +53,7 @@ def get_data(filters):
         FROM `tabEmployee` e
         Left JOIN `tabDepartment` d ON e.department = d.name
         {('WHERE ' + ' AND '.join(conditions)) if conditions else ''}
+        AND d.disabled = 0
         GROUP BY department, short_name
         ORDER BY total DESC, department ASC
     """
