@@ -27,12 +27,5 @@ frappe.query_reports["Hợp đồng sắp hết hạn"] = {
             fieldtype: "Link",
             options: "Employee"
         },
-        {
-            fieldname: "status",
-            label: __("Trạng thái NV"),
-            fieldtype: "Select",
-            options: "\nActive\nLeft\nSuspended\nOn Leave",
-            default: "Active"
-        }
     ]
 };
