@@ -40,7 +40,7 @@ def get_data(filters):
     from_date = getdate(filters.get("from_date")) if filters.get("from_date") else get_first_day(getdate())
     to_date = getdate(filters.get("to_date")) if filters.get("to_date") else get_last_day(getdate())
 
-    departments = frappe.get_all("Department", filters={"company": filters.get("company")}, fields=["name"])
+    departments = frappe.get_all("Department", filters={"company": filters.get("company"), "disabled": 0}, fields=["name"])
     data = []
     stt = 1
 
