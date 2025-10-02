@@ -8,6 +8,7 @@ def execute(filters=None):
     sql = """
         SELECT custom_ownership_type AS bucket, COUNT(*) AS cnt
         FROM `tabCompany`
+		WHERE custom_ownership_type IS NOT NULL
         GROUP BY custom_ownership_type
     """
     raw = frappe.db.sql(sql, as_dict=True)
