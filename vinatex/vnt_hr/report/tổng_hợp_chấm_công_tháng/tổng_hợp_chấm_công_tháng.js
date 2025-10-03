@@ -105,5 +105,28 @@ frappe.query_reports["Tổng hợp chấm công tháng"] = {
       "fieldtype": "Int",
       "reqd": 1
     },
-  ]
+  ],
+  onload: function (report) {
+    // Lấy ngày hiện tại
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0"); // "01".."12"
+
+    // Set mặc định Năm/Tháng nếu chưa có
+    if (!report.get_values().year) {
+      report.set_filter_value("year", yyyy);
+    }
+    if (!report.get_values().month) {
+      report.set_filter_value("month", mm);
+    }
+
+    // Set mặc định Công ty theo Default Company của user/system
+    const default_company =
+      frappe.defaults.get_user_default("Company") ||
+      frappe.defaults.get_global_default("company");
+
+    if (default_company && !report.get_values().company) {
+      report.set_filter_value("company", default_company);
+    }
+  },
 };

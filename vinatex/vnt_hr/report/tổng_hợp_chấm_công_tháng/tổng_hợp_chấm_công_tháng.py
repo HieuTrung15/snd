@@ -7,7 +7,7 @@ from calendar import monthrange
 STATUS_CODE = {
 	"CHƯA VÀO LÀM": "CV",    # Trước ngày vào làm
 	"NGHỈ LỄ": "L",        # Nghỉ lễ theo Holiday List
-	"CUỔI TUẦN": "CT",       # Cuối tuần (thứ 7/CN)
+	"CUỐI TUẦN": "CT",       # Cuối tuần (thứ 7/CN)
 	"NGHỈ PHÉP": "P",          # Nghỉ phép
 	"NGHỈ NỬA NGÀY": "0.5L",  # Nghỉ 0.5 ngày
 	"ĐI LÀM": "X",        # Đi làm
