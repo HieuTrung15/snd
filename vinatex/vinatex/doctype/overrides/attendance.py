@@ -91,7 +91,7 @@ def create_attendance_from_checkin():
 		AND log_type IN ('IN', 'OUT')
 		GROUP BY employee, DATE(time)
 	""", (start_date, date), as_dict=True)
-	frappe.throw(F"{checkin_data}")
+	# frappe.throw(F"{checkin_data}")
 	# Tạo dict checkin theo employee và date
 	employee_checkins = {}
 	for checkin in checkin_data:
