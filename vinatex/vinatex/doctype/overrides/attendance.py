@@ -21,11 +21,11 @@ def create_attendance_from_checkin():
 	"""
 	# Lấy ngày hiện tại
 	date = now_datetime().date()
-	start_date = date.replace(day=1)  # Đầu tháng
-	
+	# start_date = date.replace(day=1)  # Đầu tháng
+	start_date = date.replace(month=9, day=1)
 	# Lấy danh sách employee active một lần
 	employees = frappe.get_all('Employee', 
-		filters={'status': 'Active'}, 
+		filters={'status': 'Active', 'custom_need_check': 0}, 
 		fields=['name', 'employee_name', 'company', 'department', 'holiday_list']
 	)
 	
