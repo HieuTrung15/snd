@@ -194,32 +194,34 @@ def _get_employees(filters, start_date, end_date):
 	return frappe.db.sql(sql, vals, as_dict=True)
 
 def _holiday_map(emps, company, start_date, end_date):
-	# map (emp, day) -> holiday description
-	out = {}
-	# default company holiday list
-	comp_hl = frappe.db.get_value("Company", company, "default_holiday_list")
-	# prefetch holidays for each list
-	cache = {}
-	def fetch_days(holiday_list):
-		if not holiday_list:
-			return set()
-		if holiday_list in cache:
-			return cache[holiday_list]
-		rows = frappe.db.sql("""
-			SELECT holiday_date, description
-			FROM `tabHoliday`
-			WHERE parent=%s AND holiday_date BETWEEN %s AND %s
-		""", (holiday_list, start_date, end_date), as_dict=True)
-		m = { (r.holiday_date, r.description or "Holiday") for r in rows }
-		cache[holiday_list] = m
-		return m
+    out = {}
+    comp_hl = frappe.db.get_value("Company", company, "default_holiday_list")
+    cache = {}
 
-	for e in emps:
-		hl = e.get("holiday_list") or comp_hl
-		days = fetch_days(hl)
-		for hd, desc in days:
-			out[(e["name"], getdate(hd))] = desc
-	return out
+    def fetch_days(holiday_list):
+        if not holiday_list:
+            return []
+        if holiday_list in cache:
+            return cache[holiday_list]
+        # ERPNext v15: tabHoliday có cột weekly_off
+        rows = frappe.db.sql("""
+            SELECT holiday_date, description, COALESCE(weekly_off, 0) AS weekly_off
+            FROM `tabHoliday`
+            WHERE parent=%s AND holiday_date BETWEEN %s AND %s
+        """, (holiday_list, start_date, end_date), as_dict=True)
+        cache[holiday_list] = rows
+        return rows
+
+    for e in emps:
+        hl = e.get("holiday_list") or comp_hl
+        for r in fetch_days(hl):
+            d = getdate(r.holiday_date)
+            # Bỏ các ngày weekly off (T7/CN) khỏi map ngày lễ
+            if cint(r.weekly_off) == 1:
+                continue
+            out[(e["name"], d)] = r.description or "Holiday"
+    return out
+
 
 def _leave_map(emps, start_date, end_date):
 	# map (emp, day) -> {leave_type, half_day, leave_name}
