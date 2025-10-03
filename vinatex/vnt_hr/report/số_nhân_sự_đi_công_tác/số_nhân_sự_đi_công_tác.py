@@ -30,7 +30,7 @@ def execute(filters=None):
         {"label": "Từ ngày", "fieldname": "from_date", "fieldtype": "Date", "width": 100},
         {"label": "Đến ngày", "fieldname": "to_date", "fieldtype": "Date", "width": 100},
         {"label": "Số ngày", "fieldname": "days", "fieldtype": "Float", "width": 110},
-        {"label": "Đơn xin nghỉ", "fieldname": "leave_app", "fieldtype": "Data", "options": "Leave Application", "width": 140},
+        {"label": "Mã số phiếu", "fieldname": "leave_app", "fieldtype": "Data", "options": "Leave Application", "width": 140},
         {"label": "Đếm", "fieldname": "count", "fieldtype": "Float", "width": 50, "hidden": 1}
     ]
 
