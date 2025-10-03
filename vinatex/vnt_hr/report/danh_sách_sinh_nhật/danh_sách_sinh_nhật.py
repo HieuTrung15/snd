@@ -45,7 +45,7 @@ def get_data(filters):
             emp.department,
             emp.designation,
             emp.date_of_birth AS dob,
-            emp.personal_email AS email,
+            emp.company_email AS email,
             emp.cell_number AS phone,
             FLOOR(DATEDIFF(CURDATE(), emp.date_of_birth)/365) AS age
         FROM
