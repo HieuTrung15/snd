@@ -16,143 +16,210 @@ class VntAttendance(Attendance):
 @frappe.whitelist()
 def create_attendance_from_checkin():
 	"""
-	Loop qua tất cả employee active và tạo Attendance từ đầu tháng đến ngày hiện tại (hoặc end_date).
-	- end_date: Ngày kết thúc (YYYY-MM-DD), nếu None thì lấy ngày hiện tại.
-	- Logic:
-	  - Lấy danh sách employee active.
-	  - Loop qua từng ngày từ đầu tháng đến end_date.
-	  - Gọi get_employee_checkin để lấy in_time, out_time.
-	  - Tạo Attendance nếu có cả in_time và out_time, và chưa tồn tại Attendance.
+	Loop qua tất cả employee active và tạo Attendance từ đầu tháng đến ngày hiện tại.
+	Tối ưu để tránh timeout khi chạy cron.
 	"""
-	# lấy ngày hiện tại
+	# Lấy ngày hiện tại
 	date = now_datetime().date()
-	start_date = date.replace(day=1)  # Đầu tháng
-	# Lấy danh sách employee active
-	employees = frappe.get_all('Employee', filters={'status': 'Active'}, fields=['name', 'employee_name', 'company', 'department'])
+	# start_date = date.replace(day=1)  # Đầu tháng
+	start_date = date.replace(month=9, day=1)
+	# Lấy danh sách employee active một lần
+	employees = frappe.get_all('Employee', 
+		filters={'status': 'Active', 'custom_need_check': 0}, 
+		fields=['name', 'employee_name', 'company', 'department', 'holiday_list']
+	)
+	
 	if not employees:
-		# frappe.msgprint("Không tìm thấy employee active nào!")
 		return
 	
-	# Loop qua từng ngày từ đầu tháng đến end_date
+	# Tạo list tất cả ngày cần xử lý
+	date_list = []
+	current_date = start_date
+	while current_date <= date:
+		date_list.append(current_date)
+		current_date += timedelta(days=1)
+	
+	# Lấy tất cả Attendance đã tồn tại trong khoảng thời gian
+	existing_attendances = set()
+	existing_att_data = frappe.get_all('Attendance', 
+		filters={
+			'attendance_date': ['between', [start_date, date]],
+			'docstatus': 1
+		},
+		fields=['employee', 'attendance_date']
+	)
+	for att in existing_att_data:
+		existing_attendances.add((att.employee, att.attendance_date))
+	
+	# Lấy tất cả Leave Applications trong khoảng thời gian
+	leave_data = frappe.get_all('Leave Application', 
+		filters={
+			'docstatus': 1,
+			'from_date': ['<=', date],
+			'to_date': ['>=', start_date]
+		},
+		fields=['employee', 'from_date', 'to_date']
+	)
+	
+	# Tạo dict leave theo employee
+	employee_leaves = {}
+	for leave in leave_data:
+		if leave.employee not in employee_leaves:
+			employee_leaves[leave.employee] = []
+		employee_leaves[leave.employee].append({
+			'from_date': getdate(leave.from_date),
+			'to_date': getdate(leave.to_date)
+		})
+	
+	# Lấy tất cả holidays theo holiday_list
+	holiday_data = frappe.get_all('Holiday', fields=['parent', 'holiday_date'])
+	holiday_lists = {}
+	for holiday in holiday_data:
+		if holiday.parent not in holiday_lists:
+			holiday_lists[holiday.parent] = set()
+		holiday_lists[holiday.parent].add(getdate(holiday.holiday_date))
+	
+	# Lấy tất cả checkin data trong khoảng thời gian
+	checkin_data = frappe.db.sql("""
+		SELECT 
+			employee,
+			DATE(time) as checkin_date,
+			MIN(CASE WHEN log_type = 'IN' THEN time END) as in_time,
+			MAX(CASE WHEN log_type = 'OUT' THEN time END) as out_time
+		FROM `tabEmployee Checkin`
+		WHERE DATE(time) BETWEEN %s AND %s
+		AND log_type IN ('IN', 'OUT')
+		GROUP BY employee, DATE(time)
+	""", (start_date, date), as_dict=True)
+	# frappe.throw(F"{checkin_data}")
+	# Tạo dict checkin theo employee và date
+	employee_checkins = {}
+	for checkin in checkin_data:
+		emp_key = checkin.employee
+		date_key = getdate(checkin.checkin_date)
+		if emp_key not in employee_checkins:
+			employee_checkins[emp_key] = {}
+		employee_checkins[emp_key][date_key] = {
+			'in_time': checkin.in_time,
+			'out_time': checkin.out_time
+		}
+	
+	# Batch insert attendances
+	attendances_to_create = []
+	
+	# Xử lý employees có checkin
 	for emp in employees:
-		# Lấy thời gian check-in/check-out
-		leave_apps = frappe.get_all('Leave Application', 
-			filters={
-				'employee': emp['name'],
-				'docstatus': 1,  # Chỉ lấy các đơn đã được duyệt
-				'from_date': ['<=', date],
-				'to_date': ['>=', start_date]
-			},
-			fields=['from_date', 'to_date']
-		)
-		current_date = start_date
-		while current_date <= date:
-			# Kiểm tra xem ngày hiện tại có nằm trong Leave Application không
-			is_leave_day = False
-			for leave in leave_apps:
-				leave_from = getdate(leave['from_date'])
-				leave_to = getdate(leave['to_date'])
-				if leave_from <= current_date <= leave_to:
-					is_leave_day = True
-					break
-			if is_leave_day:
-				# Bỏ qua ngày này nếu nhân viên đang trong kỳ nghỉ phép
-				current_date += timedelta(days=1)
-				continue
-			# Check exists Attendance
-			existing_att = frappe.db.exists('Attendance', {
-				'employee': emp['name'],
-				'attendance_date': current_date,
-				'docstatus': 1
-			})
-			if existing_att:
-				# frappe.throw(f"Employee {emp['name']} ngày {current_date}: Attendance đã tồn tại")
-				current_date += timedelta(days=1)
-				continue
-			in_time, out_time = _get_employee_checkin(emp['name'], current_date)
-			
-			# Nếu không có cả IN và OUT, skip employee này cho ngày hiện tại
-			# check thêm các trường hợp leave application ở đây
-			if not (in_time and out_time):
-				# frappe.throw(f"Employee {emp['name']} ngày {current_date}: Thiếu check-in hoặc check-out")
-				current_date += timedelta(days=1)
-				continue
-	
-			# Tạo Attendance
-			att = frappe.new_doc('Attendance')
-			att.employee = emp['name']
-			att.employee_name = emp['employee_name']
-			att.company = emp['company']
-			att.attendance_date = current_date
-			att.status = 'Present'  # Có thể điều chỉnh logic status
-			att.shift = 'Hành chính'  # Nếu có field shift
-			att.docstatus = 1  # Submit luôn
-			att.save()
-			current_date += timedelta(days=1)
-
-	emp_not_checkin = frappe.get_all('Employee', filters={'status': 'Active', 'custom_need_check': 1}, fields=['name', 'employee_name', 'company', 'department', 'holiday_list'])
-	if not emp_not_checkin:
-		return
-	for emp in emp_not_checkin:
-		leave_apps = frappe.get_all('Leave Application', 
-			filters={
-				'employee': emp['name'],
-				'docstatus': 1,  # Chỉ lấy các đơn đã được duyệt
-				'from_date': ['<=', date],
-				'to_date': ['>=', start_date]
-			},
-			fields=['from_date', 'to_date']
-		)
-		holidays = frappe.get_all('Holiday', filters={'parent': emp['holiday_list']}, pluck='holiday_date')
-		current_date = start_date
+		emp_name = emp['name']
+		emp_leaves = employee_leaves.get(emp_name, [])
+		emp_holidays = holiday_lists.get(emp['holiday_list'], set()) if emp.get('holiday_list') else set()
+		emp_checkins = employee_checkins.get(emp_name, {})
 		
-		while current_date <= date:
-			if current_date in holidays:
+		for current_date in date_list:
+			# Skip nếu đã có attendance
+			if (emp_name, current_date) in existing_attendances:
 				continue
-			is_leave_day = False
-			for leave in leave_apps:
-				leave_from = getdate(leave['from_date'])
-				leave_to = getdate(leave['to_date'])
-				if leave_from <= current_date <= leave_to:
-					is_leave_day = True
-					break
+			
+			# Skip nếu là ngày nghỉ lễ
+			if current_date in emp_holidays:
+				continue
+			
+			# Skip nếu trong kỳ nghỉ phép
+			is_leave_day = any(
+				leave['from_date'] <= current_date <= leave['to_date'] 
+				for leave in emp_leaves
+			)
 			if is_leave_day:
-				# Bỏ qua ngày này nếu nhân viên đang trong kỳ nghỉ phép
-				current_date += timedelta(days=1)
 				continue
-			# Check exists Attendance
-			existing_att = frappe.db.exists('Attendance', {
-				'employee': emp['name'],
+			
+			# Lấy checkin data
+			checkin_info = emp_checkins.get(current_date)
+			if not checkin_info or not (checkin_info['in_time'] and checkin_info['out_time']):
+				continue
+			
+			# Thêm vào list để tạo
+			attendances_to_create.append({
+				'doctype': 'Attendance',
+				'employee': emp_name,
+				'employee_name': emp['employee_name'],
+				'company': emp['company'],
 				'attendance_date': current_date,
+				'status': 'Present',
+				'shift': 'Hành chính',
 				'docstatus': 1
 			})
-			if existing_att:
-				current_date += timedelta(days=1)
+	
+	# Xử lý employees có custom_need_check = 1 (không cần checkin)
+	emp_not_checkin = frappe.get_all('Employee', 
+		filters={'status': 'Active', 'custom_need_check': 1}, 
+		fields=['name', 'employee_name', 'company', 'department', 'holiday_list']
+	)
+	
+	for emp in emp_not_checkin:
+		emp_name = emp['name']
+		emp_leaves = employee_leaves.get(emp_name, [])
+		emp_holidays = holiday_lists.get(emp['holiday_list'], set()) if emp.get('holiday_list') else set()
+		
+		for current_date in date_list:
+			# Skip nếu đã có attendance
+			if (emp_name, current_date) in existing_attendances:
 				continue
-			# Tạo Attendance
-			att = frappe.new_doc('Attendance')
-			att.employee = emp['name']
-			att.employee_name = emp['employee_name']
-			att.company = emp['company']
-			att.attendance_date = current_date
-			att.status = 'Present'
-			att.shift = 'Hành chính'
-			att.docstatus = 1
-			att.save()
-			current_date += timedelta(days=1)
-	return
+			
+			# Skip nếu là ngày nghỉ lễ
+			if current_date in emp_holidays:
+				continue
+			
+			# Skip nếu trong kỳ nghỉ phép
+			is_leave_day = any(
+				leave['from_date'] <= current_date <= leave['to_date'] 
+				for leave in emp_leaves
+			)
+			if is_leave_day:
+				continue
+			
+			# Thêm vào list để tạo
+			attendances_to_create.append({
+				'doctype': 'Attendance',
+				'employee': emp_name,
+				'employee_name': emp['employee_name'],
+				'company': emp['company'],
+				'attendance_date': current_date,
+				'status': 'Present',
+				'shift': 'Hành chính',
+				'docstatus': 1
+			})
+	
+	# Batch insert tất cả attendance
+	if attendances_to_create:
+		# Chia nhỏ batch để tránh timeout
+		batch_size = 100
+		for i in range(0, len(attendances_to_create), batch_size):
+			batch = attendances_to_create[i:i + batch_size]
+			try:
+				frappe.db.bulk_insert('Attendance', 
+					fields=['doctype', 'employee', 'employee_name', 'company', 'attendance_date', 'status', 'shift', 'docstatus'],
+					values=[[att[field] for field in ['doctype', 'employee', 'employee_name', 'company', 'attendance_date', 'status', 'shift', 'docstatus']] for att in batch]
+				)
+				frappe.db.commit()
+			except Exception as e:
+				frappe.log_error(f"Error inserting attendance batch: {str(e)}", "Attendance Batch Insert Error")
+				# Fallback: insert từng record
+				for att_data in batch:
+					try:
+						att = frappe.new_doc('Attendance')
+						for key, value in att_data.items():
+							if key != 'doctype':
+								setattr(att, key, value)
+						att.save()
+						att.submit()
+					except Exception as individual_error:
+						frappe.log_error(f"Error creating attendance for {att_data.get('employee')} on {att_data.get('attendance_date')}: {str(individual_error)}", "Individual Attendance Error")
+	
+	return len(attendances_to_create)
+
 
 def _get_employee_checkin(employee, date=None):
 	"""
-	Tạo Attendance từ Employee Checkin.
-	- employee: Tên employee (string).
-	- date: Ngày (YYYY-MM-DD), nếu None thì lấy ngày hôm nay.
-	
-	Logic:
-	- Lấy MIN(time) cho log_type='IN' trong ngày.
-	- Lấy MAX(time) cho log_type='OUT' trong ngày.
-	- Nếu có IN (và OUT tùy chọn), tạo Attendance với status='Present'.
-	- Tránh duplicate bằng cách check nếu Attendance đã tồn tại cho employee/date.
+	DEPRECATED: Sử dụng query tổng hợp trong create_attendance_from_checkin thay thế
 	"""
 	if not date:
 		date = now_datetime().date()
@@ -186,162 +253,3 @@ def _get_employee_checkin(employee, date=None):
 	
 	out_time = out_time[0]['max_time'] if out_time and out_time[0]['max_time'] else None
 	return in_time, out_time
-
-# @frappe.whitelist()
-# def build_attendance_from_checkins(date_from=None, date_to=None, update_existing=False):
-#     """
-#     Tạo Attendance từ Employee Checkin:
-#       - Với mỗi (employee, attendance_date):
-#         * IN = time nhỏ nhất (log_type='IN')
-#         * OUT = time lớn nhất (log_type='OUT')
-#       - Status:
-#         * Có cả IN & OUT -> Present, tính working_hours
-#         * Chỉ có 1 đầu -> Half Day
-#       - Nếu đã có Attendance:
-#         * update nếu update_existing=True
-#         * ngược lại thì bỏ qua
-#     Params:
-#       - date_from, date_to: 'YYYY-MM-DD' (mặc định = hôm nay)
-#       - update_existing: bool
-#     Return: dict summary
-#     """
-#     # ---- resolve ngày ----
-#     if not date_from and not date_to:
-#         date_from = date_to = cstr(getdate())  # hôm nay
-#     elif date_from and not date_to:
-#         date_to = date_from
-#     elif date_to and not date_from:
-#         date_from = date_to
-
-#     d_from = getdate(date_from)
-#     d_to   = getdate(date_to)
-#     if d_from > d_to:
-#         frappe.throw(_("date_from must be <= date_to"))
-
-#     # ---- lấy tất cả checkins trong khoảng ngày ----
-#     # dùng where theo khoảng [00:00:00, 23:59:59] của từng ngày
-#     # để tránh lệ thuộc timezone DB, ta lấy min-max python theo ngày
-#     d_today = getdate(today())                 # ngày hôm nay (date)
-#     d_month_start = d_today.replace(day=1)
-#     start_dt = datetime.combine(d_month_start, time.min)  # 00:00:00 ngày 01
-#     end_dt   = datetime.combine(d_today, time.max)
-#     # start_dt = datetime.combine(d_from, time.min)
-#     # end_dt   = datetime.combine(d_to,   time.max)
-
-#     rows = frappe.get_all(
-#         "Employee Checkin",
-#         filters={"time": ["between", [start_dt, end_dt]]},
-#         fields=["name", "employee", "log_type", "time"],
-#         order_by="employee asc, time asc",
-#         limit_page_length=0,
-#     )
-	
-
-#     # ---- gom nhóm theo (employee, date) rồi tìm IN min & OUT max ----
-#     groups = {}  # key: (employee, yyyy-mm-dd) -> {"in": dt|None, "out": dt|None, "checkins": [names]}
-#     for r in rows:
-#         emp = r["employee"]
-#         t: datetime = r["time"]
-#         day_key = t.date().isoformat()
-#         key = (emp, day_key)
-
-#         g = groups.setdefault(key, {"in": None, "out": None, "checkin_names": []})
-#         g["checkin_names"].append(r["name"])
-
-#         if r["log_type"] == "IN":
-#             # lấy nhỏ nhất
-#             g["in"] = t if (g["in"] is None or t < g["in"]) else g["in"]
-#         elif r["log_type"] == "OUT":
-#             # lấy lớn nhất
-#             g["out"] = t if (g["out"] is None or t > g["out"]) else g["out"]
-
-#     created, updated, skipped = 0, 0, 0
-#     details = []
-#     frappe.throw(f"{groups}")
-#     for (emp, day_str), val in groups.items():
-#         att_date = getdate(day_str)
-#         in_time  = val["in"]
-#         out_time = val["out"]
-
-#         # Không có bất kỳ IN/OUT nào thì bỏ
-#         if not in_time and not out_time:
-#             skipped += 1
-#             continue
-
-#         status = "Present" if (in_time and out_time) else "Half Day"
-
-#         # đã có Attendance cho (employee, date)?
-#         att_name = frappe.db.get_value(
-#             "Attendance",
-#             {"employee": emp, "attendance_date": att_date},
-#             "name",
-#         )
-
-#         # Nếu có rồi mà không cho update -> skip
-#         if att_name and not update_existing:
-#             skipped += 1
-#             details.append(f"Skip {emp} {day_str}: exists {att_name}")
-#             continue
-
-#         # Chuẩn bị fields chung
-#         doc_fields = {
-#             "doctype": "Attendance",
-#             "employee": emp,
-#             "attendance_date": att_date,
-#             "status": status,
-#         }
-
-#         # nếu hệ thống bạn có field in_time/out_time (HRMS v15 thường có)
-#         if "in_time" in frappe.get_meta("Attendance").get_fieldnames():
-#             doc_fields["in_time"] = in_time
-#         if "out_time" in frappe.get_meta("Attendance").get_fieldnames():
-#             doc_fields["out_time"] = out_time
-
-#         # working_hours nếu có đủ hai đầu
-#         if in_time and out_time and "working_hours" in frappe.get_meta("Attendance").get_fieldnames():
-#             wh = (out_time - in_time).total_seconds() / 3600.0
-#             # tránh số âm (trường hợp lệch ngày)
-#             if wh < 0:
-#                 wh = 0
-#             doc_fields["working_hours"] = round(wh, 3)
-
-#         if att_name:
-#             # update
-#             att = frappe.get_doc("Attendance", att_name)
-#             att.update(doc_fields)
-#             att.save(ignore_permissions=True)
-#             updated += 1
-#             details.append(f"Update {emp} {day_str}: {att.name}")
-#         else:
-#             # create
-#             att = frappe.get_doc(doc_fields)
-#             att.insert(ignore_permissions=True)
-#             created += 1
-#             details.append(f"Create {emp} {day_str}: {att.name}")
-
-#         # (Tùy chọn) nếu bạn có custom link 'attendance' trong Employee Checkin thì gắn link
-#         # không có thì thôi, tránh lỗi bằng try/ignore
-#         try:
-#             if frappe.db.has_column("Employee Checkin", "attendance"):
-#                 frappe.db.sql(
-#                     """
-#                     UPDATE `tabEmployee Checkin`
-#                     SET attendance = %s
-#                     WHERE name IN %(names)s
-#                     """,
-#                     (att.name, tuple(val["checkin_names"]) or ("",)),
-#                 )
-#         except Exception:
-#             frappe.db.rollback()  # không để ảnh hưởng tới Attendance
-#         finally:
-#             frappe.db.commit()
-
-#     return {
-#         "date_from": cstr(d_from),
-#         "date_to": cstr(d_to),
-#         "created": created,
-#         "updated": updated,
-#         "skipped": skipped,
-#         "rows": len(rows),
-#         "notes": details[:50],  
-#     }

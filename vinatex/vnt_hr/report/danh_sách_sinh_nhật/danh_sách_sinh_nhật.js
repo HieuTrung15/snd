@@ -4,11 +4,16 @@
 frappe.query_reports["Danh sách sinh nhật"] = {
 	"filters": [
         {
-            "fieldname": "month",
-            "label": __("Chọn tháng"),
-            "fieldtype": "Select",
-            "options": "\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12",
-            "default": frappe.datetime.get_today().split('-')[1]
+            "fieldname": "from_date",
+            "label": __("Từ ngày"),
+            "fieldtype": "Date",
+            "default": frappe.datetime.month_start()
+        },
+        {
+            "fieldname": "to_date",
+            "label": __("Đến ngày"),
+            "fieldtype": "Date",
+            "default": frappe.datetime.month_end()
         },
         {
             "fieldname": "department",

@@ -18,18 +18,17 @@ def get_columns():
         {"label": "Chức danh", "fieldname": "designation", "fieldtype": "Data", "width": 300},
         {"label": "Ngày sinh", "fieldname": "dob", "fieldtype": "Date", "width": 120},
         {"label": "Tuổi", "fieldname": "age", "fieldtype": "Int", "width": 80},
-
-        # Placeholder các cột bổ sung
         {"label": "Email", "fieldname": "email", "fieldtype": "Data", "width": 150},
         {"label": "Số điện thoại", "fieldname": "phone", "fieldtype": "Data", "width": 120},
-        # {"label": "Địa chỉ", "fieldname": "address", "fieldtype": "Data", "width": 200},
     ]
 
 def get_data(filters):
     conditions = []
-    month = filters.get("month")
-    if month:
-        conditions.append(f"MONTH(emp.date_of_birth) = {int(month)}")
+
+    if filters.get("from_date") and filters.get("to_date"):
+        conditions.append(
+            f"DATE_FORMAT(emp.date_of_birth, '%m-%d') BETWEEN DATE_FORMAT('{filters.get('from_date')}', '%m-%d') AND DATE_FORMAT('{filters.get('to_date')}', '%m-%d')"
+        )
     if filters.get("department"):
         conditions.append(f"emp.department = '{filters.get('department')}'")
     if filters.get("employee"):
@@ -46,9 +45,8 @@ def get_data(filters):
             emp.department,
             emp.designation,
             emp.date_of_birth AS dob,
-            emp.personal_email AS email,
+            emp.company_email AS email,
             emp.cell_number AS phone,
-            emp.permanent_address AS address,
             FLOOR(DATEDIFF(CURDATE(), emp.date_of_birth)/365) AS age
         FROM
             `tabEmployee` emp
@@ -57,5 +55,4 @@ def get_data(filters):
     """
 
     data = frappe.db.sql(sql, as_dict=True)
-
     return data

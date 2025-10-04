@@ -1,0 +1,38 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2025-10-02 14:47:50.110763",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letter_head": "Default Letter Head T\u1eadp \u0111o\u00e0n",
+ "letterhead": null,
+ "modified": "2025-10-02 14:47:50.110763",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "Ng\u00e0y c\u00f4ng trong th\u00e1ng \u0111\u1ebfn h\u00f4m nay",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Employee",
+ "report_name": "Ng\u00e0y c\u00f4ng trong th\u00e1ng \u0111\u1ebfn h\u00f4m nay",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "HR User"
+  },
+  {
+   "role": "Employee"
+  },
+  {
+   "role": "HR Manager"
+  },
+  {
+   "role": "Employee Self Service"
+  }
+ ],
+ "timeout": 0
+}

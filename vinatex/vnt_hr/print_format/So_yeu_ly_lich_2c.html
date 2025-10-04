@@ -65,17 +65,17 @@
     <!-- Họ tên + Giới tính -->
     <div style="display:flex;">
       <div style="flex:1;">
-       <br> 1) Họ và tên khai sinh: <b>{{ doc.employee_name }}</b>
+       <br> 1) Họ và tên khai sinh: <b>{{ doc.employee_name or "..........."}}</b>
       </div>
       <div style="width:60mm;">
-       <br> Nam, nữ: {{ doc.gender or "Chưa nhập liệu" }}
+       <br> Nam, nữ: {{ doc.gender or ".............." }}
       </div>
     </div>
     <p>2) Các tên gọi khác: {{ doc.other_name or "Không có" }}</p>
     <p>3) Cấp uỷ hiện tại: {{doc.custom_current_party_committee or "Không có" }} , Cấp uỷ kiêm: {{doc.custom_party_committee_cum or "Không có"}}</p>
-    <p>Chức vụ  <span style="font-size:13px;">(Đảng, đoàn thể, Chính quyền, kể cả chức vụ kiêm nhiệm)</span>: {{ doc.designation }}</p>
+    <p>Chức vụ  <span style="font-size:13px;">(Đảng, đoàn thể, Chính quyền, kể cả chức vụ kiêm nhiệm)</span>: {{ doc.designation or "............"}}</p>
     <p>{{ doc.company }}</p>
-    <p>4) Sinh ngày: {{ date_of_birth.strftime("%d") }} tháng {{ date_of_birth.strftime("%m") }} năm {{ date_of_birth.strftime("%Y") }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5) Nơi sinh: {{doc.custom_place_of_birth or ""}}</p>
+    <p>4) Sinh ngày: {{ date_of_birth.strftime("%d") or "..."}} tháng {{ date_of_birth.strftime("%m") or "..."}} năm {{ date_of_birth.strftime("%Y") or "..."}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5) Nơi sinh: {{doc.custom_place_of_birth or "..........."}}</p>
   </div>
 </div>
 {%- set addr_name = frappe.db.get_value('Dynamic Link',
@@ -83,34 +83,34 @@
 
 
 
-<p>6) Quê quán <span style="font-size:13px;">(xã, phường)</span>: {{doc.custom_ward}} <span style="font-size:13px;">(huyện, quận)</span>: {{doc.custom_district}} <span style="font-size:12px;">(tỉnh, TP)</span>: {{doc.custom_city}}</p>
-<p>7) Nơi ở hiện nay<span style="font-size:13px;"> (Xã, huyện, tỉnh hoặc số nhà, đường phố, TP)</span>: {{ doc.current_address }}. Đ/Thoại: {{ doc.cell_number }}</p>
-<p>8) Dân tộc<span style="font-size:13px;"> (Kinh, Tày, Mông, Ê đê...)</span>: {{doc.custom_ethnic_group}} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 9) Tôn giáo: Không </p>
-<p>10) Thành phần gia đình xuất thân: {{doc.custom_family_background}}<br><span style="font-size:13px; float:right;">(Ghi là công nhân, nông dân, cán bộ, công chức, trí thức, quân nhân, dân nghèo thành thị, tiểu thương, tiểu chủ, tư sản ...)</span></b>
-<p><br>11) Nghề nghiệp bản thân trước khi được tuyển dụng: {{doc.custom_occupation_before_recruitment}}<br>
+<p>6) Quê quán <span style="font-size:13px;">(xã, phường)</span>: {{doc.custom_ward or "......."}} <span style="font-size:13px;">(huyện, quận)</span>: {{doc.custom_district or "......."}} <span style="font-size:12px;">(tỉnh, TP)</span>: {{doc.custom_city or "..........."}}</p>
+<p>7) Nơi ở hiện nay<span style="font-size:13px;"> (Xã, huyện, tỉnh hoặc số nhà, đường phố, TP)</span>: {{ doc.current_address or "..........."}}. Đ/Thoại: {{ doc.cell_number or "..........."}}</p>
+<p>8) Dân tộc<span style="font-size:13px;"> (Kinh, Tày, Mông, Ê đê...)</span>: {{doc.custom_ethnic_group or "..........."}} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 9) Tôn giáo: Không </p>
+<p>10) Thành phần gia đình xuất thân: {{doc.custom_family_background or "..........."}}<br><span style="font-size:13px; float:right;">(Ghi là công nhân, nông dân, cán bộ, công chức, trí thức, quân nhân, dân nghèo thành thị, tiểu thương, tiểu chủ, tư sản ...)</span></b>
+<p><br>11) Nghề nghiệp bản thân trước khi được tuyển dụng: {{doc.custom_occupation_before_recruitment or "..........."}}<br>
     <span style="font-size:13px; float:right;">(Ghi nghề được đào tạo hoặc công nhân (thợ gì), làm ruộng, buôn bàn, học sinh, ...)</span></p>
-<p><br>12) Ngày được tuyển dụng: {{ frappe.utils.formatdate(doc.date_of_joining, "dd/MM/yyyy") }}, Vào cơ quan nào, ở đâu: {{doc.company}}, {{ frappe.db.get_value('Address', addr_name, 'address_line1') or '' }}.</p>
-<p>13) Ngày vào cơ quan hiện đang công tác: {{ frappe.utils.formatdate(doc.date_of_joining, "dd/MM/yyyy") }}, <span style="float:right;">Ngày tham gia cách mạng: {{ frappe.utils.formatdate(doc.custom_day_of_joining_the_revolution, "dd/MM/yyyy") or "" }}</span></p>
-<p>14) Ngày vào Đảng Cộng sản Việt Nam: {{ frappe.utils.formatdate(doc.custom_sub_date, "dd/MM/yyyy") or "" }} <span style="float:right;">Ngày chính thức: {{ frappe.utils.formatdate(doc.custom_add_date, "dd/MM/yyyy") or "" }}</span></p>
+<p><br>12) Ngày được tuyển dụng: {{ frappe.utils.formatdate(doc.date_of_joining, "dd/MM/yyyy") or ".../.../..."}}, Vào cơ quan nào, ở đâu: {{doc.company or "..........." }}, {{ frappe.db.get_value('Address', addr_name, 'address_line1') or "........" }}.</p>
+<p>13) Ngày vào cơ quan hiện đang công tác: {{ frappe.utils.formatdate(doc.date_of_joining, "dd/MM/yyyy") or ".../.../..." }}, <span style="float:right;">Ngày tham gia cách mạng: {{ frappe.utils.formatdate(doc.custom_day_of_joining_the_revolution, "dd/MM/yyyy") or ".../.../..." }}</span></p>
+<p>14) Ngày vào Đảng Cộng sản Việt Nam: {{ frappe.utils.formatdate(doc.custom_sub_date, "dd/MM/yyyy") or ".../.../..." }} <span style="float:right;">Ngày chính thức: {{ frappe.utils.formatdate(doc.custom_add_date, "dd/MM/yyyy") or ".../.../..." }}</span></p>
 <p>15) Ngày tham gia các tổ chức chính trị, xã hội: {{ frappe.utils.formatdate(doc.custom_date_of_joining_political_organization, "dd/MM/yyyy") or ".../.../..." }} <span style="float:right;">Tổ chức: Đoàn TNCSHCM</span>
     <br>
     <span style="font-size:13px; float:right;"> (Ngày vào Đoàn TNCSHCM, Công đoàn, Hội .........  ) </span>
 </p>
 
-<p><br>16) Ngày nhập ngũ: {{ frappe.utils.formatdate(doc.custom_enlistment_date, "dd/MM/yyyy") or ".../.../..." }} Ngày xuất ngũ: {{ frappe.utils.formatdate(doc.custom_demobilization_date, "dd/MM/yyyy") or "" }} Quân hàm, chức vụ cao nhất (năm): {{doc.custom_military_rank or ""}}</p>
+<p><br>16) Ngày nhập ngũ: {{ frappe.utils.formatdate(doc.custom_enlistment_date, "dd/MM/yyyy") or ".../.../..." }} Ngày xuất ngũ: {{ frappe.utils.formatdate(doc.custom_demobilization_date, "dd/MM/yyyy") or ".../.../..." }} Quân hàm, chức vụ cao nhất (năm): {{doc.custom_military_rank or "..........."}}</p>
 <p>
     17)Trình độ học vấn:<span style="font-size:13px;">Giáo dục phổ thông</span>: 12/12 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Học hàm, học vị cao nhất: {{highest_diploma or ''}}</span>
     <br>
     <span style="font-size:13px; float:left;"> &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; (Lớp mấy)</span>     <span style="font-size:13px; float:right;">(GS, PGS, TS, PTS, Thạc sĩ, Cử nhân, Kỹ sư ... năm nào, chuyên ngành gì)</span><br>
-    - Lý luận chính trị: {{doc.custom_political_theory}}  &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;- Ngoại ngữ:</span>
+    - Lý luận chính trị: {{doc.custom_political_theory or "..........."}}  &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;- Ngoại ngữ:{{doc.custom_foreign_language or "........"}}</span>
     <br>
     <span style="font-size:13px;">(Cử nhân, Cao cấp, Trung cấp, Sơ cấp) &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;	(Anh (A/B/C/D)      Nga (A/B/C/D)      Pháp (A/B/C/D) ...)  </span>
 </p>
 <p>
-    18) Công tác chính đang làm: Văn phòng
+    18) Công tác chính đang làm: {{doc.custom_main_work or "............"}}
 </p>
 <p>
-    19) Ngạch công chức: ..................... (mã số: .................) 	<span style="font-size:13px; float:right;">Bậc lương: ..., hệ số: 1,5  từ tháng 07 /2022</span>
+    19) Ngạch công chức: {{doc.grade or "................."}} (mã số: .................) 	<span style="font-size:13px; float:right;">Bậc lương: ..., hệ số: 1,5  từ tháng 07 /2022</span>
 </p>
 <p>
     20) Danh hiệu được phong <span style="font-size:13px;">(năm nào)</span>: {{doc.custom_title_conferred or "Không"}}
@@ -118,7 +118,8 @@
     <span style="font-size:13px; float:right;">(Anh hùng lao động, anh hùng lực lượng vũ trang, nhà giáo, thấy thuốc, nghệ sĩ nhân dân, ưu tú)</span>
 </p>
 <p>
-    21) Sở trường công tác: {{doc.custom_work_forte or "Không"}} <span style="float:right;">Công việc đã làm lâu nhất: {{doc.custom_longest_work or ""}}</span>
+    <br>
+    21) Sở trường công tác: {{doc.custom_work_forte or "Không"}} <span style="float:right;">Công việc đã làm lâu nhất: {{doc.custom_longest_work or "........."}}</span>
 </p>
 <p>
     22) Khen thưởng: {{doc.custom_reward or "Không"}}
@@ -129,12 +130,12 @@
     23) Kỷ luật  <span style="font-size:13px;">(Đảng, Chính quyền, Đoàn thể, Cấp quyết định, năm nào, lý do, hình thức, ...)</span>: {{doc.custom_discipline or "Không"}}
 </p>
 <p>
-    24) Tình trạng sức khỏe: Tốt  <span style="float:right;">Cao: {{doc.custom_height}}, Cân nặng: {{doc.custom_weight}} (kg), Nhóm máu: {{doc.blood_group or ""}}</span>
+    24) Tình trạng sức khỏe: Tốt  <span style="float:right;">Cao: {{doc.custom_height or "..."}}, Cân nặng: {{doc.custom_weight or "..."}} (kg), Nhóm máu: {{doc.blood_group or "....."}}</span>
     <br>
     &nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp;<span style="font-size:13px;">(tốt, bình thường, yếu hoặc có bệnh mãn tính gì)</span>
 </p>
 <p>
-    25) Số chứng minh nhân dân: {{doc.custom_id_card}} &nbsp;&nbsp;&nbsp;&nbsp; Thương binh loại:{{doc.custom_wounded_soldiers_type or "....... "}} &nbsp;&nbsp;&nbsp;&nbsp;Gia đình liệt sĩ:{{ "Có" if doc.custom_martyr_family == 1 else "Không" }}
+    25) Số chứng minh nhân dân: {{doc.custom_id_card or "..............."}} &nbsp;&nbsp;&nbsp;&nbsp; Thương binh loại:{{doc.custom_wounded_soldiers_type or "....... "}} &nbsp;&nbsp;&nbsp;&nbsp;Gia đình liệt sĩ:{{ "Có" if doc.custom_martyr_family == 1 else "Không" }}
 </p>
 
 <div class="page-break"></div>
@@ -234,7 +235,7 @@
       {% set to_txt = frappe.utils.formatdate(item.to, "MM/yyyy") if item.to else "đến nay" %}
       <tr>
         <td style="border:1px solid #000;">
-          {{ "Từ tháng " ~  (from_txt ~ " - " ~ "đến tháng "~ to_txt).strip() }}
+          {{ "Từ tháng " ~  (from_txt or "..." ~ " - " ~ "đến tháng "~ to_txt or "...").strip() }}
         </td>
         <td style="border:1px solid #000;">
           {{ item.title or "" }}
@@ -275,8 +276,6 @@
     {{doc.custom_foreign_relatives or "Không"}}
 </p>
 
-<div class="page-break"></div>
-
 <p style="text-align: center;">
     30) QUAN HỆ GIA ĐÌNH
 </p>
@@ -300,7 +299,6 @@
             <td style="text-align:center; width:73%; border:1px solid #000;">
            Quê quán, nghề nghiệp, chức danh, chức vụ, đơn vị, công tác, học tập, nơi ở (trong, ngoài nước); thành viên các tổ chức chính trị-xã hội 
             </td>
-            
         </tr>
     </tbody>
      <tbody>
@@ -312,11 +310,6 @@
             <td style="border:1px solid #000;">{{ row.detail or '' }}</td>
         </tr>
         {% endfor %}
-        {% if not (doc.custom_vnt_employee_tax and (doc.custom_vnt_employee_tax|selectattr('check','equalto',0)|list)) %}
-        <tr>
-            <td style="border:1px solid #000;" colspan="5">&nbsp;</td>
-        </tr>
-        {% endif %}
     </tbody>
 </table>
 
@@ -327,10 +320,10 @@
 <table style="margin-top:20px; width:100%; border:1px solid #000; border-collapse:collapse;">
     <tbody>
         <tr>
-            <td style="text-align:center; width:7%; border:1px solid #000;">
+            <td style="text-align:center; width:12%; border:1px solid #000;">
                 Quan hệ
             </td>
-            <td style="text-align:center; width:15%; border:1px solid #000;">
+            <td style="text-align:center; width:20%; border:1px solid #000;">
                 Họ và tên
             </td>
             <td style="text-align:center; width:5%; border:1px solid #000;">
@@ -397,11 +390,11 @@
     <b>
         - Nguồn thu nhập chính của gia đình
     </b>
-     (hàng năm): + lương ..... đồng/năm
+     (hàng năm): + lương {{doc.custom_main_income or "........"}} đồng/năm
 </p>
 
 <p>
-    + Các nguồn khác: Không
+    + Các nguồn khác: {{doc.custom_other_income or "Không có"}}
 </p>
 <p>
     -<u>Nhà ở</u>:
@@ -428,7 +421,7 @@
 </p>
 
 <p>
-    - Đất sản xuất, kinh doanh: (Tổng diện tích đất được cấp, tự mua, tự khai phá ...) {{ (doc.custom_land_for_business ~ " m2") if doc.custom_land_for_business else "Không" }}
+    - Đất sản xuất, kinh doanh: (Tổng diện tích đất được cấp, tự mua, tự khai phá ...) {{ (doc.custom_land_for_business ~ " m2") if doc.custom_land_for_business else "......" }}
 </p>
 
 <table style="margin-top:20px; border:none; width:100%;">

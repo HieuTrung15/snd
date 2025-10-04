@@ -21,7 +21,7 @@
 <h5 style="font-family:Times; margin:0; text-align: center;"><b>BÁO CÁO TÌNH HÌNH SỬ DỤNG LAO ĐỘNG <br> Từ ngày {{doc.from_date}} đến ngày {{doc.to_date}}</b></h5>
 
 {%- set idx = namespace(value=0) -%}
-{%- set department = frappe.db.get_all('Department', filters={'company': doc.company}, fields=['department_name', 'name']) -%}
+{%- set department = frappe.db.get_all('Department', filters={'company': doc.company, 'disabled': 0}, fields=['department_name', 'name']) -%}
 
 
 <table class="report-table">

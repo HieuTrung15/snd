@@ -27,6 +27,8 @@ from hrms.hr.doctype.leave_application.leave_application import (
 )
 from hrms.hr.doctype.leave_ledger_entry.leave_ledger_entry import delete_ledger_entry
 from hrms.hr.utils import get_holiday_dates_for_employee
+from frappe.utils.data import get_url_to_form
+from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 
 # from eupapp.eup_hr.doctype.xac_nhan_cham_cong.xac_nhan_cham_cong import update_event
 # from eupapp.eupapp.doctype.overrides.workflow import gen_approve_channel
@@ -34,12 +36,21 @@ from hrms.hr.utils import get_holiday_dates_for_employee
 
 class VntLeaveApplication(LeaveApplication):
     LEAVE_TYPE = "Công tác"
+    
+    def save(self):
+        super().save()
+        notify(self, self.employee_name, self.leave_approver)
 
     def on_submit(self):
         super().on_submit()
         if self.leave_type == self.LEAVE_TYPE:
             self._on_submit_leave_application()
-
+            
+			
+    def before_submit(self):
+        self.status = "Approved"
+        
+    
     def on_cancel(self):
         super().on_cancel()
         if self.leave_type == self.LEAVE_TYPE:
@@ -47,206 +58,83 @@ class VntLeaveApplication(LeaveApplication):
 
 
     # Hook khi submit Leave Application
+    def _get_trip_employees(self):
+        """
+        Lấy danh sách nhân viên từ bảng con 'VNT Business Trip Items'.
+        Nếu bảng con rỗng -> trả về [] 
+        """
+        rows = getattr(self, "custom_items", None) or []
+        emps = []
+        for r in rows:
+            emp = getattr(r, "employee", None)
+            if emp and emp not in emps:
+                emps.append(emp)
+        return emps
+
+    # ===== submit/cancel handlers =====
     def _on_submit_leave_application(self):
         """
-        Xử lý tự động tạo Leave Allocation khi submit Leave Application loại "Công tác".
+        Nếu có người trong bảng con -> tạo Attendance CHỈ cho những người đó.
+        Nếu bảng con rỗng -> return.
         """
-        LEAVE_TYPE = "Công tác"
+        trip_emps = self._get_trip_employees()
+        # frappe.throw(self.name)
+        if not trip_emps:
+            return  # nếu chỉ có 1 người bảng con rỗng -> return
 
-        
-        # Xóa Attendance mặc định nếu employee phiếu không nằm trong items
-        leave_employee = self.employee
-        items_employees = [emp.employee for emp in self.custom_items]
-        if leave_employee not in items_employees:
-            attendance_records = frappe.get_all(
-                "Attendance",
-                filters={
-                    "employee": leave_employee,
-                    "attendance_date": ["between", [self.from_date, self.to_date]],
-                    "status": "On Leave",
-                    "leave_type": LEAVE_TYPE
-                },
-                fields=["name"]
-            )
-            for ar in attendance_records:
-                att_doc = frappe.get_doc("Attendance", ar["name"])
-                # if att_doc.docstatus == 1:
-                    # Nếu Attendance đã submit, cancel trước
-                    # att_doc.cancel()
-                # att_doc.delete()
-                # frappe.msgprint(f"Cancel default attendance for leave employee {leave_employee} on {att_doc.attendance_date}")
-        for emp in self.custom_items:  # bảng nhân viên
-            employee = emp.employee
-            company = self.company
+        from_date = getdate(self.from_date)
+        to_date = getdate(self.to_date)
 
-            for t in self.custom_time_leave:  # bảng thời gian
-                from_date = t.from_date
-                to_date = t.to_date
-                type_leave = t.type_leave
-
-                from_date = getdate(from_date)
-                to_date = getdate(to_date)
-
-                # Xác định số ngày yêu cầu
-                is_half_day = 1 if type_leave in ["Sáng", "Chiều"] else 0
-                half_day_date = from_date + timedelta(days=1) if is_half_day else None
-
-
-                days_required = 1 if is_half_day else (date_diff(to_date, from_date) + 1)
-
-                # Kiểm tra cấu hình của Leave Type
-                leave_type_doc = frappe.get_doc("Leave Type", LEAVE_TYPE)
-                allow_over_allocation = leave_type_doc.allow_over_allocation
-                # frappe.msgprint(f"allow_over_allocation = {allow_over_allocation}")
-
-                allocation_to_use = None
-
-                if not allow_over_allocation:
-                    # ------------------------
-                    # Tính tổng ngày đã dùng
-                    # ------------------------
-                    leaves_taken = 0
-                    leave_apps = frappe.get_all(
-                        "Leave Application",
-                        filters={
-                            "employee": employee,
-                            "leave_type": LEAVE_TYPE,
-                            "status": "Approved",
-                            "docstatus": 1,
-                        },
-                        fields=["from_date", "to_date", "half_day", "half_day_date"],
-                    )
-
-                    for la in leave_apps:
-                        if la.get("half_day"):
-                            leaves_taken += 1
-                        else:
-                            leaves_taken += date_diff(la["to_date"], la["from_date"]) + 1
-
-                    # ------------------------
-                    # Kiểm tra các allocation hiện có
-                    # ------------------------
-                    allocations = frappe.get_all(
-                        "Leave Allocation",
-                        filters={
-                            "employee": employee,
-                            "leave_type": LEAVE_TYPE,
-                            "docstatus": 1,
-                        },
-                        order_by="creation asc",
-                        fields=["name", "from_date", "to_date", "total_leaves_allocated"],
-                    )
-                    balance = 0
-                    for a in allocations:
-                        a_balance = a["total_leaves_allocated"] - leaves_taken
-                        if a_balance >= days_required:
-                            allocation_to_use = a["name"]
-                            balance = a_balance
-                            break
-                        balance += a_balance
+        for emp in trip_emps:
+            day = from_date
+            while day <= to_date:
+                # tránh trùng nếu đã có attendance ngày đó
+                exists = frappe.db.exists(
+                    "Attendance",
+                    {
+                        "employee": emp,
+                        "attendance_date": day,
+                        "docstatus": ["<", 2],  # not cancelled
+                    },
+                )
+                if not exists:
+                    att = frappe.new_doc("Attendance")
+                    att.employee = emp
+                    att.attendance_date = day
+                    att.status = "On Leave"
+                    att.leave_application = self.name
                     
-
-                    # ------------------------
-                    # Nếu không đủ allocation → tạo mới
-                    # ------------------------
-                    if (not allocation_to_use or balance < days_required) or is_half_day:
-                        # Xác định số ngày allocation cần tạo
-                        frappe.msgprint(f"is_half_day {is_half_day} {from_date} {to_date}")
-                        if is_half_day:
-                            # Nửa ngày → tạo allocation 0.5 ngày
-                            allocation_days = 1
-                            to_date_allocation = from_date + timedelta(days=1)
-                        else:
-                            # Cả ngày → tạo allocation đủ số ngày nghỉ
-                            allocation_days = days_required
-                            to_date_allocation = to_date
-
-                        allocation_doc = frappe.new_doc("Leave Allocation")
-                        allocation_doc.employee = employee
-                        allocation_doc.leave_type = LEAVE_TYPE
-                        allocation_doc.from_date = from_date
-                        allocation_doc.to_date = to_date_allocation
-                        allocation_doc.new_leaves_allocated = allocation_days
-                        allocation_doc.total_leaves_allocated = allocation_days
-                        allocation_doc.company = company
-                        allocation_doc.insert()
-                        allocation_doc.submit()
-
-                        allocation_to_use = allocation_doc.name
-                    
-                day = from_date
-        
-                while day <= to_date:    
-                    attendance_doc = frappe.new_doc("Attendance")
-                    attendance_doc.employee = employee
-                    attendance_doc.attendance_date = day
-                    # attendance_doc.status = "On Leave"
-                    attendance_doc.leave_type = "Công tác"
-
-                    # Nếu là nửa ngày, chỉ đánh dấu nửa ngày đúng ngày half_day_date
-                    if is_half_day:
-                        attendance_doc.status = "Half Day"
-                    else:
-                        attendance_doc.status = "On Leave"
-                    attendance_doc.insert()
-                    attendance_doc.submit()
-                    day += timedelta(days=1)
-
-
-
-
+                    att.leave_type = self.LEAVE_TYPE
+                    att.insert(ignore_permissions=True)
+                    att.submit()
+                    frappe.db.set_value("Attendance", att.name, "leave_application", self.name)
+                day += timedelta(days=1)
 
     def _on_cancel_leave_application(self):
-        """Xử lý khi cancel Leave Application loại Công tác."""
-        leave_type = "Công tác"
-        if self.leave_type != leave_type:
+        """
+        Hủy Attendance đã tạo (On Leave + Công tác) cho các nhân viên trong bảng con,
+        trong khoảng from_date..to_date. Nếu bảng con rỗng -> return.
+        """
+        trip_emps = self._get_trip_employees()
+        if not trip_emps:
             return
 
-        for emp in self.custom_items:  # bảng nhân viên
-            employee = emp.employee
-
-            for t in self.custom_time_leave:  # bảng thời gian
-                from_date = t.from_date
-                to_date = t.to_date
-
-                # -------------------------
-                # Xoá các bản ghi Attendance tương ứng
-                # -------------------------
-                attendance_records = frappe.get_all(
-                    "Attendance",
-                    filters={
-                        "employee": employee,
-                        "attendance_date": ["between", [from_date, to_date]],
-                        "leave_type": leave_type,
-                        "status": ["in", ["On Leave", "Half Day"]]
-                    },
-                    fields=["name"]
-                )
-                for ar in attendance_records:
-                    attendance_doc = frappe.get_doc("Attendance", ar["name"])
-                    if attendance_doc.docstatus == 1:
-                        attendance_doc.cancel()
-                    # attendance_doc.delete()
-                    frappe.msgprint(
-                        f"Attendance record deleted for {employee} on {attendance_doc.attendance_date}"
-                    )
-                # -------------------------
-                # Hủy Leave Allocation tự tạo nếu có
-                # -------------------------
-                allocations = frappe.get_all(
-                    "Leave Allocation",
-                    filters={
-                        "employee": employee,
-                        "leave_type": leave_type,
-                        "from_date": ["<=", to_date],
-                        "to_date": [">=", from_date],
-                        "docstatus": 1
-                    },
-                    fields=["name"]
-                )
-                for alloc in allocations:
-                    allocation_doc = frappe.get_doc("Leave Allocation", alloc["name"])
-                    allocation_doc.cancel()
+        for emp in trip_emps:
+            records = frappe.get_all(
+                "Attendance",
+                filters={
+                    "employee": emp,
+                    "attendance_date": ["between", [self.from_date, self.to_date]],
+                    "leave_type": self.LEAVE_TYPE,
+                    "leave_application": self.name,
+                    "status": ["in", ["On Leave", "Half Day"]],
+                },
+                fields=["name"],
+            )
+            for r in records:
+                doc = frappe.get_doc("Attendance", r.name)
+                if doc.docstatus == 1:
+                    doc.cancel()
 
     
 
@@ -404,4 +292,20 @@ def get_leave_type(
                     )
 
     return vals
+
+
+def system_notification(message, doctype, docname, emails=''):
+    subject = {
+        "type": "Alert",
+                "subject": message,
+                'document_type': doctype,
+                'document_name': docname
+    }
+    make_notification_logs(subject, emails)
+    
+    
+def notify(self, actor, receiver):
+    # url = get_url_to_form(self.doctype, self.name)
+    message = _(f"Phiếu đăng ký nghỉ phép") + " của " + actor
+    system_notification(message, self.doctype, self.name, receiver)
 

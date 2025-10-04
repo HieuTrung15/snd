@@ -14,7 +14,7 @@ Payment deadline, Hạn thanh toán
 Bank Transfer, Chuyển khoản
 Debit Offset, Bù trừ công nợ
 Advance Payment, Thanh toán trước
-Submit, Chốt
+Submit, Xác nhận
 Payment Request Content, Nội dung đề nghị thanh toán
 Payment Order Type, Loại đề nghị thanh toán
 Payment Information, Thông tin thanh toán
@@ -106,7 +106,7 @@ Attendance Request, Yêu cầu điều chỉnh chấm công
 Attendance, Chấm công
 Leave Allocation, Phân bổ nghỉ phép
 Filter By, Lọc theo
-Assigned To, Được giao cho
+Assigned To, Tạo công việc cho
 Created By, Được tạo bởi
 Edit Filters, Chỉnh sửa bộ lọc
 Tags, Các lần đánh dấu
@@ -187,7 +187,7 @@ Reason,Lý do
 From Time,Từ giờ
 To Time,Đến giờ
 Approval,Phê duyệt
-Leave Approver Name,Tên người phê duyệt nghỉ phépHalf Day Date
+Leave Approver Name,Tên người phê duyệt nghỉ phép
 Half Day Date,Ngày nghỉ nửa ngày
 Half Shift,Ca làm nửa ngày
 First half of shift,Nửa ca đầu
@@ -307,3 +307,15 @@ VNT Type Or Explain, Loại giải trình
 VNT Labor Utillzation Report, Tình hình sử dụng lao động
 VNT Timekeeper Config, Cấu hình chấm công
 VNT Bussiness Trip Reaquest, Đề nghị đi công tác
+Active, Đang hoạt động
+Left, Nghỉ việc
+Short text Employee Type, Tên viết tắt loại HĐ
+Submit this Leave Application to confirm., Xác nhận gửi đơn xin nghỉ phép này để Trưởng/Phó Ban duyệt.
+Employee Leave Balance, Số ngày phép còn lại
+Allocated Leaves, Ngày phép đã được Cấp
+No leaves have been allocated., Chưa có ngày phép nào được cấp.
+Permanently Submit,"Xác nhận gửi, không thể hoàn tác"
+Application period cannot be outside leave allocation period, Thời gian xin nghỉ không được nằm ngoài thời gian phân bổ nghỉ phép
+"Only Leave Applications with status 'Approved' and 'Rejected' can be submitted", "Chỉ những đơn xin nghỉ phép/công tác có trạng thái 'Đã duyệt' hoặc 'Bị từ chối' mới có thể xác nhận."
+Please setup default outgoing Email Account from Tools > Email Account, Vui lòng thiết lập tài khoản email gửi đi mặc định từ Công cụ > Tài khoản Email
+

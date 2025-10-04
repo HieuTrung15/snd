@@ -123,6 +123,6 @@ def get_previous_allocation(from_date, leave_type, employee):
 class Config:
     LEAVE_TYPE = "Nghỉ phép năm"
     HOLIDAY_LIST = "Tiêu chuẩn 2025"
-    LEAVE_POLICY_TITLE = "Nghỉ phép năm"
+    LEAVE_POLICY_TITLE = "Nghỉ chế độ"
     COMPANY = "TẬP ĐOÀN DỆT MAY VIỆT NAM"
     CUMULATIVE_MONTHS = [1, 2, 3]
