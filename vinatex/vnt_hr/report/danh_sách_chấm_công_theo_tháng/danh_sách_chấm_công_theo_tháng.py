@@ -37,12 +37,12 @@ def _is_privileged_user():
     return bool(PRIV_ROLES & roles)
 
 def _get_employee_of_user():
-    return frappe.db.get_value(
+    return frappe.get_value(
         "Employee",
         {"user_id": frappe.session.user, "status": "Active"},
-        "name",
-        ignore_permissions=True
+        "name"
     )
+
 
 def _restrict_scope(filters):
     """Nếu không có quyền HR/User Manager → chỉ thấy dữ liệu của Employee gắn user"""
