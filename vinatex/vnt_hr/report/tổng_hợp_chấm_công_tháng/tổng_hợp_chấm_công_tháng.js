@@ -70,7 +70,68 @@
 
 
 
-// tong_hop_cham_cong_thang.js
+// // tong_hop_cham_cong_thang.js
+// frappe.query_reports["Tổng hợp chấm công tháng"] = {
+//   "filters": [
+//     {
+//       "fieldname": "company",
+//       "label": "Công ty",
+//       "fieldtype": "Link",
+//       "options": "Company",
+//       "reqd": 1
+//     },
+//     {
+//       "fieldname": "department",
+//       "label": "Phòng ban",
+//       "fieldtype": "Link",
+//       "options": "Department"
+//     },
+//     {
+//       "fieldname": "employee",
+//       "label": "Nhân viên",
+//       "fieldtype": "Link",
+//       "options": "Employee"
+//     },
+//     {
+//       "fieldname": "month",
+//       "label": "Tháng",
+//       "fieldtype": "Select",
+//       "options": "\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12",
+//       "reqd": 1
+//     },
+//     {
+//       "fieldname": "year",
+//       "label": "Năm",
+//       "fieldtype": "Int",
+//       "reqd": 1
+//     },
+//   ],
+//   onload: function (report) {
+//     // Lấy ngày hiện tại
+//     const today = new Date();
+//     const yyyy = today.getFullYear();
+//     const mm = String(today.getMonth() + 1).padStart(2, "0"); // "01".."12"
+
+//     // Set mặc định Năm/Tháng nếu chưa có
+//     if (!report.get_values().year) {
+//       report.set_filter_value("year", yyyy);
+//     }
+//     if (!report.get_values().month) {
+//       report.set_filter_value("month", mm);
+//     }
+
+//     // Set mặc định Công ty theo Default Company của user/system
+//     const default_company =
+//       frappe.defaults.get_user_default("Company") ||
+//       frappe.defaults.get_global_default("company");
+
+//     if (default_company && !report.get_values().company) {
+//       report.set_filter_value("company", default_company);
+//     }
+//   },
+// };
+
+
 frappe.query_reports["Tổng hợp chấm công tháng"] = {
   "filters": [
     {
@@ -93,34 +154,59 @@ frappe.query_reports["Tổng hợp chấm công tháng"] = {
       "options": "Employee"
     },
     {
-      "fieldname": "month",
-      "label": "Tháng",
-      "fieldtype": "Select",
-      "options": "\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12",
+      "fieldname": "from_date",
+      "label": "Từ ngày",
+      "fieldtype": "Date",
       "reqd": 1
     },
     {
-      "fieldname": "year",
-      "label": "Năm",
-      "fieldtype": "Int",
+      "fieldname": "to_date",
+      "label": "Đến ngày",
+      "fieldtype": "Date",
       "reqd": 1
     },
+    // (tuỳ chọn) cho phép bật kế hoạch ca
+    {
+      "fieldname": "use_shift_plan",
+      "label": "Dùng kế hoạch ca",
+      "fieldtype": "Check",
+      "default": 0
+    },
+    // (tuỳ chọn) giờ ca mặc định nếu không dùng kế hoạch ca
+    {
+      "fieldname": "shift_start",
+      "label": "Giờ bắt đầu ca",
+      "fieldtype": "Time",
+      "default": "08:00:00"
+    },
+    {
+      "fieldname": "shift_end",
+      "label": "Giờ kết thúc ca",
+      "fieldtype": "Time",
+      "default": "17:00:00"
+    },
+    // (tuỳ chọn) bật/tắt view tóm tắt để hiển thị message/biểu đồ
+    {
+      "fieldname": "summarized_view",
+      "label": "Chế độ tóm tắt",
+      "fieldtype": "Check",
+      "default": 0
+    },
   ],
+
   onload: function (report) {
-    // Lấy ngày hiện tại
     const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, "0"); // "01".."12"
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    // Set mặc định Năm/Tháng nếu chưa có
-    if (!report.get_values().year) {
-      report.set_filter_value("year", yyyy);
+    // Set mặc định from_date (ngày đầu tháng) & to_date (hôm nay)
+    if (!report.get_values().from_date) {
+      report.set_filter_value("from_date", frappe.datetime.obj_to_str(firstDay));
     }
-    if (!report.get_values().month) {
-      report.set_filter_value("month", mm);
+    if (!report.get_values().to_date) {
+      report.set_filter_value("to_date", frappe.datetime.obj_to_str(today));
     }
 
-    // Set mặc định Công ty theo Default Company của user/system
+    // Set mặc định Công ty
     const default_company =
       frappe.defaults.get_user_default("Company") ||
       frappe.defaults.get_global_default("company");

@@ -16,10 +16,11 @@ STATUS_CODE = {
 }
 
 def execute(filters):
-	if not filters.get("month") or not filters.get("year") or not filters.get("company"):
+	if not filters.get("company"):
 		frappe.throw("Vui lòng chọn Company, Month, Year")
 
-	start_date, end_date = _month_bounds(int(filters.year), int(filters.month))
+	start_date = getdate(filters.get("from_date"))
+	end_date = getdate(filters.get("to_date"))
 	days = list(_daterange(start_date, end_date))
 	cols = _columns_pivot(days)
 
@@ -200,6 +201,8 @@ def _get_employees(filters, start_date, end_date):
 		SELECT name, employee_name, department, date_of_joining, relieving_date, holiday_list
 		FROM `tabEmployee`
 		WHERE {" AND ".join(conds)}
+		AND custom_need_check = 0 
+		AND attendance_device_id != ""
 		ORDER BY department, employee_name
 	"""
 	return frappe.db.sql(sql, vals, as_dict=True)
