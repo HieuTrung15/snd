@@ -341,7 +341,7 @@ Create Job Opening, Tạo tin tuyển dụng
 Associate Job Opening, Tin tuyển dụng liên quan
 Open,Đang mở
 Posted On,Ngày đăng
-Closed On,Ngày đóng
+Closes On,Ngày đóng
 Lower Range,Mức lương tối thiểu
 Upper Range,Mức lương tối đa
 Salary Paid Per, Lương trả theo
@@ -379,3 +379,7 @@ based on {} reviews, dựa trên {} đánh giá
 Feedback Summary,Tóm tắt phản hồi
 Average rating of demonstrated skills, Mức điểm đánh giá trung bình về các kỹ năng đã thể hiện
 Skill Assessment, Đánh giá kỹ năng
+VNT Business Trip Request, Đăng ký đi công tác
+Destination, Địa điểm đi công tác
+Purpose Bussiness Trip, Lý do đi công tác
+Travel Route, Lộ trình
