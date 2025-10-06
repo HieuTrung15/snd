@@ -40,104 +40,10 @@ class VntLeaveApplication(LeaveApplication):
     def save(self):
         super().save()
         notify(self, self.employee_name, self.leave_approver)
-
-    def on_submit(self):
-        super().on_submit()
-        if self.leave_type == self.LEAVE_TYPE:
-            self._on_submit_leave_application()
             
 			
     def before_submit(self):
         self.status = "Approved"
-        
-    
-    def on_cancel(self):
-        super().on_cancel()
-        if self.leave_type == self.LEAVE_TYPE:
-            self._on_cancel_leave_application()
-
-
-    # Hook khi submit Leave Application
-    def _get_trip_employees(self):
-        """
-        Lấy danh sách nhân viên từ bảng con 'VNT Business Trip Items'.
-        Nếu bảng con rỗng -> trả về [] 
-        """
-        rows = getattr(self, "custom_items", None) or []
-        emps = []
-        for r in rows:
-            emp = getattr(r, "employee", None)
-            if emp and emp not in emps:
-                emps.append(emp)
-        return emps
-
-    # ===== submit/cancel handlers =====
-    def _on_submit_leave_application(self):
-        """
-        Nếu có người trong bảng con -> tạo Attendance CHỈ cho những người đó.
-        Nếu bảng con rỗng -> return.
-        """
-        trip_emps = self._get_trip_employees()
-        # frappe.throw(self.name)
-        if not trip_emps:
-            return  # nếu chỉ có 1 người bảng con rỗng -> return
-
-        from_date = getdate(self.from_date)
-        to_date = getdate(self.to_date)
-
-        for emp in trip_emps:
-            day = from_date
-            while day <= to_date:
-                # tránh trùng nếu đã có attendance ngày đó
-                exists = frappe.db.exists(
-                    "Attendance",
-                    {
-                        "employee": emp,
-                        "attendance_date": day,
-                        "docstatus": ["<", 2],  # not cancelled
-                    },
-                )
-                if not exists:
-                    att = frappe.new_doc("Attendance")
-                    att.employee = emp
-                    att.attendance_date = day
-                    att.status = "On Leave"
-                    att.leave_application = self.name
-                    
-                    att.leave_type = self.LEAVE_TYPE
-                    att.insert(ignore_permissions=True)
-                    att.submit()
-                    frappe.db.set_value("Attendance", att.name, "leave_application", self.name)
-                day += timedelta(days=1)
-
-    def _on_cancel_leave_application(self):
-        """
-        Hủy Attendance đã tạo (On Leave + Công tác) cho các nhân viên trong bảng con,
-        trong khoảng from_date..to_date. Nếu bảng con rỗng -> return.
-        """
-        trip_emps = self._get_trip_employees()
-        if not trip_emps:
-            return
-
-        for emp in trip_emps:
-            records = frappe.get_all(
-                "Attendance",
-                filters={
-                    "employee": emp,
-                    "attendance_date": ["between", [self.from_date, self.to_date]],
-                    "leave_type": self.LEAVE_TYPE,
-                    "leave_application": self.name,
-                    "status": ["in", ["On Leave", "Half Day"]],
-                },
-                fields=["name"],
-            )
-            for r in records:
-                doc = frappe.get_doc("Attendance", r.name)
-                if doc.docstatus == 1:
-                    doc.cancel()
-
-    
-
 
 @frappe.whitelist()
 def get_leave_type(
