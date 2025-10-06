@@ -84,8 +84,8 @@
   {
    "fieldname": "approval_status",
    "fieldtype": "Select",
-   "label": "Approval Status",
-   "options": "\nDraft\nSubmited\nApproved\nRejected"
+   "label": "Tr\u1ea1ng th\u00e1i ph\u00ea duy\u1ec7t",
+   "options": "Ch\u1edd ph\u00ea duy\u1ec7t\n\u0110\u00e3 duy\u1ec7t\nT\u1eeb ch\u1ed1i\nH\u1ee7y"
   },
   {
    "fieldname": "amended_from",
@@ -200,8 +200,8 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-05 22:54:26.590900",
- "modified_by": "sonph@vinatex.com.vn",
+ "modified": "2025-10-06 13:45:20.243446",
+ "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request",
  "naming_rule": "By \"Naming Series\" field",
