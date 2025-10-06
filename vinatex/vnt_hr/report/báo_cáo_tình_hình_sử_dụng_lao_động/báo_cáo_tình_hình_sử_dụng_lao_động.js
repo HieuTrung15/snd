@@ -8,7 +8,8 @@ frappe.query_reports["BÁO CÁO TÌNH HÌNH SỬ DỤNG LAO ĐỘNG"] = {
             "label": "Công ty",
             "fieldtype": "Link",
             "options": "Company",
-            "reqd": 1
+            "reqd": 1,
+            "default": frappe.defaults.get_user_default("Company")
         },
         {
             "fieldname": "from_date",

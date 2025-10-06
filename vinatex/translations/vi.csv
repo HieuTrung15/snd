@@ -28,7 +28,7 @@ No., STT
 Content, Nội dung
 Actual Payment Amount, Giá trị thanh toán thực tế
 Electronic Invoice Lookup Link, Liên kết tra cứu HDDT
-Employee, Nhân viên
+Employee, Nhân sự
 Filters, Bộ lọc
 Add a Filter, Thêm bộ lọc
 Apply Filters, Áp dụng bộ lọc
@@ -68,7 +68,7 @@ Cash, Tiền mặt
 Check, Séc
 Personal Details, Thông tin cá nhân
 Single, Độc thân
-Married, Kết hôn
+Married, Đã kết hôn
 Divorced, Ly hôn
 Family Background, Hoàn cảnh gia đình
 Passport Details, Thông tin Hộ chiếu
@@ -84,7 +84,7 @@ Year of Passing, Năm tốt nghiệp
 Class / Percentage, Lớp/ Phần trăm
 Major/Optional Subjects, Môn học chính/Môn học tự chọn
 External Work History, Lịch sử công việc bên ngoài
-Employee Exit, Nhân viên nghỉ việc
+Employee Exit, Nhân sự nghỉ việc
 Resignation Letter Date, Ngày viết đơn xin nghỉ
 Exit Interview Held On, Ngày phỏng vấn nghỉ việc
 Leave Encashed?, Đã quy đổi phép thành tiền?
@@ -99,7 +99,7 @@ Fieldname, Tên Trường
 Column Width, Chiều rộng cột
 Add / Remove Columns, Thêm/ Xóa cột
 Reset to default, Khôi phục về mặc định
-Employee Grievance, Phiếu nại nhân viên
+Employee Grievance, Khiếu nại nhân sự
 Employee Checkin, Chấm công nhân viên
 Leave Application, Đơn xin nghỉ phép
 Attendance Request, Yêu cầu điều chỉnh chấm công
@@ -195,14 +195,13 @@ Second half of shift,Nửa ca sau
 Leave Balance Before Application,Số ngày phép còn lại trước khi nộp đơn
 Leave Extra Day,Ngày nghỉ thêm
 Posting Date, Ngày nộp đơn
-Open,Đang chờ xử lý
 Cancelled,Hủy bỏ
 Follow via Email,Theo dõi qua Email
 Other Details,Thông tin khác
 Salary Slip,Phiếu lương
 Letter Head
 Choose a color, Chọn một màu
-Desgination,Chức danh
+Desgination,Chức vụ
 Transport Mode, Phương tiện
 Travel Route, Tuyến đường
 From date,Từ ngày
@@ -318,4 +317,70 @@ Permanently Submit,"Xác nhận gửi, không thể hoàn tác"
 Application period cannot be outside leave allocation period, Thời gian xin nghỉ không được nằm ngoài thời gian phân bổ nghỉ phép
 "Only Leave Applications with status 'Approved' and 'Rejected' can be submitted", "Chỉ những đơn xin nghỉ phép/công tác có trạng thái 'Đã duyệt' hoặc 'Bị từ chối' mới có thể xác nhận."
 Please setup default outgoing Email Account from Tools > Email Account, Vui lòng thiết lập tài khoản email gửi đi mặc định từ Công cụ > Tài khoản Email
-
+Job Requisition,Nhu cầu tuyển dụng
+Job Opening,Tin tuyển dụng
+Job Applicant,Danh sách ứng viên
+Interview,Lịch phỏng vấn
+Interview Feedback,Phản hồi kết quả phỏng vấn
+No of. Positions,Số lượng cần tuyển dụng
+Expected Compensation,Mức lương dự kiến
+Pending,Tạm dừng
+Open & Approved,Đang mở & Đã duyệt
+Rejected,Từ chối
+Filled,Đã tuyển đủ
+On Hold,Chờ xử lý
+Cancelled,Hủy bỏ
+Requested By,Người đề xuất
+Requested By (Name),Tên người đề xuất
+Timelines,Tiến độ
+Posting Date,Ngày tạo
+Expected By,Ngày cần có nhân sự
+HR,Nhân sự
+Reason for Requesting, Lý do đề xuất
+Create Job Opening, Tạo tin tuyển dụng
+Associate Job Opening, Tin tuyển dụng liên quan
+Open,Đang mở
+Posted On,Ngày đăng
+Closes On,Ngày đóng
+Lower Range,Mức lương tối thiểu
+Upper Range,Mức lương tối đa
+Salary Paid Per, Lương trả theo
+Publish Salary Range, Hiển thị mức lương
+Currency, Loại tiền tệ
+Job Offer, Thư mời nhận việc
+Employee Onboarding, Tiếp nhận nhân sự mới
+Appointment Letter, Thư bổ nhiệm
+Interview Summary, Tóm tắt phỏng vấn
+Interview Round, Vòng phỏng vấn
+Cleared,Đã đạt
+Under Review,Đang xem xét
+Applicant Name,Tên ứng viên
+Replied,Đã phản hồi#
+Hold,Đang chờ
+Source and Rating, Nguồn hồ sơ và đánh giá
+Applicant Rating, Đánh giá ứng viên
+Resume Attachment, Tệp đính kèm hồ sơ
+Resume Link, Liên kết hồ sơ
+Salary Expectation, Mức lương mong muốn
+Select Interview Round First, Vui lòng chọn vòng phỏng vấn trước
+Resume link, Liên kết hồ sơ
+Scheduled On, Ngày lên lịch
+Interviewers,Danh sách người phỏng vấn
+Interviewer, Người phỏng vấn
+Ratings, Đánh giá
+Expected Average Rating, Mức điểm đánh giá trung bình mong muốn
+No feedback has been received yet, Chưa nhận được phản hồi nào
+Obtained Average Rating, Mức điểm đánh giá trung bình đạt được
+Overall Average Rating, Mức điểm đánh giá trung bình chung
+Submit Feedback, Gửi phản hồi
+Only interviewers can submit feedback, Chỉ người phỏng vấn mới có thể gửi phản hồi
+Average Rating, Mức điểm đánh giá trung bình
+based on {} reviews, dựa trên {} đánh giá
+Feedback Summary,Tóm tắt phản hồi
+Average rating of demonstrated skills, Mức điểm đánh giá trung bình về các kỹ năng đã thể hiện
+Skill Assessment, Đánh giá kỹ năng
+VNT Business Trip Request, Đăng ký đi công tác
+Destination, Địa điểm đi công tác
+Purpose Bussiness Trip, Lý do đi công tác
+Travel Route, Lộ trình
+Submitted, Đã xác nhận

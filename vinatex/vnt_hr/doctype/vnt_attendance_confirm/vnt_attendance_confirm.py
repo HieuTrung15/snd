@@ -71,9 +71,16 @@ def get_working_dates_of_month():
         if not holiday_list:
             frappe.throw("Không xác định được Holiday List (thiếu employee/company/holiday_list).")
 
-    # 2) Tính khoảng đầu-cuối tháng
-    start_date = date(year, month, 1)
-    end_date   = end_date = datetime.now().date()
+    # 2) Tính khoảng đầu-cuối tháng trước
+    if month == 1:
+        prev_year = year - 1
+        prev_month = 12
+    else:
+        prev_year = year
+        prev_month = month - 1
+
+    start_date = date(prev_year, prev_month, 1)
+    end_date = date(prev_year, prev_month, calendar.monthrange(prev_year, prev_month)[1])
 
     if end_date < start_date:
         return []
@@ -108,17 +115,35 @@ def _parse_dates(dates):
     return ds
 
 def _pick_employees(employees):
+    """Trả về list dict nhân viên có các field cần thiết.
+    - Nếu employees là list mã NV -> lọc theo danh sách đó
+    - Nếu None -> lấy toàn bộ NV Active và custom_need_check=0
+    """
+    fields = ["name", "employee_name", "department", "user_id", "leave_approver"]
     if employees:
-        return
-    # Lấy toàn bộ nhân viên Active
-    return frappe.get_all("Employee", filters={"status": "Active"}, fields=["name", "employee_name", "department", 'user_id', 'leave_approver'])
+        return frappe.get_all(
+            "Employee",
+            filters={"status": "Active", "name": ["in", employees], "custom_need_check": 0, "attendance_device_id": ["!=", None]},
+            fields=fields,
+        )
+    return frappe.get_all("Employee", filters={"status": "Active", "custom_need_check": 0,"attendance_device_id": ["!=", None]}, fields=fields)
+
+def _emp_names(employees):
+    """employees: list[dict|str] -> tuple tên nhân viên"""
+    if not employees:
+        return tuple()
+    if isinstance(employees[0], dict):
+        return tuple(e["name"] for e in employees)
+    return tuple(employees)
 
 
 def _bulk_fetch_checkins(employees, d_start, d_end):
-    """Trả về dict[(emp, date)] = {'first_in': dt|None, 'last_out': dt|None, 'cnt_in': int, 'cnt_out': int}"""
+    """Lấy IN sớm nhất và OUT muộn nhất theo (emp, date) trong khoảng d_start..d_end (datetime)."""
     if not employees:
         return {}
 
+    emps = _emp_names(employees)
+    # d_start/d_end PHẢI là datetime (đầu ngày/cuối ngày)
     rows = frappe.db.sql(
         """
         SELECT employee, log_type, time
@@ -126,7 +151,7 @@ def _bulk_fetch_checkins(employees, d_start, d_end):
         WHERE employee IN %(emps)s
           AND time BETWEEN %(t0)s AND %(t1)s
         """,
-        {"emps": ('VGT00047', 'VGT00050'), "t0": d_start, "t1": d_end},
+        {"emps": emps, "t0": d_start, "t1": d_end},
         as_dict=True,
     )
     box = {}
@@ -146,11 +171,13 @@ def _bulk_fetch_checkins(employees, d_start, d_end):
                 item["last_out"] = r["time"]
     return box
 
+
 def _bulk_fetch_leaves(employees, d_start, d_end):
-    """Trả về set[(emp, date)] cho các ngày có Leave Application (không quan tâm trạng thái, theo yêu cầu)."""
+    """Trả về set[(emp, date)] cho các ngày có đơn nghỉ (không Rejected/Cancelled)."""
     if not employees:
         return set()
 
+    emps = _emp_names(employees)
     leaves = frappe.db.sql(
         """
         SELECT employee, from_date, to_date
@@ -160,7 +187,7 @@ def _bulk_fetch_leaves(employees, d_start, d_end):
           AND from_date <= %(d1)s
           AND status NOT IN ('Rejected','Cancelled')
         """,
-        {"emps": tuple(employees), "d0": d_start.date(), "d1": d_end.date()},
+        {"emps": emps, "d0": d_start.date(), "d1": d_end.date()},
         as_dict=True,
     )
 
@@ -179,13 +206,9 @@ def _bulk_fetch_leaves(employees, d_start, d_end):
 @frappe.whitelist()
 def check_employee_checkin_by_days(employees=None):
     """
-    working_days: list[str 'YYYY-MM-DD'] - các ngày làm việc trong tháng (đã lọc holiday ở ngoài nếu muốn)
-    employees: list[str] hoặc None -> mặc định tất cả Employee Active
-    shift_start / shift_end: 'HH:MM', mặc định '08:15' và '17:00'
-
-    Return: list[ {employee, date, first_in, last_out, status} ]
+    Tính trạng thái chấm công theo ngày trong tháng đến hôm nay (đã trừ holiday).
+    Chỉ trả về các dòng có vấn đề (status != 'OK').
     """
-    # Chuẩn hoá input
     working_days = get_working_dates_of_month()
     from_date, to_date = min_max_date(working_days)
     days = _parse_dates(working_days)
@@ -193,22 +216,23 @@ def check_employee_checkin_by_days(employees=None):
         return []
 
     emps = _pick_employees(employees)
+
     # Giờ chuẩn ca
-    shift_start="08:15"
-    shift_end="17:00"
+    shift_start = "08:15"
+    shift_end   = "17:00"
     h1, m1 = map(int, shift_start.split(":"))
     h2, m2 = map(int, shift_end.split(":"))
     SHIFT_START = time(h1, m1)
     SHIFT_END   = time(h2, m2)
 
-    # Khoảng thời gian lớn nhất để bulk-fetch
+    # Khoảng thời gian đúng (đầu/cuối ngày) để bulk-fetch
     t0, _ = _day_bounds(days[0])
     _, t1 = _day_bounds(days[-1])
 
     # Lấy dữ liệu 1 lần
-    checkins_map = _bulk_fetch_checkins(emps, from_date, to_date)
+    checkins_map = _bulk_fetch_checkins(emps, t0, t1)     # SỬ DỤNG t0,t1 (datetime)
     leaves_set   = _bulk_fetch_leaves(emps, t0, t1)
-    # frappe.throw(f"{checkins_map}")
+
     out = []
     for d in days:
         for emp in emps:
@@ -217,26 +241,18 @@ def check_employee_checkin_by_days(employees=None):
             ci, co = rec["cnt_in"],  rec["cnt_out"]
 
             status = "OK"
-            issues = []  # gom các lỗi theo thứ tự yêu cầu
+            issues = []
 
-            # Case 3: không có checkin -> kiểm tra Leave Application
             if ci == 0 and co == 0:
                 status = "Đã tạo đơn chờ duyệt" if (emp['name'], d) in leaves_set else "Vắng mặt"
-
-            # Case 2 (một chiều) + combo logic
             elif ci > 0 and co == 0:
-                # Nếu đi muộn buổi sáng và quên OUT -> "Đi muộn, Quên chấm công"
                 if fi and fi.time() > SHIFT_START:
                     issues.append("Đi muộn")
                 issues.append("Quên chấm công")
-
             elif co > 0 and ci == 0:
-                # Nếu quên IN và về sớm -> "Quên chấm công, Về sớm"
                 issues.append("Quên chấm công")
                 if lo and lo.time() < SHIFT_END:
                     issues.append("Về sớm")
-
-            # Case 1: có đủ IN/OUT -> xét đi muộn / về sớm
             else:
                 if fi and fi.time() > SHIFT_START:
                     issues.append("Đi muộn")
@@ -244,9 +260,8 @@ def check_employee_checkin_by_days(employees=None):
                     issues.append("Về sớm")
 
             if issues:
-                status = " , ".join(issues)
+                status = ", ".join(issues)
 
-            # chỉ trả về nếu status != "OK"
             if status != "OK":
                 out.append({
                     "employee": emp['name'],
@@ -271,229 +286,3 @@ def min_max_date(dates):
         return None, None
     return min(dates), max(dates)
 
-
-
-# Copyright (c) 2025, vinatex and contributors
-# For license information, please see license.txt
-
-# import frappe
-# from frappe.model.document import Document
-# from datetime import datetime, time, date, timedelta
-# import calendar
-# from frappe.utils import getdate
-# # from hrms.hr.utils import get_holiday_list_for_employee(employee)
-
-
-# class VNTAttendanceConfirm(Document):
-# 	pass
-
-
-# @frappe.whitelist()
-# def make_attendance_confirm():
-#     data = check_employee_checkin_by_days()
-#     data_sorted = sorted(data, key=lambda r: (r.get("employee") or ""))
-#     frappe.throw(F"{data_sorted}")    
-
-
-# @frappe.whitelist()
-# def get_working_dates_of_month():
-#     # lấy ra các ngày làm việc trong tháng hiện tại (đã loại bỏ holiday)
-#     today = date.today()
-#     year = today.year
-#     month = today.month
-#     company = frappe.defaults.get_user_default("Company")
-#     if company:
-#         holiday_list = frappe.db.get_value("Company", company, "default_holiday_list")
-#         if not holiday_list:
-#             frappe.throw("Không xác định được Holiday List (thiếu employee/company/holiday_list).")
-
-#     # 2) Tính khoảng đầu-cuối tháng
-#     start_date = date(year, month, 1)
-#     end_date   = date(year, month, calendar.monthrange(year, month)[1])
-
-#     if end_date < start_date:
-#         return []
-
-#     # 3) Lấy toàn bộ holiday trong tháng bằng MỘT query, rồi cho vào set để tra nhanh
-#     holidays = frappe.get_all(
-#         "Holiday",
-#         filters={
-#             "parent": holiday_list,
-#             "holiday_date": ["between", [start_date, end_date]],
-#         },
-#         pluck="holiday_date",  # trả về list các date
-#     )
-#     holiday_set = set(holidays)  # O(1) lookup
-
-#     # 4) Sinh tất cả ngày trong tháng và lọc ra ngày làm việc
-#     days = (end_date - start_date).days + 1
-#     working_dates = [
-#         (start_date + timedelta(days=i))
-#         for i in range(days)
-#         if (start_date + timedelta(days=i)) not in holiday_set
-#     ]
-#     return working_dates
-	
-
-# def _day_bounds(d):
-#     return datetime.combine(d, time.min), datetime.combine(d, time.max)
-
-# def _parse_dates(dates):
-#     """dates: list[str 'YYYY-MM-DD'] -> list[date]; bỏ trùng & sort"""
-#     ds = sorted({getdate(x) for x in dates})
-#     return ds
-
-# def _pick_employees(employees):
-#     if employees:
-#         return
-#     # Lấy toàn bộ nhân viên Active
-#     return frappe.get_all("Employee", filters={"status": "Active"}, fields=["name", "employee_name", "department", 'user_id'])
-
-# def _bulk_fetch_checkins(employees, d_start, d_end):
-#     """Trả về dict[(emp, date)] = {'first_in': dt|None, 'last_out': dt|None, 'cnt_in': int, 'cnt_out': int}"""
-#     if not employees:
-#         return {}
-
-#     rows = frappe.db.sql(
-#         """
-#         SELECT employee, log_type, time
-#         FROM `tabEmployee Checkin`
-#         WHERE employee IN %(emps)s
-#           AND time BETWEEN %(t0)s AND %(t1)s
-#         """,
-#         {"emps": tuple(employees), "t0": d_start, "t1": d_end},
-#         as_dict=True,
-#     )
-
-#     box = {}
-#     for r in rows:
-#         emp = r["employee"]
-#         d   = getdate(r["time"])
-#         key = (emp, d)
-#         item = box.setdefault(key, {"first_in": None, "last_out": None, "cnt_in": 0, "cnt_out": 0})
-
-#         if r["log_type"] == "IN":
-#             item["cnt_in"] += 1
-#             if item["first_in"] is None or r["time"] < item["first_in"]:
-#                 item["first_in"] = r["time"]
-#         elif r["log_type"] == "OUT":
-#             item["cnt_out"] += 1
-#             if item["last_out"] is None or r["time"] > item["last_out"]:
-#                 item["last_out"] = r["time"]
-
-#     return box
-
-# def _bulk_fetch_leaves(employees, d_start, d_end):
-#     """Trả về set[(emp, date)] cho các ngày có Leave Application (không quan tâm trạng thái, theo yêu cầu)."""
-#     if not employees:
-#         return set()
-
-#     leaves = frappe.db.sql(
-#         """
-#         SELECT employee, from_date, to_date
-#         FROM `tabLeave Application`
-#         WHERE employee IN %(emps)s
-#           AND to_date   >= %(d0)s
-#           AND from_date <= %(d1)s
-#           AND status NOT IN ('Rejected','Cancelled')
-#         """,
-#         {"emps": tuple(employees), "d0": d_start.date(), "d1": d_end.date()},
-#         as_dict=True,
-#     )
-
-#     covered = set()
-#     for r in leaves:
-#         emp = r["employee"]
-#         d0  = getdate(r["from_date"])
-#         d1  = getdate(r["to_date"])
-#         cur = d0
-#         while cur <= d1:
-#             if d_start.date() <= cur <= d_end.date():
-#                 covered.add((emp, cur))
-#             cur += timedelta(days=1)
-#     return covered
-
-# @frappe.whitelist()
-# def check_employee_checkin_by_days(employees=None):
-#     """
-#     working_days: list[str 'YYYY-MM-DD'] - các ngày làm việc trong tháng (đã lọc holiday ở ngoài nếu muốn)
-#     employees: list[str] hoặc None -> mặc định tất cả Employee Active
-#     shift_start / shift_end: 'HH:MM', mặc định '08:15' và '17:00'
-
-#     Return: list[ {employee, date, first_in, last_out, status} ]
-#     """
-#     # Chuẩn hoá input
-#     working_days = get_working_dates_of_month()
-#     days = _parse_dates(working_days)
-#     if not days:
-#         return []
-
-#     emps = _pick_employees(employees)
-
-#     # Giờ chuẩn ca
-#     shift_start="08:15"
-#     shift_end="17:00"
-#     h1, m1 = map(int, shift_start.split(":"))
-#     h2, m2 = map(int, shift_end.split(":"))
-#     SHIFT_START = time(h1, m1)
-#     SHIFT_END   = time(h2, m2)
-
-#     # Khoảng thời gian lớn nhất để bulk-fetch
-#     t0, _ = _day_bounds(days[0])
-#     _, t1 = _day_bounds(days[-1])
-
-#     # Lấy dữ liệu 1 lần
-#     checkins_map = _bulk_fetch_checkins(emps, t0, t1)
-#     leaves_set   = _bulk_fetch_leaves(emps, t0, t1)
-
-#     out = []
-#     for d in days:
-#         for emp in emps:
-#             rec = checkins_map.get((emp['name'], d), {"first_in": None, "last_out": None, "cnt_in": 0, "cnt_out": 0})
-#             fi, lo = rec["first_in"], rec["last_out"]
-#             ci, co = rec["cnt_in"],  rec["cnt_out"]
-
-#             status = "OK"
-#             issues = []  # gom các lỗi theo thứ tự yêu cầu
-
-#             # Case 3: không có checkin -> kiểm tra Leave Application
-#             if ci == 0 and co == 0:
-#                 status = "Đã tạo đơn chờ duyệt" if (emp['name'], d) in leaves_set else "Vắng mặt"
-
-#             # Case 2 (một chiều) + combo logic
-#             elif ci > 0 and co == 0:
-#                 # Nếu đi muộn buổi sáng và quên OUT -> "Đi muộn, Quên chấm công"
-#                 if fi and fi.time() > SHIFT_START:
-#                     issues.append("Đi muộn")
-#                 issues.append("Quên chấm công")
-
-#             elif co > 0 and ci == 0:
-#                 # Nếu quên IN và về sớm -> "Quên chấm công, Về sớm"
-#                 issues.append("Quên chấm công")
-#                 if lo and lo.time() < SHIFT_END:
-#                     issues.append("Về sớm")
-
-#             # Case 1: có đủ IN/OUT -> xét đi muộn / về sớm
-#             else:
-#                 if fi and fi.time() > SHIFT_START:
-#                     issues.append("Đi muộn")
-#                 if lo and lo.time() < SHIFT_END:
-#                     issues.append("Về sớm")
-
-#             if issues:
-#                 status = " , ".join(issues)
-
-#             # chỉ trả về nếu status != "OK"
-#             if status != "OK":
-#                 out.append({
-#                     "employee": emp['name'],
-#                     "employee_name": emp['employee_name'],
-#                     "department": emp['department'],
-#                     "user_id": emp.get('user_id'),
-#                     "date": d.isoformat(),
-#                     "first_in": fi.strftime("%H:%M:%S") if fi else None,
-#                     "last_out": lo.strftime("%H:%M:%S") if lo else None,
-#                     "status": status,
-#                 })
-
-#     return out

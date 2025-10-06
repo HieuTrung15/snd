@@ -2,3 +2,4 @@ vinatex
 VNT Accounts
 VNT HR
 VNT Selling
+VNT User

@@ -6,7 +6,6 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_aeac",
   "company",
   "employee",
   "designation",
@@ -37,40 +36,44 @@
  ],
  "fields": [
   {
-   "fieldname": "section_break_aeac",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "employee",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Employee",
-   "options": "Employee"
+   "options": "Employee",
+   "reqd": 1
   },
   {
    "fetch_from": "employee.department",
    "fieldname": "department",
    "fieldtype": "Data",
-   "label": "Department"
+   "label": "Department",
+   "reqd": 1
   },
   {
    "fieldname": "from_date",
    "fieldtype": "Date",
-   "label": "From Date"
+   "in_list_view": 1,
+   "label": "From Date",
+   "reqd": 1
   },
   {
    "fieldname": "to_date",
    "fieldtype": "Date",
-   "label": "To Date"
+   "label": "To Date",
+   "reqd": 1
   },
   {
    "fieldname": "destination",
    "fieldtype": "Data",
-   "label": "Destination"
+   "label": "Destination",
+   "reqd": 1
   },
   {
    "fieldname": "purpose",
    "fieldtype": "Small Text",
-   "label": "Purpose Bussiness Trip"
+   "label": "Purpose Bussiness Trip",
+   "reqd": 1
   },
   {
    "fetch_from": "employee.reports_to",
@@ -79,13 +82,16 @@
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "label": "Approver",
-   "options": "Employee"
+   "options": "Employee",
+   "reqd": 1
   },
   {
    "fieldname": "approval_status",
    "fieldtype": "Select",
-   "label": "Approval Status",
-   "options": "\nDraft\nSubmited\nApproved\nRejected"
+   "label": "Tr\u1ea1ng th\u00e1i ph\u00ea duy\u1ec7t",
+   "options": "Ch\u1edd ph\u00ea duy\u1ec7t\n\u0110\u00e3 duy\u1ec7t\nT\u1eeb ch\u1ed1i\nH\u1ee7y",
+   "permlevel": 1,
+   "reqd": 1
   },
   {
    "fieldname": "amended_from",
@@ -101,7 +107,8 @@
    "fetch_from": "employee.employee_name",
    "fieldname": "employee_name",
    "fieldtype": "Data",
-   "label": "Employee Name"
+   "label": "Employee Name",
+   "reqd": 1
   },
   {
    "fieldname": "naming_series",
@@ -119,14 +126,18 @@
    "fetch_if_empty": 1,
    "fieldname": "company",
    "fieldtype": "Data",
-   "label": "Company"
+   "in_list_view": 1,
+   "label": "Company",
+   "reqd": 1
   },
   {
    "fetch_from": "employee.designation",
    "fetch_if_empty": 1,
    "fieldname": "designation",
    "fieldtype": "Data",
-   "label": "Designation"
+   "in_list_view": 1,
+   "label": "Designation",
+   "reqd": 1
   },
   {
    "fieldname": "items",
@@ -200,8 +211,8 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-05 22:54:26.590900",
- "modified_by": "sonph@vinatex.com.vn",
+ "modified": "2025-10-06 14:13:07.062471",
+ "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request",
  "naming_rule": "By \"Naming Series\" field",
@@ -217,6 +228,52 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Leave Approver",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Leave Approver",
+   "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],
