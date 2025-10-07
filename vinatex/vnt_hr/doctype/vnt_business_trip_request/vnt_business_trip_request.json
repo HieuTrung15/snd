@@ -6,14 +6,14 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "company",
   "employee",
-  "designation",
-  "from_date",
-  "column_break_mduw",
-  "department",
   "employee_name",
+  "department",
+  "company",
+  "column_break_mduw",
+  "designation",
   "destination",
+  "from_date",
   "to_date",
   "section_break_dnxy",
   "purpose",
@@ -86,6 +86,7 @@
    "reqd": 1
   },
   {
+   "default": "Ch\u1edd ph\u00ea duy\u1ec7t",
    "fieldname": "approval_status",
    "fieldtype": "Select",
    "label": "Tr\u1ea1ng th\u00e1i ph\u00ea duy\u1ec7t",
@@ -132,7 +133,6 @@
   },
   {
    "fetch_from": "employee.designation",
-   "fetch_if_empty": 1,
    "fieldname": "designation",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -211,7 +211,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-06 14:13:07.062471",
+ "modified": "2025-10-07 10:49:46.776018",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request",
@@ -238,7 +238,6 @@
    "report": 1,
    "role": "Employee",
    "share": 1,
-   "submit": 1,
    "write": 1
   },
   {
