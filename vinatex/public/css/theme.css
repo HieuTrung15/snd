@@ -1,7 +1,9 @@
-html, body, * {
-  font-family: "Times New Roman", Times, serif !important;
-  font-variant-ligatures: none;
-  font-synthesis: none;
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&display=swap'); /* hoặc Noto Sans */
+
+body {
+	font-size: 14px;
+	background-color: #f3f6f9;
 }
 
 [data-theme="light"] {
