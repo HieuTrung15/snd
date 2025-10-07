@@ -105,7 +105,7 @@
    "options": "Location"
   },
   {
-   "default": "41A L\u00fd Th\u00e1i T\u1ed5, Ho\u00e0n Ki\u1ebfm, H\u00e0 N\u1ed9i",
+   "default": "C\u01a1 quan v\u0103n ph\u00f2ng T\u1eadp \u0111o\u00e0n D\u1ec7t May Vi\u1ec7t Nam",
    "fieldname": "place_of_contract",
    "fieldtype": "Data",
    "label": "N\u01a1i t\u1ea1o H\u0110"
@@ -225,7 +225,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-07 17:41:52.183286",
+ "modified": "2025-10-07 21:45:50.750321",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Contract",
