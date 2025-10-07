@@ -4,7 +4,6 @@ frappe.ui.form.on('VNT Business Trip Request', {
             frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name")
             .then(r => {
                 if (r && r.message && r.message.name) {
-                  // console.log(r);
                     frm.set_value("employee", r.message.name);
                 }
             });
