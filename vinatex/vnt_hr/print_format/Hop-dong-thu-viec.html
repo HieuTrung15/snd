@@ -58,11 +58,11 @@
         <tr>
             <td style="text-align:left; width:30%; border-right:none; border-top:none;">Đại diện:</td>
             <td style="text-align:left; border-left:none; border-top:none;">
-                {{frappe.db.get_value('VNT Contract', {'parent': doc.name, 'type':'Hợp đồng thử việc', 'validity':1}, 'salutation') }}<b> {{frappe.db.get_value('VNT Contract', {'parent': doc.name, 'type':'Hợp đồng thử việc', 'validity':1}, 'employee')  | upper}}</b><span style="float:right;"> Quốc tịch: Việt Nam</span></td>
+                {{frappe.db.get_value('VNT Contract', {'parent': doc.name, 'validity':1}, 'salutation') }}<b> {{frappe.db.get_value('VNT Contract', {'parent': doc.name, 'validity':1}, 'employee')  | upper}}</b><span style="float:right;"> Quốc tịch: Việt Nam</span></td>
         </tr>
          <tr style="border: none;">
             <td style="text-align:left; width:30%; border-right:none;">Chức vụ:</td>
-            <td style="text-align:left; border-left:none;">{{frappe.db.get_value('VNT Contract', {'parent': doc.name, 'type':'Hợp đồng thử việc', 'validity':1}, 'designation') }}</td>
+            <td style="text-align:left; border-left:none;">{{frappe.db.get_value('VNT Contract', {'parent': doc.name, 'validity':1}, 'designation') }}</td>
         </tr>
         <tr style="border: none;">
             <td style="text-align:left; width:30%; border-right:none;">Trụ sở:</td>
@@ -271,7 +271,7 @@ từ ngày {{ frappe.utils.formatdate(frappe.db.get_value("VNT Contract", {"pare
                 </div>
                 <div style="margin-top:120px;">
                     <b>
-                        {{ frappe.db.get_value("VNT Contract", {"parent": doc.name, "type":"Hợp đồng thử việc", "validity":1}, "employee") }}
+                        {{ frappe.db.get_value("VNT Contract", {"parent": doc.name, "validity":1}, "employee") }}
                     </b>
                 </div>
             </td>

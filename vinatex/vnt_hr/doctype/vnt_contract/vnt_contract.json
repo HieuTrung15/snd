@@ -5,21 +5,25 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "th\u00f4ng_tin_chung_section",
   "contract_no",
   "contract_date",
-  "type",
   "job_title",
+  "column_break_se5q",
+  "type",
   "contract_term",
   "from_date",
   "to_date",
   "column_break_0rga",
   "location",
   "place_of_contract",
-  "salutation",
-  "employee",
-  "designation",
   "sign_reason",
   "sign_status",
+  "column_break_bcjg",
+  "employee_name",
+  "employee",
+  "salutation",
+  "designation",
   "validity",
   "section_break_sa5g",
   "salary_decision_num",
@@ -58,7 +62,8 @@
   },
   {
    "fieldname": "column_break_0rga",
-   "fieldtype": "Column Break"
+   "fieldtype": "Section Break",
+   "label": "Th\u00f4ng tin \u0111\u1ecba \u0111i\u1ec3m & ng\u01b0\u1eddi k\u00fd"
   },
   {
    "columns": 1,
@@ -92,6 +97,7 @@
   },
   {
    "columns": 1,
+   "default": "H\u00e0 N\u1ed9i",
    "fieldname": "location",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -99,22 +105,26 @@
    "options": "Location"
   },
   {
+   "default": "41A L\u00fd Th\u00e1i T\u1ed5, Ho\u00e0n Ki\u1ebfm, H\u00e0 N\u1ed9i",
    "fieldname": "place_of_contract",
    "fieldtype": "Data",
    "label": "N\u01a1i t\u1ea1o H\u0110"
   },
   {
+   "fetch_from": "employee_name.employee_name",
    "fieldname": "employee",
    "fieldtype": "Data",
-   "label": "Ng\u01b0\u1eddi \u0111\u1ea1i di\u1ec7n"
+   "label": "T\u00ean ng\u01b0\u1eddi \u0111\u1ea1i di\u1ec7n"
   },
   {
+   "fetch_from": "employee_name.salutation",
    "fieldname": "salutation",
    "fieldtype": "Link",
    "label": "Danh x\u01b0ng",
    "options": "Salutation"
   },
   {
+   "fetch_from": "employee_name.designation",
    "fieldname": "designation",
    "fieldtype": "Data",
    "label": "Ch\u1ee9c v\u1ee5"
@@ -138,6 +148,7 @@
   {
    "fieldname": "section_break_sa5g",
    "fieldtype": "Section Break",
+   "label": "Th\u00f4ng tin l\u01b0\u01a1ng",
    "options": " "
   },
   {
@@ -188,13 +199,33 @@
    "fieldname": "salary_grade",
    "fieldtype": "Data",
    "label": "Ng\u1ea1ch l\u01b0\u01a1ng"
+  },
+  {
+   "fieldname": "column_break_se5q",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_bcjg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "th\u00f4ng_tin_chung_section",
+   "fieldtype": "Section Break",
+   "label": "Th\u00f4ng tin chung"
+  },
+  {
+   "default": "VGT00067",
+   "fieldname": "employee_name",
+   "fieldtype": "Link",
+   "label": "Ng\u01b0\u1eddi \u0111\u1ea1i di\u1ec7n",
+   "options": "Employee"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-25 14:08:15.646495",
+ "modified": "2025-10-07 17:41:52.183286",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Contract",

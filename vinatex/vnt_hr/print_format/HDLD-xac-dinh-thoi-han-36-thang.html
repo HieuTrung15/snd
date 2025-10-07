@@ -61,11 +61,11 @@
         <tr>
             <td style="text-align:left; width:30%; border-right:none; border-top:none;">Đại diện:</td>
             <td style="text-align:left; border-left:none; border-top:none;">
-                {{frappe.db.get_value('VNT Contract', {'parent': doc.name, 'type':'Hợp đồng thử việc', 'validity':1}, 'salutation') }}<b> {{frappe.db.get_value('VNT Contract', {'parent': doc.name, 'type':'Hợp đồng thử việc', 'validity':1}, 'employee')  | upper}}</b><span style="float:right;"> Quốc tịch: Việt Nam</span></td>
+                {{frappe.db.get_value('VNT Contract', {'parent': doc.name, 'validity':1}, 'salutation') }}<b> {{frappe.db.get_value('VNT Contract', {'parent': doc.name, 'validity':1}, 'employee')  | upper}}</b><span style="float:right;"> Quốc tịch: Việt Nam</span></td>
         </tr>
          <tr style="border: none;">
             <td style="text-align:left; width:30%; border-right:none;">Chức vụ:</td>
-            <td style="text-align:left; border-left:none;">{{frappe.db.get_value('VNT Contract', {'parent': doc.name, 'type':'Hợp đồng thử việc', 'validity':1}, 'designation') }}</td>
+            <td style="text-align:left; border-left:none;">{{frappe.db.get_value('VNT Contract', {'parent': doc.name, 'validity':1}, 'designation') }}</td>
         </tr>
         <tr style="border: none;">
             <td style="text-align:left; width:30%; border-right:none;">Trụ sở:</td>
@@ -206,7 +206,7 @@ từ ngày {{ frappe.utils.formatdate(frappe.db.get_value("VNT Contract", {"pare
         </b>
     </div>
     <div style="font-size:14px; margin:8px; text-align:justify; font-weight:normal;">
-    - Thực hiện công việc với sự tận tâm, đảm bảo hoàn thành với hiệu quả cao nhất những công việc đã cam kết trong Hợp đồng thử việc và theo sự phân công, điều hành (bằng văn bản hoặc bằng miệng) của người quản lý trực tiếp hoặc các cá nhân được Lãnh đạo Tập đoàn phân công hoặc ủy quyền phụ trách;
+    - Thực hiện công việc với sự tận tâm, đảm bảo hoàn thành với hiệu quả cao nhất những công việc đã cam kết trong Hợp đồng lao động và theo sự phân công, điều hành (bằng văn bản hoặc bằng miệng) của người quản lý trực tiếp hoặc các cá nhân được Lãnh đạo Tập đoàn phân công hoặc ủy quyền phụ trách;
     </div>
     <div style="font-size:14px; margin:8px; text-align:justify; font-weight:normal;">
     - Phối hợp với các bộ phận, phòng ban khác trong Tập đoàn để phát huy tối đa hiệu quả công việc;
@@ -265,7 +265,7 @@ từ ngày {{ frappe.utils.formatdate(frappe.db.get_value("VNT Contract", {"pare
     - Những vấn đề về lao động không được ghi trong Hợp đồng này sẽ được áp dụng thực hiện theo Nội quy Tập đoàn, Thỏa ước lao động tập thể và các quy định khác của Tập đoàn đã được gửi cho người lao động khi tiếp nhận công việc; các quy định của Pháp luật lao động hiện hành;
     </div>
     <div style="font-size:14px; margin:8px; text-align:justify; font-weight:normal;">
-    - Hợp đồng thử việc được lập thành 03 bản có giá trị như nhau (Người lao động giữ một (01) bản, Ban Quản lý Nguồn nhân lực lưu một (01) bản, lưu hồ sơ một (01) bản).
+    - Hợp đồng lao động được lập thành 03 bản có giá trị như nhau (Người lao động giữ một (01) bản, Ban Quản lý Nguồn nhân lực lưu một (01) bản, lưu hồ sơ một (01) bản).
     </div>
     <div style="font-size:14px; margin:8px; text-align:justify; font-weight:normal;">
     - Hợp đồng này làm tại {{frappe.db.get_value("VNT Contract", {"parent": doc.name, "validity": 1}, "place_of_contract")}} tại {{frappe.db.get_value("VNT Contract", {"parent": doc.name, "validity": 1}, "location")}} và có hiệu lực kể từ ngày {{ from_date.strftime("%d") }} tháng {{ from_date.strftime("%m") }} năm {{ from_date.strftime("%Y") }}./. 
@@ -288,7 +288,7 @@ từ ngày {{ frappe.utils.formatdate(frappe.db.get_value("VNT Contract", {"pare
                 </div>
                 <div style="margin-top:120px;">
                     <b>
-                        {{ frappe.db.get_value("VNT Contract", {"parent": doc.name, "type":"Hợp đồng thử việc", "validity":1}, "employee") }}
+                        {{ frappe.db.get_value("VNT Contract", {"parent": doc.name, "validity":1}, "employee") }}
                     </b>
                 </div>
             </td>
