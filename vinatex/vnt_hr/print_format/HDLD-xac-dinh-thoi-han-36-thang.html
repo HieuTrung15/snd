@@ -1,39 +1,40 @@
 <style>
-    .print-format {
-        width: 210mm;
-        padding: 15mm;
-        font-family: Times, sans-serif;
-    }
-    .print-format table, .print-format tr, .print-format th
-    .print-format td, .print-format p {
-        font-family: Times, sans-serif;
-        line-height: 40%;
-        padding: 3px !important;
-        vertical-align: middle;
-        font-size: 14px;
-        text-align: left;
-    }
-    .contract table { 
-        border-collapse: collapse; 
-        border-spacing: 0; 
-        width: 100%; 
-        margin-top:0px; 
-        margin-bottom:0px; 
-    }
-    .print-format table { 
-        border-collapse: collapse; 
-        border-spacing: 0; 
-        width: 100%; 
-        margin-top:0px; 
-        margin-bottom:0px; 
-    }
+  .print-format {
+    width: 210mm;
+    padding: 15mm;
+    /* Ép đúng Times New Roman */
+    font-family: "Times New Roman", Times, serif;
+  }
 
-    .print-format h1, .print-format h2, .print-format p { margin: 0; }
-    img { max-width: 100px; }
-   
-    @media screen {
-        .print-format { width: 210mm; padding: 15mm; }
-    }
+  /* FIX dấu phẩy + line-height hợp lý */
+  .print-format table,
+  .print-format tr,
+  .print-format th,
+  .print-format td,
+  .print-format p {
+    font-family: "Times New Roman", Times, serif !important;
+    line-height: 1.4; /* hoặc 140% */
+    padding: 3px !important;
+    vertical-align: middle;
+    font-size: 14px;
+    text-align: left;
+  }
+
+  .contract table,
+  .print-format table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    width: 100%;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .print-format h1, .print-format h2, .print-format p { margin: 0; }
+  img { max-width: 100px; }
+
+  @media screen {
+    .print-format { width: 210mm; padding: 15mm; }
+  }
 </style>
 {% set from_date = frappe.db.get_value("VNT Contract", {"parent": doc.name, "validity": 1}, "from_date") %}
 
