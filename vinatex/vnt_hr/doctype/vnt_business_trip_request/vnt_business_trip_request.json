@@ -86,10 +86,12 @@
    "reqd": 1
   },
   {
+   "allow_on_submit": 1,
    "default": "Ch\u1edd ph\u00ea duy\u1ec7t",
    "fieldname": "approval_status",
    "fieldtype": "Select",
    "label": "Tr\u1ea1ng th\u00e1i ph\u00ea duy\u1ec7t",
+   "no_copy": 1,
    "options": "Ch\u1edd ph\u00ea duy\u1ec7t\n\u0110\u00e3 duy\u1ec7t\nT\u1eeb ch\u1ed1i\nH\u1ee7y",
    "permlevel": 1,
    "reqd": 1
@@ -211,7 +213,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-07 10:49:46.776018",
+ "modified": "2025-10-07 12:01:46.006909",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request",
