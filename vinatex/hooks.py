@@ -189,7 +189,7 @@ scheduler_events = {
         ],
 
 		#Chạy tính lại tuổi hàng năm
-		"00 01 1 * *": [
+		"00 01 1 1 *": [
             "vinatex.vinatex.doctype.overrides.retire_update.recalc_retirement_dates",
         ]
     }
