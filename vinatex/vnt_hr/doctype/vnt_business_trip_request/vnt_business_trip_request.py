@@ -5,9 +5,9 @@ from frappe.desk.doctype.notification_log.notification_log import make_notificat
 from frappe.utils import getdate, add_days
 
 # ---- Workflow states (khớp với cấu hình Workflow) ----
-PENDING_STATES = {"Chờ duyệt", "Chờ phê duyệt"}
+PENDING_STATES = {"Chờ duyệt"}
 APPROVED_STATE = "Đã duyệt"
-REJECT_STATES  = {"Từ chối", "Huỷ", "Đã huỷ"}
+REJECT_STATES  = {"Từ chối", "Hủy", "Huỷ"}
 
 class VNTBusinessTripRequest(Document):
     def on_update(self):
@@ -20,8 +20,10 @@ class VNTBusinessTripRequest(Document):
         replace_attendance_for_business_trip(self)
 
     def on_cancel(self):
+        self.db_set("workflow_state", "Đã hủy", update_modified=False)
         delete_todos_for_doc(self)
         cancel_attendance_for_trip(self)
+
 
 def _handle_state_transition(doc: Document):
     state = (doc.get("workflow_state") or "").strip()
@@ -170,7 +172,5 @@ def cancel_attendance_for_trip(doc: Document):
     if not employees or not doc.get("from_date"):
         return
     start_date = getdate(doc.from_date)
-    end_date   = getdate(doc.to_date or doc.from_date)
-    if end_date < start_date:
-        start_date, end_date = end_date, start_date
+    end_date   = getdate(doc.to_date)
     _delete_or_cancel_attendance(employees, start_date, end_date)
