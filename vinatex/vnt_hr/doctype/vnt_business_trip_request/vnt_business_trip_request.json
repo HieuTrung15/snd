@@ -23,7 +23,6 @@
   "created_on",
   "naming_series",
   "column_break_dr5q",
-  "approval_status",
   "amended_from",
   "danh_s\u00e1ch_nh\u00e2n_vi\u00ean_\u0111i_c\u00f4ng_t\u00e1c_section",
   "items",
@@ -85,18 +84,6 @@
    "ignore_user_permissions": 1,
    "label": "Approver",
    "options": "Employee",
-   "reqd": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "default": "M\u1edbi t\u1ea1o",
-   "fieldname": "approval_status",
-   "fieldtype": "Select",
-   "in_standard_filter": 1,
-   "label": "Tr\u1ea1ng th\u00e1i ph\u00ea duy\u1ec7t",
-   "no_copy": 1,
-   "options": "M\u1edbi t\u1ea1o\nCh\u1edd ph\u00ea duy\u1ec7t\n\u0110\u00e3 duy\u1ec7t\nT\u1eeb ch\u1ed1i\nH\u1ee7y",
-   "read_only": 1,
    "reqd": 1
   },
   {
@@ -216,7 +203,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-07 13:05:00.940346",
+ "modified": "2025-10-09 09:03:35.706214",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request",

@@ -4,14 +4,15 @@ from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.utils import getdate, add_days
 
-# ---- Workflow states (khớp với ảnh) ----
+# ---- Workflow states (khớp với cấu hình Workflow) ----
 PENDING_STATES = {"Chờ duyệt", "Chờ phê duyệt"}
 APPROVED_STATE = "Đã duyệt"
 REJECT_STATES  = {"Từ chối", "Huỷ", "Đã huỷ"}
 
 class VNTBusinessTripRequest(Document):
     def on_update(self):
-        if self.has_value_changed("approval_status"):
+        # chuyển sang theo dõi workflow_state
+        if self.has_value_changed("workflow_state"):
             _handle_state_transition(self)
 
     def on_submit(self):
@@ -22,16 +23,17 @@ class VNTBusinessTripRequest(Document):
         delete_todos_for_doc(self)
         cancel_attendance_for_trip(self)
 
-def _handle_state_transition(doc):
-    state = (doc.get("approval_status") or "").strip()
+def _handle_state_transition(doc: Document):
+    state = (doc.get("workflow_state") or "").strip()
 
-    if state in {"Chờ duyệt", "Chờ phê duyệt"}:
+    if state in PENDING_STATES:
         _notify_if_pending(doc)
 
-    elif state == "Đã duyệt":
+    elif state == APPROVED_STATE:
+        # đã duyệt: không làm gì thêm ở đây
         return
 
-    elif state in {"Từ chối", "Huỷ", "Đã huỷ"}:
+    elif state in REJECT_STATES:
         delete_todos_for_doc(doc)
         cancel_attendance_for_trip(doc)
 
@@ -130,7 +132,6 @@ def _delete_or_cancel_attendance(employees: set, start_date, end_date):
 
 def replace_attendance_for_business_trip(doc: Document):
     """
-    ĐÚNG TÊN HÀM đang được gọi từ on_update/on_submit.
     - Gom employee từ parent + items.
     - Huỷ/xoá Attendance cũ trong [from_date, to_date].
     - Tạo mới Attendance status='On Leave', leave_type='Công tác' (submit).
@@ -144,10 +145,8 @@ def replace_attendance_for_business_trip(doc: Document):
     if end_date < start_date:
         start_date, end_date = end_date, start_date
 
-    # dọn cũ
     _delete_or_cancel_attendance(employees, start_date, end_date)
 
-    # tạo mới
     company = doc.get("company")
     destination = doc.get("destination") or ""
     d = start_date
