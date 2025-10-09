@@ -1,58 +1,59 @@
 <style>
-@media print {
-  .print-format, .print-format * {
-    font-family: "Times New Roman", Times, serif !important;
+  @media print {
+    .print-format, .print-format * {
+      font-family: "Times New Roman", Times, serif !important;
+    }
+    @page {
+      size: A4;
+      margin-top: 20mm;     /* trên 2cm */
+      margin-right: 20mm;   /* phải 2cm */
+      margin-bottom: 20mm;  /* dưới 2cm */
+      margin-left: 30mm;    /* trái 3cm */
+    }
+    .print-format {
+      padding-top: 0;       /* không cộng thêm padding */
+      padding-bottom: 0;
+    }
   }
-  @page {
-    size: A4;
-    margin-top: 20mm;     /* trên 2cm */
-    margin-right: 20mm;   /* phải 2cm */
-    margin-bottom: 20mm;  /* dưới 2cm */
-    margin-left: 30mm;    /* trái 3cm */
-  }
+
+  body .print-format, 
+  body .print-format * { font-family: "Times New Roman", Times, serif !important; }
+  .print-format, .print-format * { box-sizing: border-box; }
+
   .print-format {
-    padding-top: 0;       /* không cộng thêm padding */
-    padding-bottom: 0;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 0;                 /* không cộng dồn với @page */
+    font-size: 16pt;
+    color: #000;
+    line-height: 1.2;
   }
-}
 
-body .print-format, body .print-format * { font-family: "Times New Roman", Times, serif !important; }
-.print-format, .print-format * { box-sizing: border-box; }
+  .center { text-align: center; }
+  .right  { text-align: right;  }
+  .bold   { font-weight: bold;  }
+  .row    { display: flex; justify-content: space-between; }
+  .content{ flex: 1; }
+  .mb-2   { margin-bottom: 2mm; }
 
-.print-format {
-  width: 210mm;
-  min-height: 297mm;
-  padding: 0;                 /* không cộng dồn với @page */
-  font-size: 20px;
-  color: #000;
-  line-height: 1.2;
-}
+  table   { width: 100%; border-collapse: collapse; }
+  td      { vertical-align: top; padding: 0 0 2mm 0; border: none; }
 
-.center { text-align: center; }
-.right  { text-align: right;  }
-.bold   { font-weight: bold;  }
-.row    { display: flex; justify-content: space-between; }
-.content{ flex: 1; }
-.mb-2   { margin-bottom: 2mm; }
+  .page-break { page-break-before: always; }
 
-table { width: 100%; border-collapse: collapse; }
-td    { vertical-align: top; padding: 0 0 2mm 0; border: none; }
+  .print-format table {
+      border-collapse: collapse;
+      line-height: 0.1;       /* thu nhỏ chiều cao dòng */
+  }
 
-.page-break { page-break-before: always; }
-
-.print-format table {
-    border-collapse: collapse;
-    line-height: 0.1;       /* thu nhỏ chiều cao dòng */
-}
-
-.print-format td, 
-.print-format th {
-    padding-top: 0.5mm;     /* giảm padding dọc */
-    padding-bottom: 0.5mm;
-    font-size: 19px;        /* nếu cần gọn chữ hơn 17px */
-    line-height: 1.0;       /* kiểm soát thêm trong ô */
-    vertical-align: top;
-}
+  .print-format td, 
+  .print-format th {
+      padding-top: 0.5mm;     /* giảm padding dọc */
+      padding-bottom: 0.5mm;
+      font-size: 16pt;        /* nếu cần gọn chữ hơn 17px */
+      line-height: 1.0;       /* kiểm soát thêm trong ô */
+      vertical-align: top;
+  }
 </style>
 
 {# === GOM TRUY VẤN, TỐI ƯU HIỆU NĂNG === #}
@@ -83,16 +84,16 @@ td    { vertical-align: top; padding: 0 0 2mm 0; border: none; }
 {% set td = contract.to_date   and frappe.utils.getdate(contract.to_date)   or None %}
 
 <div>
-  <p class="center"><b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b></p>
-  <p class="center" style="font-size:15px;"><b>Độc lập - Tự do - Hạnh phúc</b></p>
-  <p class="center" style="font-size:15px;"><b>---------------------------</b></p>
+  <p class="center" style="font-size:15pt;"><b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b></p>
+  <p class="center" style="font-size:14pt;"><b>Độc lập - Tự do - Hạnh phúc</b></p>
+  <p class="center" style="font-size:14px;"><b>---------------------------</b></p>
 
-  <p class="right" style="font-size:15px; font-weight:normal;">
+  <p class="right" style="font-weight:normal;">
     {{ contract.location or "" }}, ngày {{ fd and fd.strftime("%d") or "" }} tháng {{ fd and fd.strftime("%m") or "" }} năm {{ fd and fd.strftime("%Y") or "" }}
   </p>
 
   <br>
-  <p class="center"><b>HỢP ĐỒNG THỬ VIỆC</b></p>
+  <p class="center" style="font-size: 17pt;"><b>HỢP ĐỒNG THỬ VIỆC</b></p>
   <br>
   <p style="margin:8px; text-align:left;">Chúng tôi một bên là:</p>
 </div>
@@ -147,15 +148,15 @@ td    { vertical-align: top; padding: 0 0 2mm 0; border: none; }
     </tr>
     <tr>
       <td>Trình độ chuyên môn:</td>
-      <td>{{ (edu.qualification or "") ~ (edu.school_univ and (" - " ~ edu.school_univ) or "") }}</td>
+      <td style="padding: 8px; text-align: justify;">{{ (edu.qualification or "") ~ (edu.school_univ and (" - " ~ edu.school_univ) or "") }}</td>
     </tr>
     <tr>
       <td>Địa chỉ thường trú:</td>
-      <td>{{ doc.permanent_address or "" }}</td>
+      <td style="padding: 8px; text-align: justify;">{{ doc.permanent_address or "" }}</td>
     </tr>
     <tr>
       <td>CCCD/Hộ chiếu số:</td>
-      <td>
+      <td style="padding: 8px; text-align: justify;">
         {{ doc.custom_id_card or "" }};
         &nbsp;&nbsp;&nbsp; Cấp ngày: {{ frappe.utils.formatdate(doc.custom_id_issue_date, "dd/MM/yyyy") if doc.custom_id_issue_date else "" }}<br>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br> Nơi cấp: {{ doc.custom_place_of_issue or "" }}
@@ -175,7 +176,7 @@ td    { vertical-align: top; padding: 0 0 2mm 0; border: none; }
   <p style="margin:8px; text-align:left;"><b><u>Điều 1:</u> Thời hạn và công việc theo hợp đồng</b></p>
   <p style="margin:8px; text-align:left;">- Loại hợp đồng: Hợp đồng thử việc.</p>
   <p style="margin:8px; text-align:left;">
-    - Thời gian thử việc: {{ contract.contract_term or "" }} tháng,
+    - Thời gian thử việc: 0{{ contract.contract_term or "" }} tháng,
     từ ngày {{ frappe.utils.formatdate(fd, "dd/MM/yyyy") if fd else "" }}
     đến hết ngày {{ frappe.utils.formatdate(td, "dd/MM/yyyy") if td else "" }}.
   </p>
