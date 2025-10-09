@@ -185,7 +185,12 @@ scheduler_events = {
 			"vinatex.vinatex.doctype.overrides.attendance.create_attendance_from_checkin",
 		],
         "00 01 1 * *": [
-            "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.make_attendance_confirm"
+            "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.make_attendance_confirm",
+        ],
+
+		#Chạy tính lại tuổi hàng năm
+		"00 01 1 * *": [
+            "vinatex.vinatex.doctype.overrides.retire_update.recalc_retirement_dates",
         ]
     }
 

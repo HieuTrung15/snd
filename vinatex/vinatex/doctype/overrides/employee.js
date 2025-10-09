@@ -1,22 +1,41 @@
 frappe.ui.form.on("Employee", {
-    department(frm) {
-        if (frm.doc.department) {
-            frappe.call({
-                method: "vinatex.vinatex.doctype.overrides.employee.get_approver_by_department",
-                args: {
-                    department: frm.doc.department
-                },
-                callback: function(r) {
-                    if (r.message) {
-                        frm.set_value("leave_approver", r.message);
-                    } else {
-                        frm.set_value("leave_approver", null);
-                    }
-                }
-            });
+  department(frm) {
+    if (frm.doc.department) {
+      frappe.call({
+        method: "vinatex.vinatex.doctype.overrides.employee.get_approver_by_department",
+        args: {
+          department: frm.doc.department
+        },
+        callback: function (r) {
+          if (r.message) {
+            frm.set_value("leave_approver", r.message);
+          } else {
+            frm.set_value("leave_approver", null);
+          }
         }
-    },
-    onload(frm) {
+      });
+    }
+  },
+  validate(frm) {
+    if (frm.doc.date_of_birth && frm.doc.gender) {
+      frappe.call({
+        method: "vinatex.vinatex.doctype.overrides.employee.get_retirement_date",
+        args: {
+          dob: frm.doc.date_of_birth,
+          gender: frm.doc.gender
+        },
+        callback: function (r) {
+          if (r.message) {
+            frm.set_value("date_of_retirement", r.message);
+          } else {
+            frm.set_value("date_of_retirement", null);
+          }
+        }
+
+      })
+    }
+  },
+  onload(frm) {
     bind_contract_grid_events_once(frm);
   }
 });
