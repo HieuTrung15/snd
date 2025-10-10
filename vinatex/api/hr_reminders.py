@@ -6,8 +6,13 @@ def get_hr_reminders(days_ahead: int = 30, limit: int = 100):
     days_ahead = int(days_ahead or 30)
     limit = int(limit)
 
+    days_ahead_retire = 365
+
     start = getdate(today())
     end = getdate(add_days(start, days_ahead))
+
+    # start_retire = getdate(today())
+    end_retire = getdate(add_days(start, days_ahead_retire)) 
 
     # --- HỢP ĐỒNG SẮP HẾT HẠN: lấy từ tabEmployee ---
     # end_date = min(contract_end_date, date_of_retirement) (nếu có cả 2)
@@ -68,9 +73,10 @@ def get_hr_reminders(days_ahead: int = 30, limit: int = 100):
         AND e.date_of_retirement BETWEEN %(start)s AND %(end)s
         ORDER BY e.date_of_retirement ASC
         """,
-        {"ret_age": int(retirement_age), "start": start, "end": end},
+        {"ret_age": int(retirement_age), "start": start, "end": end_retire},
         as_dict=True,
     )
+    # frappe.msgprint(end_retire)
 
     return {
         "params": {"start": str(start), "end": str(end), "days_ahead": days_ahead},
