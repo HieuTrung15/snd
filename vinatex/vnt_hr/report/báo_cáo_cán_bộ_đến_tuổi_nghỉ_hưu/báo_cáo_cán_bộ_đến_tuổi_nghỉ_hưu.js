@@ -15,7 +15,7 @@ frappe.query_reports["Báo cáo cán bộ đến tuổi nghỉ hưu"] = {
       label: "Đến ngày",
       fieldtype: "Date",
       reqd: 1,
-      default: frappe.datetime.add_months(frappe.datetime.get_today(), 6)
+      default: frappe.datetime.add_days(frappe.datetime.get_today(),365)
     },
     {
       fieldname: "company",

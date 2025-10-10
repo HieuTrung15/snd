@@ -12,6 +12,7 @@ from erpnext.setup.doctype.employee.employee import (
 
 
 
+
 class VntEmployee(Employee):
     pass
 
@@ -24,12 +25,12 @@ def get_approver_by_department(department):
 
 # Cập nhật tuổi theo luật VN
 @frappe.whitelist()
-def get_retirement_date(dob: str, gender: str | None = None) -> str:
+def get_retirement_date(dob: str, gender: str | None = None, extra_months: int = 0) -> str:
     """
     Tính NGÀY nghỉ hưu theo lộ trình VN, KHÓA THEO NĂM NGHỈ HƯU (không dựa năm hiện tại).
     - Nam: 60y3m (2021) +3m/năm, trần 62y (>=2028).
     - Nữ: 55y4m (2021) +4m/năm, trần 60y (>=2035).
-    Trả về ngày cuối tháng đủ tuổi (YYYY-MM-DD).
+    Trả về NGÀY ĐẦU TIÊN CỦA THÁNG KẾ TIẾP SAU KHI ĐỦ TUỔI (YYYY-MM-DD).
     extra_months: cộng/trừ tháng cho diện đặc thù (âm nếu nghỉ sớm hợp lệ).
     """
     d = getdate(dob)
@@ -47,14 +48,20 @@ def get_retirement_date(dob: str, gender: str | None = None) -> str:
         months = base_2021 + max(0, Y - 2021) * inc_per_year
         return min(months, cap)
 
-    # Bước 1: ước lượng bằng trần (để không bị thiếu), rồi "khóa" theo năm về hưu
-    retired = d + relativedelta(months=+cap)
-    for _ in range(8):  # vài vòng là hội tụ
-        m = months_for_year(retired.year)
-        r2 = d + relativedelta(months=+m)
-        if r2 == retired:
-            break
-        retired = r2
+    def first_day_next_month(dt):
+        # Ví dụ: 2025-10-15 -> 2025-11-01
+        return dt.replace(day=1) + relativedelta(months=+1)
 
-    retired = retired
-    return retired.isoformat()
+    # Ước lượng ban đầu bằng trần và lấy "ngày hiệu lực" (đầu tháng sau khi đủ tuổi)
+    retired_effective = first_day_next_month(d + relativedelta(months=+cap + extra_months))
+
+    # Lặp để hội tụ theo năm NGHỈ HƯU (năm của ngày hiệu lực)
+    for _ in range(10):
+        m = months_for_year(retired_effective.year)  # khóa theo NĂM NGHỈ HƯU
+        anniv = d + relativedelta(months=+(m + extra_months))  # ngày đủ tuổi
+        new_effective = first_day_next_month(anniv)  # ngày nghỉ hưu (đầu tháng kế tiếp)
+        if new_effective == retired_effective:
+            break
+        retired_effective = new_effective
+
+    return retired_effective.isoformat()
