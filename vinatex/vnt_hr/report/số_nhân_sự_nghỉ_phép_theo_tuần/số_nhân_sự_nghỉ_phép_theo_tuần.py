@@ -1,15 +1,13 @@
-# file: erpnext/[app_name]/[module]/report/so_nhan_su_nghi_phep_theo_tuan/so_nhan_su_nghi_phep_theo_tuan.py
 import frappe
 from frappe.utils import getdate, add_days, nowdate
 
 def execute(filters=None):
     filters = filters or {}
+    mode = (filters.get("mode") or "detail").lower()
 
-    # Xác định tuần hiện tại dựa trên "hôm nay"
     ref_date = getdate(nowdate())
 
     def week_bounds(d):
-        # ISO: Monday=1..Sunday=7
         iso_weekday = d.isocalendar()[2]
         mon = add_days(d, -(iso_weekday - 1))
         sun = add_days(mon, 6)
@@ -17,47 +15,117 @@ def execute(filters=None):
 
     week_start, week_end = week_bounds(ref_date)
 
-    # Lấy Leave Application đã duyệt, có giao thoa với tuần hiện tại,
-    # và leave_type khác 'công tác' (không phân biệt hoa/thường)
-    leave_apps = frappe.db.sql(
+    if mode == "summary":
+        rows = frappe.db.sql(
+            """
+            SELECT
+                la.employee,
+                la.employee_name,
+                -- tổng ngày nghỉ trong tuần (đã cắt + trừ half-day nếu có)
+                SUM(
+                    DATEDIFF(LEAST(la.to_date, %(week_end)s), GREATEST(la.from_date, %(week_start)s)) + 1
+                    - CASE
+                        WHEN IFNULL(la.half_day, 0) = 1
+                             AND la.half_day_date BETWEEN
+                                 GREATEST(la.from_date, %(week_start)s)
+                                 AND LEAST(la.to_date, %(week_end)s)
+                        THEN 0.5 ELSE 0
+                      END
+                ) AS days_off,
+                1 AS headcount
+            FROM `tabLeave Application` la
+            WHERE la.docstatus = 1
+              AND la.from_date <= %(week_end)s
+              AND la.to_date   >= %(week_start)s
+            GROUP BY la.employee, la.employee_name
+            HAVING days_off > 0
+            ORDER BY la.employee_name
+            """,
+            {"week_start": week_start, "week_end": week_end},
+            as_dict=True,
+        )
+
+        data = [
+            {
+                "employee": r.employee,
+                "employee_name": r.employee_name,
+                "days_off": float(round(r.days_off or 0, 1)),
+                "headcount": 1
+            }
+            for r in rows
+        ]
+
+        total_headcount = len(data)
+        total_days = sum(d["days_off"] for d in data)
+
+        columns = [
+            {"label": "Mã NV", "fieldname": "employee", "fieldtype": "Data", "width": 120},
+            {"label": "Tên nhân viên", "fieldname": "employee_name", "fieldtype": "Data", "width": 220},
+            {"label": "Tổng ngày nghỉ (tuần)", "fieldname": "days_off", "fieldtype": "Float", "precision": 1, "width": 160},
+            {"label": "Số nhân sự", "fieldname": "headcount", "fieldtype": "Int", "width": 120}
+        ]
+        return columns, data, f"Tổng nhân sự nghỉ: <b>{total_headcount}</b> • Tổng ngày nghỉ: <b>{total_days}</b>"
+
+    rows = frappe.db.sql(
         """
         SELECT
-            name,
-            employee,
-            employee_name,
-            from_date,
-            to_date,
-            leave_type
-        FROM `tabLeave Application`
-        WHERE
-            docstatus = 1
-            AND (from_date <= %(week_end)s AND to_date >= %(week_start)s)
-            AND (LOWER(COALESCE(leave_type, '')) <> 'công tác')
+            la.name AS leave_app,
+            la.employee,
+            la.employee_name,
+            la.leave_type,
+            GREATEST(la.from_date, %(week_start)s) AS actual_from,
+            LEAST(la.to_date, %(week_end)s) AS actual_to,
+            (
+                DATEDIFF(LEAST(la.to_date, %(week_end)s), GREATEST(la.from_date, %(week_start)s)) + 1
+                - CASE
+                    WHEN IFNULL(la.half_day, 0) = 1
+                         AND la.half_day_date BETWEEN
+                             GREATEST(la.from_date, %(week_start)s)
+                             AND LEAST(la.to_date, %(week_end)s)
+                    THEN 0.5 ELSE 0
+                  END
+            ) AS days_off
+        FROM `tabLeave Application` la
+        WHERE la.docstatus = 1
+          AND la.from_date <= %(week_end)s
+          AND la.to_date   >= %(week_start)s
+        ORDER BY la.employee_name, actual_from
         """,
-        {
-            "week_start": week_start,
-            "week_end": week_end,
-        },
+        {"week_start": week_start, "week_end": week_end},
         as_dict=True,
     )
 
-    # Đếm DISTINCT nhân sự có nghỉ trong tuần
-    employees = {la.employee for la in leave_apps if la.employee}
-    headcount = len(employees)
+    data = []
+    seen = set()  # để đánh dấu nhân sự đã xuất hiện
+    for r in rows:
+        days = float(round((r.days_off or 0.0), 1))
+        if days <= 0:
+            continue
+        first_of_emp = 0
+        if r.employee and r.employee not in seen:
+            first_of_emp = 1
+            seen.add(r.employee)
+        data.append({
+            "employee": r.employee,
+            "employee_name": r.employee_name,
+            "leave_type": r.leave_type,
+            "from_date": r.actual_from,
+            "to_date": r.actual_to,
+            "days_off": days,
+            "leave_app": r.leave_app,
+            "headcount": first_of_emp
+        })
 
-
-    data = [{
-        "week_start": week_start,
-        "week_end": week_end,
-        "headcount": headcount,
-    }]
+    total_headcount = sum(d["headcount"] for d in data)
 
     columns = [
-        {"label": "Từ ngày", "fieldname": "week_start", "fieldtype": "Date", "width": 110},
-        {"label": "Đến ngày", "fieldname": "week_end", "fieldtype": "Date", "width": 110},
-        {"label": "Số nhân sự nghỉ", "fieldname": "headcount", "fieldtype": "Int", "width": 140},
+        {"label": "Mã NV", "fieldname": "employee", "fieldtype": "Data", "width": 120},
+        {"label": "Tên nhân viên", "fieldname": "employee_name", "fieldtype": "Data", "width": 220},
+        {"label": "Loại nghỉ", "fieldname": "leave_type", "fieldtype": "Data", "width": 150},
+        {"label": "Từ ngày", "fieldname": "from_date", "fieldtype": "Date", "width": 110},
+        {"label": "Đến ngày", "fieldname": "to_date", "fieldtype": "Date", "width": 110},
+        {"label": "Số ngày nghỉ", "fieldname": "days_off", "fieldtype": "Float", "precision": 1, "width": 120},
+        {"label": "Số nhân sự", "fieldname": "headcount", "fieldtype": "Int", "width": 110, "hidden": 1}
     ]
 
-    message = ""
-
-    return columns, data, message
+    return columns, data, f"Tổng phiếu nghỉ: <b>{len(data)}</b> • Tổng nhân sự: <b>{total_headcount}</b>"
