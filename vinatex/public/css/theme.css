@@ -586,7 +586,6 @@ input[type=file]::-webkit-file-upload-button{
 
 @media screen and (min-width: 1600px) {
  .navbar-expand {
- background-image: url(/files/navbar1920.png), url(/files/navbar1920.jpg);
  background-repeat: no-repeat;
  background-size: 100% 100%;
  background-color: #72abf0;
@@ -597,7 +596,6 @@ input[type=file]::-webkit-file-upload-button{
 
 @media screen and (min-width: 1920px) {
  .navbar-expand {
- background-image: url(/files/navbar1920.png), url(/files/navbar1920.jpg);
  background-repeat: no-repeat;
  background-size: 100% 100%;
  background-color: #3288f1;
@@ -606,7 +604,6 @@ input[type=file]::-webkit-file-upload-button{
  }
 
  .navbar-expand .form-inline {
- background-image: url(/files/form-navbar1920.gif), url(/files/form-navbar1920.png), url(/files/form-navbar1920.jpg);
  background-repeat: no-repeat;
  background-size: 50px;
  }
