@@ -4,7 +4,7 @@ from frappe import _
 
 ORDER = [
     "HĐQT","KS","CQĐH","VP HĐQT","ĐTPT","QLNNL","TCKT",
-    "TT","THPC","CNTT","VPTD","39-41","VCC","Đảng","CĐ","Khác"
+    "TT","THPC","CNTT","VPTĐ","39-41","VCC","Đảng","CĐ","Khác"
 ]
 
 def execute(filters=None):
