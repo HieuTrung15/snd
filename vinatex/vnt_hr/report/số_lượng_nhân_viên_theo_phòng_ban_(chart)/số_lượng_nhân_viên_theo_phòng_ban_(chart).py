@@ -1,128 +1,79 @@
 # -*- coding: utf-8 -*-
-# Path gợi ý: your_app/your_app/report/employees_by_department/employees_by_department.py
-
 import frappe
 from frappe import _
 
-def execute(filters=None):
-    filters = frappe._dict(filters or {})
-    columns = get_columns()
-    data = get_data(filters)
-    chart = get_chart(data)
-    report_summary = get_report_summary(data)
+# Thứ tự nhóm viết tắt phòng ban (custom_short_name)
+ORDER = [
+    "HĐQT", "KS", "CQĐH", "VP HĐQT", "ĐTPT", "QLNNL", "TCKT",
+    "TT", "THPC", "CNTT", "VPTD", "39-41", "VCC",
+    "Đảng", "CĐ", "Khác"
+]
 
-    return columns, data, None, chart, report_summary
+def execute(filters=None):
+    filters = filters or {}
+    data = get_data(filters)
+    return get_columns(), data, None, get_chart(data)
 
 
 def get_columns():
     return [
-        {
-            "fieldname": "department",
-            "label": _("Department"),
-            "fieldtype": "Link",
-            "options": "Department",
-            "width": 260,
-        },
-        {
-            "fieldname": "total",
-            "label": _("Employees"),
-            "fieldtype": "Int",
-            "width": 120,
-        },
+        {"label": _("Phòng ban (viết tắt)"), "fieldname": "short_name", "fieldtype": "Data", "width": 140},
+        {"label": _("Tên phòng ban"), "fieldname": "department_name", "fieldtype": "Data", "width": 240},
+        {"label": _("Số lượng nhân sự"), "fieldname": "employee_count", "fieldtype": "Int", "width": 150},
     ]
 
 
 def get_data(filters):
-    # Xây filters cho Employee
-    emp_filters = {}
+    where, params = ["emp.status = 'Active'"], {}
+
     if filters.get("company"):
-        emp_filters["company"] = filters.company
-    if filters.get("status"):
-        emp_filters["status"] = filters.status  # Active / Left / Suspended / On Leave
+        where.append("emp.company = %(company)s")
+        params["company"] = filters["company"]
 
-    if filters.get("department"):
-        emp_filters["department"] = filters.department
-
-    # Count theo department (kể cả None)
-    # Dùng SQL để gom nhóm cả các bản ghi department is null
-    conditions, values = build_conditions(emp_filters)
-
-    query = f"""
+    # Chỉ lấy Department đang hoạt động
+    sql = f"""
         SELECT
-            COALESCE(d.custom_short_name, '{_("(No Department)")}') AS short_name,
-            COUNT(e.name) AS total
-        FROM `tabEmployee` e
-        Left JOIN `tabDepartment` d ON e.department = d.name
-        {('WHERE ' + ' AND '.join(conditions)) if conditions else ''}
-        GROUP BY department, short_name
-        ORDER BY total DESC, department ASC
-        LIMIT 10
+            d.custom_short_name AS short_name,
+            d.department_name   AS department_name,
+            COUNT(emp.name)     AS employee_count
+        FROM `tabEmployee` emp
+        LEFT JOIN `tabDepartment` d ON emp.department = d.name
+        WHERE {" AND ".join(where)} AND d.disabled = 0
+        GROUP BY d.custom_short_name, d.department_name
     """
+    rows = frappe.db.sql(sql, params, as_dict=True)
 
-    rows = frappe.db.sql(query, values, as_dict=True)
-    return [{"department": r["short_name"],"short_name":r["short_name"], "total": int(r["total"])} for r in rows]
+    # Sắp xếp theo thứ tự ORDER
+    order_index = {k: i for i, k in enumerate(ORDER)}
+    rows.sort(key=lambda r: order_index.get(r["short_name"], 999))
 
+    # Gộp nhóm "Khác" nếu có phòng ban không có short_name
+    other_count = sum(r["employee_count"] for r in rows if not r["short_name"])
+    rows = [r for r in rows if r["short_name"]]  # loại dòng rỗng
+    if other_count:
+        rows.append({"short_name": "Khác", "department_name": "Khác", "employee_count": other_count})
 
-def build_conditions(emp_filters):
-    conditions, values = [], []
-    if emp_filters.get("company"):
-        conditions.append("e.company = %s")
-        values.append(emp_filters["company"])
-    if emp_filters.get("status"):
-        conditions.append("e.status = %s")
-        values.append(emp_filters["status"])
-    if emp_filters.get("department"):
-        conditions.append("e.department = %s")
-        values.append(emp_filters["department"])
-    return conditions, values
+    return rows
 
 
-def get_chart(data):
-    # Chỉ lấy 10 dòng đầu để vẽ chart
-    top10 = data[:10]
-
-    # Luôn lấy short_name làm label
-    labels = [d["short_name"] for d in top10]
-    values = [d["total"] for d in top10]
+def get_chart(rows):
+    labels = [r["short_name"] for r in rows]
+    values = [r["employee_count"] for r in rows]
 
     return {
         "data": {
             "labels": labels,
-            "datasets": [{"name": _("Employees"), "values": values}],
+            "datasets": [
+                {
+                    "name": _("Nhân sự"),
+                    "values": values,
+                    "chartType": "bar",
+                    "color": "#3288f1"  # xanh dương
+                }
+            ]
         },
-        "type": "bar",  # hoặc "pie" nếu thích
-        "axis_options": {"x_axis_mode": "tick", "x_is_series": False},
-        "height": 300,
+        "type": "bar",
+        "height": 280,
+        "colors": ["#3288f1"],
+        "barOptions": {"spaceRatio": 0.4}
     }
-
-
-
-
-def get_report_summary(data):
-    total_employees = sum(d["total"] for d in data) if data else 0
-    dept_count = len(data)
-    max_row = max(data, key=lambda x: x["total"]) if data else None
-
-    summary = [
-        {
-            "label": _("Tổng số nhân sự"),
-            "value": total_employees,
-            "indicator": "green",
-        },
-        {
-            "label": _("Tổng số phòng ban"),
-            "value": dept_count,
-            "indicator": "blue",
-        },
-    ]
-
-    if max_row:
-        summary.append(
-            {
-                "label": _("Đơn vị nhiều nhân sự nhất"),
-                "value": f'{max_row["department"]} ({max_row["total"]})',
-                "indicator": "orange",
-            }
-        )
-
-    return summary
