@@ -1,76 +1,56 @@
-# -*- coding: utf-8 -*-
+# apps/vinatex/vinatex/vnt_hr/report/tong_hop_nhan_su_theo_phong_ban/tong_hop_nhan_su_theo_phong_ban.py
 import frappe
 from frappe import _
 
-# Thứ tự nhóm viết tắt phòng ban (custom_short_name)
 ORDER = [
-    "HĐQT", "KS", "CQĐH", "VP HĐQT", "ĐTPT", "QLNNL", "TCKT",
-    "TT", "THPC", "CNTT", "VPTD", "39-41", "VCC",
-    "Đảng", "CĐ", "Khác"
+    "HĐQT","KS","CQĐH","VP HĐQT","ĐTPT","QLNNL","TCKT",
+    "TT","THPC","CNTT","VPTD","39-41","VCC","Đảng","CĐ","Khác"
 ]
 
 def execute(filters=None):
     filters = filters or {}
-    data = get_data(filters)
-    return get_columns(), data, None, get_chart(data)
-
+    rows = get_data(filters)
+    return get_columns(), rows, None, get_chart(rows)
 
 def get_columns():
     return [
         {"label": _("Phòng ban (viết tắt)"), "fieldname": "short_name", "fieldtype": "Data", "width": 140},
-        {"label": _("Tên phòng ban"), "fieldname": "department_name", "fieldtype": "Data", "width": 240},
         {"label": _("Số lượng nhân sự"), "fieldname": "employee_count", "fieldtype": "Int", "width": 150},
     ]
 
-
 def get_data(filters):
-    where, params = ["emp.status = 'Active'"], {}
-
+    conds, params = ["emp.status = 'Active'"], {}
     if filters.get("company"):
-        where.append("emp.company = %(company)s")
+        conds.append("emp.company = %(company)s")
         params["company"] = filters["company"]
 
-    # Chỉ lấy Department đang hoạt động
-    sql = f"""
+    sql = """
         SELECT
-            d.custom_short_name AS short_name,
-            d.department_name   AS department_name,
-            COUNT(emp.name)     AS employee_count
+            COALESCE(NULLIF(TRIM(d.custom_short_name), ''), 'Khác') AS short_name,
+            COUNT(emp.name) AS employee_count
         FROM `tabEmployee` emp
-        LEFT JOIN `tabDepartment` d ON emp.department = d.name
-        WHERE {" AND ".join(where)} AND d.disabled = 0
-        GROUP BY d.custom_short_name, d.department_name
-    """
-    rows = frappe.db.sql(sql, params, as_dict=True)
+        INNER JOIN `tabDepartment` d
+            ON d.name = emp.department AND d.disabled = 0
+        WHERE {cond}
+        GROUP BY short_name
+        ORDER BY FIELD(short_name, {order_list}), short_name
+    """.format(
+        cond=" AND ".join(conds),
+        order_list=", ".join(frappe.db.escape(x) for x in ORDER)
+    )
 
-    # Sắp xếp theo thứ tự ORDER
-    order_index = {k: i for i, k in enumerate(ORDER)}
-    rows.sort(key=lambda r: order_index.get(r["short_name"], 999))
-
-    # Gộp nhóm "Khác" nếu có phòng ban không có short_name
-    other_count = sum(r["employee_count"] for r in rows if not r["short_name"])
-    rows = [r for r in rows if r["short_name"]]  # loại dòng rỗng
-    if other_count:
-        rows.append({"short_name": "Khác", "department_name": "Khác", "employee_count": other_count})
-
-    return rows
-
+    return frappe.db.sql(sql, params, as_dict=True)
 
 def get_chart(rows):
-    labels = [r["short_name"] for r in rows]
-    values = [r["employee_count"] for r in rows]
-
     return {
         "data": {
-            "labels": labels,
-            "datasets": [
-                {
-                    "name": _("Nhân sự"),
-                    "values": values,
-                    "chartType": "bar",
-                    "color": "#3288f1"  # xanh dương
-                }
-            ]
+            "labels": [r["short_name"] for r in rows],
+            "datasets": [{
+                "name": _("Nhân sự"),
+                "values": [r["employee_count"] for r in rows],
+                "chartType": "bar",
+                "color": "#3288f1"
+            }]
         },
         "type": "bar",
         "height": 280,
