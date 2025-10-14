@@ -52,11 +52,10 @@
   <br>
 {% set date_of_birth = frappe.db.get_value("Employee", doc.name, "date_of_birth") %}
 {% set highest_diploma = "" %}
-{% for e in doc.employee_education %}
-    {% if e.custom_check == 1 %}
-        {% set highest_diploma = e.custom_diploma_level %}
-    {% endif %}
-{% endfor %}
+{% set x = doc.education
+    | selectattr('custom_check','eq',1)
+    | map(attribute='qualification') | list %}
+{{ x[0] if x else '' }}
 
 <!-- Ảnh và nội dung -->
 <div class="row">
@@ -99,7 +98,7 @@
 
 <p><br>16) Ngày nhập ngũ: {{ frappe.utils.formatdate(doc.custom_enlistment_date, "dd/MM/yyyy") or ".../.../..." }} Ngày xuất ngũ: {{ frappe.utils.formatdate(doc.custom_demobilization_date, "dd/MM/yyyy") or ".../.../..." }} Quân hàm, chức vụ cao nhất (năm): {{doc.custom_military_rank or "..........."}}</p>
 <p>
-    17)Trình độ học vấn:<span style="font-size:13px;">Giáo dục phổ thông</span>: 12/12 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Học hàm, học vị cao nhất: {{highest_diploma or ''}}</span>
+    17)Trình độ học vấn:<span style="font-size:13px;">Giáo dục phổ thông</span>: 12/12 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Học hàm, học vị cao nhất: {{x[-1] or ''}}</span>
     <br>
     <span style="font-size:13px; float:left;"> &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; (Lớp mấy)</span>     <span style="font-size:13px; float:right;">(GS, PGS, TS, PTS, Thạc sĩ, Cử nhân, Kỹ sư ... năm nào, chuyên ngành gì)</span><br>
     - Lý luận chính trị: {{doc.custom_political_theory or doc.custom_political_level}}  &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;- Ngoại ngữ:{{doc.custom_foreign_language or "........"}}</span>
