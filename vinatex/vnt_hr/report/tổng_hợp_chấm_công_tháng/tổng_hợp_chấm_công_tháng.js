@@ -166,32 +166,32 @@ frappe.query_reports["Tổng hợp chấm công tháng"] = {
       "reqd": 1
     },
     // (tuỳ chọn) cho phép bật kế hoạch ca
-    {
-      "fieldname": "use_shift_plan",
-      "label": "Dùng kế hoạch ca",
-      "fieldtype": "Check",
-      "default": 0
-    },
+    // {
+    //   "fieldname": "use_shift_plan",
+    //   "label": "Dùng kế hoạch ca",
+    //   "fieldtype": "Check",
+    //   "default": 0
+    // },
     // (tuỳ chọn) giờ ca mặc định nếu không dùng kế hoạch ca
-    {
-      "fieldname": "shift_start",
-      "label": "Giờ bắt đầu ca",
-      "fieldtype": "Time",
-      "default": "08:00:00"
-    },
-    {
-      "fieldname": "shift_end",
-      "label": "Giờ kết thúc ca",
-      "fieldtype": "Time",
-      "default": "17:00:00"
-    },
+    // {
+    //   "fieldname": "shift_start",
+    //   "label": "Giờ bắt đầu ca",
+    //   "fieldtype": "Time",
+    //   "default": "08:00:00"
+    // },
+    // {
+    //   "fieldname": "shift_end",
+    //   "label": "Giờ kết thúc ca",
+    //   "fieldtype": "Time",
+    //   "default": "17:00:00"
+    // },
     // (tuỳ chọn) bật/tắt view tóm tắt để hiển thị message/biểu đồ
-    {
-      "fieldname": "summarized_view",
-      "label": "Chế độ tóm tắt",
-      "fieldtype": "Check",
-      "default": 0
-    },
+    // {
+    //   "fieldname": "summarized_view",
+    //   "label": "Chế độ tóm tắt",
+    //   "fieldtype": "Check",
+    //   "default": 0
+    // },
   ],
 
   onload: function (report) {
@@ -216,3 +216,4 @@ frappe.query_reports["Tổng hợp chấm công tháng"] = {
     }
   },
 };
+

@@ -7,12 +7,15 @@ from calendar import monthrange
 STATUS_CODE = {
 	"CHƯA VÀO LÀM": "CV",     # Trước ngày vào làm
 	"NGHỈ LỄ": "L",           # Nghỉ lễ theo Holiday List (không tính weekend)
-	"CUỐI TUẦN": "CT",        # Thứ 7/CN
-	"NGHỈ PHÉP": "P",         # Nghỉ phép
-	"NGHỈ NỬA NGÀY": "0.5L",  # Nghỉ 0.5 ngày
+	"CUỐI TUẦN": "T",        # Thứ 7/CN
 	"ĐI LÀM": "X",            # Đi làm
 	"VẮNG MẶT": "V",          # Vắng mặt
-	"QUÊN CHẤM CÔNG": "QCC",  # Quên chấm công
+	"QUÊN CHẤM CÔNG": "QCC",  # Quên chấm công,
+	"NGHỈ PHÉP": "P",
+	"NGHỈ VIỆC RIÊNG KHÔNG HƯỞNG LƯƠNG": "Ro",
+	"NGHỈ CÓ HƯỞNG LƯƠNG, CHẾ ĐỘ": "CĐ",
+	"NGHỈ HƯỞNG CHẾ ĐỘ BHXH": "BH",
+	"VẮNG MẶT TẠI TRỤ SỞ CÔNG TY CÓ LÝ DO CÔNG VIỆC": "CT",
 }
 
 def execute(filters):
@@ -56,6 +59,7 @@ def execute(filters):
 			"tot_absent": 0,
 			"tot_late": 0,
 			"tot_miss": 0,
+			"tot_not_joined": 0,
 		}
 
 		for d in days:
@@ -64,6 +68,7 @@ def execute(filters):
 			# 1) DOJ
 			if d < doj:
 				row[key] = STATUS_CODE["CHƯA VÀO LÀM"]
+				row["tot_not_joined"] += 1
 				continue
 
 			# 2) Holiday (ưu tiên hơn weekend & attendance)
@@ -341,11 +346,15 @@ def _is_weekend(d: date) -> bool:
 
 def get_message() -> str:
 	message = ""
-	colors = ["green","red","orange","#914EE3","green","#3187D8","#878787","#878787"]
+	colors = [
+		"green", "red", "orange", "#914EE3", "#3187D8", "#878787", 
+		"#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FECA57"
+	]
 	count = 0
 	for status, abbr in STATUS_CODE.items():
+		color = colors[count % len(colors)]  # Sử dụng modulo để tránh index out of range
 		message += f"""
-			<span style='border-left: 2px solid {colors[count]}; padding-right: 12px; padding-left: 5px; margin-right: 3px;'>
+			<span style='border-left: 2px solid {color}; padding-right: 12px; padding-left: 5px; margin-right: 3px;'>
 				{_(status)} - {abbr}
 			</span>
 		"""
@@ -353,7 +362,20 @@ def get_message() -> str:
 	return message
 
 def chart_data(rows):
-	agg = {"X": 0, "P": 0, "L": 0, "CT": 0, "V": 0, "QCC": 0}
+	# Initialize aggregation dictionary
+	agg = {
+		"X": 0,    # Đi làm
+		"P": 0,    # Nghỉ phép
+		"L": 0,    # Nghỉ lễ
+		"CT": 0,   # Cuối tuần
+		"V": 0,    # Vắng mặt
+		"QCC": 0,  # Quên chấm công
+		"CV": 0,   # Chưa vào làm
+		"Ro": 0,   # Nghỉ việc riêng không hưởng lương
+		"CĐ": 0    # Nghỉ có hưởng lương, chế độ
+	}
+	
+	# Aggregate data from rows
 	for r in rows:
 		agg["X"]   += r.get("tot_present", 0)
 		agg["P"]   += r.get("tot_leave", 0)
@@ -361,10 +383,29 @@ def chart_data(rows):
 		agg["CT"]  += r.get("tot_weekend", 0)
 		agg["V"]   += r.get("tot_absent", 0)
 		agg["QCC"] += r.get("tot_miss", 0)
+		agg["CV"]  += r.get("tot_not_joined", 0)
+		agg["Ro"]  += r.get("tot_unpaid_leave", 0)
+		agg["CĐ"]  += r.get("tot_paid_leave", 0)
+	
+	# Return chart configuration
+	labels = []
+	values = []
+	
+	# Create labels and values from STATUS_CODE dynamically
+	for status, abbr in STATUS_CODE.items():
+		if abbr in agg and agg[abbr] > 0:  # Only include non-zero values
+			labels.append(f"{status} ({abbr})")
+			values.append(agg[abbr])
+	
 	return {
 		"data": {
-			"labels": ["Đi làm (X)","Nghỉ phép (P)","Nghỉ lễ (L)","Cuối tuần (CT)","Vắng (V)","Quên CC (QCC)"],
-			"datasets": [{"name": "Số ngày","values": [agg["X"], agg["P"], agg["L"], agg["CT"], agg["V"], agg["QCC"]]}],
+			"labels": labels,
+			"datasets": [
+				{
+					"name": "Số ngày",
+					"values": values
+				}
+			]
 		},
 		"type": "donut",
 	}
