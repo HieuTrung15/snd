@@ -7,18 +7,18 @@ from calendar import monthrange
 STATUS_CODE = {
 	"CHƯA VÀO LÀM": "CV",     # Trước ngày vào làm
 	"NGHỈ LỄ": "L",           # Nghỉ lễ theo Holiday List (không tính weekend)
-	"CUỐI TUẦN": "CT",        # Thứ 7/CN
-	"NGHỈ PHÉP": "P",         # Nghỉ phép
-	"NGHỈ NỬA NGÀY": "0.5L",  # Nghỉ 0.5 ngày
+	"CUỐI TUẦN": "T",        # Thứ 7/CN
 	"ĐI LÀM": "X",            # Đi làm
 	"VẮNG MẶT": "V",          # Vắng mặt
-	"QUÊN CHẤM CÔNG": "QCC",  # Quên chấm công
+	"QUÊN CHẤM CÔNG": "O",  # Quên chấm công,
+	"NGHỈ PHÉP": "P",
+	"NGHỈ VIỆC RIÊNG KHÔNG HƯỞNG LƯƠNG": "Ro",
+	"NGHỈ CÓ HƯỞNG LƯƠNG, CHẾ ĐỘ": "CĐ",
+	"NGHỈ HƯỞNG CHẾ ĐỘ BHXH": "BH",
+	"VẮNG MẶT TẠI TRỤ SỞ CÔNG TY CÓ LÝ DO CÔNG VIỆC": "CT",
 }
 
 def execute(filters):
-	if not filters.get("company"):
-		frappe.throw("Vui lòng chọn Company, Month, Year")
-
 	start_date = getdate(filters.get("from_date"))
 	end_date = getdate(filters.get("to_date"))
 	days = list(_daterange(start_date, end_date))
@@ -56,30 +56,32 @@ def execute(filters):
 			"tot_absent": 0,
 			"tot_late": 0,
 			"tot_miss": 0,
+			"tot_not_joined": 0,
 		}
 
 		for d in days:
 			key = f"d{d.day:02d}"
-
+			d_date = getdate(d)
 			# 1) DOJ
-			if d < doj:
+			if d_date < doj:
 				row[key] = STATUS_CODE["CHƯA VÀO LÀM"]
+				row["tot_not_joined"] += 1
 				continue
 
 			# 2) Holiday (ưu tiên hơn weekend & attendance)
-			if (emp_code, d) in holi_map:
+			if (emp_code, d_date) in holi_map:
 				row[key] = STATUS_CODE["NGHỈ LỄ"]
 				row["tot_holiday"] += 1
 				continue
 
 			# 3) Cuối tuần
-			if _is_weekend(d):
+			if _is_weekend(d_date):
 				row[key] = STATUS_CODE["CUỐI TUẦN"]
 				row["tot_weekend"] += 1
 				continue
 
 			# 4) Attendance (ƯU TIÊN trước Leave/Checkin)
-			att = att_map.get((emp_code, d))
+			att = att_map.get((emp_code, d_date))
 			if att:
 				st = (att.get("status") or "").strip()
 				if st in ("Present", "Work From Home"):
@@ -101,7 +103,7 @@ def execute(filters):
 				continue
 
 			# 5) Leave (fallback khi không có Attendance)
-			lv = leave_map.get((emp_code, d))
+			lv = leave_map.get((emp_code, d_date))
 			if lv:
 				if lv.get("half_day"):
 					row[key] = STATUS_CODE["NGHỈ NỬA NGÀY"]
@@ -111,7 +113,7 @@ def execute(filters):
 				continue
 
 			# 6) Checkin (cuối cùng)
-			chk = checkin_map.get((emp_code, d), {"first_in": None, "last_out": None, "cnt_in": 0, "cnt_out": 0})
+			chk = checkin_map.get((emp_code, d_date), {"first_in": None, "last_out": None, "cnt_in": 0, "cnt_out": 0})
 			fi, lo, ci, co = chk["first_in"], chk["last_out"], chk["cnt_in"], chk["cnt_out"]
 
 			if ci == 0 and co == 0:
@@ -120,8 +122,8 @@ def execute(filters):
 				continue
 
 			# Khung giờ
-			if (emp_code, d) in shift_map:
-				sstart, send = shift_map[(emp_code, d)]
+			if (emp_code, d_date) in shift_map:
+				sstart, send = shift_map[(emp_code, d_date)]
 			else:
 				sstart, send = s_start, s_end
 
@@ -137,14 +139,13 @@ def execute(filters):
 
 		out.append(row)
 
-	message = get_message() if not filters.summarized_view else ""
-	chart = chart_data(out)
-	return cols, out, message, chart
+	# message = get_message() if not filters.summarized_view else ""
+	return cols, out
 
 
 def _columns_pivot(days):
 	base = [
-		{"fieldname": "employee", "label": "Mã NV", "fieldtype": "Link", "options": "Employee", "width": 90},
+		{"fieldname": "employee", "label": "Mã NV", "fieldtype": "Link", "options": "Employee", "width": 100},
 		{"fieldname": "employee_name", "label": "Tên NV", "fieldtype": "Data", "width": 150},
 		{"fieldname": "department", "label": "Phòng ban", "fieldtype": "Link", "options": "Department", "width": 140},
 	]
@@ -153,15 +154,15 @@ def _columns_pivot(days):
 			"fieldname": f"d{d.day:02d}",
 			"label": f"{d.day:02d}",
 			"fieldtype": "Data",
-			"width": 100,
+			"width": 42,
 		})
 	base += [
-		{"fieldname": "tot_present", "label": "Đi làm",  "fieldtype": "Int", "width": 110},
-		{"fieldname": "tot_leave",   "label": "Nghỉ phép",  "fieldtype": "Int", "width": 110},
-		{"fieldname": "tot_holiday", "label": "Nghỉ Lễ",  "fieldtype": "Int", "width": 110},
-		{"fieldname": "tot_weekend", "label": "Công tác", "fieldtype": "Int", "width": 110},
-		{"fieldname": "tot_absent",  "label": "Vắng",  "fieldtype": "Int", "width": 110},
-		{"fieldname": "tot_miss",    "label": "Quên chấm công","fieldtype": "Int", "width": 110},
+		{"fieldname": "tot_present", "label": "Đi làm",  "fieldtype": "Int", "width": 100},
+		{"fieldname": "tot_leave",   "label": "Nghỉ phép",  "fieldtype": "Int", "width": 100},
+		{"fieldname": "tot_holiday", "label": "Nghỉ Lễ",  "fieldtype": "Int", "width": 100},
+		{"fieldname": "tot_weekend", "label": "Công tác", "fieldtype": "Int", "width": 100},
+		{"fieldname": "tot_absent",  "label": "Vắng",  "fieldtype": "Int", "width": 100},
+		{"fieldname": "tot_miss",    "label": "Quên chấm công","fieldtype": "Int", "width": 100},
 	]
 	return base
 
@@ -341,11 +342,15 @@ def _is_weekend(d: date) -> bool:
 
 def get_message() -> str:
 	message = ""
-	colors = ["green","red","orange","#914EE3","green","#3187D8","#878787","#878787"]
+	colors = [
+		"green", "red", "orange", "#914EE3", "#3187D8", "#878787", 
+		"#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FECA57"
+	]
 	count = 0
 	for status, abbr in STATUS_CODE.items():
+		color = colors[count % len(colors)]  # Sử dụng modulo để tránh index out of range
 		message += f"""
-			<span style='border-left: 2px solid {colors[count]}; padding-right: 12px; padding-left: 5px; margin-right: 3px;'>
+			<span style='border-left: 2px solid {color}; padding-right: 12px; padding-left: 5px; margin-right: 3px;'>
 				{_(status)} - {abbr}
 			</span>
 		"""
@@ -353,7 +358,20 @@ def get_message() -> str:
 	return message
 
 def chart_data(rows):
-	agg = {"X": 0, "P": 0, "L": 0, "CT": 0, "V": 0, "QCC": 0}
+	# Initialize aggregation dictionary
+	agg = {
+		"X": 0,    # Đi làm
+		"P": 0,    # Nghỉ phép
+		"L": 0,    # Nghỉ lễ
+		"CT": 0,   # Cuối tuần
+		"V": 0,    # Vắng mặt
+		"QCC": 0,  # Quên chấm công
+		"CV": 0,   # Chưa vào làm
+		"Ro": 0,   # Nghỉ việc riêng không hưởng lương
+		"CĐ": 0    # Nghỉ có hưởng lương, chế độ
+	}
+	
+	# Aggregate data from rows
 	for r in rows:
 		agg["X"]   += r.get("tot_present", 0)
 		agg["P"]   += r.get("tot_leave", 0)
@@ -361,10 +379,29 @@ def chart_data(rows):
 		agg["CT"]  += r.get("tot_weekend", 0)
 		agg["V"]   += r.get("tot_absent", 0)
 		agg["QCC"] += r.get("tot_miss", 0)
+		agg["CV"]  += r.get("tot_not_joined", 0)
+		agg["Ro"]  += r.get("tot_unpaid_leave", 0)
+		agg["CĐ"]  += r.get("tot_paid_leave", 0)
+	
+	# Return chart configuration
+	labels = []
+	values = []
+	
+	# Create labels and values from STATUS_CODE dynamically
+	for status, abbr in STATUS_CODE.items():
+		if abbr in agg and agg[abbr] > 0:  # Only include non-zero values
+			labels.append(f"{status} ({abbr})")
+			values.append(agg[abbr])
+	
 	return {
 		"data": {
-			"labels": ["Đi làm (X)","Nghỉ phép (P)","Nghỉ lễ (L)","Cuối tuần (CT)","Vắng (V)","Quên CC (QCC)"],
-			"datasets": [{"name": "Số ngày","values": [agg["X"], agg["P"], agg["L"], agg["CT"], agg["V"], agg["QCC"]]}],
+			"labels": labels,
+			"datasets": [
+				{
+					"name": "Số ngày",
+					"values": values
+				}
+			]
 		},
 		"type": "donut",
 	}
