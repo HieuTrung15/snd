@@ -27,6 +27,7 @@
    "fieldname": "employee",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "M\u00e3 nh\u00e2n s\u1ef1 l\u1eadp k\u1ebf ho\u1ea1ch",
    "options": "Employee",
    "reqd": 1
@@ -35,6 +36,7 @@
    "fetch_from": "employee.employee_name",
    "fieldname": "employee_name",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "T\u00ean nh\u00e2n s\u1ef1 l\u1eadp k\u1ebf ho\u1ea1ch",
    "reqd": 1
   },
@@ -54,6 +56,7 @@
    "fetch_from": "employee.department",
    "fieldname": "department",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Ph\u00f2ng/ ban nh\u00e2n s\u1ef1 l\u00e0m vi\u1ec7c",
    "options": "Department",
    "reqd": 1
@@ -67,6 +70,7 @@
   {
    "fieldname": "year",
    "fieldtype": "Int",
+   "in_standard_filter": 1,
    "label": "K\u1ebf ho\u1ea1ch tuy\u1ec3n d\u1ee5ng n\u0103m",
    "reqd": 1
   },
@@ -90,7 +94,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-14 09:16:36.835942",
+ "modified": "2025-10-14 15:35:34.335101",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Recruitment Plan",

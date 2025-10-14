@@ -1,0 +1,56 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-14 15:19:49.331675",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "designation",
+  "des_detail",
+  "qty",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "V\u1ecb tr\u00ed",
+   "options": "Designation"
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "S\u1ed1 l\u01b0\u1ee3ng"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Ghi ch\u00fa"
+  },
+  {
+   "fieldname": "des_detail",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "V\u1ecb tr\u00ed c\u00f4ng vi\u1ec7c chi ti\u1ebft"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-10-14 15:26:05.289804",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Recruitment Proposal Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
