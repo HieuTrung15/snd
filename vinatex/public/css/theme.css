@@ -81,7 +81,7 @@ a {
  margin-bottom: 10px;
  background-color: white;
  border-bottom: 1px solid #d2d2d2;
- border-radius: 5px;
+ border-radius: 8px !important;
 }
 
 .form-control {
@@ -94,9 +94,25 @@ a {
 .spacer {
  background-color: #f3f6f9 !important;
 }
+
 [data-page-route=Workspaces] .layout-main .layout-main-section {
  background-color: #f3f6f9 !important;
  box-shadow: unset !important;
+}
+
+[data-page-route=Workspaces] .sidebar-item-container {
+	position: relative;
+	margin-left: 0px !important;
+	background: #f3f6f9;
+}
+
+[data-page-route=Workspaces] .standard-sidebar-item .item-anchor {
+	padding: 8px 0px 8px 12px;
+}
+
+.widget.shortcut-widget-box {
+	padding: 8px 8px !important;
+	border-radius: 8px;
 }
 
 .standard-sidebar-item.selected, .standard-sidebar-item:hover {
