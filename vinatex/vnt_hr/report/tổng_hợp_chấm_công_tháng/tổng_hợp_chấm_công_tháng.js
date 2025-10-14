@@ -154,56 +154,86 @@ frappe.query_reports["Tổng hợp chấm công tháng"] = {
       "options": "Employee"
     },
     {
+      "fieldname": "month",
+      "label": "Tháng",
+      "fieldtype": "Select",
+      "options": "\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12",
+      "reqd": 1,
+      on_change: function () {
+        const r = frappe.query_report;
+        const vals = r.get_values();
+        const y = parseInt(vals.year, 10);
+        const m = parseInt(vals.month, 10);
+        if (!isNaN(y) && !isNaN(m)) {
+          const first = new Date(y, m - 1, 1);
+          const last = new Date(y, m, 0);
+          r.set_filter_value("from_date", frappe.datetime.obj_to_str(first));
+          r.set_filter_value("to_date", frappe.datetime.obj_to_str(last));
+          r.refresh();
+        }
+      }
+    },
+    {
+      "fieldname": "year",
+      "label": "Năm",
+      "fieldtype": "Int",
+      "reqd": 1,
+      on_change: function () {
+        const r = frappe.query_report;
+        const vals = r.get_values();
+        const y = parseInt(vals.year, 10);
+        const m = parseInt(vals.month, 10);
+        if (!isNaN(y) && !isNaN(m)) {
+          const first = new Date(y, m - 1, 1);
+          const last = new Date(y, m, 0);
+          r.set_filter_value("from_date", frappe.datetime.obj_to_str(first));
+          r.set_filter_value("to_date", frappe.datetime.obj_to_str(last));
+          r.refresh();
+        }
+      }
+    },
+    {
       "fieldname": "from_date",
       "label": "Từ ngày",
       "fieldtype": "Date",
-      "reqd": 1
+      "reqd": 1,
+      "hidden": 1
     },
     {
       "fieldname": "to_date",
       "label": "Đến ngày",
       "fieldtype": "Date",
-      "reqd": 1
+      "reqd": 1,
+      "hidden": 1
     },
-    // (tuỳ chọn) cho phép bật kế hoạch ca
-    // {
-    //   "fieldname": "use_shift_plan",
-    //   "label": "Dùng kế hoạch ca",
-    //   "fieldtype": "Check",
-    //   "default": 0
-    // },
-    // (tuỳ chọn) giờ ca mặc định nếu không dùng kế hoạch ca
-    // {
-    //   "fieldname": "shift_start",
-    //   "label": "Giờ bắt đầu ca",
-    //   "fieldtype": "Time",
-    //   "default": "08:00:00"
-    // },
-    // {
-    //   "fieldname": "shift_end",
-    //   "label": "Giờ kết thúc ca",
-    //   "fieldtype": "Time",
-    //   "default": "17:00:00"
-    // },
-    // (tuỳ chọn) bật/tắt view tóm tắt để hiển thị message/biểu đồ
-    // {
-    //   "fieldname": "summarized_view",
-    //   "label": "Chế độ tóm tắt",
-    //   "fieldtype": "Check",
-    //   "default": 0
-    // },
   ],
 
   onload: function (report) {
     const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0"); // "01".."12"
 
-    // Set mặc định from_date (ngày đầu tháng) & to_date (hôm nay)
-    if (!report.get_values().from_date) {
-      report.set_filter_value("from_date", frappe.datetime.obj_to_str(firstDay));
+    // Set mặc định tháng/năm
+    if (!report.get_values().year) {
+      report.set_filter_value("year", yyyy);
     }
-    if (!report.get_values().to_date) {
-      report.set_filter_value("to_date", frappe.datetime.obj_to_str(today));
+    if (!report.get_values().month) {
+      report.set_filter_value("month", mm);
+    }
+
+    // Tính ngày đầu & cuối tháng theo tháng/năm đã chọn
+    const vals = report.get_values();
+    const y = parseInt(vals.year || yyyy, 10);
+    const m = parseInt(vals.month || mm, 10);
+    if (!isNaN(y) && !isNaN(m)) {
+      const first = new Date(y, m - 1, 1);
+      const last = new Date(y, m, 0);
+      if (!vals.from_date) {
+        report.set_filter_value("from_date", frappe.datetime.obj_to_str(first));
+      }
+      if (!vals.to_date) {
+        report.set_filter_value("to_date", frappe.datetime.obj_to_str(last));
+      }
     }
 
     // Set mặc định Công ty

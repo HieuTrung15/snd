@@ -10,7 +10,7 @@ STATUS_CODE = {
 	"CUỐI TUẦN": "T",        # Thứ 7/CN
 	"ĐI LÀM": "X",            # Đi làm
 	"VẮNG MẶT": "V",          # Vắng mặt
-	"QUÊN CHẤM CÔNG": "QCC",  # Quên chấm công,
+	"QUÊN CHẤM CÔNG": "O",  # Quên chấm công,
 	"NGHỈ PHÉP": "P",
 	"NGHỈ VIỆC RIÊNG KHÔNG HƯỞNG LƯƠNG": "Ro",
 	"NGHỈ CÓ HƯỞNG LƯƠNG, CHẾ ĐỘ": "CĐ",
@@ -19,9 +19,6 @@ STATUS_CODE = {
 }
 
 def execute(filters):
-	if not filters.get("company"):
-		frappe.throw("Vui lòng chọn Company, Month, Year")
-
 	start_date = getdate(filters.get("from_date"))
 	end_date = getdate(filters.get("to_date"))
 	days = list(_daterange(start_date, end_date))
@@ -64,27 +61,27 @@ def execute(filters):
 
 		for d in days:
 			key = f"d{d.day:02d}"
-
+			d_date = getdate(d)
 			# 1) DOJ
-			if d < doj:
+			if d_date < doj:
 				row[key] = STATUS_CODE["CHƯA VÀO LÀM"]
 				row["tot_not_joined"] += 1
 				continue
 
 			# 2) Holiday (ưu tiên hơn weekend & attendance)
-			if (emp_code, d) in holi_map:
+			if (emp_code, d_date) in holi_map:
 				row[key] = STATUS_CODE["NGHỈ LỄ"]
 				row["tot_holiday"] += 1
 				continue
 
 			# 3) Cuối tuần
-			if _is_weekend(d):
+			if _is_weekend(d_date):
 				row[key] = STATUS_CODE["CUỐI TUẦN"]
 				row["tot_weekend"] += 1
 				continue
 
 			# 4) Attendance (ƯU TIÊN trước Leave/Checkin)
-			att = att_map.get((emp_code, d))
+			att = att_map.get((emp_code, d_date))
 			if att:
 				st = (att.get("status") or "").strip()
 				if st in ("Present", "Work From Home"):
@@ -106,7 +103,7 @@ def execute(filters):
 				continue
 
 			# 5) Leave (fallback khi không có Attendance)
-			lv = leave_map.get((emp_code, d))
+			lv = leave_map.get((emp_code, d_date))
 			if lv:
 				if lv.get("half_day"):
 					row[key] = STATUS_CODE["NGHỈ NỬA NGÀY"]
@@ -116,7 +113,7 @@ def execute(filters):
 				continue
 
 			# 6) Checkin (cuối cùng)
-			chk = checkin_map.get((emp_code, d), {"first_in": None, "last_out": None, "cnt_in": 0, "cnt_out": 0})
+			chk = checkin_map.get((emp_code, d_date), {"first_in": None, "last_out": None, "cnt_in": 0, "cnt_out": 0})
 			fi, lo, ci, co = chk["first_in"], chk["last_out"], chk["cnt_in"], chk["cnt_out"]
 
 			if ci == 0 and co == 0:
@@ -125,8 +122,8 @@ def execute(filters):
 				continue
 
 			# Khung giờ
-			if (emp_code, d) in shift_map:
-				sstart, send = shift_map[(emp_code, d)]
+			if (emp_code, d_date) in shift_map:
+				sstart, send = shift_map[(emp_code, d_date)]
 			else:
 				sstart, send = s_start, s_end
 
@@ -142,14 +139,13 @@ def execute(filters):
 
 		out.append(row)
 
-	message = get_message() if not filters.summarized_view else ""
-	chart = chart_data(out)
-	return cols, out, message, chart
+	# message = get_message() if not filters.summarized_view else ""
+	return cols, out
 
 
 def _columns_pivot(days):
 	base = [
-		{"fieldname": "employee", "label": "Mã NV", "fieldtype": "Link", "options": "Employee", "width": 90},
+		{"fieldname": "employee", "label": "Mã NV", "fieldtype": "Link", "options": "Employee", "width": 100},
 		{"fieldname": "employee_name", "label": "Tên NV", "fieldtype": "Data", "width": 150},
 		{"fieldname": "department", "label": "Phòng ban", "fieldtype": "Link", "options": "Department", "width": 140},
 	]
@@ -158,15 +154,15 @@ def _columns_pivot(days):
 			"fieldname": f"d{d.day:02d}",
 			"label": f"{d.day:02d}",
 			"fieldtype": "Data",
-			"width": 100,
+			"width": 42,
 		})
 	base += [
-		{"fieldname": "tot_present", "label": "Đi làm",  "fieldtype": "Int", "width": 110},
-		{"fieldname": "tot_leave",   "label": "Nghỉ phép",  "fieldtype": "Int", "width": 110},
-		{"fieldname": "tot_holiday", "label": "Nghỉ Lễ",  "fieldtype": "Int", "width": 110},
-		{"fieldname": "tot_weekend", "label": "Công tác", "fieldtype": "Int", "width": 110},
-		{"fieldname": "tot_absent",  "label": "Vắng",  "fieldtype": "Int", "width": 110},
-		{"fieldname": "tot_miss",    "label": "Quên chấm công","fieldtype": "Int", "width": 110},
+		{"fieldname": "tot_present", "label": "Đi làm",  "fieldtype": "Int", "width": 100},
+		{"fieldname": "tot_leave",   "label": "Nghỉ phép",  "fieldtype": "Int", "width": 100},
+		{"fieldname": "tot_holiday", "label": "Nghỉ Lễ",  "fieldtype": "Int", "width": 100},
+		{"fieldname": "tot_weekend", "label": "Công tác", "fieldtype": "Int", "width": 100},
+		{"fieldname": "tot_absent",  "label": "Vắng",  "fieldtype": "Int", "width": 100},
+		{"fieldname": "tot_miss",    "label": "Quên chấm công","fieldtype": "Int", "width": 100},
 	]
 	return base
 
