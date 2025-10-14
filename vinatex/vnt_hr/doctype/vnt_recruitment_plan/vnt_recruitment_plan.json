@@ -1,0 +1,118 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "KHTD-.{year}.-.####",
+ "creation": "2025-10-14 08:34:15.263073",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_ox4f",
+  "employee",
+  "employee_name",
+  "date",
+  "column_break_r4vr",
+  "company",
+  "department",
+  "year",
+  "section_break_b1fo",
+  "items",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_ox4f",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "M\u00e3 nh\u00e2n s\u1ef1 l\u1eadp k\u1ebf ho\u1ea1ch",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean nh\u00e2n s\u1ef1 l\u1eadp k\u1ebf ho\u1ea1ch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_r4vr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "C\u00f4ng ty nh\u00e2n s\u1ef1 l\u1eadp k\u1ebf ho\u1ea1ch l\u00e0m vi\u1ec7c",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Ph\u00f2ng/ ban nh\u00e2n s\u1ef1 l\u00e0m vi\u1ec7c",
+   "options": "Department",
+   "reqd": 1
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y l\u1eadp k\u1ebf ho\u1ea1ch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Int",
+   "label": "K\u1ebf ho\u1ea1ch tuy\u1ec3n d\u1ee5ng n\u0103m",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_b1fo",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "K\u1ebf ho\u1ea1ch chi ti\u1ebft",
+   "options": "VNT Recruitment Plan Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Ghi ch\u00fa"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-10-14 09:16:36.835942",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Recruitment Plan",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

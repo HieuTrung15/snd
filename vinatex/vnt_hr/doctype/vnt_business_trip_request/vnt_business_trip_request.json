@@ -8,11 +8,12 @@
  "field_order": [
   "employee",
   "employee_name",
-  "department",
-  "company",
-  "column_break_mduw",
   "designation",
+  "column_break_mduw",
+  "company",
+  "department",
   "destination",
+  "section_break_vrfz",
   "from_date",
   "to_date",
   "section_break_dnxy",
@@ -26,11 +27,7 @@
   "amended_from",
   "danh_s\u00e1ch_nh\u00e2n_vi\u00ean_\u0111i_c\u00f4ng_t\u00e1c_section",
   "items",
-  "danh_s\u00e1ch_ph\u01b0\u01a1ng_ti\u1ec7n_di_chuy\u1ec3n_section",
   "transportation",
-  "th\u1eddi_gian_\u0111i_c\u00f4ng_t\u00e1c_section",
-  "time_leave",
-  "section_break_wgca",
   "note"
  ],
  "fields": [
@@ -134,27 +131,24 @@
   {
    "fieldname": "items",
    "fieldtype": "Table",
-   "label": "N\u1ebfu c\u00f3 nh\u00e2n s\u1ef1 c\u00f9ng \u0111i c\u00f4ng t\u00e1c trong c\u00f9ng ph\u00f2ng b\u1ed5 sung v\u00e0o b\u1ea3ng d\u01b0\u1edbi",
+   "label": "Danh s\u00e1ch nh\u00e2n s\u1ef1 \u0111i c\u00f4ng t\u00e1c c\u00f9ng",
    "options": "VNT Business Trip Request Items"
   },
   {
+   "collapsible": 1,
    "fieldname": "danh_s\u00e1ch_nh\u00e2n_vi\u00ean_\u0111i_c\u00f4ng_t\u00e1c_section",
    "fieldtype": "Section Break",
-   "label": "Danh s\u00e1ch nh\u00e2n s\u1ef1 \u0111i c\u00f4ng t\u00e1c b\u1ed5 sung"
-  },
-  {
-   "fieldname": "danh_s\u00e1ch_ph\u01b0\u01a1ng_ti\u1ec7n_di_chuy\u1ec3n_section",
-   "fieldtype": "Section Break",
-   "label": "Danh s\u00e1ch ph\u01b0\u01a1ng ti\u1ec7n di chuy\u1ec3n"
+   "label": "Other Details"
   },
   {
    "fieldname": "transportation",
    "fieldtype": "Table",
+   "label": "Danh s\u00e1ch ph\u01b0\u01a1ng ti\u1ec7n di chuy\u1ec3n",
    "options": "VNT Business Trip Request Transportation"
   },
   {
    "fieldname": "section_break_dnxy",
-   "fieldtype": "Section Break"
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "created_on",
@@ -177,33 +171,23 @@
    "label": "Note"
   },
   {
-   "fieldname": "th\u1eddi_gian_\u0111i_c\u00f4ng_t\u00e1c_section",
-   "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "Th\u1eddi gian \u0111i c\u00f4ng t\u00e1c"
-  },
-  {
-   "fieldname": "time_leave",
-   "fieldtype": "Table",
-   "options": "VNT Leave Application Time"
-  },
-  {
-   "fieldname": "section_break_wgca",
-   "fieldtype": "Section Break"
-  },
-  {
    "fetch_from": "approver.employee_name",
    "fetch_if_empty": 1,
    "fieldname": "approver_name",
    "fieldtype": "Read Only",
    "label": "T\u00ean ng\u01b0\u1eddi duy\u1ec7t"
+  },
+  {
+   "fieldname": "section_break_vrfz",
+   "fieldtype": "Section Break",
+   "label": "Th\u1eddi gian & M\u1ee5c \u0111\u00edch"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-09 09:03:35.706214",
+ "modified": "2025-10-14 11:20:57.917539",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request",
