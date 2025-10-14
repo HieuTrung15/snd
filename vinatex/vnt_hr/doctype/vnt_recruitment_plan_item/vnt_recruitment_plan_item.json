@@ -1,0 +1,88 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-14 08:41:34.878713",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "designation",
+  "department",
+  "column_break_k2gd",
+  "qty",
+  "expected_by",
+  "section_break_opgz",
+  "reason_for_requesting",
+  "column_break_cyag",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "V\u1ecb tr\u00ed tuy\u1ec3n d\u1ee5ng",
+   "options": "Designation",
+   "reqd": 1
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "S\u1ed1 l\u01b0\u1ee3ng tuy\u1ec3n d\u1ef1 ki\u1ebfn",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "expected_by",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Ng\u00e0y c\u1ea7n NS d\u1ef1 ki\u1ebfn"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Ph\u00f2ng/ ban",
+   "options": "Department",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_k2gd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_opgz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "reason_for_requesting",
+   "fieldtype": "Small Text",
+   "label": "L\u00fd do tuy\u1ec3n d\u1ee5ng"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "M\u00f4 t\u1ea3 c\u00f4ng vi\u1ec7c"
+  },
+  {
+   "fieldname": "column_break_cyag",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-10-14 09:17:16.982941",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Recruitment Plan Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -99,7 +99,7 @@ def get_chart(rows, avg):
             "labels": labels,
             "datasets": [
                 {
-                    "name": _("Headcount"),
+                    "name": _("Số nhân sự"),
                     "values": values,
                     "chartType": "bar",
                     "color": "#3288f1",   # xanh dương

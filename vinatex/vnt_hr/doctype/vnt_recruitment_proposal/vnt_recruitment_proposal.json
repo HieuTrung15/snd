@@ -1,0 +1,114 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-14 09:08:29.025572",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "th\u00f4ng_tin_chung_section",
+  "employee",
+  "employee_name",
+  "date",
+  "column_break_lxik",
+  "company",
+  "department",
+  "th\u00f4ng_tin_chi_ti\u1ebft_section",
+  "justification",
+  "column_break_k0fi",
+  "reason_for_requesting",
+  "section_break_pjfo"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "M\u00e3 nh\u00e2n s\u1ef1 l\u1eadp t\u1edd tr\u00ecnh",
+   "link_filters": "[[\"Employee\",\"status\",\"=\",\"Active\"]]",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean nh\u00e2n s\u1ef1 l\u1eadp t\u1edd tr\u00ecnh"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y l\u1eadp t\u1edd tr\u00ecnh"
+  },
+  {
+   "fieldname": "column_break_lxik",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "C\u00f4ng ty nh\u00e2n s\u1ef1 l\u00e0m vi\u1ec7c",
+   "options": "Company"
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Ph\u00f2ng/ ban nh\u00e2n s\u1ef1 l\u00e0m vi\u1ec7c",
+   "options": "Department"
+  },
+  {
+   "fieldname": "th\u00f4ng_tin_chung_section",
+   "fieldtype": "Section Break",
+   "label": "Th\u00f4ng tin chung"
+  },
+  {
+   "fieldname": "th\u00f4ng_tin_chi_ti\u1ebft_section",
+   "fieldtype": "Section Break",
+   "label": "Th\u00f4ng tin chi ti\u1ebft"
+  },
+  {
+   "fieldname": "justification",
+   "fieldtype": "Small Text",
+   "label": "Th\u1ef1c tr\u1ea1ng, c\u0103n c\u1ee9"
+  },
+  {
+   "fieldname": "reason_for_requesting",
+   "fieldtype": "Small Text",
+   "label": "L\u00fd do tuy\u1ec3n d\u1ee5ng"
+  },
+  {
+   "fieldname": "column_break_k0fi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_pjfo",
+   "fieldtype": "Section Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-10-14 11:07:54.715181",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Recruitment Proposal",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
