@@ -55,7 +55,6 @@
 {% set x = doc.education
     | selectattr('custom_check','eq',1)
     | map(attribute='qualification') | list %}
-{{ x[0] if x else '' }}
 
 <!-- Ảnh và nội dung -->
 <div class="row">
