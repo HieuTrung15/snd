@@ -16,6 +16,21 @@ frappe.query_reports["Số nhân sự đi làm hôm nay"] = {
             fieldtype: "Link",
             options: "Department",
             reqd: 0
+        },
+        {
+            fieldname: "branch",
+            label: __("Chi nhánh"),
+            fieldtype: "Link",
+            options: "Branch",
+            reqd: 0
+        },
+        {
+            fieldname: "employee",
+            label: __("Nhân viên"),
+            fieldtype: "Link",
+            options: "Employee",
+            hidden: 1,
+            default: frappe.session.user
         }
 	]
 };
