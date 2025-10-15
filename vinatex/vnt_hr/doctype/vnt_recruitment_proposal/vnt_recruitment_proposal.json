@@ -13,6 +13,7 @@
   "column_break_lxik",
   "company",
   "department",
+  "location",
   "th\u00f4ng_tin_chi_ti\u1ebft_section",
   "justification",
   "column_break_k0fi",
@@ -105,12 +106,19 @@
   {
    "fieldname": "job_description",
    "fieldtype": "Text Editor"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Link",
+   "label": "\u0110\u1ecba \u0111i\u1ec3m l\u1eadp t\u1edd tr\u00ecnh",
+   "options": "Location"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-14 15:34:45.845104",
+ "make_attachments_public": 1,
+ "modified": "2025-10-15 08:11:51.201277",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Recruitment Proposal",
