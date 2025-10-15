@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "TTTD-.YY.MM.-.####",
  "creation": "2025-10-14 09:08:29.025572",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -12,16 +13,21 @@
   "column_break_lxik",
   "company",
   "department",
+  "location",
   "th\u00f4ng_tin_chi_ti\u1ebft_section",
   "justification",
   "column_break_k0fi",
   "reason_for_requesting",
-  "section_break_pjfo"
+  "section_break_pjfo",
+  "items",
+  "m\u00f4_t\u1ea3_c\u00f4ng_vi\u1ec7c_tuy\u1ec3n_d\u1ee5ng_section",
+  "job_description"
  ],
  "fields": [
   {
    "fieldname": "employee",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "M\u00e3 nh\u00e2n s\u1ef1 l\u1eadp t\u1edd tr\u00ecnh",
    "link_filters": "[[\"Employee\",\"status\",\"=\",\"Active\"]]",
    "options": "Employee"
@@ -30,11 +36,13 @@
    "fetch_from": "employee.employee_name",
    "fieldname": "employee_name",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "T\u00ean nh\u00e2n s\u1ef1 l\u1eadp t\u1edd tr\u00ecnh"
   },
   {
    "fieldname": "date",
    "fieldtype": "Date",
+   "in_standard_filter": 1,
    "label": "Ng\u00e0y l\u1eadp t\u1edd tr\u00ecnh"
   },
   {
@@ -52,6 +60,7 @@
    "fetch_from": "employee.department",
    "fieldname": "department",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Ph\u00f2ng/ ban nh\u00e2n s\u1ef1 l\u00e0m vi\u1ec7c",
    "options": "Department"
   },
@@ -82,15 +91,38 @@
   {
    "fieldname": "section_break_pjfo",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Th\u00f4ng tin chi ti\u1ebft",
+   "options": "VNT Recruitment Proposal Item"
+  },
+  {
+   "fieldname": "m\u00f4_t\u1ea3_c\u00f4ng_vi\u1ec7c_tuy\u1ec3n_d\u1ee5ng_section",
+   "fieldtype": "Section Break",
+   "label": "M\u00f4 t\u1ea3 c\u00f4ng vi\u1ec7c tuy\u1ec3n d\u1ee5ng"
+  },
+  {
+   "fieldname": "job_description",
+   "fieldtype": "Text Editor"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Link",
+   "label": "\u0110\u1ecba \u0111i\u1ec3m l\u1eadp t\u1edd tr\u00ecnh",
+   "options": "Location"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-14 11:07:54.715181",
+ "make_attachments_public": 1,
+ "modified": "2025-10-15 08:11:51.201277",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Recruitment Proposal",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {
