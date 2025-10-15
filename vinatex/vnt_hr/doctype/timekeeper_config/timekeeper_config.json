@@ -11,6 +11,7 @@
   "abbr",
   "device_name",
   "is_active",
+  "branch",
   "column_break_498g",
   "ip",
   "port",
@@ -63,12 +64,18 @@
    "fieldname": "comm_key",
    "fieldtype": "Data",
    "label": "COMM_KEY"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-11 10:54:12.190934",
+ "modified": "2025-10-15 13:29:58.150858",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "Timekeeper Config",

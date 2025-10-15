@@ -36,11 +36,12 @@ def get_timekeeping_data_morning():
             comm_key=d.get("comm_key") or 0,
             start_dt=start_dt,
             end_dt=end_dt,
+            branch=d["branch"]
         ))
     if not rows:
         frappe.msgprint(_("Không có dữ liệu chấm công nào được lấy từ máy chấm công."))
         return
-        
+	
     processed = 0
     skipped_no_emp = 0
     skipped_exists = 0
@@ -56,6 +57,7 @@ def get_timekeeping_data_morning():
             {
                 "attendance_device_id": row["user_id"],
                 "status": "Active",
+                "branch": row["branch"]
             },
             ["name", "employee_name"],
             as_dict=True,
@@ -72,7 +74,6 @@ def get_timekeeping_data_morning():
         date_key = row_time.date()
         emp_key = emp.name
         emp_date_map.setdefault(emp_key, {}).setdefault(date_key, []).append((row_time, emp))
-
     for emp_key, dates in emp_date_map.items():
         for date_key, entries in dates.items():
             if not entries:
@@ -131,6 +132,7 @@ def get_timekeeping_data_evening():
             comm_key=d.get("comm_key") or 0,
             start_dt=start_dt,
             end_dt=end_dt,
+            branch=d["branch"]
         ))
     if not rows:
         frappe.msgprint(_("Không có dữ liệu chấm công nào được lấy từ máy chấm công."))
@@ -153,6 +155,7 @@ def get_timekeeping_data_evening():
             {
                 "attendance_device_id": row["user_id"],
                 "status": "Active",
+                "branch": row["branch"]
             },
             ["name", "employee_name"],
             as_dict=True,
@@ -239,10 +242,10 @@ def get_timekeeping_data_evening():
 
 
 def _device_list():
-    return frappe.get_all('Timekeeper Config', filters={'is_active': 1}, fields=['ip', 'port', 'comm_key', 'name'])
+    return frappe.get_all('Timekeeper Config', filters={'is_active': 1}, fields=['ip', 'port', 'comm_key', 'name', 'branch'])
 
 
-def _fetch_from_device(ip: str, port: int, comm_key: int, start_dt: datetime, end_dt: datetime):
+def _fetch_from_device(ip: str, branch: str, port: int, comm_key: int, start_dt: datetime, end_dt: datetime):
     """Kết nối 1 thiết bị và trả về list rows đã lọc theo khoảng thời gian."""
     zk = ZK(ip, port=port, timeout=5, password=comm_key, force_udp=False, ommit_ping=False)
     conn, out = None, []
@@ -260,6 +263,7 @@ def _fetch_from_device(ip: str, port: int, comm_key: int, start_dt: datetime, en
                     "status": getattr(att, "status", ""),
                     "punch": getattr(att, "punch", ""),
                     "device_ip": ip,
+                    "branch": branch
                 })
     except Exception as e:
         frappe.log_error(f"[{ip}] Lỗi khi kết nối/đọc dữ liệu: {e}", "get_cham_cong_multi")
