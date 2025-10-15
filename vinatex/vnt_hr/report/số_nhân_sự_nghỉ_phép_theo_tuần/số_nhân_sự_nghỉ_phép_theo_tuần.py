@@ -73,6 +73,7 @@ def execute(filters=None):
             la.employee,
             la.employee_name,
             la.leave_type,
+            la.custom_leave_group as leave_group,
             GREATEST(la.from_date, %(week_start)s) AS actual_from,
             LEAST(la.to_date, %(week_end)s) AS actual_to,
             (
@@ -113,15 +114,17 @@ def execute(filters=None):
             "to_date": r.actual_to,
             "days_off": days,
             "leave_app": r.leave_app,
-            "headcount": first_of_emp
+            "headcount": first_of_emp,
+            "leave_group": r.leave_group
         })
 
     total_headcount = sum(d["headcount"] for d in data)
 
     columns = [
         {"label": "Mã NV", "fieldname": "employee", "fieldtype": "Data", "width": 120},
-        {"label": "Tên nhân viên", "fieldname": "employee_name", "fieldtype": "Data", "width": 220},
-        {"label": "Loại nghỉ", "fieldname": "leave_type", "fieldtype": "Data", "width": 150},
+        {"label": "Tên nhân viên", "fieldname": "employee_name", "fieldtype": "Data", "width": 200},
+        {"label": "Nhóm nghỉ phép", "fieldname": "leave_group", "fieldtype": "Data", "width": 250},
+        {"label": "Loại nghỉ phép", "fieldname": "leave_type", "fieldtype": "Data", "width": 150},
         {"label": "Từ ngày", "fieldname": "from_date", "fieldtype": "Date", "width": 110},
         {"label": "Đến ngày", "fieldname": "to_date", "fieldtype": "Date", "width": 110},
         {"label": "Số ngày nghỉ", "fieldname": "days_off", "fieldtype": "Float", "precision": 1, "width": 120},
