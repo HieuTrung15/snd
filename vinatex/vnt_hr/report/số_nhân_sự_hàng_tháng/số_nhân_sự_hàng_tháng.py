@@ -94,33 +94,52 @@ def get_chart(rows, avg):
     values = [r["headcount"] for r in rows]
     avg_values = [avg] * len(rows)
 
+    def ds_compat(name, kind, data, color, fill=False, border_width=2, point_radius=3, tension=0.25, y_axis="y"):
+        # Trả về keys cho cả v14 (values/name) và v15 (data/label)
+        base = {
+            # v15 (Chart.js)
+            "type": kind,                 # "bar" hoặc "line"
+            "label": name,
+            "data": data,
+            "backgroundColor": color,
+            "borderColor": color,
+            "borderWidth": border_width,
+            "fill": fill,
+            "pointRadius": point_radius if kind == "line" else 0,
+            "tension": tension if kind == "line" else 0,
+            "yAxisID": y_axis,
+            # v14 (frappe-charts) fallback
+            "name": name,
+            "values": data,
+            "chartType": kind,            # để v14 hiểu mixed
+            "color": color,
+        }
+        return base
+
     return {
+        # v15 schema
+        "type": "bar",  # mixed: dataset "line" vẫn vẽ line
         "data": {
             "labels": labels,
             "datasets": [
-                {
-                    "name": _("Số nhân sự"),
-                    "values": values,
-                    "chartType": "bar",
-                    "color": "#3288f1",   # xanh dương
-                },
-                {
-                    "name": _("Bình quân năm"),
-                    "values": avg_values,
-                    "chartType": "bar",
-                    "color": "#f5a623",   # cam
-                },
+                ds_compat("Số nhân sự", "bar", values, "#3288f1", border_width=1),
+                ds_compat("Bình quân năm", "line", avg_values, "#f5a623", fill=False, border_width=2),
             ],
         },
-        "type": "bar",
-        "height": 280,
+        "options": {
+            "responsive": True,
+            "interaction": {"mode": "index", "intersect": False},
+            "plugins": {
+                "legend": {"position": "bottom"},
+                "tooltip": {"enabled": True}
+            },
+            "scales": {
+                "x": {"title": {"display": True, "text": "Tháng"}},
+                "y": {"title": {"display": True, "text": "Số nhân sự"}}
+            },
+        },
+        # v14 fallback
         "colors": ["#3288f1", "#f5a623"],
-        "axisOptions": {
-            "xAxisMode": "tick",
-            "yAxisMode": "tick",
-            "xIsSeries": 1,
-        },
-        "barOptions": {
-            "spaceRatio": 0.3
-        },
     }
+
+
