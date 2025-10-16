@@ -532,7 +532,7 @@
    "fetch_from": null,
    "fetch_if_empty": 0,
    "fieldname": "custom_years_of_experience",
-   "fieldtype": "Float",
+   "fieldtype": "Int",
    "hidden": 0,
    "hide_border": 0,
    "hide_days": 0,
