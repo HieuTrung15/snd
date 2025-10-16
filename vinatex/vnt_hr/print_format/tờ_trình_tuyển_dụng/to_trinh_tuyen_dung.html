@@ -1,129 +1,191 @@
 <style>
-    @media print {
-        .print-format, .print-format * {
-        font-family: "Times New Roman", Times, serif !important;
-        }
-        @page {
-            size: A4;
-            margin-top: 20mm;     /* trên 2cm */
-            margin-right: 20mm;   /* phải 2cm */
-            margin-bottom: 20mm;  /* dưới 2cm */
-            margin-left: 30mm;    /* trái 3cm */
-        }
-        .print-format {
-            padding-top: 0;       /* không cộng thêm padding */
-            padding-bottom: 0;
-        }
-    }
+  /* === Trang & in A4 === */
+  @page {
+    size: A4;
+    margin: 20mm 20mm 20mm 30mm; /* trên - phải - dưới - trái */
+  }
 
-    body .print-format, 
-    body .print-format * { font-family: "Times New Roman", Times, serif !important; }
-    .print-format, .print-format * { box-sizing: border-box; }
+  /* === Reset an toàn để không dư trang === */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: auto !important;
+    height: auto !important;
+  }
 
+  /* === Khối in chính (mặc định xem trên màn hình vẫn giữ kích thước bạn đặt) === */
+  .print-format {
+    width: 210mm;             /* chỉ áp dụng khi xem; sẽ bị override khi in */
+    padding: 0;
+    font-size: 16pt;
+    color: #000;
+    line-height: 1;
+    box-sizing: border-box;
+  }
+  .print-format * { box-sizing: border-box; }
+
+  table   { width: 100%; border-collapse: collapse; }
+  td      { vertical-align: top; padding: 0 0 2mm 0; border: none; }
+
+  .center { text-align: center; }
+  .right  { text-align: right;  }
+  .bold   { font-weight: bold;  }
+  .row    { display: flex; justify-content: space-between; }
+  .content{ flex: 1; }
+  .mb-2   { margin-bottom: 2mm; }
+
+  .print-format table { border-collapse: collapse; line-height: 0.1; }
+  .print-format td, .print-format th {
+    padding-top: 0.5mm;
+    padding-bottom: 0.5mm;
+    font-size: 16pt;
+    line-height: 1.0;
+    vertical-align: top;
+  }
+
+  /* === Chỉ khi IN: bỏ khung cứng để hết trang trắng, mỏng hóa page-break === */
+  @media print {
     .print-format {
-        width: 210mm;
-        min-height: 297mm;
-        padding: 0;                 /* không cộng dồn với @page */
-        font-size: 16pt;
-        color: #000;
-        line-height: 1;
+      width: auto !important;        /* quan trọng: không còn 210mm khi in */
+      min-height: auto !important;   /* bỏ min-height để không kéo sang trang mới */
+      margin: 0 !important;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      line-height: 1.15;             /* dễ đọc khi in */
     }
 
-    .center { text-align: center; }
-    .right  { text-align: right;  }
-    .bold   { font-weight: bold;  }
-    .row    { display: flex; justify-content: space-between; }
-    .content{ flex: 1; }
-    .mb-2   { margin-bottom: 2mm; }
-
-    table   { width: 100%; border-collapse: collapse; }
-    td      { vertical-align: top; padding: 0 0 2mm 0; border: none; }
-
-    .page-break { page-break-before: always; }
-
-    .print-format table {
-        border-collapse: collapse;
-        line-height: 0.1;       /* thu nhỏ chiều cao dòng */
+    .page-break{
+      display:block;
+      page-break-before: always;     /* legacy */
+      break-before: page;            /* modern */
+      height:0;
+      margin:0 !important;
+      padding:0 !important;
+      border:0 !important;
+      overflow:hidden;
     }
+    .page-break + * { margin-top: 0 !important; }
+  }
 
-    .print-format td, 
-    .print-format th {
-        padding-top: 0.5mm;     /* giảm padding dọc */
-        padding-bottom: 0.5mm;
-        font-size: 16pt;        /* nếu cần gọn chữ hơn 17px */
-        line-height: 1.0;       /* kiểm soát thêm trong ô */
-        vertical-align: top;
-    }
+  /* === QUAN TRỌNG: ép font ở CUỐI để thắng mọi rule khác === */
+  .print-format,
+  .print-format * {
+    font-family: "Times New Roman", Times, serif !important;
+  }
 </style>
 
 {% set fd = doc.date and frappe.utils.getdate(doc.date) or None %}
 {% set department = frappe.db.get_value("Department", doc.department, "department_name") %}
+
 <table style="width:100%;">
   <tbody>
     <tr>
-      <td style="text-align:center; width:42%; vertical-align:bottom; min-height:200px;">
+      <td style="text-align:center; width:42%; vertical-align:bottom;">
         <b>TẬP ĐOÀN DỆT MAY <br>VIỆT NAM</b>
-        <div style="margin-top:20px; font-size: 14pt;"><b>{{department | upper}}</b></div>
+        <div style="margin-top:20px; font-size:14pt;"><b>{{ department | upper }}</b></div>
       </td>
-      <td style="text-align:center; width:58%; vertical-align:bottom; min-height:200px;">
-        <b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
-        <br>Độc lập - Tự do - Hạnh phúc</b>
-        <div style="margin-top:20px; font-size: 14pt;"><i>{{doc.location}}, ngày {{ fd and fd.strftime("%d") or "" }} tháng {{ fd and fd.strftime("%m") or "" }} năm {{ fd and fd.strftime("%Y") or "" }}</i></div>
+      <td style="text-align:center; width:58%; vertical-align:bottom;">
+        <b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br>Độc lập - Tự do - Hạnh phúc</b>
+        <div style="margin-top:20px; font-size:14pt;">
+          <i>{{ doc.location }}, ngày {{ fd and fd.strftime("%d") or "" }} tháng {{ fd and fd.strftime("%m") or "" }} năm {{ fd and fd.strftime("%Y") or "" }}</i>
+        </div>
       </td>
     </tr>
   </tbody>
 </table>
 <br>
 
-<h2 style= "text-align: center; font-size: 17pt;"><b>TỜ TRÌNH<br>V/v bổ sung nhân sự cho {{department}}</b></h2>
+<h2 style="text-align:center; font-size:17pt;"><b>TỜ TRÌNH<br>V/v bổ sung nhân sự cho {{ department }}</b></h2>
 <br>
 
-<p style="margin:8px; text-align:center; font-size: 17pt;">Kính gửi: Lãnh đạo Tập đoàn Dệt May Việt Nam</p>
+<p style="margin:8px; text-align:center; font-size:17pt;">Kính gửi: Lãnh đạo Tập đoàn Dệt May Việt Nam</p>
 <br>
 
-<p style="margin:8px; text-align:justify; text-indent: 1.20cm;"> {{doc.justification}}</p>
+<p style="margin:8px; text-align:justify; text-indent:1.20cm;">{{ doc.justification }}</p>
 
 {% set list = frappe.db.get_all('VNT Recruitment Proposal Item', filters={'parent': doc.name}, fields=['des_detail', 'qty']) %}
-
-
 {% set ns = namespace(idx=0) %}
 
-<p style="margin:8px; text-align:justify; text-indent: 1.20cm;"> {{department}} kính đề nghị Lãnh đạo Tập đoàn phê duyệt kế hoạch tuyển dụng và/hoặc điều chuyển cán bộ từ đơn vị thành viên cho Ban như sau:</p>
-{% for row in list %}
+<p style="margin:8px; text-align:justify; text-indent:1.20cm;">
+  {{ department }} kính đề nghị Lãnh đạo Tập đoàn phê duyệt kế hoạch tuyển dụng và/hoặc điều chuyển cán bộ từ đơn vị thành viên cho Ban như sau:
+</p>
 
-{% set ns.idx = ns.idx + 1 %}
-<p style="margin:8px; text-align:justify; text-indent: 1.20cm;">{{ns.idx}}. Tuyển dụng {{row.qty}} cán bộ {{row.des_detail}} (hoặc điều chuyển từ đơn vị thành viên nếu có)</p>
+{% for row in list %}
+  {% set ns.idx = ns.idx + 1 %}
+  <p style="margin:8px; text-align:justify; text-indent:1.20cm;">
+    {{ ns.idx }}. Tuyển dụng {{ row.qty }} cán bộ {{ row.des_detail }} (hoặc điều chuyển từ đơn vị thành viên nếu có)
+  </p>
 {% endfor %}
 
-<p style="margin:8px; text-align:justify; text-indent: 1.20cm;">- Lý do tuyển dụng/bổ sung: {{doc.reason_for_requesting}}</p>
+<p style="margin:8px; text-align:justify; text-indent:1.20cm;">- Lý do tuyển dụng/bổ sung: {{ doc.reason_for_requesting }}</p>
+<p style="margin:8px; text-align:justify; text-indent:1.20cm;">Yêu cầu công việc cụ thể của từng vị trí được mô tả như phụ lục đính kèm.</p>
+<p style="margin:8px; text-align:justify; text-indent:1.20cm;">{{ department }} kính trình Lãnh đạo Tập đoàn phê duyệt.</p>
 
-<p style="margin: 8px; text-align: justify; text-indent: 1.20cm;">Yêu cầu công việc cụ thể của từng vị trí được mô tả như phụ lục đính kèm.</p>
-
-<p style="margin: 8px; text-align: justify; text-indent: 1.20cm;">{{department}} kính trình Lãnh đạo Tập đoàn phê duyệt.</p>
-
-<br>
-
+{# 1) Thử lấy từ Employee trước #}
 {% set tb = frappe.db.get_value(
-  'Employee',
-  {'designation': 'Trưởng ban', 'status': 'Active'},
-  'employee_name'
-) %}
+  "Employee",
+  {"designation": "Trưởng ban", "status": "Active", "department": doc.department},
+  "employee_name"
+) or "" %}
 
+{# 2) Fallback bằng mapping — KHÔNG phân biệt hoa/thường #}
+{% if not tb %}
+  {% set dept = (doc.department or "").lower() %}
 
+  {# Lưu ý: TẤT CẢ key đều lower-case để khớp với dept.lower() #}
+  {% set mapping = {
+    "văn phòng hđqt": "Hoàng Mạnh Cầm",
+    "ban đầu tư và phát triển": "Nguyễn Song Hải",
+    "ban quản lý nguồn nhân lực": "Trần Thị Thu Thảo",
+    "ban tài chính kế toán": "Nguyễn Ngọc Cách",
+    "ban cntt và chuyển đổi số": "Bùi Thành Hưng",
+    "ban truyền thông": "Nguyễn Thị Kiều Giang",
+    "ban tổng hợp pháp chế": "Tạ Hữu Doanh",
+    "ban tuyên giáo đảng ủy": "Nguyễn Thị Kiều Giang",
+    "văn phòng tập đoàn": "Nguyễn Diệp Linh",
+    "vinateximex + lái xe kiêm nhiệm": "Phan Việt Hảo",
+    "ủy ban kiểm tra đảng ủy": "Phạm Thị Thanh Tâm",
+    "văn phòng đảng ủy": "Đặng Thanh Huyền",
+    "ban tổ chức đảng ủy": "Nguyễn Song Hải",
+    "ban quản lý dự án vải chống cháy": "Phạm Xuân Trình",
+    "công đoàn dệt may việt nam": "Phạm Thị Thanh Tâm"
+  } %}
 
-<table style="width:100%;">
+  {# Dùng namespace để GIỮ GIÁ TRỊ ngoài vòng for #}
+  {% set pick = namespace(name="") %}
+  {% for k, v in mapping.items() %}
+    {% if k in dept and not pick.name %}
+      {% set pick.name = v %}
+    {% endif %}
+  {% endfor %}
+
+  {% if pick.name %}
+    {% set tb = pick.name %}
+  {% endif %}
+{% endif %}
+
+<table style="width:100%; margin-top:10mm;">
   <tbody>
     <tr>
-      <td style="text-align:center; width:50%; vertical-align:bottom; min-height:200px;">
+      <td style="text-align:center; width:47%;">
         <b>TỔNG GIÁM ĐỐC DUYỆT</b>
-    
       </td>
-      <td style="text-align:center; width:50%; vertical-align:bottom; min-height:200px;">
-        <b>{{department | upper}}
-            <div style="margin-top:20px;">TRƯỞNG BAN</div><br><br><br><br><br>
-            <div style="margin-top:20px;">{{tb}}</div>
-        </b>
+      <td style="text-align:center; width:53%;">
+        <b>{{ department | upper }}
+        <div>TRƯỞNG BAN</div>
+        <div style="margin-top:20mm;">{{ tb }}</b></div>
       </td>
     </tr>
   </tbody>
 </table>
+
+<p style="page-break-after: always;"></p>
+
+<p style="text-align:center; font-size:17pt;">
+  <b>PHỤ LỤC: MÔ TẢ CÔNG VIỆC TUYỂN DỤNG</b><br>
+  <i>(Kèm theo Tờ trình xin phê duyệt bổ sung nhân sự cho {{ department }}
+  ngày {{ fd and fd.strftime("%d") or "" }} tháng {{ fd and fd.strftime("%m") or "" }} năm {{ fd and fd.strftime("%Y") or "" }})</i>
+</p>
+<br>
+
+<p style="text-align:center; text-indent:1.20cm;">{{doc.job_description or ''}}</p>
