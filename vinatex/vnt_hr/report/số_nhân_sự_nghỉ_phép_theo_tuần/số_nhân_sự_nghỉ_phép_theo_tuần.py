@@ -1,6 +1,8 @@
 import frappe
 from frappe.utils import getdate, add_days, nowdate
 
+
+@frappe.whitelist()
 def execute(filters=None):
     filters = filters or {}
     mode = (filters.get("mode") or "detail").lower()
@@ -21,6 +23,7 @@ def execute(filters=None):
             SELECT
                 la.employee,
                 la.employee_name,
+                e.branch,
                 -- tổng ngày nghỉ trong tuần (đã cắt + trừ half-day nếu có)
                 SUM(
                     DATEDIFF(LEAST(la.to_date, %(week_end)s), GREATEST(la.from_date, %(week_start)s)) + 1
@@ -34,6 +37,7 @@ def execute(filters=None):
                 ) AS days_off,
                 1 AS headcount
             FROM `tabLeave Application` la
+            JOIN `tabEmployee` e ON e.name = la.employee
             WHERE la.docstatus = 1
               AND la.from_date <= %(week_end)s
               AND la.to_date   >= %(week_start)s
@@ -72,6 +76,7 @@ def execute(filters=None):
             la.name AS leave_app,
             la.employee,
             la.employee_name,
+            e.branch,
             la.leave_type,
             la.custom_leave_group as leave_group,
             GREATEST(la.from_date, %(week_start)s) AS actual_from,
@@ -87,6 +92,7 @@ def execute(filters=None):
                   END
             ) AS days_off
         FROM `tabLeave Application` la
+        JOIN `tabEmployee` e ON e.name = la.employee
         WHERE la.docstatus = 1
           AND la.from_date <= %(week_end)s
           AND la.to_date   >= %(week_start)s
@@ -109,6 +115,7 @@ def execute(filters=None):
         data.append({
             "employee": r.employee,
             "employee_name": r.employee_name,
+            "branch": r.branch,
             "leave_type": r.leave_type,
             "from_date": r.actual_from,
             "to_date": r.actual_to,
@@ -123,6 +130,7 @@ def execute(filters=None):
     columns = [
         {"label": "Mã NV", "fieldname": "employee", "fieldtype": "Data", "width": 120},
         {"label": "Tên nhân viên", "fieldname": "employee_name", "fieldtype": "Data", "width": 200},
+        {"label": "Chi nhánh", "fieldname": "branch", "fieldtype": "Link", "options": "Branch", "width": 200},
         {"label": "Nhóm nghỉ phép", "fieldname": "leave_group", "fieldtype": "Data", "width": 250},
         {"label": "Loại nghỉ phép", "fieldname": "leave_type", "fieldtype": "Data", "width": 150},
         {"label": "Từ ngày", "fieldname": "from_date", "fieldtype": "Date", "width": 110},
