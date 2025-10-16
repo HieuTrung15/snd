@@ -1,0 +1,660 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-10-15 15:14:16.007486",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_n6f5",
+  "t\u1ed5ng_quan_section",
+  "naming_series",
+  "first_name",
+  "middle_name",
+  "last_name",
+  "employee_name",
+  "custom_need_check",
+  "column_break_w6xm",
+  "gender",
+  "date_of_birth",
+  "salutation",
+  "custom_ethnic_group",
+  "custom_religion",
+  "column_break_loai",
+  "date_of_joining",
+  "status",
+  "company",
+  "department",
+  "branch",
+  "custom_abbr",
+  "th\u00f4ng_tin_kh\u00e1c_section",
+  "custom_id_card",
+  "custom_id_issue_date",
+  "custom_place_of_issue",
+  "passport_number",
+  "valid_upto",
+  "column_break_etfj",
+  "marital_status",
+  "custom_party_member",
+  "custom_sub_date",
+  "custom_add_date",
+  "custom_political_level",
+  "column_break_yuzt",
+  "custom_tax_number",
+  "bhxh_number",
+  "custom_relation_number",
+  "bank_name",
+  "bank_ac_no",
+  "tr\u00ecnh_\u0111\u1ed9_chuy\u00ean_m\u00f4n_section",
+  "education",
+  "th\u00f4ng_tin_h\u0111l\u0111_m\u1edbi_nh\u1ea5t_section",
+  "custom_vnt_contract",
+  "section_break_5u2s",
+  "employment_type",
+  "contract_end_date",
+  "date_of_retirement",
+  "column_break_vdyv",
+  "designation",
+  "custom_designation_group",
+  "custom_position_designation",
+  "column_break_klr8",
+  "custom_appointment_date",
+  "reports_to",
+  "user_id",
+  "th\u00f4ng_tin_li\u00ean_h\u1ec7_section",
+  "cell_number",
+  "person_to_be_contacted",
+  "column_break_eq80",
+  "personal_email",
+  "emergency_phone_number",
+  "column_break_2qdp",
+  "company_email",
+  "relation",
+  "\u0111\u1ecba_ch\u1ec9_section",
+  "custom_ward",
+  "custom_district",
+  "custom_city",
+  "column_break_rae3",
+  "custom_place_of_birth",
+  "th\u01b0\u1eddng_tr\u00fa_x\u00e3_ph\u01b0\u1eddng",
+  "t\u1ec9nh_th\u00e0nh_ph\u1ed1",
+  "column_break_wcue",
+  "t\u1ea1m_tr\u00fa_x\u00e3_ph\u01b0\u1eddng",
+  "t\u1ea1m_tr\u00fa_t\u1ec9nh_th\u00e0nh_ph\u1ed1",
+  "current_address",
+  "th\u00f4ng_tin_nh\u00e2n_th\u00e2n_section",
+  "custom_vnt_employee_tax",
+  "qu\u00e1_tr\u00ecnh_c\u00f4ng_t\u00e1c_trong_c\u00f4ng_ty_tab",
+  "internal_work_history",
+  "qu\u00e1_tr\u00ecnh_c\u00f4ng_t\u00e1c_tr\u01b0\u1edbc_\u0111\u00e2y_tab",
+  "external_work_history",
+  "luong_phucap",
+  "45",
+  "qu\u00e1_tr\u00ecnh_k\u00fd_h\u0111l\u0111_tab",
+  "44",
+  "qu\u00e1_tr\u00ecnh_khen_th\u01b0\u1edfng_tab",
+  "4",
+  "qu\u00e1_tr\u00ecnh_k\u1ef7_lu\u1eadt_tab",
+  "3",
+  "qu\u00e1_tr\u00ecnh_ngh\u1ec9_vi\u1ec7c_tab",
+  "resignation_letter_date",
+  "relieving_date",
+  "held_on",
+  "new_workplace",
+  "select_sjjb",
+  "th\u00f4ng_tin_nh\u00e2n_th\u00e2n_tab",
+  "12"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_n6f5",
+   "fieldtype": "Tab Break",
+   "label": "H\u1ed3 s\u01a1 nh\u00e2n s\u1ef1"
+  },
+  {
+   "fieldname": "qu\u00e1_tr\u00ecnh_c\u00f4ng_t\u00e1c_trong_c\u00f4ng_ty_tab",
+   "fieldtype": "Tab Break",
+   "label": "Qu\u00e1 tr\u00ecnh c\u00f4ng t\u00e1c trong c\u00f4ng ty",
+   "options": ".{custom_abbr}.#####"
+  },
+  {
+   "fieldname": "qu\u00e1_tr\u00ecnh_c\u00f4ng_t\u00e1c_tr\u01b0\u1edbc_\u0111\u00e2y_tab",
+   "fieldtype": "Tab Break",
+   "label": "Qu\u00e1 tr\u00ecnh c\u00f4ng t\u00e1c tr\u01b0\u1edbc \u0111\u00e2y"
+  },
+  {
+   "fieldname": "luong_phucap",
+   "fieldtype": "Tab Break",
+   "label": "Qu\u00e1 tr\u00ecnh l\u01b0\u01a1ng & ph\u1ee5 c\u1ea5p"
+  },
+  {
+   "fieldname": "qu\u00e1_tr\u00ecnh_k\u00fd_h\u0111l\u0111_tab",
+   "fieldtype": "Tab Break",
+   "label": "Qu\u00e1 tr\u00ecnh k\u00fd H\u0110L\u0110"
+  },
+  {
+   "fieldname": "qu\u00e1_tr\u00ecnh_khen_th\u01b0\u1edfng_tab",
+   "fieldtype": "Tab Break",
+   "label": "Qu\u00e1 tr\u00ecnh khen th\u01b0\u1edfng"
+  },
+  {
+   "fieldname": "qu\u00e1_tr\u00ecnh_k\u1ef7_lu\u1eadt_tab",
+   "fieldtype": "Tab Break",
+   "label": "Qu\u00e1 tr\u00ecnh k\u1ef7 lu\u1eadt"
+  },
+  {
+   "fieldname": "qu\u00e1_tr\u00ecnh_ngh\u1ec9_vi\u1ec7c_tab",
+   "fieldtype": "Tab Break",
+   "label": "Qu\u00e1 tr\u00ecnh ngh\u1ec9 vi\u1ec7c"
+  },
+  {
+   "fieldname": "th\u00f4ng_tin_nh\u00e2n_th\u00e2n_tab",
+   "fieldtype": "Tab Break",
+   "label": "Th\u00f4ng tin nh\u00e2n th\u00e2n"
+  },
+  {
+   "fieldname": "45",
+   "fieldtype": "Data",
+   "label": "45"
+  },
+  {
+   "fieldname": "44",
+   "fieldtype": "Data",
+   "label": "44"
+  },
+  {
+   "fieldname": "4",
+   "fieldtype": "Data",
+   "label": "4"
+  },
+  {
+   "fieldname": "3",
+   "fieldtype": "Data",
+   "label": "3"
+  },
+  {
+   "fieldname": "12",
+   "fieldtype": "Data",
+   "label": "12"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "in_list_view": 1,
+   "label": "Series",
+   "no_copy": 1,
+   "options": ".{custom_abbr}.#####"
+  },
+  {
+   "fieldname": "first_name",
+   "fieldtype": "Data",
+   "label": "H\u1ecd",
+   "reqd": 1
+  },
+  {
+   "fieldname": "middle_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean \u0111\u1ec7m"
+  },
+  {
+   "fieldname": "last_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean \u0111\u1ea7y \u0111\u1ee7"
+  },
+  {
+   "default": "0",
+   "description": "Tick v\u00e0o \u0111\u00e2y n\u1ebfu nh\u00e2n s\u1ef1 \u0111\u00f3 kh\u00f4ng ph\u1ea3i ch\u1ea5m c\u00f4ng",
+   "fieldname": "custom_need_check",
+   "fieldtype": "Check",
+   "label": "Kh\u00f4ng ph\u1ea3i ch\u1ea5m c\u00f4ng"
+  },
+  {
+   "fieldname": "column_break_w6xm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gi\u1edbi t\u00ednh",
+   "options": "Gender",
+   "reqd": 1
+  },
+  {
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y th\u00e1ng n\u0103m sinh",
+   "reqd": 1
+  },
+  {
+   "fieldname": "salutation",
+   "fieldtype": "Link",
+   "label": "Danh x\u01b0ng",
+   "options": "Salutation",
+   "reqd": 1
+  },
+  {
+   "fieldname": "custom_ethnic_group",
+   "fieldtype": "Data",
+   "label": "D\u00e2n t\u1ed9c"
+  },
+  {
+   "fieldname": "custom_religion",
+   "fieldtype": "Data",
+   "label": "T\u00f4n gi\u00e1o"
+  },
+  {
+   "fieldname": "column_break_loai",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date_of_joining",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y b\u1eaft \u0111\u1ea7u l\u00e0m vi\u1ec7c",
+   "reqd": 1
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Tr\u1ea1ng th\u00e1i",
+   "options": "Active\nInactive\nSuspended\nLeft",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "C\u00f4ng ty",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Ph\u00f2ng/Ban",
+   "options": "Department"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Chi nh\u00e1nh",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "t\u1ed5ng_quan_section",
+   "fieldtype": "Section Break",
+   "label": "T\u1ed5ng quan"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "th\u00f4ng_tin_kh\u00e1c_section",
+   "fieldtype": "Section Break",
+   "label": "Th\u00f4ng tin kh\u00e1c"
+  },
+  {
+   "fieldname": "custom_id_card",
+   "fieldtype": "Int",
+   "label": "S\u1ed1 CCCD"
+  },
+  {
+   "fieldname": "custom_id_issue_date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y c\u1ea5p"
+  },
+  {
+   "fieldname": "custom_place_of_issue",
+   "fieldtype": "Data",
+   "label": "N\u01a1i c\u1ea5p"
+  },
+  {
+   "fieldname": "column_break_etfj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "passport_number",
+   "fieldtype": "Data",
+   "label": "S\u1ed1 h\u1ed9 chi\u1ebfu"
+  },
+  {
+   "fieldname": "valid_upto",
+   "fieldtype": "Date",
+   "label": "Hi\u1ec7u l\u1ef1c"
+  },
+  {
+   "fieldname": "marital_status",
+   "fieldtype": "Select",
+   "label": "T\u00ecnh tr\u1ea1ng h\u00f4n nh\u00e2n",
+   "options": "\nSingle\nMarried\nDivorced\nWidowed"
+  },
+  {
+   "fieldname": "column_break_yuzt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "custom_party_member",
+   "fieldtype": "Select",
+   "label": "Th\u00f4ng tin \u0111\u1ea3ng vi\u00ean",
+   "options": "Ch\u01b0a k\u1ebft n\u1ea1p\nD\u1ef1 b\u1ecb\nCh\u00ednh th\u1ee9c"
+  },
+  {
+   "fieldname": "custom_sub_date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y d\u1ef1 b\u1ecb"
+  },
+  {
+   "fieldname": "custom_add_date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y ch\u00ednh th\u1ee9c"
+  },
+  {
+   "fieldname": "custom_political_level",
+   "fieldtype": "Select",
+   "label": "L\u00fd lu\u1eadn ch\u00ednh tr\u1ecb",
+   "options": "Kh\u00f4ng\nS\u01a1 c\u1ea5p\nTrung c\u1ea5p\nC\u1eed nh\u00e2n\nCao c\u1ea5p"
+  },
+  {
+   "fieldname": "custom_tax_number",
+   "fieldtype": "Int",
+   "label": "M\u00e3 s\u1ed1 thu\u1ebf"
+  },
+  {
+   "fieldname": "custom_relation_number",
+   "fieldtype": "Int",
+   "label": "S\u1ed1 ng\u01b0\u1eddi ph\u1ee5 thu\u1ed9c"
+  },
+  {
+   "fieldname": "bank_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean ng\u00e2n h\u00e0ng"
+  },
+  {
+   "fieldname": "bank_ac_no",
+   "fieldtype": "Data",
+   "label": "S\u1ed1 ng\u00e2n h\u00e0ng"
+  },
+  {
+   "fieldname": "bhxh_number",
+   "fieldtype": "Int",
+   "label": "M\u00e3 s\u1ed1 BHXH"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "tr\u00ecnh_\u0111\u1ed9_chuy\u00ean_m\u00f4n_section",
+   "fieldtype": "Section Break",
+   "label": "Tr\u00ecnh \u0111\u1ed9 chuy\u00ean m\u00f4n"
+  },
+  {
+   "fieldname": "education",
+   "fieldtype": "Table",
+   "label": "\u0110\u00e0o t\u1ea1o",
+   "options": "Employee Education"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "th\u00f4ng_tin_h\u0111l\u0111_m\u1edbi_nh\u1ea5t_section",
+   "fieldtype": "Section Break",
+   "label": "Th\u00f4ng tin H\u0110L\u0110 m\u1edbi nh\u1ea5t"
+  },
+  {
+   "fieldname": "contract_end_date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y h\u1ebft h\u1ea1n h\u1ee3p \u0111\u1ed3ng"
+  },
+  {
+   "fieldname": "column_break_vdyv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date_of_retirement",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y ngh\u1ec9 h\u01b0u"
+  },
+  {
+   "fieldname": "employment_type",
+   "fieldtype": "Link",
+   "label": "Lo\u1ea1i h\u1ee3p \u0111\u1ed3ng lao \u0111\u1ed9ng",
+   "options": "Employment Type"
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Ch\u1ee9c v\u1ee5",
+   "options": "Designation"
+  },
+  {
+   "fieldname": "custom_designation_group",
+   "fieldtype": "Link",
+   "label": "Nh\u00f3m ch\u1ee9c v\u1ee5",
+   "options": "VNT Designation Group"
+  },
+  {
+   "fieldname": "column_break_klr8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "custom_appointment_date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y b\u1ed5 nhi\u1ec7m"
+  },
+  {
+   "fieldname": "custom_position_designation",
+   "fieldtype": "Data",
+   "label": "V\u1ecb tr\u00ed ch\u1ee9c v\u1ee5"
+  },
+  {
+   "fieldname": "reports_to",
+   "fieldtype": "Link",
+   "label": "B\u00e1o c\u00e1o cho",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "user_id",
+   "fieldtype": "Link",
+   "label": "ID ng\u01b0\u1eddi d\u00f9ng",
+   "options": "User"
+  },
+  {
+   "fieldname": "custom_vnt_contract",
+   "fieldtype": "Table",
+   "label": "Th\u00f4ng tin qu\u00e1 tr\u00ecnh H\u0110L\u0110 chi ti\u1ebft",
+   "options": "VNT Contract"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "th\u00f4ng_tin_li\u00ean_h\u1ec7_section",
+   "fieldtype": "Section Break",
+   "label": "Th\u00f4ng tin li\u00ean h\u1ec7"
+  },
+  {
+   "fieldname": "cell_number",
+   "fieldtype": "Data",
+   "label": "\u0110i\u1ec7n tho\u1ea1i di \u0111\u1ed9ng"
+  },
+  {
+   "fieldname": "column_break_eq80",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "personal_email",
+   "fieldtype": "Data",
+   "label": "Email c\u00e1 nh\u00e2n"
+  },
+  {
+   "fieldname": "column_break_2qdp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company_email",
+   "fieldtype": "Data",
+   "label": "Email c\u00f4ng ty"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "\u0111\u1ecba_ch\u1ec9_section",
+   "fieldtype": "Section Break",
+   "label": "\u0110\u1ecba ch\u1ec9"
+  },
+  {
+   "fieldname": "custom_ward",
+   "fieldtype": "Data",
+   "label": "Qu\u00ea qu\u00e1n (x\u00e3, ph\u01b0\u1eddng)"
+  },
+  {
+   "fieldname": "custom_district",
+   "fieldtype": "Data",
+   "label": "Huy\u1ec7n, qu\u1eadn"
+  },
+  {
+   "fieldname": "custom_city",
+   "fieldtype": "Data",
+   "label": "T\u1ec9nh, th\u00e0nh ph\u1ed1"
+  },
+  {
+   "fieldname": "column_break_rae3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "custom_place_of_birth",
+   "fieldtype": "Data",
+   "label": "N\u01a1i sinh"
+  },
+  {
+   "fieldname": "th\u01b0\u1eddng_tr\u00fa_x\u00e3_ph\u01b0\u1eddng",
+   "fieldtype": "Data",
+   "label": "Th\u01b0\u1eddng tr\u00fa (x\u00e3, ph\u01b0\u1eddng)"
+  },
+  {
+   "fieldname": "t\u1ec9nh_th\u00e0nh_ph\u1ed1",
+   "fieldtype": "Data",
+   "label": "T\u1ec9nh, th\u00e0nh ph\u1ed1"
+  },
+  {
+   "fieldname": "column_break_wcue",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "t\u1ea1m_tr\u00fa_x\u00e3_ph\u01b0\u1eddng",
+   "fieldtype": "Data",
+   "label": "T\u1ea1m tr\u00fa (x\u00e3, ph\u01b0\u1eddng)"
+  },
+  {
+   "fieldname": "t\u1ea1m_tr\u00fa_t\u1ec9nh_th\u00e0nh_ph\u1ed1",
+   "fieldtype": "Data",
+   "label": "T\u1ea1m tr\u00fa (t\u1ec9nh, th\u00e0nh ph\u1ed1)"
+  },
+  {
+   "fieldname": "current_address",
+   "fieldtype": "Data",
+   "label": "\u0110\u1ecba ch\u1ec9 hi\u1ec7n t\u1ea1i"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_5u2s",
+   "fieldtype": "Section Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "th\u00f4ng_tin_nh\u00e2n_th\u00e2n_section",
+   "fieldtype": "Section Break",
+   "label": "Th\u00f4ng tin nh\u00e2n th\u00e2n"
+  },
+  {
+   "fieldname": "custom_vnt_employee_tax",
+   "fieldtype": "Table",
+   "label": "Chi ti\u1ebft",
+   "options": "VNT Employee Tax"
+  },
+  {
+   "fetch_from": "company.abbr",
+   "fieldname": "custom_abbr",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Abbr"
+  },
+  {
+   "fieldname": "person_to_be_contacted",
+   "fieldtype": "Data",
+   "label": "Ng\u01b0\u1eddi li\u00ean h\u1ec7 kh\u1ea9n c\u1ea5p"
+  },
+  {
+   "fieldname": "emergency_phone_number",
+   "fieldtype": "Data",
+   "label": "S\u0110T ng\u01b0\u1eddi li\u00ean h\u1ec7"
+  },
+  {
+   "fieldname": "relation",
+   "fieldtype": "Data",
+   "label": "M\u1ed1i li\u00ean h\u1ec7"
+  },
+  {
+   "fieldname": "internal_work_history",
+   "fieldtype": "Table",
+   "label": "Internal Work History",
+   "options": "Employee Internal Work History"
+  },
+  {
+   "fieldname": "external_work_history",
+   "fieldtype": "Table",
+   "label": "External Work History",
+   "options": "Employee External Work History"
+  },
+  {
+   "fieldname": "resignation_letter_date",
+   "fieldtype": "Date",
+   "label": "Resignation Letter Date"
+  },
+  {
+   "fieldname": "relieving_date",
+   "fieldtype": "Date",
+   "label": "Relieving Date"
+  },
+  {
+   "fieldname": "held_on",
+   "fieldtype": "Date",
+   "label": "Exit Interview Held On"
+  },
+  {
+   "fieldname": "new_workplace",
+   "fieldtype": "Data",
+   "label": "New Workplace"
+  },
+  {
+   "fieldname": "select_sjjb",
+   "fieldtype": "Select"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-10-16 16:16:21.937176",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Employee",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
