@@ -13,7 +13,7 @@
  "is_hidden": 0,
  "label": "4. Qu\u1ea3n tr\u1ecb s\u1ea3n xu\u1ea5t (MES)",
  "links": [],
- "modified": "2025-10-06 14:59:01.225811",
+ "modified": "2025-10-16 15:29:25.439485",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "4. Qu\u1ea3n tr\u1ecb s\u1ea3n xu\u1ea5t (MES)",
@@ -23,7 +23,7 @@
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 53.0,
+ "sequence_id": 50.0,
  "shortcuts": [],
  "title": "4. Qu\u1ea3n tr\u1ecb s\u1ea3n xu\u1ea5t (MES)"
 }
