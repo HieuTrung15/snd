@@ -63,10 +63,13 @@
   "user_id",
   "th\u00f4ng_tin_li\u00ean_h\u1ec7_section",
   "cell_number",
+  "person_to_be_contacted",
   "column_break_eq80",
   "personal_email",
+  "emergency_phone_number",
   "column_break_2qdp",
   "company_email",
+  "relation",
   "\u0111\u1ecba_ch\u1ec9_section",
   "custom_ward",
   "custom_district",
@@ -82,9 +85,9 @@
   "th\u00f4ng_tin_nh\u00e2n_th\u00e2n_section",
   "custom_vnt_employee_tax",
   "qu\u00e1_tr\u00ecnh_c\u00f4ng_t\u00e1c_trong_c\u00f4ng_ty_tab",
-  "444",
+  "internal_work_history",
   "qu\u00e1_tr\u00ecnh_c\u00f4ng_t\u00e1c_tr\u01b0\u1edbc_\u0111\u00e2y_tab",
-  "6",
+  "external_work_history",
   "luong_phucap",
   "45",
   "qu\u00e1_tr\u00ecnh_k\u00fd_h\u0111l\u0111_tab",
@@ -94,7 +97,11 @@
   "qu\u00e1_tr\u00ecnh_k\u1ef7_lu\u1eadt_tab",
   "3",
   "qu\u00e1_tr\u00ecnh_ngh\u1ec9_vi\u1ec7c_tab",
-  "2",
+  "resignation_letter_date",
+  "relieving_date",
+  "held_on",
+  "new_workplace",
+  "select_sjjb",
   "th\u00f4ng_tin_nh\u00e2n_th\u00e2n_tab",
   "12"
  ],
@@ -146,16 +153,6 @@
    "label": "Th\u00f4ng tin nh\u00e2n th\u00e2n"
   },
   {
-   "fieldname": "444",
-   "fieldtype": "Data",
-   "label": "444"
-  },
-  {
-   "fieldname": "6",
-   "fieldtype": "Data",
-   "label": "6"
-  },
-  {
    "fieldname": "45",
    "fieldtype": "Data",
    "label": "45"
@@ -174,11 +171,6 @@
    "fieldname": "3",
    "fieldtype": "Data",
    "label": "3"
-  },
-  {
-   "fieldname": "2",
-   "fieldtype": "Data",
-   "label": "2"
   },
   {
    "fieldname": "12",
@@ -584,12 +576,63 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Abbr"
+  },
+  {
+   "fieldname": "person_to_be_contacted",
+   "fieldtype": "Data",
+   "label": "Ng\u01b0\u1eddi li\u00ean h\u1ec7 kh\u1ea9n c\u1ea5p"
+  },
+  {
+   "fieldname": "emergency_phone_number",
+   "fieldtype": "Data",
+   "label": "S\u0110T ng\u01b0\u1eddi li\u00ean h\u1ec7"
+  },
+  {
+   "fieldname": "relation",
+   "fieldtype": "Data",
+   "label": "M\u1ed1i li\u00ean h\u1ec7"
+  },
+  {
+   "fieldname": "internal_work_history",
+   "fieldtype": "Table",
+   "label": "Internal Work History",
+   "options": "Employee Internal Work History"
+  },
+  {
+   "fieldname": "external_work_history",
+   "fieldtype": "Table",
+   "label": "External Work History",
+   "options": "Employee External Work History"
+  },
+  {
+   "fieldname": "resignation_letter_date",
+   "fieldtype": "Date",
+   "label": "Resignation Letter Date"
+  },
+  {
+   "fieldname": "relieving_date",
+   "fieldtype": "Date",
+   "label": "Relieving Date"
+  },
+  {
+   "fieldname": "held_on",
+   "fieldtype": "Date",
+   "label": "Exit Interview Held On"
+  },
+  {
+   "fieldname": "new_workplace",
+   "fieldtype": "Data",
+   "label": "New Workplace"
+  },
+  {
+   "fieldname": "select_sjjb",
+   "fieldtype": "Select"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-16 11:24:52.037528",
+ "modified": "2025-10-16 16:16:21.937176",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Employee",

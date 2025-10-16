@@ -6,52 +6,48 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "section_break_0nyf",
   "name1",
   "tax_number",
   "birthday",
-  "relationship",
   "is_dependent",
+  "column_break_fkbn",
+  "relationship",
   "birth_year",
   "detail",
   "check"
  ],
  "fields": [
   {
-   "fieldname": "section_break_0nyf",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "name1",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Name",
+   "label": "H\u1ecd v\u00e0 t\u00ean",
    "reqd": 1
   },
   {
    "fieldname": "tax_number",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Tax number"
+   "label": "MST"
   },
   {
    "fieldname": "birthday",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "label": "Birthday"
+   "label": "Ng\u00e0y th\u00e1ng n\u0103m sinh"
   },
   {
    "fieldname": "relationship",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Relationship"
+   "label": "M\u1ed1i li\u00ean h\u1ec7"
   },
   {
    "default": "0",
    "fieldname": "is_dependent",
    "fieldtype": "Check",
    "in_list_view": 1,
-   "label": "C\u00f3 ph\u1ee5 thu\u1ed9c kh\u00f4ng"
+   "label": "L\u00e0 ng\u01b0\u1eddi ph\u1ee5 thu\u1ed9c"
   },
   {
    "fieldname": "birth_year",
@@ -61,20 +57,24 @@
   {
    "fieldname": "detail",
    "fieldtype": "Data",
-   "label": "Qu\u00ea qu\u00e1n,ngh\u1ec1 nghi\u1ec7p"
+   "label": "Qu\u00ea qu\u00e1n, ngh\u1ec1 nghi\u1ec7p"
   },
   {
    "default": "0",
    "fieldname": "check",
    "fieldtype": "Check",
    "label": "B\u00ean v\u1ee3/ch\u1ed3ng"
+  },
+  {
+   "fieldname": "column_break_fkbn",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-24 02:03:07.260801",
+ "modified": "2025-10-16 15:15:38.342144",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Employee Tax",
