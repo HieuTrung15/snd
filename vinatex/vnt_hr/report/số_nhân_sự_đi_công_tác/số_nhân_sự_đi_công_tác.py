@@ -12,6 +12,7 @@ def _week_bounds(base=None):
     end = start + timedelta(days=6)           # Sunday
     return start, end
 
+@frappe.whitelist()
 def execute(filters=None):
     week_start, week_end = _week_bounds()
     today = getdate(nowdate())
@@ -21,6 +22,7 @@ def execute(filters=None):
             u.emp_code,
             e.employee_name,
             e.department,
+            e.branch,
             u.destination,
             u.from_date,
             u.to_date
@@ -89,6 +91,7 @@ def execute(filters=None):
         {"label": "Mã NV", "fieldname": "emp_code", "fieldtype": "Link", "options": "Employee", "width": 120},
         {"label": "Tên NV", "fieldname": "employee_name", "fieldtype": "Data", "width": 200},
         {"label": "Phòng ban", "fieldname": "department", "fieldtype": "Link", "options": "Department", "width": 200},
+        {"label": "Chi nhánh", "fieldname": "branch", "fieldtype": "Link", "options": "Branch", "width": 200},
         {"label": "Địa điểm công tác", "fieldname": "destination", "fieldtype": "Data", "width": 200},
         {"label": "Từ ngày", "fieldname": "from_date", "fieldtype": "Date", "width": 110},
         {"label": "Đến ngày", "fieldname": "to_date", "fieldtype": "Date", "width": 110},
