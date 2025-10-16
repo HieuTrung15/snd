@@ -26,6 +26,7 @@
   "company",
   "department",
   "branch",
+  "custom_abbr",
   "th\u00f4ng_tin_kh\u00e1c_section",
   "custom_id_card",
   "custom_id_issue_date",
@@ -576,12 +577,19 @@
    "fieldtype": "Table",
    "label": "Chi ti\u1ebft",
    "options": "VNT Employee Tax"
+  },
+  {
+   "fetch_from": "company.abbr",
+   "fieldname": "custom_abbr",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Abbr"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-15 18:04:13.264324",
+ "modified": "2025-10-16 11:24:52.037528",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Employee",
