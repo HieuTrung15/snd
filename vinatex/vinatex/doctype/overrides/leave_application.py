@@ -46,6 +46,75 @@ class VntLeaveApplication(LeaveApplication):
         self.status = "Approved"
 
 @frappe.whitelist()
+def get_leave_approver(employee: str):
+    # lấy approver trên Employee trước
+    emp = frappe.db.get_value("Employee", employee, ["leave_approver", "department"], as_dict=True)
+    if not emp:
+        return None
+    approver = emp.leave_approver
+
+    # nếu chưa có và có department → tìm trong Department Approver
+    if not approver and emp.department:
+        # ƯU TIÊN custom flag custom_level_1 = 1
+        approver = frappe.db.get_value(
+            "Department Approver",
+            {
+                "parent": emp.department,
+                "parentfield": "leave_approvers",
+                "custom_level_1": 1,      
+            },
+            "approver",
+        )
+
+        if not approver:
+            approver = frappe.db.get_value(
+                "Department Approver",
+                {
+                    "parent": emp.department,
+                    "parentfield": "leave_approvers",
+                    "idx": 1,
+                },
+                "approver",
+            )
+
+    return approver
+
+
+@frappe.whitelist()
+def get_leave_approver_level_2(employee: str):
+    # lấy approver trên Employee trước
+    emp = frappe.db.get_value("Employee", employee, ["leave_approver", "department"], as_dict=True)
+    if not emp:
+        return None
+    approver = emp.leave_approver
+
+    # nếu chưa có và có department → tìm trong Department Approver
+    if not approver and emp.department:
+        # ƯU TIÊN custom flag custom_level_1 = 1
+        approver = frappe.db.get_value(
+            "Department Approver",
+            {
+                "parent": emp.department,
+                "parentfield": "leave_approvers",
+                "custom_level_2": 1,      
+            },~
+            "approver",
+        )
+
+        if not approver:
+            approver = frappe.db.get_value(
+                "Department Approver",
+                {
+                    "parent": emp.department,
+                    "parentfield": "leave_approvers",
+                    "idx": 1,
+                },
+                "approver",
+            )
+
+    return approver
+
+@frappe.whitelist()
 def get_leave_type(
     from_date=None,
     to_date=None,

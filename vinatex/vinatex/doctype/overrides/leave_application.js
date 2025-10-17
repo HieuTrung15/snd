@@ -5,6 +5,37 @@ frappe.ui.form.on("Leave Application", {
 			frm.refresh_field("status");
 		}
 	},
+	// lấy ra người duyệt cấp 2
+	employee (frm) {
+		frappe.call({
+			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver_level_2",
+			args: {
+				employee: frm.doc.employee,
+			},
+			callback (r) {
+				if (r.message) {
+					console.log(r.message);
+					frm.set_value("custom_second_approver", r.message);
+				}
+			}
+		});
+	},
+	// hiển thị người duyệt cấp 2 nếu nghỉ trên 3 ngày
+	total_leave_days(frm) {
+		frappe.call({
+			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver_level_2",
+			args: {
+				employee: frm.doc.employee,
+			},
+			callback (r) {
+				if (r.message) {
+					console.log(r.message);
+					frm.set_value("custom_second_approver", r.message);
+				}
+			}
+		});
+	},
+
 	onload(frm) {
 		frm.set_value("follow_via_email", 0);
 		// Ignore cancellation of doctype on cancel all.

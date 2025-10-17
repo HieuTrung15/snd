@@ -42,6 +42,11 @@ app_include_js = "/assets/vinatex/js/title-wrap.js"
 
 # include js in page
 # page_js = {"page" : "public/js/file.js"}
+override_whitelisted_methods = {
+    # method gốc của HRMS → method của bạn
+    "hrms.hr.doctype.leave_application.leave_application.get_leave_approver":
+        "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver"
+}
 
 override_doctype_class = {
     "Leave Application": "vinatex.vinatex.doctype.overrides.leave_application.VntLeaveApplication",
