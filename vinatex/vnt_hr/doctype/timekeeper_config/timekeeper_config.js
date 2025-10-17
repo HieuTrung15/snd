@@ -3,6 +3,10 @@
 
 frappe.ui.form.on("Timekeeper Config", {
 	refresh(frm) {
-        
+        frm.add_custom_button(__('Đồng bộ dữ liệu chấm công'), function() {
+			frappe.call({
+				method: "vinatex.vinatex.doctype.overrides.timekeeping.create_allocation_nghi_con_ket_hon",
+			});
+		});
 	}
 });

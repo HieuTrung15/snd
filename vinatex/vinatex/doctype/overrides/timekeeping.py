@@ -13,6 +13,26 @@ class VntEmployeeCheckin(EmployeeCheckin):
 # 118.70.128.34
 
 @frappe.whitelist()
+def create_allocation_nghi_con_ket_hon():
+    today = date.today()
+    from_date = date(today.year, 1, 1)
+    to_date = date(today.year, 12, 31)
+    employee = frappe.get_all("Employee",filters={"status": "Active"},pluck="name")
+        
+    for emp in employee:
+        if frappe.db.exists("Leave Allocation", {'employee': emp, 'leave_type': 'Nghỉ con kết hôn', 'from_date': from_date, 'to_date': to_date}):
+            continue
+        doc = frappe.new_doc("Leave Allocation")
+        doc.employee = emp
+        doc.leave_type = 'Nghỉ con kết hôn'
+        doc.from_date = from_date
+        doc.to_date = to_date
+        doc.new_leaves_allocated = 1
+        doc.total_leaves_allocated = 1
+        doc.save()
+
+
+@frappe.whitelist()
 def get_timekeeping_data_morning():
     d_today = getdate(today())                 # ngày hôm nay (date)
     d_month_start = d_today.replace(day=1)     # ngày đầu tháng (date)
