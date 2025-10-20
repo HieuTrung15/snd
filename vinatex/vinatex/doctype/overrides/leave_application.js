@@ -7,33 +7,33 @@ frappe.ui.form.on("Leave Application", {
 	},
 	// lấy ra người duyệt cấp 2
 	employee (frm) {
-		frappe.call({
+		if (frm.doc.total_leave_days > 3) {
+			frappe.call({
 			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver_level_2",
 			args: {
 				employee: frm.doc.employee,
 			},
 			callback (r) {
 				if (r.message) {
-					console.log(r.message);
 					frm.set_value("custom_second_approver", r.message);
-				}
-			}
-		});
+				}}
+			});
+		}
 	},
 	// hiển thị người duyệt cấp 2 nếu nghỉ trên 3 ngày
 	total_leave_days(frm) {
-		frappe.call({
+		if (frm.doc.total_leave_days > 3) {
+			frappe.call({
 			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver_level_2",
 			args: {
 				employee: frm.doc.employee,
 			},
 			callback (r) {
 				if (r.message) {
-					console.log(r.message);
 					frm.set_value("custom_second_approver", r.message);
-				}
-			}
-		});
+				}}
+			});
+		}
 	},
 
 	onload(frm) {
@@ -48,22 +48,34 @@ frappe.ui.form.on("Leave Application", {
 	},
 
 	refresh(frm) {
-		if (frm.doc.docstatus === 1) {
-			frm.add_custom_button(__("Cancel"), function () {
-				let dialog = new frappe.ui.Dialog({
-					title: __("Bạn chắc chắn muốn hủy?"),
-					primary_action_label: __("Xác nhận"),
-					primary_action() {
-						frappe.call({
-							method: "cancel",
-							doc: cur_frm.doc,
-						});
-						dialog.hide();
-					},
-				});
-				dialog.show();
-			}).removeClass().addClass("btn btn-warning");
-		}
+		// gỡ nút View Ledger (kể cả có group "View" hay không)
+		frm.remove_custom_button(__('View Ledger'), __('View'));
+		frm.remove_custom_button(__('View Ledger'));
+
+		// nếu app khác add lại sau refresh, delay 1 nhịp để gỡ tiếp
+		setTimeout(() => {
+		frm.remove_custom_button(__('View Ledger'), __('View'));
+		frm.remove_custom_button(__('View Ledger'));
+		}, 0);
+
+		// Ẩn luôn trong menu More Actions nếu có
+		// frm.page.remove_menu_item(__('View Ledger'));
+		// if (frm.doc.docstatus === 1) {
+		// 	frm.add_custom_button(__("Cancel"), function () {
+		// 		let dialog = new frappe.ui.Dialog({
+		// 			title: __("Bạn chắc chắn muốn hủy?"),
+		// 			primary_action_label: __("Xác nhận"),
+		// 			primary_action() {
+		// 				frappe.call({
+		// 					method: "cancel",
+		// 					doc: cur_frm.doc,
+		// 				});
+		// 				dialog.hide();
+		// 			},
+		// 		});
+		// 		dialog.show();
+		// 	}).removeClass().addClass("btn btn-warning");
+		// }
 
 		// lọc leave_type theo custom_leave_group ngay khi mở form
     	set_leave_type_query(frm);

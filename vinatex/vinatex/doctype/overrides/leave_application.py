@@ -45,6 +45,46 @@ class VntLeaveApplication(LeaveApplication):
     def before_submit(self):
         self.status = "Approved"
 
+
+    def validate(self):
+        days_notice = 0
+        if getattr(self, "leave_type", None) == 'Nghỉ phép năm' and getattr(self, "from_date", None) and getattr(self, "to_date", None):
+            days_diff = date_diff(self.from_date, self.to_date) + 1
+            # "Nghỉ 02 ngày phải gửi đơn trước 01 ngày.
+            #  Nghỉ từ 03 - 06 ngày, phải gửi đơn trước ít nhất 03 ngày.
+            #  Nghỉ từ 07 ngày trở lên, phải gửi đơn trước ít nhất 14 ngày."
+            if days_diff == 2:
+                days_notice = 1
+            elif 3 <= days_diff <= 6:
+                days_notice = 3
+            elif days_diff >= 7:
+                days_notice = 14
+            if date_diff(self.from_date, frappe.utils.nowdate()) < days_notice:
+                frappe.throw(_("Đơn nghỉ phép năm từ {0} ngày trở lên phải gửi trước ít nhất {1} ngày. Vui lòng kiểm tra lại.").format(days_diff, days_notice), indicator='orange')
+        if getattr(self, "leave_type", None) == 'Nghỉ không hưởng lương' and getattr(self, "from_date", None) and getattr(self, "to_date", None):
+            days_diff = date_diff(self.to_date, self.from_date) + 1
+            # "Nghỉ dưới 7 ngày báo trước ít nhất 3 ngày.
+            # Nghỉ trên 7 ngày báo trước ít nhất 14 ngày."
+            if days_diff < 7:
+                days_notice = 3
+            else:
+                days_notice = 14
+            if date_diff(self.from_date, frappe.utils.nowdate()) < days_notice:
+                frappe.throw(_("Đơn nghỉ không hưởng lương từ {0} ngày trở lên phải gửi trước ít nhất {1} ngày. Vui lòng kiểm tra lại.").format(days_diff, days_notice))
+        if getattr(self, "leave_type", None) == 'Lao động nam nghỉ do có vợ sinh con' and getattr(self, "from_date", None) and getattr(self, "to_date", None):
+            # "Nghỉ 02 ngày phải gửi đơn trước 01 ngày.
+            # Nghỉ từ 03 - 06 ngày, phải gửi đơn trước ít nhất 03 ngày.
+            # Nghỉ từ 07 ngày trở lên, phải gửi đơn trước ít nhất 14 ngày."
+            days_diff = date_diff(self.from_date, self.to_date) + 1
+            if days_diff == 2:
+                days_notice = 1
+            elif 3 <= days_diff <= 6:
+                days_notice = 3 
+            elif days_diff >= 7:
+                days_notice = 14
+            if date_diff(self.from_date, frappe.utils.nowdate()) < days_notice:
+                frappe.throw(_("Đơn nghỉ lao động nam do có vợ sinh con từ {0} ngày trở lên phải gửi trước ít nhất {1} ngày. Vui lòng kiểm tra lại.").format(days_diff, days_notice), indicator='orange')
+
 @frappe.whitelist()
 def get_leave_approver(employee: str):
     # lấy approver trên Employee trước
@@ -86,31 +126,21 @@ def get_leave_approver_level_2(employee: str):
     emp = frappe.db.get_value("Employee", employee, ["leave_approver", "department"], as_dict=True)
     if not emp:
         return None
-    approver = emp.leave_approver
 
     # nếu chưa có và có department → tìm trong Department Approver
-    if not approver and emp.department:
-        # ƯU TIÊN custom flag custom_level_1 = 1
+        # ƯU TIÊN custom flag custom_level_2 = 1
+    if emp:
         approver = frappe.db.get_value(
             "Department Approver",
             {
                 "parent": emp.department,
                 "parentfield": "leave_approvers",
                 "custom_level_2": 1,      
-            },~
+            },
             "approver",
         )
-
-        if not approver:
-            approver = frappe.db.get_value(
-                "Department Approver",
-                {
-                    "parent": emp.department,
-                    "parentfield": "leave_approvers",
-                    "idx": 1,
-                },
-                "approver",
-            )
+    else :
+        approver = emp.leave_approver
 
     return approver
 
