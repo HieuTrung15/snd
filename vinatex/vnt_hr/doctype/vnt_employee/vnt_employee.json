@@ -47,8 +47,6 @@
   "bank_ac_no",
   "tr\u00ecnh_\u0111\u1ed9_chuy\u00ean_m\u00f4n_section",
   "education",
-  "th\u00f4ng_tin_h\u0111l\u0111_m\u1edbi_nh\u1ea5t_section",
-  "custom_vnt_contract",
   "section_break_5u2s",
   "employment_type",
   "contract_end_date",
@@ -91,7 +89,7 @@
   "luong_phucap",
   "45",
   "qu\u00e1_tr\u00ecnh_k\u00fd_h\u0111l\u0111_tab",
-  "44",
+  "custom_vnt_contract",
   "qu\u00e1_tr\u00ecnh_khen_th\u01b0\u1edfng_tab",
   "4",
   "qu\u00e1_tr\u00ecnh_k\u1ef7_lu\u1eadt_tab",
@@ -99,11 +97,20 @@
   "qu\u00e1_tr\u00ecnh_ngh\u1ec9_vi\u1ec7c_tab",
   "resignation_letter_date",
   "relieving_date",
+  "column_break_egyi",
   "held_on",
   "new_workplace",
-  "select_sjjb",
-  "th\u00f4ng_tin_nh\u00e2n_th\u00e2n_tab",
-  "12"
+  "column_break_8buh",
+  "leave_encashed",
+  "section_break_alpo",
+  "reason_for_leaving",
+  "column_break_dsnt",
+  "feedback",
+  "th\u00f4ng_tin_syll_tab",
+  "custom_current_party_committee",
+  "custom_party_committee_cum",
+  "custom_family_background",
+  "custom_wounded_soldiers_type"
  ],
  "fields": [
   {
@@ -148,19 +155,9 @@
    "label": "Qu\u00e1 tr\u00ecnh ngh\u1ec9 vi\u1ec7c"
   },
   {
-   "fieldname": "th\u00f4ng_tin_nh\u00e2n_th\u00e2n_tab",
-   "fieldtype": "Tab Break",
-   "label": "Th\u00f4ng tin nh\u00e2n th\u00e2n"
-  },
-  {
    "fieldname": "45",
    "fieldtype": "Data",
    "label": "45"
-  },
-  {
-   "fieldname": "44",
-   "fieldtype": "Data",
-   "label": "44"
   },
   {
    "fieldname": "4",
@@ -171,11 +168,6 @@
    "fieldname": "3",
    "fieldtype": "Data",
    "label": "3"
-  },
-  {
-   "fieldname": "12",
-   "fieldtype": "Data",
-   "label": "12"
   },
   {
    "fieldname": "naming_series",
@@ -396,12 +388,6 @@
    "options": "Employee Education"
   },
   {
-   "collapsible": 1,
-   "fieldname": "th\u00f4ng_tin_h\u0111l\u0111_m\u1edbi_nh\u1ea5t_section",
-   "fieldtype": "Section Break",
-   "label": "Th\u00f4ng tin H\u0110L\u0110 m\u1edbi nh\u1ea5t"
-  },
-  {
    "fieldname": "contract_end_date",
    "fieldtype": "Date",
    "label": "Ng\u00e0y h\u1ebft h\u1ea1n h\u1ee3p \u0111\u1ed3ng"
@@ -556,7 +542,8 @@
   {
    "collapsible": 1,
    "fieldname": "section_break_5u2s",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Th\u00f4ng tin H\u0110L\u0110 m\u1edbi nh\u1ea5t"
   },
   {
    "collapsible": 1,
@@ -625,14 +612,68 @@
    "label": "New Workplace"
   },
   {
-   "fieldname": "select_sjjb",
-   "fieldtype": "Select"
+   "fieldname": "section_break_alpo",
+   "fieldtype": "Section Break",
+   "label": "Feedback"
+  },
+  {
+   "fieldname": "column_break_egyi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_8buh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "leave_encashed",
+   "fieldtype": "Select",
+   "label": "Leave Encashed?",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "reason_for_leaving",
+   "fieldtype": "Small Text",
+   "label": "Reason for Leaving"
+  },
+  {
+   "fieldname": "column_break_dsnt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "feedback",
+   "fieldtype": "Small Text",
+   "label": "Feedback"
+  },
+  {
+   "fieldname": "th\u00f4ng_tin_syll_tab",
+   "fieldtype": "Tab Break",
+   "label": "Th\u00f4ng tin SYLL"
+  },
+  {
+   "fieldname": "custom_current_party_committee",
+   "fieldtype": "Data",
+   "label": "C\u1ea5p \u1ee7y hi\u1ec7n t\u1ea1i"
+  },
+  {
+   "fieldname": "custom_party_committee_cum",
+   "fieldtype": "Data",
+   "label": "C\u1ea5p \u1ee7y ki\u00eam"
+  },
+  {
+   "fieldname": "custom_family_background",
+   "fieldtype": "Data",
+   "label": "Th\u00e0nh ph\u1ea7n gia \u0111\u00ecnh xu\u1ea5t th\u00e2n"
+  },
+  {
+   "fieldname": "custom_wounded_soldiers_type",
+   "fieldtype": "Data",
+   "label": "Th\u01b0\u01a1ng binh lo\u1ea1i"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-16 16:16:21.937176",
+ "modified": "2025-10-20 08:37:42.712168",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Employee",
