@@ -15,7 +15,9 @@ frappe.ui.form.on("VNT Attendance Confirm", {
 				}
 			});
 		});
-	},
+		frm.set_df_property("items", "cannot_delete_rows", true);
+		frm.set_df_property("items", "cannot_add_rows", true);
+	}
 });
 
 frappe.ui.form.on("VNT Attendance Confirm Item", "type", function(frm, cdt, cdn) {
