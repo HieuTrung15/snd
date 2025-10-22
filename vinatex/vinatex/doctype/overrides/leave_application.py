@@ -215,7 +215,7 @@ def get_leave_approver(employee: str):
 	approver = emp.leave_approver
 
 	# nếu chưa có và có department → tìm trong Department Approver
-	if not approver and emp.department and emp.custom_designation_group == 'Chuyên viên, Nhân viên':
+	if emp.custom_designation_group == 'Chuyên viên, Nhân viên':
 		# ƯU TIÊN custom flag custom_level_1 = 1
 		approver = frappe.db.get_value(
 			"Department Approver",
