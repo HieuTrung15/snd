@@ -14,13 +14,13 @@ function maybe_redirect(frm) {
 
   const rt = frm.doc?.reference_type;   // lấy từ frm.doc
   const rn = frm.doc?.reference_name;   // name của chứng từ đích
-  const st = frm.doc?.status;
+  // const st = frm.doc?.status;
 
-  const TARGETS = ['VNT Attendance Confirm', 'VNT Business Trip Request'];
+  const TARGETS = ['VNT Attendance Confirm', 'VNT Business Trip Request','Leave Application'];
 
   if (!rt || !rn) return;
   if (!TARGETS.includes(rt)) return;
-  if (st === 'Closed') return;
+  // if (st === 'Closed') return;
 
   // Tránh vòng lặp nếu vừa quay lại từ chứng từ đích
   const prev_route = frappe.get_prev_route?.();
