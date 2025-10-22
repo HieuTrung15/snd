@@ -22,12 +22,19 @@ function maybe_redirect(frm) {
   if (!TARGETS.includes(rt)) return;
   if (st === 'Closed') return;
 
-  // Tránh vòng lặp khi quay lại
-  if (frappe.route_options && frappe.route_options._from_todo_redirect) return;
+  // Tránh vòng lặp nếu vừa quay lại từ chứng từ đích
+  const prev_route = frappe.get_prev_route?.();
+  if (
+    prev_route &&
+    prev_route[0] === 'Form' &&
+    prev_route[1] === rt &&
+    prev_route[2] === rn
+  ) {
+    return;
+  }
 
   // defer 1 nhịp để chắc chắn UI đã sẵn sàng
   setTimeout(() => {
-    frappe.route_options = Object.assign({}, frappe.route_options, { _from_todo_redirect: 1 });
     frappe.set_route('Form', rt, rn);   // dùng reference_name thực tế, không hardcode
   }, 50);
 }
