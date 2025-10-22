@@ -5,8 +5,11 @@ from datetime import timedelta
 import frappe
 from frappe.utils import cint, get_first_day, get_last_day, getdate, today
 
+BUSINESS_TRIP_TYPE = "Công tác"
+APPROVED_TRIP_STATE = "Đã duyệt"
+
 LEAVE_TYPES = {
-    "Công tác": {"code": "CT", "summary_field": "tot_business_trip"},
+    BUSINESS_TRIP_TYPE: {"code": "CT", "summary_field": "tot_business_trip"},
     "Nghỉ phép năm": {"code": "NP", "summary_field": "tot_annual_leave"},
 }
 
@@ -45,7 +48,8 @@ def execute(filters=None):
     emp_doc = _get_employee_doc(employee)
     days = list(_daterange(start_date, end_date))
     leave_rows = _fetch_leaves(employee, start_date, end_date)
-    leave_map = _expand_leave_rows(leave_rows, start_date, end_date)
+    trip_rows = _fetch_business_trips(employee, start_date, end_date)
+    leave_map = _expand_leave_rows(leave_rows + trip_rows, start_date, end_date)
 
     columns = _columns() + _info_columns() + _day_columns(days) + SUMMARY_COLUMNS
 
@@ -199,6 +203,13 @@ def _daterange(start_date, end_date):
 
 
 def _fetch_leaves(employee, start_date, end_date):
+    leave_types = [lt for lt in LEAVE_TYPES if lt != BUSINESS_TRIP_TYPE]
+    if not leave_types:
+        return []
+    if len(leave_types) == 1:
+        leave_types = (leave_types[0], leave_types[0])
+    else:
+        leave_types = tuple(leave_types)
     return frappe.db.sql(
         """
         SELECT leave_type, from_date, to_date, half_day, half_day_date
@@ -214,10 +225,48 @@ def _fetch_leaves(employee, start_date, end_date):
             "employee": employee,
             "start": start_date,
             "end": end_date,
-            "leave_types": tuple(LEAVE_TYPES.keys()),
+            "leave_types": leave_types,
         },
         as_dict=True,
     )
+
+
+def _fetch_business_trips(employee, start_date, end_date):
+    rows = frappe.db.sql(
+        """
+        SELECT DISTINCT p.name, p.from_date, p.to_date
+        FROM `tabVNT Business Trip Request` p
+        LEFT JOIN `tabVNT Business Trip Request Items` i ON i.parent = p.name
+        WHERE p.workflow_state = %(approved)s
+          AND (p.employee = %(employee)s OR i.employee = %(employee)s)
+          AND NOT (p.to_date < %(start)s OR p.from_date > %(end)s)
+        """,
+        {
+            "approved": APPROVED_TRIP_STATE,
+            "employee": employee,
+            "start": start_date,
+            "end": end_date,
+        },
+        as_dict=True,
+    )
+
+    results = []
+    for row in rows:
+        from_date = getdate(row.from_date) if row.from_date else None
+        to_date = getdate(row.to_date) if row.to_date else from_date
+        if not from_date:
+            continue
+        if to_date and to_date < from_date:
+            from_date, to_date = to_date, from_date
+        results.append(frappe._dict({
+            "leave_type": BUSINESS_TRIP_TYPE,
+            "from_date": from_date,
+            "to_date": to_date or from_date,
+            "half_day": 0,
+            "half_day_date": None,
+        }))
+
+    return results
 
 
 def _expand_leave_rows(rows, start_date, end_date):
