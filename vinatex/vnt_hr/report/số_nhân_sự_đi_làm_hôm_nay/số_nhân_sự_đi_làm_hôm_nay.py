@@ -108,7 +108,7 @@ def get_data(the_date, employee=None, department=None, branch=None):
         INNER JOIN `tabEmployee` e ON e.name = ec.employee
         WHERE {where_clause}
         GROUP BY ec.employee, e.employee_name, e.department, e.branch
-        ORDER BY e.branch, e.department, first_in ASC, e.employee_name
+        ORDER BY e.branch, first_in ASC
     """
 
     rows = frappe.db.sql(query, params, as_dict=True)
