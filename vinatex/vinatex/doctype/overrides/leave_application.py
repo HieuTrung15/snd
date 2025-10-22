@@ -109,6 +109,10 @@ def _handle_state_transition(doc: Document):
 
 	if prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Đã duyệt':
 		_check_state_to_close_todo(doc, doc.get("custom_second_approver"))
+	
+	if curr_state == 'Từ chối':
+		_check_state_to_close_todo(doc, doc.get("leave_approver"))
+		_check_state_to_close_todo(doc, doc.get("custom_second_approver"))
 
 
 def _notify_to_approver(doc: Document):
@@ -120,6 +124,7 @@ def _notify_to_approver(doc: Document):
 		"subject": _("Phiếu đăng ký {0} của {1} đang chờ lãnh đạo duyệt.").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
+		"subject": _('Duyệt đăng ký {0} của {1}').format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
 	}, [approver_emp])
 	# tạo todo cho người duyệt
 	ensure_todo(doc, approver_emp)
@@ -134,6 +139,7 @@ def _notify_to_approver_2(doc: Document):
 		"subject": _("Phiếu đăng ký {0} của {1} đang chờ lãnh đạo duyệt.").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
+		"subject": _('Duyệt đăng ký {0} của {1}').format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
 	}, [approver_emp])
 	# tạo todo cho người duyệt
 	ensure_todo(doc, approver_emp)
@@ -177,8 +183,7 @@ def ensure_todo(doc: Document, user: str):
 	from_date = doc.get("from_date") or _("(không rõ ngày bắt đầu)")
 	to_date = doc.get("to_date") or _("(không rõ ngày kết thúc)")
 	total_leave_days = doc.get("total_leave_days") or _("(không rõ số ngày nghỉ)")
-	description = _("Duyệt phiếu đăng ký {0} do {1} tạo. Nghỉ từ {2} đến {3}, tổng số ngày nghỉ: {4}").format(leave_type, employee, from_date, to_date, total_leave_days)
-   
+	description = _('Duyệt đăng ký {0} của {1}').format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)"))
 	new_todo =  frappe.new_doc("ToDo")
 	new_todo.description = description
 	new_todo.allocated_to = user
