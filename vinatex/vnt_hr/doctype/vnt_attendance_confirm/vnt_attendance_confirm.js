@@ -17,3 +17,22 @@ frappe.ui.form.on("VNT Attendance Confirm", {
 		});
 	},
 });
+
+frappe.ui.form.on("VNT Attendance Confirm Item", "type", function(frm, cdt, cdn) {
+	const row = frappe.get_doc(cdt, cdn);
+	if (!row.type) {
+		frappe.msgprint({
+			title: __('Thiếu thông tin'),
+			message: __('Loại giải trình không được để trống.'),
+			indicator: 'red'
+		});
+	}
+});
+
+frappe.ui.form.on("VNT Attendance Confirm", "validate", function(frm) {
+	(frm.doc.items || []).forEach(function(row) {
+		if (!row.type) {
+			frappe.throw(__('Loại giải trình không được để trống (ngày {0}).', [frappe.format(row.date, {fieldtype: 'Date'}) || row.idx]));
+		}
+	});
+});

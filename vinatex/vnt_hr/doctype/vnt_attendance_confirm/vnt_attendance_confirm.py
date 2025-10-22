@@ -1,16 +1,249 @@
 # # Copyright (c) 2025, vinatex and contributors
 # # For license information, please see license.txt
 
-import frappe
-from frappe.model.document import Document
-from datetime import datetime, time, date, timedelta
 import calendar
+from datetime import datetime, time, date, timedelta
+
+import frappe
+from frappe import _
+from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
+from frappe.model.document import Document
 from frappe.utils import getdate
 # from hrms.hr.utils import get_holiday_list_for_employee(employee)
 
+PENDING_STATES = {"Chờ duyệt"}
+APPROVED_STATE = "Đã duyệt"
+REJECT_STATES = {"Từ chối", "Hủy", "Huỷ"}
+
 
 class VNTAttendanceConfirm(Document):
-	pass
+    def on_update(self):
+        if self.has_value_changed("workflow_state"):
+            _handle_state_transition(self)
+
+    def on_submit(self):
+        _close_todos_for_doc(self)
+
+    def on_cancel(self):
+        self.db_set("workflow_state", "Đã hủy", update_modified=False)
+        _delete_todos_for_doc(self)
+
+
+def _employee_user_id(employee: str | None) -> str | None:
+    if not employee:
+        return None
+    return frappe.db.get_value("Employee", employee, "user_id")
+
+
+def _resolve_employee_user(doc: Document) -> str | None:
+    user = _employee_user_id(doc.employee)
+    if user:
+        return user
+    raw = doc.get("email")
+    if raw and frappe.db.get_value("Employee", {"user_id": raw}, "name") == doc.employee:
+        return raw
+    return None
+
+
+def _send_notification(doc: Document, user: str, subject: str, message: str):
+    if not user:
+        return
+    make_notification_logs({
+        "type": "Alert",
+        "subject": subject,
+        "document_type": doc.doctype,
+        "document_name": doc.name,
+        "message": message,
+    }, [user])
+
+
+def _ensure_todo_for_confirmation(doc: Document, user: str):
+    if not user:
+        return
+    if frappe.db.exists("ToDo", {
+        "reference_type": doc.doctype,
+        "reference_name": doc.name,
+        "allocated_to": user,
+        "status": ["!=", "Cancelled"],
+    }):
+        return
+    mapped_employee = frappe.db.get_value("Employee", {"user_id": user}, "name")
+    if mapped_employee and mapped_employee != doc.employee:
+        return
+
+    description = _("Xác nhận chấm công {0} đến {1}.").format(
+        frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
+        frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
+    )
+    frappe.get_doc({
+        "doctype": "ToDo",
+        "description": description,
+        "allocated_to": user,
+        "reference_type": doc.doctype,
+        "reference_name": doc.name,
+        "priority": "Medium",
+        "status": "Open",
+    }).insert(ignore_permissions=True)
+
+
+def _notify_confirmation(doc: Document, user: str):
+    if not user:
+        return
+    subject = _("Xác nhận chấm công {0}").format(doc.employee_name or doc.employee or _("Nhân viên"))
+    message = _(
+        "Xác nhận bảng chấm công từ {0} đến {1}."
+    ).format(
+        frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
+        frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
+    )
+    mapped_employee = frappe.db.get_value("Employee", {"user_id": user}, "name")
+    if mapped_employee and mapped_employee != doc.employee:
+        return
+    _send_notification(doc, user, subject, message)
+
+
+def _handle_state_transition(doc: Document):
+    state = (doc.get("workflow_state") or "").strip()
+
+    if state in PENDING_STATES:
+        _ensure_items_have_type(doc)
+        _close_employee_todos(doc)
+        _notify_approver_pending(doc)
+
+    elif state == APPROVED_STATE:
+        _close_todos_for_doc(doc)
+        _notify_employee_result(doc, APPROVED_STATE)
+
+    elif state in REJECT_STATES:
+        _delete_todos_for_doc(doc)
+        _notify_employee_result(doc, state)
+
+
+def _notify_approver_pending(doc: Document):
+    user = doc.get("approver")
+    if not user:
+        reports_to = frappe.db.get_value("Employee", doc.employee, "reports_to") if doc.employee else None
+        user = _employee_user_id(reports_to) if reports_to else None
+    if not user:
+        return
+
+    _ensure_todo_for_approver(doc, user)
+
+    subject = _("Chờ duyệt chấm công: {0}").format(doc.employee_name or doc.employee or _("Nhân viên"))
+    message = _(
+        "{0} đã gửi bảng chấm công từ {1} đến {2}.")
+    message = message.format(
+        doc.employee_name or doc.employee or _("Nhân viên"),
+        frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
+        frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
+    )
+    _send_notification(doc, user, subject, message)
+
+
+def _ensure_todo_for_approver(doc: Document, user: str):
+    existing = frappe.db.exists("ToDo", {
+        "reference_type": doc.doctype,
+        "reference_name": doc.name,
+        "allocated_to": user,
+        "status": ["!=", "Cancelled"],
+    })
+    if existing:
+        return
+
+    description = _("Duyệt bảng chấm công của {0} (từ {1} đến {2}).").format(
+        doc.employee_name or doc.employee or _("Nhân viên"),
+        frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
+        frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
+    )
+    frappe.get_doc({
+        "doctype": "ToDo",
+        "description": description,
+        "allocated_to": user,
+        "reference_type": doc.doctype,
+        "reference_name": doc.name,
+        "priority": "Medium",
+        "status": "Open",
+    }).insert(ignore_permissions=True)
+
+
+def _close_todos_for_doc(doc: Document):
+    names = frappe.get_all(
+        "ToDo",
+        filters={
+            "reference_type": doc.doctype,
+            "reference_name": doc.name,
+            "status": ["!=", "Cancelled"],
+        },
+        pluck="name",
+    )
+    for n in names:
+        frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
+
+
+def _delete_todos_for_doc(doc: Document):
+    names = frappe.get_all(
+        "ToDo",
+        filters={
+            "reference_type": doc.doctype,
+            "reference_name": doc.name,
+        },
+        pluck="name",
+    )
+    for n in names:
+        try:
+            frappe.delete_doc("ToDo", n, ignore_permissions=True, force=1)
+        except Exception:
+            frappe.log_error(frappe.get_traceback(), f"Không xoá được ToDo: {n}")
+
+
+def _ensure_items_have_type(doc: Document):
+    for row in doc.get("items") or []:
+        if not row.get("type"):
+            frappe.throw(_("Loại giải trình không được để trống (dòng {0}).").format(row.idx))
+
+
+def _close_employee_todos(doc: Document):
+    employee_user = _resolve_employee_user(doc)
+    if not employee_user:
+        return
+    names = frappe.get_all(
+        "ToDo",
+        filters={
+            "reference_type": doc.doctype,
+            "reference_name": doc.name,
+            "allocated_to": employee_user,
+            "status": ["!=", "Cancelled"],
+        },
+        pluck="name",
+    )
+    for n in names:
+        frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
+
+
+def _notify_employee_result(doc: Document, state: str):
+    user = _resolve_employee_user(doc)
+    if not user:
+        return
+
+    if state == APPROVED_STATE:
+        subject = _("Bảng xác nhận chấm công đã được duyệt")
+        message = _(
+            "Bảng chấm công từ {0} đến {1} đã được duyệt.")
+        message = message.format(
+            frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
+            frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
+        )
+    else:
+        subject = _("Bảng xác nhận chấm công đã bị hủy/từ chối")
+        message = _(
+            "Bảng chấm công từ {0} đến {1} bị cập nhật trạng thái: {2}.")
+        message = message.format(
+            frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
+            frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
+            state,
+        )
+
+    _send_notification(doc, user, subject, message)
 
 
 @frappe.whitelist()
@@ -56,6 +289,9 @@ def make_attendance_confirm():
                 "status": r.get("status"),
             })
         att.insert()
+        user = _resolve_employee_user(att)
+        _ensure_todo_for_confirmation(att, user)
+        _notify_confirmation(att, user)
         # att.submit()  
 
 
@@ -119,7 +355,7 @@ def _pick_employees(employees):
     - Nếu employees là list mã NV -> lọc theo danh sách đó
     - Nếu None -> lấy toàn bộ NV Active và custom_need_check=0
     """
-    fields = ["name", "employee_name", "department", "user_id", "leave_approver"]
+    fields = ["name", "employee_name", "department", "user_id", "leave_approver", "reports_to"]
     if employees:
         return frappe.get_all(
             "Employee",
@@ -263,13 +499,14 @@ def check_employee_checkin_by_days(employees=None):
                 status = ", ".join(issues)
 
             if status != "OK":
+                approver_user = _employee_user_id(emp.get('reports_to')) if emp.get('reports_to') else None
                 out.append({
                     "employee": emp['name'],
                     "employee_name": emp['employee_name'],
                     "department": emp['department'],
                     "user_id": emp.get('user_id'),
                     "date": d.isoformat(),
-                    "approver": emp.get('leave_approver'),
+                    "approver": approver_user,
                     "from_date": from_date.isoformat(),
                     "to_date": to_date.isoformat(),
                     "first_in": fi.strftime("%H:%M:%S") if fi else None,
@@ -285,4 +522,3 @@ def min_max_date(dates):
     if not dates:
         return None, None
     return min(dates), max(dates)
-

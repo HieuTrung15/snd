@@ -100,6 +100,8 @@
    "fieldtype": "Section Break"
   },
   {
+   "fetch_from": "employee.reports_to",
+   "fetch_if_empty": 1,
    "fieldname": "approver",
    "fieldtype": "Link",
    "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
@@ -119,7 +121,7 @@
    "fieldname": "tr\u1ea1ng_th\u00e1i",
    "fieldtype": "Select",
    "label": "Tr\u1ea1ng th\u00e1i",
-   "options": "Nh\u00e1p\nPh\u00ea duy\u1ec7t\nT\u1eeb ch\u1ed1i\nH\u1ee7y"
+   "options": "Nh\u00e1p\nM\u1edbi t\u1ea1o\nCh\u1edd ph\u00ea duy\u1ec7t\n\u0110\u00e3 duy\u1ec7t\nT\u1eeb ch\u1ed1i\nH\u1ee7y\n\u0110\u00e3 h\u1ee7y"
   },
   {
    "fieldname": "chi_ti\u1ebft_section",
@@ -136,7 +138,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-23 16:40:25.547046",
+ "modified": "2025-10-21 17:37:16.700901",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Attendance Confirm",
@@ -155,6 +157,29 @@
    "role": "System Manager",
    "share": 1,
    "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
    "write": 1
   }
  ],

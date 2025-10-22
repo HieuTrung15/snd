@@ -27,7 +27,10 @@ app_license = "mit"
 # include js, css files in header of desk.html
 # app_include_css = "/assets/vinatex/css/chart.css"
 app_include_css = "/assets/vinatex/css/theme.css"
-app_include_js = "/assets/vinatex/js/title-wrap.js"
+app_include_js = [
+	"/assets/vinatex/js/title-wrap.js",
+	"/assets/vinatex/js/todo_quick_list_override.js",
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/vinatex/css/vinatex.css"
@@ -60,6 +63,7 @@ doctype_js = {
     # "doctype" : "public/js/doctype.js"
     "Leave Application": "vinatex/doctype/overrides/leave_application.js",
     "Employee": "vinatex/doctype/overrides/employee.js",
+	"ToDo": "vinatex/doctype/overrides/todo.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -296,4 +300,3 @@ scheduler_events = {
 #     "Leave Application": "vinatex.vinatex.doctype.overrides.leave_application.VntLeaveApplication",
 #     "Leave Allocation": "vinatex.vinatex.doctype.overrides.leave_allocation.VntLeaveAllocation"
 # }
-
