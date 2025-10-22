@@ -1,4 +1,11 @@
 frappe.ui.form.on("Leave Application", {
+	validate (frm) {
+		// Khi chuyển về Rejected thì bắt buộc phải có lý do
+		if (frm.doc.workflow_state === 'Rejected' && !frm.doc.custom_reject_reason) {
+		frappe.throw(__('Vui lòng nhập "Lý do từ chối" trước khi từ chối.'));
+		}
+	},
+
 	after_save (frm) {
 		if (frm.is_new()) {
 			frm.set_value("status", "Approved");
@@ -7,7 +14,7 @@ frappe.ui.form.on("Leave Application", {
 	},
 	// lấy ra người duyệt cấp 2
 	employee (frm) {
-		if (frm.doc.total_leave_days > 3) {
+		if (frm.doc.total_leave_days > 3 && frm.doc.custom_designation_group == 'Chuyên viên, Nhân viên') {
 			frappe.call({
 			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver_level_2",
 			args: {
@@ -22,7 +29,7 @@ frappe.ui.form.on("Leave Application", {
 	},
 	// hiển thị người duyệt cấp 2 nếu nghỉ trên 3 ngày
 	total_leave_days(frm) {
-		if (frm.doc.total_leave_days > 3) {
+		if (frm.doc.total_leave_days > 3 && frm.doc.custom_designation_group == 'Chuyên viên, Nhân viên') {
 			frappe.call({
 			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver_level_2",
 			args: {
@@ -37,6 +44,7 @@ frappe.ui.form.on("Leave Application", {
 	},
 
 	onload(frm) {
+		toggle_reject_reason(frm);
 		frm.set_value("follow_via_email", 0);
 		// Ignore cancellation of doctype on cancel all.
 		frm.ignore_doctypes_on_cancel_all = ["Leave Ledger Entry"];
@@ -48,6 +56,7 @@ frappe.ui.form.on("Leave Application", {
 	},
 
 	refresh(frm) {
+		toggle_reject_reason(frm);
 		// gỡ nút View Ledger (kể cả có group "View" hay không)
 		frm.remove_custom_button(__('View Ledger'), __('View'));
 		frm.remove_custom_button(__('View Ledger'));
@@ -228,4 +237,24 @@ function set_leave_type_query(frm) {
       // tương đương: filters: [['custom_leave_group', '=', frm.doc.custom_leave_group]]
     };
   });
+}
+
+
+function toggle_reject_reason(frm) {
+  const isApprover =
+    (frappe.user_roles || []).includes('Leave Approver L1') ||
+    (frappe.user_roles || []).includes('Leave Approver L2');
+
+  const pending = frm.doc.workflow_state === 'Chờ LĐ phòng/ban duyệt';
+  const rejected = frm.doc.workflow_state === 'Từ chối';
+
+  // Hiện cho người duyệt khi đang chờ duyệt (để điền), 
+  // hoặc hiện cho tất cả khi đã Rejected (để xem lý do)
+  const showForApproverToEdit = isApprover && pending;
+  const showForEveryoneReadOnly = rejected;
+
+  const shouldShow = showForApproverToEdit || showForEveryoneReadOnly;
+
+  frm.toggle_display('custom_reject_reason', shouldShow);
+  frm.set_df_property('custom_reject_reason', 'read_only', !showForApproverToEdit);
 }
