@@ -262,7 +262,8 @@
   {
    "fieldname": "employee_name",
    "fieldtype": "Data",
-   "label": "T\u00ean \u0111\u1ea7y \u0111\u1ee7"
+   "label": "T\u00ean \u0111\u1ea7y \u0111\u1ee7",
+   "read_only": 1
   },
   {
    "default": "0",
@@ -1094,7 +1095,7 @@
  "index_web_pages_for_search": 1,
  "is_tree": 1,
  "links": [],
- "modified": "2025-10-21 15:45:40.427385",
+ "modified": "2025-10-22 14:14:50.981901",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Employee",
