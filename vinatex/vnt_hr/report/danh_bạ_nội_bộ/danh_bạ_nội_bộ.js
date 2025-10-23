@@ -7,7 +7,9 @@ frappe.query_reports["Danh bạ nội bộ"] = {
             "fieldname":"employee",
             "label": __("Nhân sự"),
             "fieldtype": "Link",
-            "options": "Employee"
+            "options": "Employee",
+            "ignore_permissions": 1,
+            "ignore_user_permissions": 1
         },
 		{
             "fieldname":"company",
