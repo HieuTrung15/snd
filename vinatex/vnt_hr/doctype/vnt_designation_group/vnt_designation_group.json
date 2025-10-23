@@ -24,7 +24,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-22 10:17:24.717072",
+ "modified": "2025-10-22 19:05:35.021028",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Designation Group",
@@ -52,6 +52,7 @@
    "read": 1,
    "report": 1,
    "role": "Employee",
+   "select": 1,
    "share": 1,
    "write": 1
   }
