@@ -55,6 +55,8 @@ class VntLeaveApplication(LeaveApplication):
 
 
 	def validate(self):
+		super().validate()
+		 # kiểm tra gửi đơn nghỉ phép năm, nghỉ không hưởng lương, lao động nam nghỉ do có vợ sinh con trước bao nhiêu ngày
 		days_notice = 0
 		if getattr(self, "leave_type", None) == 'Nghỉ phép năm' and getattr(self, "from_date", None) and getattr(self, "to_date", None):
 			days_diff = date_diff(self.from_date, self.to_date) + 1
