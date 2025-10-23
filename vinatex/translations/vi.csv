@@ -389,7 +389,11 @@ VNT Recruitment Plan,Kế hoạch tuyển dụng
 VNT Recruitment Proposal,Tờ trình tuyển dụng
 {0} assigned {1}: {2},{0} đã gửi tới {1}: {2}
 New {0},{0} mới
-Leave Group, Nhóm nghỉ phép
-{0} created this, {0} đã tạo
-{0} last edited this, {0} đã chỉnh sửa lần cuối
-Reload List, Tải mới danh sách
+Leave Group,Nhóm nghỉ phép
+{0} created this,{0} đã tạo
+{0} last edited this,{0} đã chỉnh sửa lần cuối
+Reload List,Làm mới danh sách
+commented,đã bình luận
+Show all activity,Hiển thị tất cả hoạt động
+{0} List,Danh sách {0}
+{0} Report,Báo cáo {0}
