@@ -10,7 +10,7 @@ APPROVED_TRIP_STATE = "Đã duyệt"
 
 LEAVE_TYPES = {
     BUSINESS_TRIP_TYPE: {"code": "CT", "summary_field": "tot_business_trip"},
-    "Nghỉ phép năm": {"code": "NP", "summary_field": "tot_annual_leave"},
+    "Nghỉ phép năm": {"code": "P", "summary_field": "tot_annual_leave"},
 }
 
 SUMMARY_COLUMNS = [
@@ -19,12 +19,21 @@ SUMMARY_COLUMNS = [
     {"fieldname": "tot_total", "label": "Tổng", "fieldtype": "Float", "width": 80},
 ]
 
+LEGEND_HTML = (
+    "<div style='margin-top:8px;'>"
+    "<strong>Chú thích:</strong> "
+    "<span><strong>CT</strong>: Ngày đi công tác; </span>"
+    "<span><strong>P</strong>: Nghỉ phép năm; </span>"
+    # "<span><strong>P(0.5)</strong>: Nghỉ nửa ngày.</span>"
+    "</div>"
+)
+
 
 def execute(filters=None):
     """
     Báo cáo số ngày Công tác + Nghỉ phép theo từng ngày trong khoảng tháng (mặc định tháng hiện tại).
     - Giữ cột đầu tiên `value` để số liệu vẫn dùng được cho Number Card như trước.
-    - Bảng thể hiện từng ngày (CT, NP, CT(0.5), ...), cộng dồn tổng theo loại.
+    - Bảng thể hiện từng ngày (CT, P, CT(0.5), ...), cộng dồn tổng theo loại.
     - Nếu không truyền employee, tự động map từ user đăng nhập.
     - Hỗ trợ filters:
         {"month": 9, "year": 2025}
@@ -91,7 +100,7 @@ def execute(filters=None):
 
     row["value"] = float(total_value)
 
-    return columns, [row], None
+    return columns, [row], LEGEND_HTML
 
 
 def _columns():

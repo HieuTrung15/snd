@@ -85,7 +85,7 @@ frappe.query_reports["Số ngày công tác và nghỉ phép trong tháng"] = {
       });
     }
 
-    setTimeout(() => set_range_from_month_year(report), 0);
+    set_range_from_month_year(report);
   },
 
   formatter(value, row, column, data, default_formatter) {
@@ -114,8 +114,8 @@ frappe.query_reports["Số ngày công tác và nghỉ phép trong tháng"] = {
 const STATUS_COLORS = {
   CT: "rgba(33, 150, 243, .12)",
   "CT(0.5)": "rgba(33, 150, 243, .12)",
-  NP: "rgba(255, 152, 0, .18)",
-  "NP(0.5)": "rgba(255, 152, 0, .18)",
+  P: "rgba(255, 152, 0, .18)",
+  "P(0.5)": "rgba(255, 152, 0, .18)",
 };
 
 function set_range_from_month_year(report) {

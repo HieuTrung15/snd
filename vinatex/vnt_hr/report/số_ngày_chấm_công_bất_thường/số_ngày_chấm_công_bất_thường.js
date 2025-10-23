@@ -85,7 +85,7 @@ frappe.query_reports["Số ngày chấm công bất thường"] = {
       });
     }
 
-    setTimeout(() => set_range_from_month_year(report), 0);
+    set_range_from_month_year(report);
   },
 
   formatter(value, row, column, data, default_formatter) {
@@ -117,11 +117,6 @@ const STATUS_COLORS = {
   BT: "rgba(255, 76, 76, .2)",
   "BT(0.5)": "rgba(255, 138, 101, .2)",
   T: "rgba(121, 85, 72, .15)",
-  // X: "rgba(76, 175, 80, .12)",
-  // NP: "rgba(33, 150, 243, .12)",
-  // "NP(0.5)": "rgba(33, 150, 243, .18)",
-  // L: "rgba(158, 158, 158, .15)",
-  // CV: "rgba(121, 85, 72, .12)",
 };
 
 function set_range_from_month_year(report) {

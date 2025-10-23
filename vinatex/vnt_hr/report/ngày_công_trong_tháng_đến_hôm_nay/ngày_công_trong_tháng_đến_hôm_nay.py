@@ -21,6 +21,7 @@ STATUS_CODE = {
 }
 
 LEAVE_TYPE_CODE = {
+    "Nghỉ phép năm": STATUS_CODE["NGHỈ PHÉP"],
     "Unpaid Leave": STATUS_CODE["NGHỈ VIỆC RIÊNG KHÔNG HƯỞNG LƯƠNG"],
     "Leave Without Pay": STATUS_CODE["NGHỈ VIỆC RIÊNG KHÔNG HƯỞNG LƯƠNG"],
     "Sick Leave": STATUS_CODE["NGHỈ HƯỞNG CHẾ ĐỘ BHXH"],
@@ -41,6 +42,37 @@ TOTAL_FIELD_FOR_CODE = {
     STATUS_CODE["NGHỈ HƯỞNG CHẾ ĐỘ BHXH"]: "tot_social_leave",
     STATUS_CODE["NGHỈ NỬA NGÀY"]: "tot_half_day",
 }
+
+BUSINESS_TRIP_TYPE = "Công tác"
+APPROVED_TRIP_STATE = "Đã duyệt"
+TRACKED_LEAVE_TYPES = {
+    BUSINESS_TRIP_TYPE: {
+        "code": STATUS_CODE["VẮNG MẶT TẠI TRỤ SỞ CÔNG TY CÓ LÝ DO CÔNG VIỆC"],
+        "summary_field": "tot_on_duty",
+    },
+    "Nghỉ phép năm": {
+        "code": STATUS_CODE["NGHỈ PHÉP"],
+        "summary_field": "tot_leave",
+    },
+}
+
+LEGEND_HTML = (
+    "<div style='margin-top:8px;'>"
+    "<strong>Chú thích:</strong> "
+    "<span><strong>CV</strong>: Chưa vào làm; </span>"
+    "<span><strong>L</strong>: Nghỉ lễ; </span>"
+    "<span><strong>T</strong>: Cuối tuần; </span>"
+    "<span><strong>X</strong>: Đi làm; </span>"
+    "<span><strong>V</strong>: Vắng mặt; </span>"
+    "<span><strong>O</strong>: Quên chấm công; </span>"
+    "<span><strong>P</strong>: Nghỉ phép; </span>"
+    "<span><strong>Ro</strong>: Nghỉ không lương; </span>"
+    "<span><strong>CĐ</strong>: Nghỉ hưởng chế độ; </span>"
+    "<span><strong>BH</strong>: Nghỉ BHXH; </span>"
+    "<span><strong>CT</strong>: Đi công tác; </span>"
+    # "<span><strong>N1/2</strong>: Nghỉ nửa ngày.</span>"
+    "</div>"
+)
 
 def execute(filters=None):
     """
@@ -171,12 +203,12 @@ def execute(filters=None):
     ]
     summary_columns = [
         {"fieldname": "tot_present", "label": "Đi làm", "fieldtype": "Int", "width": 80},
-        {"fieldname": "tot_leave", "label": "Nghỉ phép", "fieldtype": "Int", "width": 90},
+        {"fieldname": "tot_leave", "label": "Nghỉ phép", "fieldtype": "Float", "width": 90},
         {"fieldname": "tot_holiday", "label": "Nghỉ lễ", "fieldtype": "Int", "width": 80},
         {"fieldname": "tot_weekend", "label": "Cuối tuần", "fieldtype": "Int", "width": 90},
         {"fieldname": "tot_absent", "label": "Vắng", "fieldtype": "Int", "width": 70},
         {"fieldname": "tot_miss", "label": "Quên CC", "fieldtype": "Int", "width": 80},
-        {"fieldname": "tot_on_duty", "label": "Công tác", "fieldtype": "Int", "width": 90},
+        {"fieldname": "tot_on_duty", "label": "Công tác", "fieldtype": "Float", "width": 90},
         {"fieldname": "tot_unpaid_leave", "label": "Nghỉ K/L", "fieldtype": "Int", "width": 80},
         {"fieldname": "tot_paid_leave", "label": "Nghỉ hưởng lương", "fieldtype": "Int", "width": 130},
         {"fieldname": "tot_social_leave", "label": "Nghỉ BHXH", "fieldtype": "Int", "width": 95},
@@ -190,8 +222,9 @@ def execute(filters=None):
     attendance_map = _attendance_map(employee, start_date, end_date)
     leave_map = _leave_map(employee, start_date, end_date)
     checkin_map = _checkin_map(employee, start_date, end_date)
+    tracked_leave_map = _tracked_leave_trip_map(employee, start_date, end_date)
 
-    totals = {col["fieldname"]: 0 for col in summary_columns}
+    totals = {col["fieldname"]: 0.0 for col in summary_columns}
     row = {
         "value": float(total_days),
         "employee": employee,
@@ -210,15 +243,40 @@ def execute(filters=None):
             checkin_map,
         )
         fieldname = f"d{d.day:02d}"
-        row[fieldname] = code
 
-        total_key = TOTAL_FIELD_FOR_CODE.get(code)
-        if total_key and total_key in totals:
-            totals[total_key] += 1
+        tracked_entries = _sorted_tracked_entries(tracked_leave_map.get(d, []))
+        if tracked_entries:
+            parts = []
+            for entry in tracked_entries:
+                label = entry["code"] if entry["fraction"] == 1 else f"{entry['code']}(0.5)"
+                parts.append(label)
+                summary_field = entry.get("summary_field")
+                if summary_field in totals:
+                    totals[summary_field] += entry["fraction"]
+            row[fieldname] = "/".join(parts)
+            # Không cộng lại theo TOTAL_FIELD_FOR_CODE để tránh đếm hai lần
+        else:
+            row[fieldname] = code
+            total_key = TOTAL_FIELD_FOR_CODE.get(code)
+            if total_key and total_key in totals:
+                totals[total_key] += 1.0
 
-    row.update(totals)
+    int_fields = {
+        "tot_present",
+        "tot_holiday",
+        "tot_weekend",
+        "tot_absent",
+        "tot_miss",
+        "tot_unpaid_leave",
+        "tot_paid_leave",
+        "tot_social_leave",
+        "tot_half_day",
+        "tot_not_joined",
+    }
+    for key, value in totals.items():
+        row[key] = int(value) if key in int_fields else float(value)
 
-    return columns, [row], None
+    return columns, [row], LEGEND_HTML
 
 
 def _columns():
@@ -347,6 +405,105 @@ def _checkin_map(employee, start_date, end_date):
         getdate(r.d): {"cnt_in": int(r.cnt_in or 0), "cnt_out": int(r.cnt_out or 0)}
         for r in rows
     }
+
+
+def _tracked_leave_trip_map(employee, start_date, end_date):
+    leave_rows = _fetch_tracked_leaves(employee, start_date, end_date)
+    trip_rows = _fetch_tracked_business_trips(employee, start_date, end_date)
+    return _expand_tracked_rows(leave_rows + trip_rows, start_date, end_date)
+
+
+def _fetch_tracked_leaves(employee, start_date, end_date):
+    leave_types = [lt for lt in TRACKED_LEAVE_TYPES if lt != BUSINESS_TRIP_TYPE]
+    if not leave_types:
+        return []
+    if len(leave_types) == 1:
+        leave_types = (leave_types[0], leave_types[0])
+    else:
+        leave_types = tuple(leave_types)
+    return frappe.db.sql(
+        """
+        SELECT leave_type, from_date, to_date, half_day, half_day_date
+        FROM `tabLeave Application`
+        WHERE employee = %(employee)s
+          AND docstatus = 1
+          AND status = 'Approved'
+          AND leave_type IN %(leave_types)s
+          AND to_date   >= %(start)s
+          AND from_date <= %(end)s
+        """,
+        {
+            "employee": employee,
+            "start": start_date,
+            "end": end_date,
+            "leave_types": leave_types,
+        },
+        as_dict=True,
+    )
+
+
+def _fetch_tracked_business_trips(employee, start_date, end_date):
+    rows = frappe.db.sql(
+        """
+        SELECT DISTINCT p.name, p.from_date, p.to_date
+        FROM `tabVNT Business Trip Request` p
+        LEFT JOIN `tabVNT Business Trip Request Items` i ON i.parent = p.name
+        WHERE p.workflow_state = %(approved)s
+          AND (p.employee = %(employee)s OR i.employee = %(employee)s)
+          AND NOT (p.to_date < %(start)s OR p.from_date > %(end)s)
+        """,
+        {
+            "approved": APPROVED_TRIP_STATE,
+            "employee": employee,
+            "start": start_date,
+            "end": end_date,
+        },
+        as_dict=True,
+    )
+
+    results = []
+    for row in rows:
+        from_date = getdate(row.from_date) if row.from_date else None
+        to_date = getdate(row.to_date) if row.to_date else from_date
+        if not from_date:
+            continue
+        if to_date and to_date < from_date:
+            from_date, to_date = to_date, from_date
+        results.append(frappe._dict({
+            "leave_type": BUSINESS_TRIP_TYPE,
+            "from_date": from_date,
+            "to_date": to_date or from_date,
+            "half_day": 0,
+            "half_day_date": None,
+        }))
+    return results
+
+
+def _expand_tracked_rows(rows, start_date, end_date):
+    out = {}
+    for row in rows:
+        config = TRACKED_LEAVE_TYPES.get(row.leave_type)
+        if not config:
+            continue
+
+        current = max(getdate(row.from_date), start_date)
+        last = min(getdate(row.to_date), end_date)
+        half_day_date = getdate(row.half_day_date) if row.half_day and row.half_day_date else None
+
+        while current <= last:
+            fraction = 0.5 if half_day_date and current == half_day_date else 1.0
+            out.setdefault(current, []).append({
+                "code": config["code"],
+                "summary_field": config["summary_field"],
+                "fraction": fraction,
+            })
+            current += timedelta(days=1)
+    return out
+
+
+def _sorted_tracked_entries(entries):
+    priority = {cfg["code"]: idx for idx, cfg in enumerate(TRACKED_LEAVE_TYPES.values())}
+    return sorted(entries, key=lambda e: priority.get(e["code"], 99))
 
 
 def _status_code_for_day(
