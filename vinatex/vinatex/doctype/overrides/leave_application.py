@@ -98,9 +98,13 @@ class VntLeaveApplication(LeaveApplication):
 
 def _handle_state_transition(doc: Document):
 	prev_state, curr_state = _get_prev_and_curr_workflow_state(doc)
-	pending_state = "Chờ lãnh đạo duyệt"
-	approved_state = "Đã duyệt"
-	if curr_state == pending_state and prev_state != pending_state:
+	# pending_state = "Chờ lãnh đạo duyệt"
+	# approved_state = "Đã duyệt"
+	leave_type = doc.get("leave_type")
+	employee_user = doc.get("employee")
+	approver_user = get_employee_user_id(employee_user)
+
+	if curr_state == "Chờ lãnh đạo duyệt" and prev_state == "Mới tạo":
 		_notify_to_approver(doc)
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Chờ lãnh đạo tập đoàn duyệt':
 		_notify_to_approver_2(doc)
@@ -116,6 +120,46 @@ def _handle_state_transition(doc: Document):
 		_check_state_to_close_todo(doc, doc.get("leave_approver"))
 		_check_state_to_close_todo(doc, doc.get("custom_second_approver"))
 
+	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Đã duyệt':
+		make_notification_logs({
+			"type": "Alert",
+			"subject": _("Phiếu đăng ký {0} của {1} đã được lãnh đạo duyệt").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
+			"document_type": doc.doctype,
+			"document_name": doc.name,
+		}, [approver_user])
+
+	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Chờ lãnh đạo tập đoàn duyệt':
+		make_notification_logs({
+			"type": "Alert",
+			"subject": _("Phiếu đăng ký {0} của {1} đang chờ lãnh đạo tập đoàn duyệt").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
+			"document_type": doc.doctype,
+			"document_name": doc.name,
+		}, [approver_user])
+
+	if prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Đã duyệt':
+		make_notification_logs({
+			"type": "Alert",
+			"subject": _("Phiếu đăng ký {0} của {1} đã được lãnh đạo tập đoàn duyệt").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
+			"document_type": doc.doctype,
+			"document_name": doc.name,
+		}, [approver_user])
+
+	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Từ chối':
+		make_notification_logs({
+        "type": "Alert",
+        "subject": _("Phiếu đăng ký {0} của {1} đã bị lãnh đạo từ chối.").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
+        "document_type": doc.doctype,
+        "document_name": doc.name,
+    }, [approver_user])
+
+	if prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Từ chối':
+		make_notification_logs({
+        "type": "Alert",
+        "subject": _("Phiếu đăng ký {0} của {1} đã bị lãnh đạo tập đoàn từ chối.").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
+        "document_type": doc.doctype,
+        "document_name": doc.name,
+    }, [approver_user])
+
 
 def _notify_to_approver(doc: Document):
 	"""Gửi thông báo đến người duyệt khi đơn được chuyển sang trạng thái 'Chờ lãnh đạo duyệt'."""
@@ -130,7 +174,13 @@ def _notify_to_approver(doc: Document):
 	}, [approver_emp])
 	# tạo todo cho người duyệt
 	ensure_todo(doc, approver_emp)
-		
+
+
+def get_employee_user_id(employee_name: str) -> str | None:
+    if not employee_name:
+        return None
+    return frappe.db.get_value("Employee", employee_name, "user_id")
+
 
 def _notify_to_approver_2(doc: Document):
 	"""Gửi thông báo đến người duyệt khi đơn được chuyển sang trạng thái 'Chờ lãnh đạo duyệt'."""
