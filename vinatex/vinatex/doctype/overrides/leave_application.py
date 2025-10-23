@@ -214,35 +214,14 @@ def _check_state_to_close_todo(doc: Document, user: str):
 @frappe.whitelist()
 def get_leave_approver(employee: str):
 	# lấy approver trên Employee trước
-	emp = frappe.db.get_value("Employee", employee, ["leave_approver", "department", "custom_designation_group"], as_dict=True)
-	if not emp:
-		return None
-	approver = emp.leave_approver
-
-	# nếu chưa có và có department → tìm trong Department Approver
-	if emp.custom_designation_group == 'Chuyên viên, Nhân viên':
-		# ƯU TIÊN custom flag custom_level_1 = 1
-		approver = frappe.db.get_value(
-			"Department Approver",
-			{
-				"parent": emp.department,
-				"parentfield": "leave_approvers",
-				"custom_level_1": 1,
-			},
-			"approver",
-		)
-
-	else:
-		approver = frappe.db.get_value(
-			"Department Approver",
-			{
-				"parent": emp.department,
-				"parentfield": "leave_approvers",
-				"custom_level_2": 1,
-			},
-			"approver",
-		)
-
+	emp = frappe.db.get_value("Employee", employee, ["reports_to", "user_id"], as_dict=True)
+	if not emp.reports_to:
+		approver = emp.user_id
+	if emp.reports_to:
+		report_to = frappe.db.get_value("Employee", emp.reports_to, ["user_id"], as_dict=True)
+		if not report_to.user_id:
+			frappe.throw("Chưa có người duyệt cho nhân viên này.Cần cập nhật trong Employee.")
+		approver = report_to.user_id
 	return approver
 
 

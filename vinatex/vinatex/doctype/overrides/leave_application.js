@@ -12,9 +12,14 @@ frappe.ui.form.on("Leave Application", {
 			frm.refresh_field("status");
 		}
 	},
+	half_day(frm) {
+		if (frm.doc.from_date && !frm.doc.to_date) {
+			frm.set_value("to_date", frm.doc.from_date);
+		}
+	},
 	// lấy ra người duyệt cấp 2
 	employee (frm) {
-		if (frm.doc.total_leave_days > 3 && frm.doc.custom_designation_group == 'Chuyên viên, Nhân viên') {
+		if (frm.doc.total_leave_days > 3) {
 			frappe.call({
 			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver_level_2",
 			args: {
@@ -26,10 +31,22 @@ frappe.ui.form.on("Leave Application", {
 				}}
 			});
 		}
+		if (frm.doc.total_leave_days < 3) {
+			frappe.call({
+			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver",
+			args: {
+				employee: frm.doc.employee,
+			},
+			callback (r) {
+				if (r.message) {
+					frm.set_value("leave_approver", r.message);
+				}}
+			});
+		}
 	},
 	// hiển thị người duyệt cấp 2 nếu nghỉ trên 3 ngày
 	total_leave_days(frm) {
-		if (frm.doc.total_leave_days > 3 && frm.doc.custom_designation_group == 'Chuyên viên, Nhân viên') {
+		if (frm.doc.total_leave_days > 3) {
 			frappe.call({
 			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver_level_2",
 			args: {
@@ -38,6 +55,18 @@ frappe.ui.form.on("Leave Application", {
 			callback (r) {
 				if (r.message) {
 					frm.set_value("custom_second_approver", r.message);
+				}}
+			});
+		}
+		if (frm.doc.total_leave_days < 3) {
+			frappe.call({
+			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver",
+			args: {
+				employee: frm.doc.employee,
+			},
+			callback (r) {
+				if (r.message) {
+					frm.set_value("leave_approver", r.message);
 				}}
 			});
 		}
