@@ -44,8 +44,9 @@
   {
    "fetch_from": "employee.department",
    "fieldname": "department",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "label": "Department",
+   "options": "Department",
    "reqd": 1
   },
   {
@@ -115,17 +116,19 @@
    "fetch_from": "employee.company",
    "fetch_if_empty": 1,
    "fieldname": "company",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Company",
+   "options": "Company",
    "reqd": 1
   },
   {
    "fetch_from": "employee.designation",
    "fieldname": "designation",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Designation",
+   "options": "Designation",
    "reqd": 1
   },
   {
@@ -187,7 +190,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-14 11:20:57.917539",
+ "modified": "2025-10-23 09:03:35.735962",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request",
