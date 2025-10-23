@@ -228,9 +228,9 @@ def _get_employees(filters, start_date, end_date):
 		)
 		ORDER BY
 			CASE
+				WHEN designation = 'Tổng Giám đốc Tập đoàn' THEN -2
 				WHEN custom_need_check = 1 THEN -1
 				WHEN custom_designation_group = 'Người quản lý' THEN 0
-				WHEN designation = 'Tổng Giám đốc Tập đoàn' THEN 1
 				WHEN custom_designation_group = 'Lãnh đạo cấp trung' THEN 2
 				WHEN COALESCE(custom_designation_group, '') = '' THEN 99
 				ELSE 2
