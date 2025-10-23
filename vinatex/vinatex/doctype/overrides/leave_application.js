@@ -19,7 +19,7 @@ frappe.ui.form.on("Leave Application", {
 	},
 	// lấy ra người duyệt cấp 2
 	employee (frm) {
-		if (frm.doc.total_leave_days > 3) {
+		if (frm.doc.total_leave_days >= 3) {
 			frappe.call({
 			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver_level_2",
 			args: {
@@ -46,7 +46,7 @@ frappe.ui.form.on("Leave Application", {
 	},
 	// hiển thị người duyệt cấp 2 nếu nghỉ trên 3 ngày
 	total_leave_days(frm) {
-		if (frm.doc.total_leave_days > 3) {
+		if (frm.doc.total_leave_days >= 3) {
 			frappe.call({
 			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver_level_2",
 			args: {
@@ -85,6 +85,10 @@ frappe.ui.form.on("Leave Application", {
 	},
 
 	refresh(frm) {
+		if (frm.is_new()) {
+			frm.set_value("custom_leave_group", "Nghỉ có hưởng lương, chế độ");
+			frm.set_value("leave_type", "Nghỉ phép năm");
+		}
 		toggle_reject_reason(frm);
 		// gỡ nút View Ledger (kể cả có group "View" hay không)
 		frm.remove_custom_button(__('View Ledger'), __('View'));
