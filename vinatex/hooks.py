@@ -56,6 +56,7 @@ override_doctype_class = {
     "Leave Allowcation": "vinatex.vinatex.doctype.overrides.leave_allowcation.VntLeaveAllocation",
 	"Attendance": "vinatex.vinatex.doctype.overrides.attendance.VntAttendance",
     "Employee": "vinatex.vinatex.doctype.overrides.employee.VntEmployee",
+    "User": "vinatex.vinatex.doctype.overrides.user.CustomUser"
 }
 
 # include js in doctype views

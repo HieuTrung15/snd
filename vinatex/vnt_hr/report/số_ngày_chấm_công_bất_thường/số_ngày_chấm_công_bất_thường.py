@@ -30,12 +30,7 @@ STANDARD_END_TIME = time(17, 0)
 LEGEND_HTML = (
     "<div style='margin-top:8px;'>"
     "<strong>Chú thích:</strong> "
-    "<span><strong>BT</strong>: Bất thường (đi muộn, về sớm hoặc không có chấm công); </span>"
-    "<span><strong>X</strong>: Có chấm công đúng giờ; </span>"
-    "<span><strong>P</strong>: Nghỉ phép cả ngày; </span>"
-    "<span><strong>P(0.5)</strong>: Nghỉ phép nửa ngày; </span>"
-    "<span><strong>L</strong>: Ngày lễ; </span>"
-    "<span><strong>T</strong>: Ngày nghỉ cuối tuần.</span>"
+    "<span><strong>BT</strong>: Bất thường (đi muộn, về sớm hoặc không có chấm công). </span>"
     "</div>"
 )
 
