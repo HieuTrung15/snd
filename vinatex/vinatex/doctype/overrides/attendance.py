@@ -8,6 +8,9 @@ from hrms.hr.doctype.attendance.attendance import (
 from datetime import datetime, date, time, timedelta
 from frappe.utils import getdate, now_datetime
 
+STANDARD_START_TIME = time(8, 17)
+STANDARD_END_TIME = time(17, 0)
+
 
 class VntAttendance(Attendance):
 	pass
@@ -134,6 +137,12 @@ def create_attendance_from_checkin():
 			# Lấy checkin data
 			checkin_info = emp_checkins.get(current_date)
 			if not checkin_info or not (checkin_info['in_time'] and checkin_info['out_time']):
+				continue
+
+			in_time = checkin_info['in_time'].time() if isinstance(checkin_info['in_time'], datetime) else checkin_info['in_time']
+			out_time = checkin_info['out_time'].time() if isinstance(checkin_info['out_time'], datetime) else checkin_info['out_time']
+			if (in_time and in_time > STANDARD_START_TIME) or (out_time and out_time < STANDARD_END_TIME):
+				# Bỏ qua các bản ghi đi muộn / về sớm để xử lý thủ công
 				continue
 			
 			# Thêm vào list để tạo
