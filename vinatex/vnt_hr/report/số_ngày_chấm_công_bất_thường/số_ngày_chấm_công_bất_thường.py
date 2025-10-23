@@ -1,29 +1,43 @@
 # -*- coding: utf-8 -*-
 import json
-from datetime import timedelta
+from datetime import datetime, timedelta, time
 
 import frappe
-from frappe.utils import cint, get_first_day, get_last_day, getdate, today
+from frappe.utils import cint, get_datetime, get_first_day, get_last_day, getdate, today,add_days
 
 SUMMARY_COLUMNS = [
-    {"fieldname": "tot_abnormal", "label": "Ngày bất thường", "fieldtype": "Float", "width": 130},
-    {"fieldname": "tot_present", "label": "Có Attendance", "fieldtype": "Int", "width": 120},
-    {"fieldname": "tot_leave_full", "label": "Nghỉ (cả ngày)", "fieldtype": "Int", "width": 100},
-    {"fieldname": "tot_leave_half", "label": "Nghỉ (nửa ngày)", "fieldtype": "Float", "width": 110},
-    {"fieldname": "tot_holiday", "label": "Holiday", "fieldtype": "Int", "width": 90},
-    {"fieldname": "tot_not_joined", "label": "Chưa vào làm", "fieldtype": "Int", "width": 120},
+    # {"fieldname": "tot_abnormal", "label": "Ngày bất thường", "fieldtype": "Float", "width": 130},
+    # {"fieldname": "tot_present", "label": "Có Attendance", "fieldtype": "Int", "width": 120},
+    # {"fieldname": "tot_leave_full", "label": "Nghỉ (cả ngày)", "fieldtype": "Int", "width": 100},
+    # {"fieldname": "tot_leave_half", "label": "Nghỉ (nửa ngày)", "fieldtype": "Float", "width": 110},
+    # {"fieldname": "tot_holiday", "label": "Holiday", "fieldtype": "Int", "width": 90},
+    # {"fieldname": "tot_not_joined", "label": "Chưa vào làm", "fieldtype": "Int", "width": 120},
 ]
 
 STATUS_PRIORITY = {
     "CV": 0,
     "L": 1,
     "X": 2,
-    "NP": 3,
-    "NP(0.5)": 4,
+    "P": 3,
+    "P(0.5)": 4,
     "T": 5,
     "BT": 6,
     "BT(0.5)": 7,
 }
+# Cấu hình giờ vào ra
+STANDARD_START_TIME = time(8, 15)
+STANDARD_END_TIME = time(17, 0)
+LEGEND_HTML = (
+    "<div style='margin-top:8px;'>"
+    "<strong>Chú thích:</strong> "
+    "<span><strong>BT</strong>: Bất thường (đi muộn, về sớm hoặc không có chấm công); </span>"
+    "<span><strong>X</strong>: Có chấm công đúng giờ; </span>"
+    "<span><strong>P</strong>: Nghỉ phép cả ngày; </span>"
+    "<span><strong>P(0.5)</strong>: Nghỉ phép nửa ngày; </span>"
+    "<span><strong>L</strong>: Ngày lễ; </span>"
+    "<span><strong>T</strong>: Ngày nghỉ cuối tuần.</span>"
+    "</div>"
+)
 
 
 def execute(filters=None):
@@ -33,10 +47,10 @@ def execute(filters=None):
     - Bảng hiển thị từng ngày với các mã:
         * BT / BT(0.5): ngày bất thường (full hoặc nửa ngày)
         * X: có Attendance
-        * NP / NP(0.5): nghỉ phép full / nửa ngày
+        * P / P(0.5): nghỉ phép full / nửa ngày
         * L: Holiday
         * CV: trước ngày vào làm
-    - Half-day leave -> hiển thị NP(0.5)/BT(0.5) và cộng 0.5 ngày bất thường.
+    - Half-day leave -> hiển thị P(0.5)/BT(0.5) và cộng 0.5 ngày bất thường.
     """
 
     filters = _parse_filters(filters)
@@ -47,7 +61,7 @@ def execute(filters=None):
 
     start_date, end_date = _resolve_period(filters)
     if cint(filters.get("to_today") or 0):
-        end_date = min(end_date, getdate(today()))
+        end_date = min(end_date, getdate(add_days(today(),-1)))
     if end_date < start_date:
         return _columns(), [{"value": 0.0}], None
 
@@ -55,7 +69,7 @@ def execute(filters=None):
     days = list(_daterange(start_date, end_date))
 
     holiday_days, weekend_days = _holiday_days(emp_doc, start_date, end_date)
-    attendance_days = _attendance_days(employee, start_date, end_date)
+    attendance_map = _attendance_map(employee, start_date, end_date)
     leave_map = _leave_map(employee, start_date, end_date)
 
     columns = _columns() + _info_columns() + _day_columns(days) + SUMMARY_COLUMNS
@@ -71,23 +85,29 @@ def execute(filters=None):
     total_abnormal = 0.0
 
     for day in days:
-        entries = _classify_day(day, emp_doc, holiday_days, weekend_days, attendance_days, leave_map)
+        entries = _classify_day(day, emp_doc, holiday_days, weekend_days, attendance_map, leave_map)
         fieldname = f"d{day.day:02d}"
         if not entries:
             row[fieldname] = ""
             continue
 
         labels = []
+        display_labels = []
         for entry in entries:
             labels.append(entry["code"])
-            summary_field = entry.get("summary_field")
             fraction = entry.get("fraction", 1.0)
-            if summary_field in totals:
-                totals[summary_field] += fraction
+            summary_fields = entry.get("summary_fields") or []
+            if not summary_fields and entry.get("summary_field"):
+                summary_fields = [entry["summary_field"]]
+            for summary_field in summary_fields:
+                if summary_field in totals:
+                    totals[summary_field] += fraction
             if entry.get("is_abnormal"):
                 total_abnormal += fraction
+            if entry["code"].startswith("BT"):
+                display_labels.append(entry["code"])
 
-        row[fieldname] = "/".join(labels)
+        row[fieldname] = "/".join(display_labels) if display_labels else ""
 
     for key, value in totals.items():
         if key in {"tot_present", "tot_holiday", "tot_leave_full", "tot_not_joined"}:
@@ -97,7 +117,7 @@ def execute(filters=None):
 
     row["value"] = float(total_abnormal)
 
-    return columns, [row], None
+    return columns, [row], LEGEND_HTML
 
 
 def _columns():
@@ -181,7 +201,7 @@ def _resolve_period(filters):
     if filters.get("from_date") and filters.get("to_date"):
         return getdate(filters["from_date"]), getdate(filters["to_date"])
 
-    ref_date = getdate(today())
+    ref_date = getdate(add_days(today(),-1))
     month = cint(filters.get("month") or 0)
     year = cint(filters.get("year") or 0)
     if month and year:
@@ -239,7 +259,7 @@ def _holiday_days(emp_doc, start_date, end_date):
     return holidays, weekend_days
 
 
-def _attendance_days(employee, start_date, end_date):
+def _attendance_map(employee, start_date, end_date):
     rows = frappe.db.sql(
         """
         SELECT attendance_date
@@ -251,7 +271,42 @@ def _attendance_days(employee, start_date, end_date):
         {"employee": employee, "start": start_date, "end": end_date},
         as_dict=True,
     )
-    return {getdate(r.attendance_date) for r in rows}
+
+    out = {}
+    for r in rows:
+        day = getdate(r.attendance_date)
+        out[day] = {
+            "has_attendance": True,
+            "in_time": None,
+            "out_time": None,
+        }
+
+    checkins = frappe.db.sql(
+        """
+        SELECT DATE(time) AS checkin_date,
+               MIN(CASE WHEN UPPER(TRIM(log_type)) = 'IN'  THEN time END) AS in_time,
+               MAX(CASE WHEN UPPER(TRIM(log_type)) = 'OUT' THEN time END) AS out_time
+        FROM `tabEmployee Checkin`
+        WHERE employee = %(employee)s
+          AND DATE(time) BETWEEN %(start)s AND %(end)s
+          AND UPPER(TRIM(log_type)) IN ('IN', 'OUT')
+        GROUP BY DATE(time)
+    """,
+        {"employee": employee, "start": start_date, "end": end_date},
+        as_dict=True,
+    )
+
+    for row in checkins:
+        day = getdate(row.checkin_date)
+        entry = out.setdefault(day, {
+            "has_attendance": False,
+            "in_time": None,
+            "out_time": None,
+        })
+        entry["in_time"] = row.in_time
+        entry["out_time"] = row.out_time
+
+    return out
 
 
 def _leave_map(employee, start_date, end_date):
@@ -283,31 +338,23 @@ def _leave_map(employee, start_date, end_date):
     return out
 
 
-def _classify_day(day, emp_doc, holiday_days, weekend_days, attendance_days, leave_map):
+def _classify_day(day, emp_doc, holiday_days, weekend_days, attendance_map, leave_map):
     entries = []
     doj = emp_doc.get("date_of_joining")
     doj = getdate(doj) if doj else None
 
-    if doj and day < doj:
-        entries.append({
-            "code": "CV",
-            "summary_field": "tot_not_joined",
-            "fraction": 1.0,
-        })
-        return entries
+    # if doj and day < doj:
+    #     entries.append({
+    #         "code": "CV",
+    #         "summary_field": "tot_not_joined",
+    #         "fraction": 1.0,
+    #     })
+    #     return entries
 
     if day in holiday_days:
         entries.append({
             "code": "L",
             "summary_field": "tot_holiday",
-            "fraction": 1.0,
-        })
-        return entries
-
-    if day in attendance_days:
-        entries.append({
-            "code": "X",
-            "summary_field": "tot_present",
             "fraction": 1.0,
         })
         return entries
@@ -319,12 +366,45 @@ def _classify_day(day, emp_doc, holiday_days, weekend_days, attendance_days, lea
         })
         return entries
 
+    attendance = attendance_map.get(day)
+    if attendance:
+        if attendance.get("has_attendance"):
+            if _is_abnormal_attendance(attendance):
+                entries.append({
+                    "code": "BT",
+                    "summary_fields": ["tot_abnormal", "tot_present"],
+                    "fraction": 1.0,
+                    "is_abnormal": True,
+                })
+            else:
+                entries.append({
+                    "code": "X",
+                    "summary_fields": ["tot_present"],
+                    "fraction": 1.0,
+                })
+            return entries
+
+        if attendance.get("in_time") or attendance.get("out_time"):
+            if _is_abnormal_attendance(attendance):
+                entries.append({
+                    "code": "BT",
+                    "summary_fields": ["tot_abnormal"],
+                    "fraction": 1.0,
+                    "is_abnormal": True,
+                })
+            else:
+                entries.append({
+                    "code": "X",
+                    "fraction": 1.0,
+            })
+            return entries
+
     leave = leave_map.get(day)
     if leave:
         fraction = leave["fraction"]
         if fraction >= 1:
             entries.append({
-                "code": "NP",
+                "code": "P",
                 "summary_field": "tot_leave_full",
                 "fraction": 1.0,
             })
@@ -332,7 +412,7 @@ def _classify_day(day, emp_doc, holiday_days, weekend_days, attendance_days, lea
 
         # half-day leave + 0.5 abnormal
         entries.append({
-            "code": "NP(0.5)",
+            "code": "P(0.5)",
             "summary_field": "tot_leave_half",
             "fraction": 0.5,
         })
@@ -355,3 +435,28 @@ def _classify_day(day, emp_doc, holiday_days, weekend_days, attendance_days, lea
 
 def _sorted_entries(entries):
     return sorted(entries, key=lambda e: STATUS_PRIORITY.get(e["code"], 99))
+
+
+def _is_abnormal_attendance(attendance):
+    in_time = _as_time(attendance.get("in_time"))
+    out_time = _as_time(attendance.get("out_time"))
+
+    if in_time is None or out_time is None:
+        return True
+    if in_time and in_time > STANDARD_START_TIME:
+        return True
+    if out_time and out_time < STANDARD_END_TIME:
+        return True
+    return False
+
+
+def _as_time(value):
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return value.time()
+    if isinstance(value, time):
+        return value
+    if isinstance(value, str):
+        return get_datetime(value).time()
+    return value

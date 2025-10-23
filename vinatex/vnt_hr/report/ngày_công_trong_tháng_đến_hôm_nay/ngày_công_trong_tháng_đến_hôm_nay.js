@@ -52,6 +52,7 @@ frappe.query_reports["Ngày công trong tháng đến hôm nay"] = {
       label: "Coi làm việc từ xa là đi làm",
       fieldtype: "Check",
       default: 1,
+      hidden:1
     },
   ],
 
@@ -85,7 +86,7 @@ frappe.query_reports["Ngày công trong tháng đến hôm nay"] = {
       });
     }
 
-    setTimeout(() => set_range_from_month_year(report), 0);
+    set_range_from_month_year(report);
   },
 
   formatter(value, row, column, data, default_formatter) {
