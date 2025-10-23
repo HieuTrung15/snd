@@ -70,7 +70,7 @@
   {
    "fieldname": "purpose",
    "fieldtype": "Small Text",
-   "label": "Purpose Bussiness Trip",
+   "label": "N\u1ed9i dung c\u00f4ng t\u00e1c",
    "reqd": 1
   },
   {
@@ -189,7 +189,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-23 09:18:28.872412",
+ "modified": "2025-10-23 11:55:25.437642",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request",
