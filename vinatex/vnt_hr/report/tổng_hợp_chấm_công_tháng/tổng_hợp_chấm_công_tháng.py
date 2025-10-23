@@ -36,7 +36,7 @@ def execute(filters):
 	shift_map = _shift_map(emps, days) if cint(filters.get("use_shift_plan")) else {}
 
 	# Defaults nếu không dùng ca
-	s_start = _parse_time(filters.get("shift_start") or "08:00:00")
+	s_start = _parse_time(filters.get("shift_start") or "08:15:00")
 	s_end   = _parse_time(filters.get("shift_end") or "17:00:00")
 
 	out = []

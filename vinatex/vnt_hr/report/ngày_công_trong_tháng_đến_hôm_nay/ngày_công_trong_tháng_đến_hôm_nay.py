@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import json
-from datetime import datetime, time, timedelta
+from datetime import timedelta
 
 import frappe
-from frappe.utils import cint, get_first_day, get_last_day, getdate, today
+from frappe.utils import cint, get_first_day, get_last_day, getdate, today,add_days
 
 STATUS_CODE = {
     "CHƯA VÀO LÀM": "CV",
@@ -108,7 +108,7 @@ def execute(filters=None):
         return _columns(), [{"value": 0.0}], None
 
     # Khoảng tính: ưu tiên from_date/to_date; luôn cắt end_date đến HÔM NAY
-    ref_date = getdate(today())
+    ref_date = getdate(add_days(today(),-1))
     if filters.get("from_date"):
         start_date = getdate(filters["from_date"])
         end_date = getdate(filters.get("to_date") or ref_date)
@@ -221,7 +221,6 @@ def execute(filters=None):
     holiday_days = _holiday_days(emp_doc, company, start_date, end_date)
     attendance_map = _attendance_map(employee, start_date, end_date)
     leave_map = _leave_map(employee, start_date, end_date)
-    checkin_map = _checkin_map(employee, start_date, end_date)
     tracked_leave_map = _tracked_leave_trip_map(employee, start_date, end_date)
 
     totals = {col["fieldname"]: 0.0 for col in summary_columns}
@@ -240,7 +239,6 @@ def execute(filters=None):
             holiday_days,
             attendance_map,
             leave_map,
-            checkin_map,
         )
         fieldname = f"d{d.day:02d}"
 
@@ -383,30 +381,6 @@ def _leave_map(employee, start_date, end_date):
     return out
 
 
-def _checkin_map(employee, start_date, end_date):
-    rows = frappe.db.sql(
-        """
-        SELECT DATE(time) AS d,
-               SUM(CASE WHEN log_type='IN' THEN 1 ELSE 0 END) AS cnt_in,
-               SUM(CASE WHEN log_type='OUT' THEN 1 ELSE 0 END) AS cnt_out
-        FROM `tabEmployee Checkin`
-        WHERE employee = %(employee)s
-          AND time BETWEEN %(start)s AND %(end)s
-        GROUP BY DATE(time)
-    """,
-        {
-            "employee": employee,
-            "start": datetime.combine(start_date, time.min),
-            "end": datetime.combine(end_date, time.max),
-        },
-        as_dict=True,
-    )
-    return {
-        getdate(r.d): {"cnt_in": int(r.cnt_in or 0), "cnt_out": int(r.cnt_out or 0)}
-        for r in rows
-    }
-
-
 def _tracked_leave_trip_map(employee, start_date, end_date):
     leave_rows = _fetch_tracked_leaves(employee, start_date, end_date)
     trip_rows = _fetch_tracked_business_trips(employee, start_date, end_date)
@@ -512,7 +486,6 @@ def _status_code_for_day(
     holiday_days,
     attendance_map,
     leave_map,
-    checkin_map,
 ):
     doj = emp_doc.get("date_of_joining")
     doj = getdate(doj) if doj else None
@@ -551,13 +524,6 @@ def _status_code_for_day(
             return STATUS_CODE["NGHỈ NỬA NGÀY"]
         leave_type = leave.get("leave_type")
         return LEAVE_TYPE_CODE.get(leave_type, STATUS_CODE["NGHỈ PHÉP"])
-
-    checkin = checkin_map.get(day)
-    if checkin:
-        ci, co = checkin["cnt_in"], checkin["cnt_out"]
-        if ci > 0 and co > 0:
-            return STATUS_CODE["ĐI LÀM"]
-        return STATUS_CODE["QUÊN CHẤM CÔNG"]
 
     return STATUS_CODE["VẮNG MẶT"]
 
