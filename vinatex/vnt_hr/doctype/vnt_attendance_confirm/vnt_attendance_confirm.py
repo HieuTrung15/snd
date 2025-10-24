@@ -297,31 +297,24 @@ def make_attendance_confirm():
 
 @frappe.whitelist()
 def get_working_dates_of_month():
-    # lấy ra các ngày làm việc trong tháng hiện tại (đã loại bỏ holiday)
+    # lấy ra các ngày làm việc từ đầu tháng hiện tại đến hôm nay (đã loại bỏ holiday)
     today = date.today()
     year = today.year
     month = today.month
+    holiday_list = None
     company = frappe.defaults.get_user_default("Company")
     if company:
         holiday_list = frappe.db.get_value("Company", company, "default_holiday_list")
-        if not holiday_list:
-            frappe.throw("Không xác định được Holiday List (thiếu employee/company/holiday_list).")
+    if not holiday_list:
+        frappe.throw("Không xác định được Holiday List (thiếu employee/company/holiday_list).")
 
-    # 2) Tính khoảng đầu-cuối tháng trước
-    if month == 1:
-        prev_year = year - 1
-        prev_month = 12
-    else:
-        prev_year = year
-        prev_month = month - 1
-
-    start_date = date(prev_year, prev_month, 1)
-    end_date = date(prev_year, prev_month, calendar.monthrange(prev_year, prev_month)[1])
+    start_date = date(year, month, 1)
+    end_date = today
 
     if end_date < start_date:
         return []
 
-    # 3) Lấy toàn bộ holiday trong tháng bằng MỘT query, rồi cho vào set để tra nhanh
+    # Lấy toàn bộ holiday trong khoảng và đưa vào set để tra nhanh
     holidays = frappe.get_all(
         "Holiday",
         filters={
@@ -331,8 +324,8 @@ def get_working_dates_of_month():
         pluck="holiday_date",  # trả về list các date
     )
     holiday_set = set(holidays)  # O(1) lookup
-
-    # 4) Sinh tất cả ngày trong tháng và lọc ra ngày làm việc
+ 
+    # Sinh danh sách ngày và loại bỏ holiday
     days = (end_date - start_date).days + 1
     working_dates = [
         (start_date + timedelta(days=i))
@@ -340,7 +333,7 @@ def get_working_dates_of_month():
         if (start_date + timedelta(days=i)) not in holiday_set
     ]
     return working_dates
-	
+
 
 def _day_bounds(d):
     return datetime.combine(d, time.min), datetime.combine(d, time.max)
@@ -421,7 +414,7 @@ def _bulk_fetch_leaves(employees, d_start, d_end):
         WHERE employee IN %(emps)s
           AND to_date   >= %(d0)s
           AND from_date <= %(d1)s
-          AND status NOT IN ('Rejected','Cancelled')
+          AND workflow_state IN ('Đã duyệt')
         """,
         {"emps": emps, "d0": d_start.date(), "d1": d_end.date()},
         as_dict=True,
@@ -439,6 +432,7 @@ def _bulk_fetch_leaves(employees, d_start, d_end):
             cur += timedelta(days=1)
     return covered
 
+
 @frappe.whitelist()
 def check_employee_checkin_by_days(employees=None):
     """
@@ -450,9 +444,9 @@ def check_employee_checkin_by_days(employees=None):
     days = _parse_dates(working_days)
     if not days:
         return []
-
+ 
     emps = _pick_employees(employees)
-
+ 
     # Giờ chuẩn ca
     shift_start = "08:15"
     shift_end   = "17:00"
@@ -460,25 +454,27 @@ def check_employee_checkin_by_days(employees=None):
     h2, m2 = map(int, shift_end.split(":"))
     SHIFT_START = time(h1, m1)
     SHIFT_END   = time(h2, m2)
-
+ 
     # Khoảng thời gian đúng (đầu/cuối ngày) để bulk-fetch
     t0, _ = _day_bounds(days[0])
     _, t1 = _day_bounds(days[-1])
-
+ 
     # Lấy dữ liệu 1 lần
     checkins_map = _bulk_fetch_checkins(emps, t0, t1)     # SỬ DỤNG t0,t1 (datetime)
     leaves_set   = _bulk_fetch_leaves(emps, t0, t1)
-
+ 
     out = []
     for d in days:
         for emp in emps:
+            if (emp['name'], d) in leaves_set:
+                continue
             rec = checkins_map.get((emp['name'], d), {"first_in": None, "last_out": None, "cnt_in": 0, "cnt_out": 0})
             fi, lo = rec["first_in"], rec["last_out"]
             ci, co = rec["cnt_in"],  rec["cnt_out"]
-
+ 
             status = "OK"
             issues = []
-
+ 
             if ci == 0 and co == 0:
                 status = "Đã tạo đơn chờ duyệt" if (emp['name'], d) in leaves_set else "Vắng mặt"
             elif ci > 0 and co == 0:
@@ -494,10 +490,10 @@ def check_employee_checkin_by_days(employees=None):
                     issues.append("Đi muộn")
                 if lo and lo.time() < SHIFT_END:
                     issues.append("Về sớm")
-
+ 
             if issues:
                 status = ", ".join(issues)
-
+ 
             if status != "OK":
                 approver_user = _employee_user_id(emp.get('reports_to')) if emp.get('reports_to') else None
                 out.append({
