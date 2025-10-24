@@ -171,7 +171,7 @@ def _columns_pivot(days):
 		{"fieldname": "tot_present", "label": "Đi làm",  "fieldtype": "Int", "width": 100},
 		{"fieldname": "tot_leave",   "label": "Nghỉ phép",  "fieldtype": "Int", "width": 100},
 		{"fieldname": "tot_holiday", "label": "Nghỉ Lễ",  "fieldtype": "Int", "width": 100},
-		{"fieldname": "tot_weekend", "label": "Công tác", "fieldtype": "Int", "width": 100},
+		# {"fieldname": "tot_weekend", "label": "Công tác", "fieldtype": "Int", "width": 100},
 		{"fieldname": "tot_absent",  "label": "Vắng",  "fieldtype": "Int", "width": 100},
 		{"fieldname": "tot_miss",    "label": "Quên chấm công","fieldtype": "Int", "width": 100},
 	]
