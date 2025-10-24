@@ -87,3 +87,20 @@ function bind_contract_grid_events_once(frm) {
 
   grid.__bound_contract_validity = true; // đánh dấu đã bind 1 lần
 }
+
+
+frappe.ui.form.on("Employee Education", {
+   custom_check: function(frm, cdt, cdn) {
+      // chỉ cho phép 1 dòng được chọn
+        const current_row = locals[cdt][cdn];
+
+        if (current_row.custom_check) {
+            (frm.doc.education || []).forEach(row => {
+                if (row.name !== current_row.name) {
+                    row.custom_check = 0;
+                }
+            });
+            frm.refresh_field('education');
+        }
+    }
+})
