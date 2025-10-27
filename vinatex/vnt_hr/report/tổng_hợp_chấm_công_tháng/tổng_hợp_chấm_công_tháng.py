@@ -13,7 +13,7 @@ STATUS_CODE = {
 	"CUỐI TUẦN": "T",        # Thứ 7/CN
 	"ĐI LÀM": "X",            # Đi làm
 	"VẮNG MẶT": "V",          # Vắng mặt
-	"QUÊN CHẤM CÔNG": "",  # Quên chấm công,
+	"QUÊN CHẤM CÔNG": "",
 	"CÔNG TÁC": "CT",
 	"NGHỈ NỬA NGÀY": "H",
 	"NGHỈ PHÉP": "P",
@@ -26,11 +26,6 @@ def execute(filters):
 	start_date = getdate(filters.get("from_date"))
 	end_date = getdate(filters.get("to_date"))
 	days = list(_daterange(start_date, end_date))
-	today_date = getdate(add_days(today(), -1))
-	effective_end_date = min(end_date, today_date)
-	data_days = [d for d in days if d <= effective_end_date]
-	data_start = data_days[0] if data_days else None
-	data_end = data_days[-1] if data_days else None
 	cols = _columns_pivot(days)
 	today_date = getdate(add_days(today(), -1))
 	effective_end_date = min(end_date, today_date)
@@ -155,8 +150,8 @@ def execute(filters):
 
 		out.append(row)
 
-	# message = get_message() if not filters.summarized_view else ""
-	return cols, out
+	legend = _legend_html()
+	return cols, out, legend
 
 
 def _columns_pivot(days):
@@ -178,7 +173,7 @@ def _columns_pivot(days):
 		{"fieldname": "tot_leave",   "label": "Nghỉ phép",  "fieldtype": "Int", "width": 100},
 		{"fieldname": "tot_holiday", "label": "Nghỉ Lễ",  "fieldtype": "Int", "width": 100},
 		{"fieldname": "tot_weekend", "label": "Cuối tuần", "fieldtype": "Int", "width": 100},
-		{"fieldname": "tot_business_trip", "label": "Công tác", "fieldtype": "Float", "width": 100, "precision": 2},
+		{"fieldname": "tot_business_trip", "label": "Công tác", "fieldtype": "Int", "width": 100, "precision": 2},
 		{"fieldname": "tot_absent",  "label": "Vắng",  "fieldtype": "Int", "width": 100},
 		{"fieldname": "tot_miss",    "label": "Quên chấm công","fieldtype": "Int", "width": 100},
 	]
@@ -799,3 +794,20 @@ def chart_data(rows):
 		},
 		"type": "donut",
 	}
+
+
+def _legend_html() -> str:
+	items = [
+		_("X = Đi làm"),
+		_("P = Nghỉ phép"),
+		_("L = Nghỉ lễ"),
+		_("T = Cuối tuần"),
+		_("CT = Công tác"),
+		_("H = Nghỉ nửa ngày"),
+		_("V = Vắng mặt"),
+		# _("O = Quên chấm công"),
+		_("Ô trống = Quên chấm công/Chấm công bất thường"),
+	]
+	parts = ["<strong>{}</strong>: ".format(_("Ghi chú ký hiệu"))]
+	parts.append(", ".join(items))
+	return "<div style='margin-bottom:8px;'>{}</div>".format("".join(parts))

@@ -259,6 +259,8 @@ frappe.query_reports["Tổng hợp chấm công tháng"] = {
         },
       });
     });
+
+    // Hiển thị ghi chú ký hiệu một lần trên đầu báo cáo
   },
   // refresh: function (report) {
   //   report.page.add_inner_button(__("Xuất tổng hợp chấm công tháng"), function () {
