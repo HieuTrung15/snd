@@ -29,7 +29,6 @@ app_license = "mit"
 app_include_css = "/assets/vinatex/css/theme.css"
 app_include_js = [
 	"/assets/vinatex/js/title-wrap.js",
-	"/assets/vinatex/js/todo_quick_list_override.js",
 ]
 
 # include js, css files in header of web template
@@ -179,10 +178,6 @@ scheduler_events = {
         "0 4 1 1 *": [
             "vinatex.vinatex.doctype.overrides.allocate_leave.allocate_leave"
         ],
-		# Chạy chấm công 10p/lần từ 7h30 đến 7h59 sáng hàng ngày
-       	"30-59/10 7 * * *": [
-    		"vinatex.vinatex.doctype.overrides.timekeeping.get_timekeeping_data_morning",
-		],
 		# Chạy chấm công 10p/lân từ 8h đến 9h30 sáng hàng ngày
 		"0-30/10 8,9 * * *": [
 			"vinatex.vinatex.doctype.overrides.timekeeping.get_timekeeping_data_morning",

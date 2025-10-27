@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:{employee}-{employee_name}-{YY}{MM}-{####}",
+ "autoname": "format:XNCC-T{MM}-{employee_name}",
  "creation": "2025-09-18 21:12:44.660032",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -22,7 +22,7 @@
   "approver",
   "approver_name",
   "column_break_wijp",
-  "tr\u1ea1ng_th\u00e1i",
+  "confirm",
   "chi_ti\u1ebft_section",
   "items"
  ],
@@ -62,12 +62,14 @@
   {
    "fieldname": "from_date",
    "fieldtype": "Date",
-   "label": "T\u1eeb ng\u00e0y"
+   "label": "T\u1eeb ng\u00e0y",
+   "read_only": 1
   },
   {
    "fieldname": "to_date",
    "fieldtype": "Date",
-   "label": "\u0110\u1ebfn ng\u00e0y"
+   "label": "\u0110\u1ebfn ng\u00e0y",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_kkv3",
@@ -78,7 +80,8 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Nh\u00e2n vi\u00ean",
-   "options": "Employee"
+   "options": "Employee",
+   "read_only": 1
   },
   {
    "fetch_from": "employee.employee_name",
@@ -118,12 +121,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "tr\u1ea1ng_th\u00e1i",
-   "fieldtype": "Select",
-   "label": "Tr\u1ea1ng th\u00e1i",
-   "options": "Nh\u00e1p\nM\u1edbi t\u1ea1o\nCh\u1edd ph\u00ea duy\u1ec7t\n\u0110\u00e3 duy\u1ec7t\nT\u1eeb ch\u1ed1i\nH\u1ee7y\n\u0110\u00e3 h\u1ee7y"
-  },
-  {
    "fieldname": "chi_ti\u1ebft_section",
    "fieldtype": "Section Break"
   },
@@ -132,13 +129,21 @@
    "fieldtype": "Table",
    "label": "Chi ti\u1ebft ch\u1ea5m c\u00f4ng",
    "options": "VNT Attendance Confirm Item"
+  },
+  {
+   "description": "Ch\u1ecdn \u0111\u1ec3 ph\u00ea duy\u1ec7t ho\u1eb7c t\u1eeb ch\u1ed1i t\u1ea5t c\u1ea3.",
+   "fieldname": "confirm",
+   "fieldtype": "Select",
+   "label": "Ph\u00ea duy\u1ec7t/T\u1eeb ch\u1ed1i t\u1ea5t c\u1ea3",
+   "options": "\n\u0110\u1ed3ng \u00fd\nT\u1eeb ch\u1ed1i",
+   "permlevel": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-21 17:37:16.700901",
+ "modified": "2025-10-27 17:52:15.436173",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Attendance Confirm",
@@ -168,6 +173,7 @@
    "report": 1,
    "role": "Employee",
    "share": 1,
+   "submit": 1,
    "write": 1
   },
   {
@@ -180,6 +186,19 @@
    "report": 1,
    "role": "HR Manager",
    "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Leave Approver",
+   "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],

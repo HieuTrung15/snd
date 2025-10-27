@@ -11,21 +11,24 @@ from frappe.model.document import Document
 from frappe.utils import getdate
 # from hrms.hr.utils import get_holiday_list_for_employee(employee)
 
-PENDING_STATES = {"Chờ duyệt"}
-APPROVED_STATE = "Đã duyệt"
-REJECT_STATES = {"Từ chối", "Hủy", "Huỷ"}
-
 
 class VNTAttendanceConfirm(Document):
-    def on_update(self):
-        if self.has_value_changed("workflow_state"):
-            _handle_state_transition(self)
+    
+    def on_update_after_submit(self):
+        _make_attendance_from_confirmation(self)
+        _notify_employee_result(self)
 
     def on_submit(self):
         _close_todos_for_doc(self)
+        _make_attendance_from_confirmation(self)
+        _notify_employee_result(self)
+
+    def after_save(self):
+        _notify_approver_pending(self)
+        _close_employee_todos(self)
 
     def on_cancel(self):
-        self.db_set("workflow_state", "Đã hủy", update_modified=False)
+        # self.db_set("workflow_state", "Đã hủy", update_modified=False)
         _delete_todos_for_doc(self)
 
 
@@ -100,23 +103,30 @@ def _notify_confirmation(doc: Document, user: str):
     if mapped_employee and mapped_employee != doc.employee:
         return
     _send_notification(doc, user, subject, message)
+ 
+
+def _make_attendance_from_confirmation(doc: Document):
+    # Tạo Attendance cho các ngày trong items
+    for row in doc.get("items") or []:
+        att_date = row.get("date")
+        if not att_date:
+            continue
+        # Tạo mới attendance
+        att = frappe.get_doc({
+            "doctype": "Attendance",
+            "employee": doc.employee,
+            "employee_name": doc.employee_name,
+            "company": frappe.db.get_value("Employee", doc.employee, "company"),
+            "attendance_date": att_date,
+            "status": "Present",
+            "shift": "Hành chính",
+            "docstatus": 1,
+        })
+        att.insert(ignore_permissions=True)
 
 
-def _handle_state_transition(doc: Document):
-    state = (doc.get("workflow_state") or "").strip()
-
-    if state in PENDING_STATES:
-        _ensure_items_have_type(doc)
-        _close_employee_todos(doc)
-        _notify_approver_pending(doc)
-
-    elif state == APPROVED_STATE:
-        _close_todos_for_doc(doc)
-        _notify_employee_result(doc, APPROVED_STATE)
-
-    elif state in REJECT_STATES:
-        _delete_todos_for_doc(doc)
-        _notify_employee_result(doc, state)
+def _cancel_attendance_from_confirmation(doc: Document):
+    pass
 
 
 def _notify_approver_pending(doc: Document):
@@ -196,12 +206,6 @@ def _delete_todos_for_doc(doc: Document):
             frappe.log_error(frappe.get_traceback(), f"Không xoá được ToDo: {n}")
 
 
-def _ensure_items_have_type(doc: Document):
-    for row in doc.get("items") or []:
-        if not row.get("type"):
-            frappe.throw(_("Loại giải trình không được để trống (dòng {0}).").format(row.idx))
-
-
 def _close_employee_todos(doc: Document):
     employee_user = _resolve_employee_user(doc)
     if not employee_user:
@@ -220,79 +224,152 @@ def _close_employee_todos(doc: Document):
         frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
 
 
-def _notify_employee_result(doc: Document, state: str):
+def _notify_employee_result(doc: Document):
     user = _resolve_employee_user(doc)
     if not user:
         return
 
-    if state == APPROVED_STATE:
-        subject = _("Bảng xác nhận chấm công đã được duyệt")
-        message = _(
-            "Bảng chấm công từ {0} đến {1} đã được duyệt.")
-        message = message.format(
-            frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
-            frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
-        )
-    else:
-        subject = _("Bảng xác nhận chấm công đã bị hủy/từ chối")
-        message = _(
-            "Bảng chấm công từ {0} đến {1} bị cập nhật trạng thái: {2}.")
-        message = message.format(
-            frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
-            frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
-            state,
-        )
+    subject = _("Bảng xác nhận chấm công đã được duyệt")
+    message = _("Bảng chấm công từ {0} đến {1} đã được duyệt.").format(
+        frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
+        frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
+    )
+
+    # subject = _("Bảng xác nhận chấm công đã bị hủy/từ chối")
+    # message = _(
+    #     "Bảng chấm công từ {0} đến {1} bị cập nhật trạng thái: {2}.")
+    # message = message.format(
+    #     frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
+    #     frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
+    #     state,
+    # )
 
     _send_notification(doc, user, subject, message)
 
 
 @frappe.whitelist()
 def make_attendance_confirm():
-    data = check_employee_checkin_by_days()
-    data_sorted = sorted(data, key=lambda r: (r.get("employee") or ""))
-    grouped_data = {}
-    for entry in data_sorted:
-        employee_id = entry['employee']
-        if employee_id not in grouped_data:
-            grouped_data[employee_id] = {
-                'employee': entry['employee'],
-                'employee_name': entry['employee_name'],
-                'department': entry['department'],
-                'email': entry['user_id'],
-                'from_date': entry['from_date'],
-                'to_date': entry['to_date'],
-                'approver': entry['approver'],
-                'records': []
-            }
-        grouped_data[employee_id]['records'].append({
-            'date': entry['date'],
-            'first_in': entry['first_in'] if entry['first_in'] else None,
-            'last_out': entry['last_out'] if entry['last_out'] else None,
-            'status': entry['status']
-        })
-    # Convert to list for output
-    result = list(grouped_data.values())
-    for i in result:
-        att = frappe.new_doc("VNT Attendance Confirm")
-        att.employee = i.get("employee")
-        att.employee_name = i.get("employee_name")
-        att.department = i.get("department")
-        att.email = i.get("email")
-        att.from_date = i.get("from_date")
-        att.to_date = i.get("to_date")
-        att.approver = i.get('approver')
-        for r in i.get("records"):
-            att.append("items", {
-                "date": r.get("date"),
-                "time_in": r.get("first_in") if r.get("first_in") else None,
-                "time_out": r.get("last_out") if r.get("last_out") else None,
-                "status": r.get("status"),
-            })
-        att.insert()
-        user = _resolve_employee_user(att)
-        _ensure_todo_for_confirmation(att, user)
-        _notify_confirmation(att, user)
-        # att.submit()  
+    # Upsert 1 phiếu/tháng cho mỗi nhân viên và thêm/cập nhật items theo từng ngày
+    working_days = get_working_dates_of_month()
+    if not working_days:
+        return []
+
+    month_from, month_to = min_max_date(working_days)
+    # Lấy NV áp dụng
+    emps = _pick_employees(None)
+
+    # Chuẩn bị dữ liệu chấm công/leaves trong khoảng đầu tháng -> hôm nay
+    t0, _ = _day_bounds(month_from)
+    _, t1 = _day_bounds(month_to)
+    checkins_map = _bulk_fetch_checkins(emps, t0, t1)
+    leaves_set   = _bulk_fetch_leaves(emps, t0, t1)
+
+    results = []
+    for emp in emps:
+        emp_name = emp["name"]
+
+        # Tìm phiếu tháng hiện tại (docstatus<2)
+        att_name = frappe.db.get_value(
+            "VNT Attendance Confirm",
+            {
+                "employee": emp_name,
+                "from_date": month_from,
+                "docstatus": ["<", 2],
+            },
+            "name",
+        )
+
+        is_new = False
+        if att_name:
+            att = frappe.get_doc("VNT Attendance Confirm", att_name)
+        else:
+            # Tạo mới nếu chưa có
+            att = frappe.new_doc("VNT Attendance Confirm")
+            att.employee = emp_name
+            att.employee_name = emp.get("employee_name")
+            att.department = emp.get("department")
+            att.email = emp.get("user_id")
+            att.from_date = month_from
+            att.approver = _employee_user_id(emp.get("reports_to")) if emp.get("reports_to") else None
+            is_new = True
+
+        # Cập nhật to_date đến ngày hiện tại của tháng
+        if not att.get("to_date") or getdate(att.to_date) != month_to:
+            att.to_date = month_to
+
+        # Lập chỉ mục items theo ngày để update nhanh
+        existing_by_date = {getdate(r.get("date")): r for r in (att.get("items") or [])}
+
+        changed = False
+        for d in working_days:
+            key = (emp_name, d)
+            # Tính status + thời gian vào/ra
+            if key in leaves_set:
+                # Bỏ qua hoàn toàn ngày có Leave Application: không tạo item
+                continue
+            else:
+                rec = checkins_map.get(key, {"first_in": None, "last_out": None, "cnt_in": 0, "cnt_out": 0})
+                fi, lo = rec["first_in"], rec["last_out"]
+                ci, co = rec["cnt_in"],  rec["cnt_out"]
+
+                status = "OK"
+                issues = []
+                SHIFT_START = time(8, 15)
+                SHIFT_END   = time(17, 0)
+
+                if ci == 0 and co == 0:
+                    status = "Vắng mặt"
+                elif ci > 0 and co == 0:
+                    if fi and fi.time() > SHIFT_START:
+                        issues.append("Đi muộn")
+                    issues.append("Quên chấm công")
+                elif co > 0 and ci == 0:
+                    issues.append("Quên chấm công")
+                    if lo and lo.time() < SHIFT_END:
+                        issues.append("Về sớm")
+                else:
+                    if fi and fi.time() > SHIFT_START:
+                        issues.append("Đi muộn")
+                    if lo and lo.time() < SHIFT_END:
+                        issues.append("Về sớm")
+
+                if issues:
+                    status = ", ".join(issues)
+
+                # Bỏ qua ngày status OK: không tạo/cập nhật item
+                if status == "OK":
+                    continue
+
+            # Giá trị time theo chuỗi HH:MM:SS để khớp field Time
+            v_in  = fi.strftime("%H:%M:%S") if fi else None
+            v_out = lo.strftime("%H:%M:%S") if lo else None
+
+            row = existing_by_date.get(d)
+            if row:
+                if (row.get("time_in") != v_in) or (row.get("time_out") != v_out) or (row.get("status") != status):
+                    row.time_in = v_in
+                    row.time_out = v_out
+                    row.status = status
+                    changed = True
+            else:
+                att.append("items", {
+                    "date": d,
+                    "time_in": v_in,
+                    "time_out": v_out,
+                    "status": status,
+                })
+                changed = True
+
+        if is_new:
+            att.insert()
+            user = _resolve_employee_user(att)
+            _ensure_todo_for_confirmation(att, user)
+            _notify_confirmation(att, user)
+            results.append(att.name)
+        elif changed:
+            att.save()
+            results.append(att.name)
+    return results
 
 
 @frappe.whitelist()
@@ -310,7 +387,6 @@ def get_working_dates_of_month():
 
     start_date = date(year, month, 1)
     end_date = today
-
     if end_date < start_date:
         return []
 

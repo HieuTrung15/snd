@@ -2,19 +2,31 @@
 // For license information, please see license.txt
 // VGT00065
 frappe.ui.form.on("VNT Attendance Confirm", {
+	validate (frm) {
+		// kiểm tra trong items không có loại giải trình thì báo lỗi
+		let missing_type = false;
+		(frm.doc.items || []).forEach(function(row) {
+			if (!row.type) {
+				missing_type = true;
+			}
+		});
+		if (missing_type) {
+			frappe.throw(__('Vui lòng điền đủ các giải trình.'));
+		}
+	},
 	refresh(frm) {
-        // frm.add_custom_button(__('Sync Timekeeper Data'), function() {
-		// 	frappe.call({
-		// 		// method: "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.make_attendance_confirm",
-		// 		method: "vinatex.vinatex.doctype.overrides.timekeeping.get_timekeeping_data_morning",
-		// 		args: {
+        frm.add_custom_button(__('Sync Timekeeper Data'), function() {
+			frappe.call({
+				method: "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.make_attendance_confirm",
+				// method: "vinatex.vinatex.doctype.overrides.timekeeping.get_timekeeping_data_morning",
+				args: {
                     
-        //         },
-		// 		callback: function(r) {
-		// 			console.log("r", r.message);
-		// 		}
-		// 	});
-		// });
+                },
+				callback: function(r) {
+					console.log("r", r.message);
+				}
+			});
+		});
 		frm.set_df_property("items", "cannot_delete_rows", true);
 		frm.set_df_property("items", "cannot_add_rows", true);
 		// const grid = frm.get_field('items').grid;
@@ -22,6 +34,12 @@ frappe.ui.form.on("VNT Attendance Confirm", {
 		// grid.on('refresh', () => {
 		// 	grid.wrapper.find('.grid-static-col .icon-sm').hide();
 		// });
+	},
+	confirm (frm) {
+		$.each(frm.doc.items || [], function (i, row) {
+			frappe.model.set_value(row.doctype, row.name, "confirm", frm.doc.confirm);
+		});
+		refresh_field("items");
 	}
 });
 
@@ -36,10 +54,10 @@ frappe.ui.form.on("VNT Attendance Confirm Item", "type", function(frm, cdt, cdn)
 	}
 });
 
-frappe.ui.form.on("VNT Attendance Confirm", "validate", function(frm) {
-	(frm.doc.items || []).forEach(function(row) {
-		if (!row.type) {
-			frappe.throw(__('Loại giải trình không được để trống (ngày {0}).', [frappe.format(row.date, {fieldtype: 'Date'}) || row.idx]));
-		}
-	});
-});
+// frappe.ui.form.on("VNT Attendance Confirm", "validate", function(frm) {
+// 	(frm.doc.items || []).forEach(function(row) {
+// 		if (!row.type) {
+// 			frappe.throw(__('Loại giải trình không được để trống (ngày {0}).', [frappe.format(row.date, {fieldtype: 'Date'}) || row.idx]));
+// 		}
+// 	});
+// });
