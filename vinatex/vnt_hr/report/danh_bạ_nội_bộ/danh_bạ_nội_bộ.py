@@ -20,7 +20,7 @@ def get_columns(filters=None):
         {"label": _("Email"), "fieldname": "company_email", "fieldtype": "Data", "width": 200},
         {"label": _("Chi nhánh"), "fieldname": "branch", "fieldtype": "Data", "width": 100}
     ]
-
+@frappe.whitelist()
 def get_data(filters=None):
     where_sql, params = build_emp_conditions(filters)
 
