@@ -11,14 +11,14 @@ def execute(filters=None):
 
 def get_columns(filters=None):
     return [
-        {"label": _("Mã số Nhân sự"), "fieldname": "employee", "fieldtype": "Data", "width": 120},
-        {"label": _("Tên Nhân sự"), "fieldname": "employee_name", "fieldtype": "Data", "width": 160},
-        {"label": _("Chức danh"), "fieldname": "designation", "fieldtype": "Data", "width": 120},
-        {"label": _("Phòng/Ban"), "fieldname": "department", "fieldtype": "Data", "width": 200},
-        {"label": _("Công ty"), "fieldname": "company", "fieldtype": "Data", "width": 250},
-        {"label": _("Chi nhánh"), "fieldname": "branch", "fieldtype": "Data", "width": 120},
-        {"label": _("Số điện thoại"), "fieldname": "phone", "fieldtype": "Data", "width": 140},
+        # {"label": _("Mã số Nhân sự"), "fieldname": "employee", "fieldtype": "Data", "width": 120},
+        {"label": _("Tên Nhân sự"), "fieldname": "employee_name", "fieldtype": "Data", "width": 180},
+        {"label": _("Chức danh"), "fieldname": "designation", "fieldtype": "Data", "width": 200},
+        {"label": _("Phòng/Ban"), "fieldname": "department", "fieldtype": "Data", "width": 180},
+        # {"label": _("Công ty"), "fieldname": "company", "fieldtype": "Data", "width": 250},
+        {"label": _("Số điện thoại"), "fieldname": "phone", "fieldtype": "Data", "width": 150},
         {"label": _("Email"), "fieldname": "company_email", "fieldtype": "Data", "width": 200},
+        {"label": _("Chi nhánh"), "fieldname": "branch", "fieldtype": "Data", "width": 100}
     ]
 
 def get_data(filters=None):
@@ -53,12 +53,13 @@ def get_data(filters=None):
             emp.name            AS employee,
             emp.employee_name   AS employee_name,
             emp.designation     AS designation,
-            emp.department      AS department,
             emp.company         AS company,
             emp.branch          AS branch,
             emp.cell_number     AS phone,
-            emp.company_email   AS company_email
+            emp.company_email   AS company_email,
+            dept.department_name AS department
         FROM `tabEmployee` emp
+        LEFT JOIN `tabDepartment` dept ON emp.department = dept.name
         WHERE emp.status != 'Left'
     """ + where_sql + """
         ORDER BY CASE
