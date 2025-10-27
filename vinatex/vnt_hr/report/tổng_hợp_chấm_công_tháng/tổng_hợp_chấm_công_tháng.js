@@ -260,22 +260,22 @@ frappe.query_reports["Tổng hợp chấm công tháng"] = {
       });
     });
   },
-  refresh: function (report) {
-    report.page.add_inner_button(__("Xuất tổng hợp chấm công tháng"), function () {
-      const filters = report.get_values();
-      frappe.call({
-        method: "vinatex.vnt_hr.report.tổng_hợp_chấm_công_tháng.tổng_hợp_chấm_công_tháng.download_summary_xlsx",
-        args: { filters },
-        freeze: true,
-        callback: function (r) {
-          if (r.message && r.message.file_url) {
-            window.open(r.message.file_url);
-          } else {
-            frappe.msgprint(__("Không tạo được file."));
-          }
-        },
-      });
-    });
-  },
+  // refresh: function (report) {
+  //   report.page.add_inner_button(__("Xuất tổng hợp chấm công tháng"), function () {
+  //     const filters = report.get_values();
+  //     frappe.call({
+  //       method: "vinatex.vnt_hr.report.tổng_hợp_chấm_công_tháng.tổng_hợp_chấm_công_tháng.download_summary_xlsx",
+  //       args: { filters },
+  //       freeze: true,
+  //       callback: function (r) {
+  //         if (r.message && r.message.file_url) {
+  //           window.open(r.message.file_url);
+  //         } else {
+  //           frappe.msgprint(__("Không tạo được file."));
+  //         }
+  //       },
+  //     });
+  //   });
+  // },
   
 };
