@@ -1,0 +1,92 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{title}",
+ "creation": "2025-10-27 17:16:30.676753",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "employee_name",
+  "column_break_zjk3",
+  "date",
+  "title",
+  "section_break_mjbw",
+  "noidung"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Ng\u01b0\u1eddi l\u1eadp phi\u1ebfu",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fetch_if_empty": 1,
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean ng\u01b0\u1eddi l\u1eadp"
+  },
+  {
+   "fieldname": "column_break_zjk3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y l\u1eadp"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Ti\u00eau \u0111\u1ec1 tin t\u1ee9c"
+  },
+  {
+   "fieldname": "section_break_mjbw",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "noidung",
+   "fieldtype": "Text Editor",
+   "label": "N\u1ed9i dung"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-10-27 17:17:57.899211",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT New Feed",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee",
+   "select": 1,
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
