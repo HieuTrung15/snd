@@ -1,9 +1,8 @@
 import io
-from datetime import date, datetime, time, timedelta
+from datetime import date, timedelta
 from frappe import _
 import frappe
-from frappe.utils import cint, getdate, flt
-from calendar import monthrange
+from frappe.utils import cint, getdate, flt, today, add_days
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from frappe.utils.file_manager import save_file
@@ -14,34 +13,45 @@ STATUS_CODE = {
 	"CUỐI TUẦN": "T",        # Thứ 7/CN
 	"ĐI LÀM": "X",            # Đi làm
 	"VẮNG MẶT": "V",          # Vắng mặt
-	"QUÊN CHẤM CÔNG": "O",  # Quên chấm công,
+	"QUÊN CHẤM CÔNG": "",  # Quên chấm công,
+	"CÔNG TÁC": "CT",
+	"NGHỈ NỬA NGÀY": "H",
 	"NGHỈ PHÉP": "P",
 	"NGHỈ VIỆC RIÊNG KHÔNG HƯỞNG LƯƠNG": "Ro",
 	"NGHỈ CÓ HƯỞNG LƯƠNG, CHẾ ĐỘ": "CĐ",
 	"NGHỈ HƯỞNG CHẾ ĐỘ BHXH": "BH",
-	"VẮNG MẶT TẠI TRỤ SỞ CÔNG TY CÓ LÝ DO CÔNG VIỆC": "CT",
 }
 
 def execute(filters):
 	start_date = getdate(filters.get("from_date"))
 	end_date = getdate(filters.get("to_date"))
 	days = list(_daterange(start_date, end_date))
+	today_date = getdate(add_days(today(), -1))
+	effective_end_date = min(end_date, today_date)
+	data_days = [d for d in days if d <= effective_end_date]
+	data_start = data_days[0] if data_days else None
+	data_end = data_days[-1] if data_days else None
 	cols = _columns_pivot(days)
+	today_date = getdate(add_days(today(), -1))
+	effective_end_date = min(end_date, today_date)
+	data_days = [d for d in days if d <= effective_end_date]
+	data_start = data_days[0] if data_days else None
+	data_end = data_days[-1] if data_days else None
 
 	emps = _get_employees(filters, start_date, end_date)
 	if not emps:
 		return cols, []
 
 	# maps
-	holi_map = _holiday_map(emps, filters["company"], start_date, end_date)  # chỉ ngày lễ (loại weekend)
-	att_map  = _attendance_map(emps, start_date, end_date)                    # ƯU TIÊN dùng trước leave/checkin
-	leave_map = _leave_map(emps, start_date, end_date)
-	checkin_map = _checkin_map(emps, start_date, end_date)
-	shift_map = _shift_map(emps, days) if cint(filters.get("use_shift_plan")) else {}
-
-	# Defaults nếu không dùng ca
-	s_start = _parse_time(filters.get("shift_start") or "08:15:00")
-	s_end   = _parse_time(filters.get("shift_end") or "17:00:00")
+	if data_start:
+		holi_map = _holiday_map(emps, filters["company"], data_start, data_end)
+		att_map  = _attendance_map(emps, data_start, data_end)
+		leave_map = _leave_map(emps, data_start, data_end)
+	else:
+		holi_map = {}
+		att_map = {}
+		leave_map = {}
+	leave_type_groups = _leave_type_group_map()
 
 	out = []
 	for emp in emps:
@@ -59,6 +69,7 @@ def execute(filters):
 			"tot_leave": 0,
 			"tot_holiday": 0,
 			"tot_weekend": 0,
+			"tot_business_trip": 0.0,
 			"tot_absent": 0,
 			"tot_late": 0,
 			"tot_miss": 0,
@@ -68,6 +79,8 @@ def execute(filters):
 		for d in days:
 			key = f"d{d.day:02d}"
 			d_date = getdate(d)
+			if d_date > effective_end_date:
+				continue
 			# 1) DOJ
 			if d_date < doj:
 				row[key] = STATUS_CODE["CHƯA VÀO LÀM"]
@@ -90,20 +103,28 @@ def execute(filters):
 			att = att_map.get((emp_code, d_date))
 			if att:
 				st = (att.get("status") or "").strip()
+				leave_type = att.get("leave_type")
+				leave_group = leave_type_groups.get(leave_type)
+				units = 1.0
 				if st in ("Present", "Work From Home"):
 					row[key] = STATUS_CODE["ĐI LÀM"]
 					row["tot_present"] += 1
+				elif st in ("Work Trip",):
+					row[key] = STATUS_CODE["CÔNG TÁC"]
+					row["tot_business_trip"] += units
 				elif st in ("On Leave",):
-					row[key] = STATUS_CODE["NGHỈ PHÉP"]
-					row["tot_leave"] += 1
+					if _is_attendance_business_trip(leave_type):
+						row[key] = STATUS_CODE["CÔNG TÁC"]
+						row["tot_business_trip"] += units
+					else:
+						row[key] = STATUS_CODE["NGHỈ PHÉP"]
+						row["tot_leave"] += 1
 				elif st in ("Half Day",):
 					row[key] = STATUS_CODE["NGHỈ NỬA NGÀY"]
-					# nếu muốn cộng 0.5 ngày nghỉ: đổi tot_leave -> Float và cộng 0.5 ở đây
 				elif st in ("Absent",):
 					row[key] = STATUS_CODE["VẮNG MẶT"]
 					row["tot_absent"] += 1
 				else:
-					# fallback nếu có trạng thái lạ: coi là vắng
 					row[key] = STATUS_CODE["VẮNG MẶT"]
 					row["tot_absent"] += 1
 				continue
@@ -111,40 +132,25 @@ def execute(filters):
 			# 5) Leave (fallback khi không có Attendance)
 			lv = leave_map.get((emp_code, d_date))
 			if lv:
-				if lv.get("half_day"):
+				leave_type = lv.get("leave_type")
+				leave_group = lv.get("leave_group") or leave_type_groups.get(leave_type)
+				category = _categorize_leave(leave_type, leave_group)
+				if category == "business_trip":
+					row[key] = STATUS_CODE["CÔNG TÁC"]
+					row["tot_business_trip"] += 0.5 if lv.get("half_day") else 1.0
+				elif lv.get("half_day"):
 					row[key] = STATUS_CODE["NGHỈ NỬA NGÀY"]
 				else:
 					row[key] = STATUS_CODE["NGHỈ PHÉP"]
 					row["tot_leave"] += 1
 				continue
 
-			# 6) Checkin (cuối cùng)
-			chk = checkin_map.get((emp_code, d_date), {"first_in": None, "last_out": None, "cnt_in": 0, "cnt_out": 0})
-			fi, lo, ci, co = chk["first_in"], chk["last_out"], chk["cnt_in"], chk["cnt_out"]
-
-			if ci == 0 and co == 0:
-				row[key] = STATUS_CODE["VẮNG MẶT"]
-				row["tot_absent"] += 1
-				continue
-
-			# Khung giờ
-			if (emp_code, d_date) in shift_map:
-				sstart, send = shift_map[(emp_code, d_date)]
-			else:
-				sstart, send = s_start, s_end
-
-			late_mins = _mins_after(fi.time(), sstart) if fi else None
-			if ci > 0 and co > 0:
-				row[key] = STATUS_CODE["ĐI LÀM"]
-				row["tot_present"] += 1
-				if late_mins and late_mins > 0:
-					row["tot_late"] += 1
-			else:
-				row[key] = STATUS_CODE["QUÊN CHẤM CÔNG"]
-				row["tot_miss"] += 1
+			# 6) Không có attendance/leave -> coi là quên chấm công
+			row[key] = STATUS_CODE["QUÊN CHẤM CÔNG"]
+			row["tot_miss"] += 1
 
 		if manual_flag:
-			for fld in ("tot_present", "tot_leave", "tot_holiday", "tot_weekend", "tot_absent", "tot_late", "tot_miss", "tot_not_joined"):
+			for fld in ("tot_present", "tot_leave", "tot_holiday", "tot_weekend", "tot_business_trip", "tot_absent", "tot_late", "tot_miss", "tot_not_joined"):
 				row[fld] = None
 
 		out.append(row)
@@ -171,7 +177,8 @@ def _columns_pivot(days):
 		{"fieldname": "tot_present", "label": "Đi làm",  "fieldtype": "Int", "width": 100},
 		{"fieldname": "tot_leave",   "label": "Nghỉ phép",  "fieldtype": "Int", "width": 100},
 		{"fieldname": "tot_holiday", "label": "Nghỉ Lễ",  "fieldtype": "Int", "width": 100},
-		# {"fieldname": "tot_weekend", "label": "Công tác", "fieldtype": "Int", "width": 100},
+		{"fieldname": "tot_weekend", "label": "Cuối tuần", "fieldtype": "Int", "width": 100},
+		{"fieldname": "tot_business_trip", "label": "Công tác", "fieldtype": "Float", "width": 100, "precision": 2},
 		{"fieldname": "tot_absent",  "label": "Vắng",  "fieldtype": "Int", "width": 100},
 		{"fieldname": "tot_miss",    "label": "Quên chấm công","fieldtype": "Int", "width": 100},
 	]
@@ -191,12 +198,6 @@ def _daterange(sd, ed):
 	while d <= ed:
 		yield d
 		d += timedelta(days=1)
-
-def _parse_time(tstr):
-	if isinstance(tstr, time):
-		return tstr
-	hh, mm, ss = [int(x) for x in str(tstr).split(":")]
-	return time(hh, mm, ss)
 
 def _get_employees(filters, start_date, end_date):
 	conds = ["company=%s", "status='Active'"]
@@ -273,7 +274,7 @@ def _attendance_map(emps, start_date, end_date):
 	rows = frappe.db.sql("""
 		SELECT employee, attendance_date, status, leave_type
 		FROM `tabAttendance`
-		WHERE docstatus=1
+		WHERE docstatus != 2
 		  AND employee IN %(emps)s
 		  AND attendance_date BETWEEN %(sd)s AND %(ed)s
 	""", {"emps": tuple(emp_list), "sd": start_date, "ed": end_date}, as_dict=True)
@@ -308,66 +309,7 @@ def _leave_map(emps, start_date, end_date):
 			cur += timedelta(days=1)
 	return out
 
-def _checkin_map(emps, start_date, end_date):
-	out = {}
-	emp_list = [e["name"] for e in emps]
-	if not emp_list: return out
-	rows = frappe.db.sql("""
-		SELECT employee, DATE(time) as d,
-			   MIN(CASE WHEN log_type='IN'  THEN time END)  as first_in,
-			   MAX(CASE WHEN log_type='OUT' THEN time END)  as last_out,
-			   SUM(CASE WHEN log_type='IN'  THEN 1 ELSE 0 END)  as cnt_in,
-			   SUM(CASE WHEN log_type='OUT' THEN 1 ELSE 0 END)  as cnt_out
-		FROM `tabEmployee Checkin`
-		WHERE employee IN %(emps)s
-		  AND time BETWEEN %(sd)s AND %(ed2)s
-		GROUP BY employee, DATE(time)
-	""", {
-		"emps": tuple(emp_list),
-		"sd": datetime.combine(start_date, time.min),
-		"ed2": datetime.combine(end_date, time.max)
-	}, as_dict=True)
-	for r in rows:
-		out[(r.employee, getdate(r.d))] = {
-			"first_in": r.first_in,
-			"last_out": r.last_out,
-			"cnt_in": int(r.cnt_in or 0),
-			"cnt_out": int(r.cnt_out or 0)
-		}
-	return out
 
-def _shift_map(emps, days):
-	out = {}
-	emp_list = [e["name"] for e in emps]
-	if not emp_list: return out
-	sd = min(days); ed = max(days)
-	rows = frappe.db.sql("""
-		SELECT sa.employee, sa.start_date, sa.end_date,
-			   st.name as shift_type, st.start_time, st.end_time
-		FROM `tabShift Assignment` sa
-		JOIN `tabShift Type` st ON st.name=sa.shift_type
-		WHERE sa.employee IN %(emps)s
-		  AND sa.docstatus=1
-		  AND sa.end_date >= %(sd)s AND sa.start_date <= %(ed)s
-	""", {"emps": tuple(emp_list), "sd": sd, "ed": ed}, as_dict=True)
-	for r in rows:
-		cur = max(getdate(r.start_date), sd)
-		last = min(getdate(r.end_date), ed)
-		s_t = _parse_time(str(r.start_time)); e_t = _parse_time(str(r.end_time))
-		while cur <= last:
-			out[(r.employee, cur)] = (s_t, e_t)
-			cur += timedelta(days=1)
-	return out
-
-def _mins_after(actual: time, ref: time):
-	a = datetime.combine(date.today(), actual)
-	r = datetime.combine(date.today(), ref)
-	return max(0, int((a - r).total_seconds() // 60))
-
-def _mins_before(actual: time, ref: time):
-	a = datetime.combine(date.today(), actual)
-	r = datetime.combine(date.today(), ref)
-	return max(0, int((r - a).total_seconds() // 60))
 
 def _is_weekend(d: date) -> bool:
 	return d.weekday() >= 5
@@ -405,6 +347,10 @@ def _is_business_trip_leave(name: str) -> bool:
 		"đi công tác",
 	]
 	return any(k in text for k in keywords)
+
+
+def _is_attendance_business_trip(leave_type: str) -> bool:
+	return _is_business_trip_leave(leave_type)
 
 
 def _categorize_leave(leave_type: str, leave_group: str) -> str:
@@ -460,7 +406,7 @@ def _add_category_units(metrics: dict, category: str, units: float):
 		metrics["paid"] += units
 
 
-def _compute_employee_metrics(emp, days, holi_map, att_map, leave_map, checkin_map, leave_type_groups):
+def _compute_employee_metrics(emp, days, holi_map, att_map, leave_map, leave_type_groups):
 	emp_code = emp["name"]
 	doj = getdate(emp.get("date_of_joining")) if emp.get("date_of_joining") else date.min
 	skip_manual = cint(emp.get("custom_need_check"))
@@ -488,6 +434,9 @@ def _compute_employee_metrics(emp, days, holi_map, att_map, leave_map, checkin_m
 		if key in holi_map:
 			metrics["holiday"] += 1.0
 			metrics["paid"] += 1.0
+			continue
+
+		if _is_weekend(d):
 			continue
 
 		weekday = d.weekday()
@@ -531,24 +480,12 @@ def _compute_employee_metrics(emp, days, holi_map, att_map, leave_map, checkin_m
 			_add_category_units(metrics, category, units)
 			continue
 
-		chk = checkin_map.get(key)
-		if chk:
-			ci = int(chk.get("cnt_in") or 0)
-			co = int(chk.get("cnt_out") or 0)
-			if ci == 0 and co == 0:
-				continue
-			if ci > 0 and co > 0:
-				if weekday < 5:
-					metrics["actual"] += 1.0
-				metrics["paid"] += 1.0
-			else:
-				metrics["forget"] += 1.0
-			continue
+		metrics["forget"] += 1.0
 
 	return metrics, False
 
 
-def _build_summary_rows(employees, days, holi_map, att_map, leave_map, checkin_map, leave_type_groups):
+def _build_summary_rows(employees, days, holi_map, att_map, leave_map, leave_type_groups):
 	rows = []
 	totals = {
 		"paid_days": 0.0,
@@ -569,7 +506,6 @@ def _build_summary_rows(employees, days, holi_map, att_map, leave_map, checkin_m
 			holi_map,
 			att_map,
 			leave_map,
-			checkin_map,
 			leave_type_groups,
 		)
 		row = {
@@ -626,14 +562,22 @@ def download_summary_xlsx(filters):
 		frappe.throw(_("Không tìm thấy nhân viên phù hợp bộ lọc."))
 
 	leave_type_groups = _leave_type_group_map()
-
-	holi_map = _holiday_map(employees, company, start_date, end_date)
-	att_map = _attendance_map(employees, start_date, end_date)
-	leave_map = _leave_map(employees, start_date, end_date)
-	checkin_map = _checkin_map(employees, start_date, end_date)
+	today_date = getdate(add_days(today(), -1))
+	effective_end_date = min(end_date, today_date)
+	data_days = [d for d in days if d <= effective_end_date]
+	data_start = data_days[0] if data_days else None
+	data_end = data_days[-1] if data_days else None
+	if data_start:
+		holi_map = _holiday_map(employees, company, data_start, data_end)
+		att_map = _attendance_map(employees, data_start, data_end)
+		leave_map = _leave_map(employees, data_start, data_end)
+	else:
+		holi_map = {}
+		att_map = {}
+		leave_map = {}
 
 	summary_rows, totals = _build_summary_rows(
-		employees, days, holi_map, att_map, leave_map, checkin_map, leave_type_groups
+		employees, data_days, holi_map, att_map, leave_map, leave_type_groups
 	)
 
 	output = io.BytesIO()
@@ -811,9 +755,10 @@ def chart_data(rows):
 		"X": 0,    # Đi làm
 		"P": 0,    # Nghỉ phép
 		"L": 0,    # Nghỉ lễ
-		"CT": 0,   # Cuối tuần
+		"T": 0,    # Cuối tuần
+		"CT": 0,   # Công tác
 		"V": 0,    # Vắng mặt
-		"QCC": 0,  # Quên chấm công
+		"O": 0,    # Quên chấm công
 		"CV": 0,   # Chưa vào làm
 		"Ro": 0,   # Nghỉ việc riêng không hưởng lương
 		"CĐ": 0    # Nghỉ có hưởng lương, chế độ
@@ -824,9 +769,10 @@ def chart_data(rows):
 		agg["X"]   += flt(r.get("tot_present") or 0)
 		agg["P"]   += flt(r.get("tot_leave") or 0)
 		agg["L"]   += flt(r.get("tot_holiday") or 0)
-		agg["CT"]  += flt(r.get("tot_weekend") or 0)
+		agg["T"]   += flt(r.get("tot_weekend") or 0)
+		agg["CT"]  += flt(r.get("tot_business_trip") or 0)
 		agg["V"]   += flt(r.get("tot_absent") or 0)
-		agg["QCC"] += flt(r.get("tot_miss") or 0)
+		agg["O"]   += flt(r.get("tot_miss") or 0)
 		agg["CV"]  += flt(r.get("tot_not_joined") or 0)
 		agg["Ro"]  += flt(r.get("tot_unpaid_leave") or 0)
 		agg["CĐ"]  += flt(r.get("tot_paid_leave") or 0)
