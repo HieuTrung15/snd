@@ -81,6 +81,10 @@ def get_data(filters=None):
         WHERE emp.status != 'Left'
     """ + where_sql + """
         ORDER BY CASE
+            WHEN emp.designation LIKE 'Chủ tịch Hội đồng quản trị Tập đoàn' THEN -10
+            WHEN emp.designation LIKE 'Tổng Giám đốc Tập đoàn' THEN -9
+            WHEN emp.designation LIKE 'Phó Tổng Giám đốc Tập đoàn' THEN -8
+            WHEN emp.designation LIKE 'Kế toán trưởng Tập đoàn' THEN -6
             WHEN emp.department LIKE %(hdqt)s THEN 1
             WHEN emp.department LIKE %(bks)s  THEN 2
             WHEN emp.department LIKE %(cqdh)s THEN 3
