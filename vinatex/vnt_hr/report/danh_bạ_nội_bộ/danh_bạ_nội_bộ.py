@@ -20,7 +20,7 @@ def get_columns(filters=None):
     ]
 
 def normalize_filters(filters):
-    """Đảm bảo filters luôn là dict, kể cả khi được truyền lên như string JSON."""
+    """Đảm bảo filters luôn là dict (hỗ trợ cả string JSON từ JS)."""
     if filters is None:
         return {}
     if isinstance(filters, dict):
@@ -33,16 +33,48 @@ def normalize_filters(filters):
             return json.loads(txt)
         except Exception:
             return {}
-    # fallback nếu lỡ truyền kiểu khác (list, int,...)
     return {}
+
+@frappe.whitelist()
+def get_filter_options():
+    """
+    Trả về list Chi nhánh và list Phòng/Ban để fill vào <select>.
+    """
+    branches = frappe.db.sql(
+        """
+        SELECT DISTINCT emp.branch AS branch
+        FROM `tabEmployee` emp
+        WHERE emp.status != 'Left' AND IFNULL(emp.branch,'')!=''
+        ORDER BY emp.branch
+        """,
+        as_dict=True,
+    )
+
+    departments = frappe.db.sql(
+        """
+        SELECT DISTINCT dept.department_name AS department
+        FROM `tabDepartment` dept
+        WHERE dept.disabled = 0 AND IFNULL(dept.department_name,'')!=''
+        ORDER BY dept.department_name
+        """,
+        as_dict=True,
+    )
+
+    return {
+        "branches": [b["branch"] for b in branches if b.get("branch")],
+        "departments": [d["department"] for d in departments if d.get("department")],
+    }
 
 @frappe.whitelist()
 def get_data(filters=None):
     filters = normalize_filters(filters)
 
+    special_role = filters.get("special_role")
+
+    # Build WHERE + params
     where_sql, params = build_emp_conditions(filters)
 
-    # bổ sung tham số cho CASE + LIKE (đưa % vào giá trị tham số)
+    # tham số phục vụ ORDER BY CASE
     params.update({
         "hdqt": "Hội đồng quản trị%",
         "bks":  "Ban Kiểm soát%",
@@ -66,8 +98,28 @@ def get_data(filters=None):
         "cg": "Chuyên gia%"
     })
 
-    sql = """
-        SELECT
+    # join child table của Company
+    rep_join_sql = ""
+    rep_where_sql = ""
+    if special_role in ["nguoi_dai_dien", "ke_toan_truong"]:
+        rep_join_sql = """
+            INNER JOIN `tabVNT Company Representative` rep
+                ON rep.employee = emp.name
+        """
+
+        if special_role == "nguoi_dai_dien":
+            # CT HĐQT, TV HĐQT, TGĐ, TV BKS
+            rep_where_sql = """
+                AND rep.position IN ('CT HĐQT', 'TV HĐQT', 'TGĐ', 'TV BKS')
+            """
+        elif special_role == "ke_toan_truong":
+            # Kế toán trưởng
+            rep_where_sql = """
+                AND rep.position IN ('Kế toán trưởng')
+            """
+
+    sql = f"""
+        SELECT DISTINCT
             emp.name              AS employee,
             emp.employee_name     AS employee_name,
             emp.designation       AS designation,
@@ -77,33 +129,38 @@ def get_data(filters=None):
             emp.company_email     AS company_email,
             dept.department_name  AS department
         FROM `tabEmployee` emp
-        LEFT JOIN `tabDepartment` dept ON emp.department = dept.name
+        LEFT JOIN `tabDepartment` dept
+            ON emp.department = dept.name
+        {rep_join_sql}
         WHERE emp.status != 'Left'
-    """ + where_sql + """
+        {where_sql}
+        {rep_where_sql}
         ORDER BY CASE
             WHEN emp.designation LIKE 'Chủ tịch Hội đồng quản trị Tập đoàn' THEN -10
             WHEN emp.designation LIKE 'Tổng Giám đốc Tập đoàn' THEN -9
             WHEN emp.designation LIKE 'Phó Tổng Giám đốc Tập đoàn' THEN -8
             WHEN emp.designation LIKE 'Kế toán trưởng Tập đoàn' THEN -6
-            WHEN emp.department LIKE %(hdqt)s THEN 1
-            WHEN emp.department LIKE %(bks)s  THEN 2
-            WHEN emp.department LIKE %(cqdh)s THEN 3
+
+            WHEN emp.department LIKE %(hdqt)s   THEN 1
+            WHEN emp.department LIKE %(bks)s    THEN 2
+            WHEN emp.department LIKE %(cqdh)s   THEN 3
             WHEN emp.department LIKE %(vphdqt)s THEN 4
             WHEN emp.department LIKE %(bdtvpt)s THEN 5
-            WHEN emp.department LIKE %(nnl)s THEN 6
-            WHEN emp.department LIKE %(tckt)s THEN 7
-            WHEN emp.department LIKE %(btt)s THEN 8
-            WHEN emp.department LIKE %(thpc)s THEN 9
-            WHEN emp.department LIKE %(cntt)s THEN 10
-            WHEN emp.department LIKE %(vptd)s THEN 11
-            WHEN emp.department LIKE %(39)s   THEN 12
-            WHEN emp.department LIKE %(vcc)s  THEN 13
-            WHEN emp.department LIKE %(tcdq)s THEN 14
-            WHEN emp.department LIKE %(tqdu)s THEN 15
-            WHEN emp.department LIKE %(vpdu)s THEN 16
-            WHEN emp.department LIKE %(cddm)s THEN 17
-            WHEN emp.department LIKE %(lx)s   THEN 18
-            WHEN emp.department LIKE %(cg)s   THEN 19
+            WHEN emp.department LIKE %(nnl)s    THEN 6
+            WHEN emp.department LIKE %(tckt)s   THEN 7
+            WHEN emp.department LIKE %(btt)s    THEN 8
+            WHEN emp.department LIKE %(thpc)s   THEN 9
+            WHEN emp.department LIKE %(cntt)s   THEN 10
+            WHEN emp.department LIKE %(vptd)s   THEN 11
+            WHEN emp.department LIKE %(39)s     THEN 12
+            WHEN emp.department LIKE %(vcc)s    THEN 13
+            WHEN emp.department LIKE %(tcdq)s   THEN 14
+            WHEN emp.department LIKE %(tqdu)s   THEN 15
+            WHEN emp.department LIKE %(vpdu)s   THEN 16
+            WHEN emp.department LIKE %(cddm)s   THEN 17
+            WHEN emp.department LIKE %(lx)s     THEN 18
+            WHEN emp.department LIKE %(cg)s     THEN 19
+
             ELSE 999
         END,
         emp.employee_name
@@ -111,26 +168,109 @@ def get_data(filters=None):
 
     return frappe.db.sql(sql, params, as_dict=True)
 
+
+
 def build_emp_conditions(filters=None):
     filters = normalize_filters(filters)
 
     conds = []
     params = {}
 
+    # chỉ lấy employee cụ thể (tùy chọn)
     if filters.get("employee"):
-        conds.append("AND emp.name = %(employee)s")
+        conds.append("emp.name = %(employee)s")
         params["employee"] = filters["employee"]
 
+    # lọc theo công ty
     if filters.get("company"):
-        conds.append("AND emp.company = %(company)s")
+        conds.append("emp.company = %(company)s")
         params["company"] = filters["company"]
 
+    # lọc theo chi nhánh
+    if filters.get("branch"):
+        conds.append("emp.branch = %(branch)s")
+        params["branch"] = filters["branch"]
+
+    # lọc theo phòng ban cụ thể (theo tên hiển thị department_name)
     if filters.get("department"):
-        conds.append("AND emp.department = %(department)s")
+        conds.append("dept.department_name = %(department)s")
         params["department"] = filters["department"]
 
-    where_sql = " ".join(conds)
+    # build WHERE ... AND ...
+    where_sql = ""
+    if conds:
+        where_sql = "AND " + " AND ".join(conds)
+
     return where_sql, params
+
+@frappe.whitelist()
+def get_company_representatives(company=None, rep_type=None):
+    """
+    Trả thông tin đại diện / kế toán trưởng theo Company.
+
+    Params:
+        company   (str, optional): nếu truyền thì chỉ lấy cho 1 công ty đó (Company.name hoặc Company.company_name).
+        rep_type  (str, optional): "NDD" = Người đại diện, "KTT" = Kế toán trưởng.
+                                   Nếu None -> lấy cả hai.
+
+    Return: list[dict] với các field:
+        - company_name
+        - company_type
+        - representative_type  (NDD hoặc KTT)
+        - position             (chức danh ghi trong bảng con)
+        - employee_name
+        - email
+        - phone
+    """
+
+    # Build điều kiện động
+    conds = []
+    params = {}
+
+    # lọc theo company nếu có
+    if company:
+        # ta cho phép tìm theo cả company.name lẫn company.company_name
+        # -> dùng OR
+        conds.append("(c.name = %(company)s OR c.company_name = %(company)s)")
+        params["company"] = company
+
+    # lọc theo loại đại diện nếu có (NDD / KTT)
+    if rep_type in ("NDD", "KTT"):
+        conds.append("rep.type = %(rep_type)s")
+        params["rep_type"] = rep_type
+    else:
+        # nếu không truyền rep_type -> chấp nhận cả 2 loại này
+        conds.append("rep.type IN ('NDD','KTT')")
+
+    # join điều kiện
+    where_sql = ""
+    if conds:
+        where_sql = "WHERE " + " AND ".join(conds)
+
+    sql = f"""
+        SELECT DISTINCT
+            c.company_name            AS company_name,
+            rep.type                  AS representative_type,
+            rep.position              AS position,
+            COALESCE(emp.employee_name, rep.employee) AS employee_name,
+            rep.email                 AS email,
+            rep.phone                 AS phone
+        FROM `tabCompany` c
+        INNER JOIN `tabVNT Company Representative` rep
+            ON rep.parent = c.name
+        LEFT JOIN `tabEmployee` emp
+            ON emp.name = rep.employee
+        {where_sql}
+        ORDER BY
+            c.company_name ASC,
+            FIELD(rep.type, 'NDD','KTT'),
+            rep.position ASC
+    """
+
+    rows = frappe.db.sql(sql, params, as_dict=True)
+
+    return rows
+
 
 def build_cpn_conditions(filters=None):
     filters = normalize_filters(filters)
