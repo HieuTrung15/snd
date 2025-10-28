@@ -62,14 +62,13 @@
   {
    "fieldname": "from_date",
    "fieldtype": "Date",
-   "label": "T\u1eeb ng\u00e0y",
-   "read_only": 1
+   "label": "T\u1eeb ng\u00e0y"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "to_date",
    "fieldtype": "Date",
-   "label": "\u0110\u1ebfn ng\u00e0y",
-   "read_only": 1
+   "label": "\u0110\u1ebfn ng\u00e0y"
   },
   {
    "fieldname": "section_break_kkv3",
@@ -80,8 +79,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Nh\u00e2n vi\u00ean",
-   "options": "Employee",
-   "read_only": 1
+   "options": "Employee"
   },
   {
    "fetch_from": "employee.employee_name",
@@ -125,12 +123,14 @@
    "fieldtype": "Section Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Chi ti\u1ebft ch\u1ea5m c\u00f4ng",
    "options": "VNT Attendance Confirm Item"
   },
   {
+   "allow_on_submit": 1,
    "description": "Ch\u1ecdn \u0111\u1ec3 ph\u00ea duy\u1ec7t ho\u1eb7c t\u1eeb ch\u1ed1i t\u1ea5t c\u1ea3.",
    "fieldname": "confirm",
    "fieldtype": "Select",
@@ -143,7 +143,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-27 17:52:15.436173",
+ "modified": "2025-10-28 15:45:30.275741",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Attendance Confirm",
@@ -151,7 +151,6 @@
  "owner": "Administrator",
  "permissions": [
   {
-   "cancel": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -161,11 +160,9 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
-   "submit": 1,
    "write": 1
   },
   {
-   "create": 1,
    "email": 1,
    "export": 1,
    "print": 1,
@@ -173,7 +170,6 @@
    "report": 1,
    "role": "Employee",
    "share": 1,
-   "submit": 1,
    "write": 1
   },
   {
@@ -190,7 +186,6 @@
   },
   {
    "create": 1,
-   "delete": 1,
    "email": 1,
    "export": 1,
    "print": 1,
@@ -198,7 +193,6 @@
    "report": 1,
    "role": "Leave Approver",
    "share": 1,
-   "submit": 1,
    "write": 1
   }
  ],

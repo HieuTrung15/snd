@@ -2,18 +2,6 @@
 // For license information, please see license.txt
 // VGT00065
 frappe.ui.form.on("VNT Attendance Confirm", {
-	validate (frm) {
-		// kiểm tra trong items không có loại giải trình thì báo lỗi
-		let missing_type = false;
-		(frm.doc.items || []).forEach(function(row) {
-			if (!row.type) {
-				missing_type = true;
-			}
-		});
-		if (missing_type) {
-			frappe.throw(__('Vui lòng điền đủ các giải trình.'));
-		}
-	},
 	refresh(frm) {
         frm.add_custom_button(__('Sync Timekeeper Data'), function() {
 			frappe.call({
@@ -40,17 +28,6 @@ frappe.ui.form.on("VNT Attendance Confirm", {
 			frappe.model.set_value(row.doctype, row.name, "confirm", frm.doc.confirm);
 		});
 		refresh_field("items");
-	}
-});
-
-frappe.ui.form.on("VNT Attendance Confirm Item", "type", function(frm, cdt, cdn) {
-	const row = frappe.get_doc(cdt, cdn);
-	if (!row.type) {
-		frappe.msgprint({
-			title: __('Thiếu thông tin'),
-			message: __('Loại giải trình không được để trống.'),
-			indicator: 'red'
-		});
 	}
 });
 
