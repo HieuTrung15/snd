@@ -1,0 +1,158 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{training_program}",
+ "creation": "2025-10-28 14:52:11.539165",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "employee_name",
+  "date",
+  "column_break_hkcp",
+  "year",
+  "training_program",
+  "instructor",
+  "section_break_ttsz",
+  "type",
+  "column_break_decd",
+  "document_name",
+  "section_break_karl",
+  "attach",
+  "html",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "in_list_view": 1,
+   "label": "Ng\u01b0\u1eddi l\u1eadp",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fetch_if_empty": 1,
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean ng\u01b0\u1eddi l\u1eadp"
+  },
+  {
+   "fieldname": "column_break_hkcp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Ng\u00e0y l\u1eadp",
+   "reqd": 1
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "L\u0129nh v\u1ef1c",
+   "options": "\nQu\u1ea3n tr\u1ecb chung\nTh\u1ecb tr\u01b0\u1eddng - Kh\u00e1ch h\u00e0ng\nQu\u1ea3n tr\u1ecb s\u1ea3n xu\u1ea5t\nT\u00e0i ch\u00ednh - Ki\u1ec3m so\u00e1t\nNh\u00e2n s\u1ef1\nK\u1ebft qu\u1ea3 SXKD\nK\u1ef9 n\u0103ng\nE-Book",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_ttsz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "document_name",
+   "fieldtype": "Data",
+   "label": "N\u1ed9i dung t\u00e0i li\u1ec7u",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_decd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "N\u0103m",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_karl",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "attach",
+   "fieldtype": "Attach",
+   "label": "\u0110\u00ednh k\u00e8m",
+   "make_attachment_public": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "html",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VNT Internal Library",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "training_program",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Ch\u01b0\u01a1ng tr\u00ecnh",
+   "reqd": 1
+  },
+  {
+   "fieldname": "instructor",
+   "fieldtype": "Data",
+   "label": "Gi\u1ea3ng vi\u00ean",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-10-28 15:46:47.316114",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Internal Library",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee",
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
