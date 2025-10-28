@@ -1,7 +1,7 @@
 # # Copyright (c) 2025, vinatex and contributors
 # # For license information, please see license.txt
 
-import calendar
+from calendar import monthrange
 from datetime import datetime, time, date, timedelta
 
 import frappe
@@ -396,7 +396,8 @@ def make_attendance_confirm():
 
 @frappe.whitelist()
 def get_working_dates_of_month():
-    # lấy ra các ngày làm việc từ đầu tháng hiện tại đến hôm nay (đã loại bỏ holiday)
+    # lấy ra các ngày làm việc trong tháng đang xét (đã loại bỏ holiday).
+    # Nếu đang là mùng 1 thì quay về trọn tháng trước, ngược lại lấy từ đầu tháng đến hôm qua.
     today = date.today()
     year = today.year
     month = today.month
@@ -407,8 +408,16 @@ def get_working_dates_of_month():
     if not holiday_list:
         frappe.throw("Không xác định được Holiday List (thiếu employee/company/holiday_list).")
 
-    start_date = date(year, month, 1)
-    end_date = today - timedelta(days=1)
+    if today.day == 1:
+    # Lấy tháng trước
+        prev_month = month - 1 if month > 1 else 12
+        prev_year = year if month > 1 else year - 1
+        start_date = date(prev_year, prev_month, 1)
+        end_date = date(prev_year, prev_month, monthrange(prev_year, prev_month)[1])
+    else:
+        start_date = date(year, month, 1)
+        end_date = today - timedelta(days=1)
+
     if end_date < start_date:
         return []
 
@@ -645,7 +654,6 @@ def min_max_date(dates):
 #             frappe.delete_doc("ToDo", n, ignore_permissions=True, force=1)
 #         except Exception:
 #             frappe.log_error(frappe.get_traceback(), f"Không xoá được ToDo: {n}")
-
 
 
 
