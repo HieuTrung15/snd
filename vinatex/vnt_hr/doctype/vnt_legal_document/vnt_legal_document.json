@@ -1,0 +1,165 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{document_name}",
+ "creation": "2025-10-28 16:49:42.303930",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "employee_name",
+  "date",
+  "document_name",
+  "column_break_2tkz",
+  "type",
+  "current_status",
+  "sector",
+  "issuing_authority",
+  "hi\u1ec7u_l\u1ef1c_v\u0103n_b\u1ea3n_section",
+  "from_date",
+  "column_break_vg2g",
+  "to_date",
+  "section_break_1jfd",
+  "attach",
+  "html",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Ng\u01b0\u1eddi l\u1eadp",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fetch_if_empty": 1,
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean ng\u01b0\u1eddi l\u1eadp"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Ng\u00e0y l\u1eadp",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_2tkz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Lo\u1ea1i VB",
+   "options": "\nLu\u1eadt\n\u0110i\u1ec1u l\u1ec7\nQuy ch\u1ebf\nQuy \u0111\u1ecbnh\n\u0110VTV",
+   "reqd": 1
+  },
+  {
+   "fieldname": "current_status",
+   "fieldtype": "Select",
+   "label": "Hi\u1ec7n tr\u1ea1ng",
+   "options": "\nH\u1ebft hi\u1ec7u l\u1ef1c\nC\u00f2n hi\u1ec7u l\u1ef1c\nCh\u01b0a hi\u1ec7u l\u1ef1c",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sector",
+   "fieldtype": "Select",
+   "label": "L\u0129nh v\u1ef1c",
+   "options": "\nChung\nT\u00e0i ch\u00ednh\n\u0110\u1ea7u t\u01b0\nNh\u00e2n s\u1ef1\nT\u1ed5 ch\u1ee9c\nCh\u1ee9ng kho\u00e1n\n\u0110\u1ea5t \u0111ai\nKh\u00e1c",
+   "reqd": 1
+  },
+  {
+   "fieldname": "hi\u1ec7u_l\u1ef1c_v\u0103n_b\u1ea3n_section",
+   "fieldtype": "Section Break",
+   "label": "Hi\u1ec7u l\u1ef1c v\u0103n b\u1ea3n"
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "T\u1eeb ng\u00e0y",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_vg2g",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "\u0110\u1ebfn ng\u00e0y"
+  },
+  {
+   "fieldname": "section_break_1jfd",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "attach",
+   "fieldtype": "Attach",
+   "label": "\u0110\u00ednh k\u00e8m",
+   "make_attachment_public": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "html",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VNT Legal Document",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "issuing_authority",
+   "fieldtype": "Data",
+   "label": "N\u01a1i ban h\u00e0nh",
+   "reqd": 1
+  },
+  {
+   "fieldname": "document_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "N\u1ed9i dung",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-10-28 17:11:26.142520",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Legal Document",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
