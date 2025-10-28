@@ -3,41 +3,47 @@ from frappe.model.document import Document
 from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.utils import getdate, add_days
+import unicodedata
 
-# ---- Workflow states (khớp với cấu hình Workflow) ----
-PENDING_STATES = {"Chờ duyệt"}
-APPROVED_STATE = "Đã duyệt"
-REJECT_STATES  = {"Từ chối", "Hủy", "Huỷ"}
+# ---------------- Utils ----------------
+def _norm(s: str) -> str:
+    return unicodedata.normalize("NFC", (s or "").strip()).lower()
+
+def _in_state(state: str, states: set) -> bool:
+    ns = _norm(state)
+    return ns in {_norm(x) for x in states}
+
+# ---- Workflow states ----
+PENDING_STATES  = {"Chờ duyệt"}
+APPROVED_STATES = {"Đã duyệt", "Duyệt"}
+REJECT_STATES   = {"Từ chối", "Hủy", "Huỷ", "Đã hủy"}
 
 class VNTBusinessTripRequest(Document):
     def on_update(self):
-        # chuyển sang theo dõi workflow_state
-        if self.has_value_changed("workflow_state"):
-            _handle_state_transition(self)
+        _apply_state_effects(self)
+        
+    def on_update_after_submit(self):
+        _apply_state_effects(self)  
 
-    def on_submit(self):
-        close_todos_for_doc(self)
-        replace_attendance_for_business_trip(self)
+# ---------------- State handling ----------------
+def _apply_state_effects(doc: Document):
+    state = doc.get("workflow_state") or ""
 
-    def on_cancel(self):
-        self.db_set("workflow_state", "Đã hủy", update_modified=False)
-        delete_todos_for_doc(self)
-        cancel_attendance_for_trip(self)
-
-
-def _handle_state_transition(doc: Document):
-    state = (doc.get("workflow_state") or "").strip()
-
-    if state in PENDING_STATES:
+    if _in_state(state, PENDING_STATES):
         _notify_if_pending(doc)
-
-    elif state == APPROVED_STATE:
-        # đã duyệt: không làm gì thêm ở đây
         return
 
-    elif state in REJECT_STATES:
+    if _in_state(state, APPROVED_STATES):
+        close_todos_for_doc(doc)
+        replace_attendance_for_business_trip(doc)
+        _notify_employees_approved(doc)
+        return
+
+    if _in_state(state, REJECT_STATES):
         delete_todos_for_doc(doc)
         cancel_attendance_for_trip(doc)
+        _notify_employees_rejected(doc)
+        return
 
 # ---------------- ToDo ----------------
 def close_todos_for_doc(doc: Document):
@@ -94,16 +100,38 @@ def _notify_if_pending(doc: Document):
         return
     make_notification_logs({
         "type": "Alert",
-        "subject": _("Phiếu đăng ký đi công tác của {0} đang chờ duyệt").format(doc.employee_name or _("(không rõ)")),
+        "subject": _("Phiếu đăng ký đi công tác của {0} đang chờ duyệt").format(doc.employee_name),
         "document_type": doc.doctype,
         "document_name": doc.name,
     }, [approver_user])
     ensure_todo(doc, approver_user)
 
+def _notify_employees_approved(doc: Document):
+    users = _get_employee_user_ids(doc)
+    if not users:
+        return
+    make_notification_logs({
+        "type": "Alert",
+        "subject": _("Phiếu công tác tại {0} đã được duyệt").format(doc.destination),
+        "document_type": doc.doctype,
+        "document_name": doc.name,
+    }, users)
+
 def get_employee_user_id(employee_name: str) -> str | None:
     if not employee_name:
         return None
     return frappe.db.get_value("Employee", employee_name, "user_id")
+
+def _get_employee_user_ids(doc: Document) -> list[str]:
+    employees = _collect_employees(doc)
+    if not employees:
+        return []
+    users = set()
+    for emp in employees:
+        uid = frappe.db.get_value("Employee", emp, "user_id")
+        if uid and uid != doc.owner:
+            users.add(uid)
+    return list(users)
 
 # ---------------- Attendance ----------------
 def _collect_employees(doc: Document) -> set:
@@ -111,11 +139,14 @@ def _collect_employees(doc: Document) -> set:
     if doc.get("employee"):
         emps.add(doc.employee)
     for d in (doc.items or []):
-        if getattr(d, "employee", None):
-            emps.add(d.employee)
+        emp = getattr(d, "employee", None)
+        if emp:
+            emps.add(emp)
     return emps
 
 def _delete_or_cancel_attendance(employees: set, start_date, end_date):
+    if not employees or not start_date or not end_date:
+        return
     existing = frappe.get_all(
         "Attendance",
         filters={
@@ -128,16 +159,19 @@ def _delete_or_cancel_attendance(employees: set, start_date, end_date):
     for row in existing:
         try:
             att = frappe.get_doc("Attendance", row["name"])
-            att.cancel() if att.docstatus == 1 else att.delete()
+            att.flags.ignore_permissions = True
+            att.flags.ignore_links = True
+            if att.docstatus == 1:
+                att.cancel()
+            else:
+                frappe.delete_doc("Attendance", att.name, ignore_permissions=True, force=1)
         except Exception:
             frappe.log_error(frappe.get_traceback(), f"Không thể huỷ/xoá Attendance: {row['name']}")
 
 def replace_attendance_for_business_trip(doc: Document):
-    """
-    - Gom employee từ parent + items.
-    - Huỷ/xoá Attendance cũ trong [from_date, to_date].
-    - Tạo mới Attendance status='On Leave', leave_type='Công tác' (submit).
-    """
+    if not _in_state(doc.get("workflow_state"), APPROVED_STATES):
+        return
+
     employees = _collect_employees(doc)
     if not employees or not doc.get("from_date"):
         return
@@ -147,10 +181,12 @@ def replace_attendance_for_business_trip(doc: Document):
     if end_date < start_date:
         start_date, end_date = end_date, start_date
 
+    # Idempotent
     _delete_or_cancel_attendance(employees, start_date, end_date)
 
     company = doc.get("company")
-    destination = doc.get("destination") or ""
+    destination = (doc.get("destination") or "").strip()
+
     d = start_date
     while d <= end_date:
         for emp in employees:
@@ -172,5 +208,20 @@ def cancel_attendance_for_trip(doc: Document):
     if not employees or not doc.get("from_date"):
         return
     start_date = getdate(doc.from_date)
-    end_date   = getdate(doc.to_date)
+    end_date   = getdate(doc.to_date or doc.from_date)
+    if end_date < start_date:
+        start_date, end_date = end_date, start_date
     _delete_or_cancel_attendance(employees, start_date, end_date)
+
+
+def _notify_employees_rejected(doc: Document):
+    """Gửi Notification Log cho toàn bộ Employee thuộc phiếu khi bị từ chối."""
+    users = _get_employee_user_ids(doc)
+    if not users:
+        return
+    make_notification_logs({
+        "type": "Alert",
+        "subject": _("Phiếu công tác đã bị từ chối"),
+        "document_type": doc.doctype,
+        "document_name": doc.name,
+    }, users)
