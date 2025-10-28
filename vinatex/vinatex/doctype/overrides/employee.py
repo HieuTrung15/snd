@@ -65,3 +65,15 @@ def get_retirement_date(dob: str, gender: str | None = None, extra_months: int =
         retired_effective = new_effective
 
     return retired_effective.isoformat()
+
+
+@frappe.whitelist()
+def get_employee_for_current_user():
+    """Lấy mã nhân viên liên kết với user hiện tại. Dùng cho html block trang chủ"""
+    user = frappe.session.user
+    if not user:
+        return ""
+
+    emp_code = frappe.db.get_value("Employee", {"user_id": user}, "name")
+
+    return emp_code or ""
