@@ -162,7 +162,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-29 10:29:32.525387",
+ "modified": "2025-10-29 10:43:25.975401",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Courier Registration",
@@ -193,6 +193,7 @@
    "role": "Employee",
    "select": 1,
    "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],
