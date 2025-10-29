@@ -18,8 +18,9 @@ def get_employee_name(user):
 @frappe.whitelist()
 def get_reports_to(user):
 	employee_doc = frappe.get_value("Employee", {"user_id": user}, "department", as_dict=True)
-	if employee_doc.department:
-		approver = frappe.get_value("Department Approver", {"parent": employee_doc.department, "custom_level_1": True}, "approver", as_dict=True)
+	department = employee_doc.department if employee_doc else None
+	if department:
+		approver = frappe.get_value("Department Approver", {"parent": department, "custom_level_1": True}, "approver", as_dict=True)
 		if approver:
 			approver_name = frappe.get_value("Employee", {"user_id": approver.approver}, "employee_name", as_dict=True)
 			return approver_name.employee_name if approver_name else ""
@@ -38,27 +39,29 @@ def get_supplier_address(supplier):
 @frappe.whitelist()
 def get_courier_items():
     """
-    Trả về list các dòng bưu gửi (đã flatten) để render bảng.
-    Mỗi dòng = 1 người nhận trong child + thông tin chung từ parent.
-    Chỉ trả các bản ghi mà user hiện tại được phép xem.
+	Tạo bảng lịch sử chuyển phát nhanh
     """
 
     parent_doctype = "VNT Courier Registration"
     child_doctype  = "VNT Courier Registration Item"
 
-    user = frappe.session.user
+    current_user = frappe.session.user
 
-    parent_filters = {}  # <-- filter phân quyền
+    # Nếu muốn giới hạn theo người tạo / quyền xem:
+    parent_filters = {
+        # ví dụ chỉ cho xem phiếu mình tạo:
+        # "owner": current_user
+    }
 
     parent_fields = [
         "name",
-        "date",
-        "employee",
+        "date",         
+        "employee",      
         "qty",
         "package_type",
         "type_send",
         "bao_phat",
-		"code_follow"
+        "code_follow",
     ]
 
     parents = frappe.get_all(
@@ -67,34 +70,65 @@ def get_courier_items():
         fields=parent_fields,
         order_by="date desc",
         limit_page_length=200,
+        # ignore_permissions=True,
     )
+
+    emp_name_cache = {}
+
+    def get_employee_name(emp_code):
+        """ Employee.employee_name"""
+        if not emp_code:
+            return ""
+
+        if emp_code in emp_name_cache:
+            return emp_name_cache[emp_code]
+
+        emp_doc = frappe.db.get_value(
+            "Employee",
+            emp_code, 
+            ["employee_name"],
+            as_dict=True,
+        )
+
+        if emp_doc and emp_doc.get("employee_name"):
+            emp_name_cache[emp_code] = emp_doc["employee_name"]
+        else:
+            # fallback
+            emp_name_cache[emp_code] = emp_code
+
+        return emp_name_cache[emp_code]
 
     all_rows = []
 
     for pr in parents:
+        # tra tên nhân viên gửi từ mã employee
+        sender_name = get_employee_name(pr.get("employee"))
+
+        # lấy child rows (người nhận / địa chỉ / sđt)
         child_rows = frappe.get_all(
             child_doctype,
             filters={"parent": pr["name"]},
             fields=[
-                "receiver",
-                "phone",
-                "addr",
+                "receiver",   # tên người nhận
+                "phone",      # sđt người nhận
+                "addr",       # địa chỉ người nhận
             ],
             limit_page_length=500,
+            # ignore_permissions=True 
         )
 
         for ch in child_rows:
             all_rows.append({
-                "date_text": pr.get("date", "") or "",
-                "sender_employee": pr.get("employee", "") or "",
-                "receiver": ch.get("receiver", "") or "",
-                "address": ch.get("addr", "") or "",
-                "phone": ch.get("phone", "") or "",
-                "qty": pr.get("qty", "") or "",
-                "package_type": pr.get("package_type", "") or "",
-                "type_send": pr.get("type_send", "") or "",
-                "bao_phat": pr.get("bao_phat", "") or "",
-				"code_follow": pr.get("code_follow", "") or "",
+                "date_text":       pr.get("date", "") or "",
+                "sender_employee": sender_name or "",    
+                "receiver":        ch.get("receiver", "") or "",
+                "address":         ch.get("addr", "") or "",
+                "phone":           ch.get("phone", "") or "",
+                "qty":             pr.get("qty", "") or "",
+                "package_type":    pr.get("package_type", "") or "",
+                "type_send":       pr.get("type_send", "") or "",
+                "bao_phat":        pr.get("bao_phat", "") or "",
+                "code_follow":     pr.get("code_follow", "") or "",
             })
 
     return all_rows
