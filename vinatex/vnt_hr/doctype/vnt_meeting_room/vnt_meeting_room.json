@@ -1,0 +1,85 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:room_name",
+ "creation": "2025-10-29 09:55:37.408011",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "room_name",
+  "qty",
+  "monitor",
+  "camera",
+  "column_break_wxl9",
+  "location",
+  "disabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "room_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean ph\u00f2ng",
+   "unique": 1
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Int",
+   "label": "S\u1ed1 ng\u01b0\u1eddi t\u1ed1i \u0111a"
+  },
+  {
+   "default": "0",
+   "fieldname": "monitor",
+   "fieldtype": "Check",
+   "label": "M\u00e0n h\u00ecnh"
+  },
+  {
+   "default": "0",
+   "fieldname": "camera",
+   "fieldtype": "Check",
+   "label": "Camera"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "label": "\u0110\u1ecba \u0111i\u1ec3m"
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Kh\u00f4ng s\u1eed d\u1ee5ng"
+  },
+  {
+   "fieldname": "column_break_wxl9",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-10-29 13:59:40.455480",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Meeting Room",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
