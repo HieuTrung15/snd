@@ -80,14 +80,15 @@
   {
    "fieldname": "lead_department",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "L\u00e3nh \u0111\u1ea1o Ban",
    "options": "Employee"
   },
   {
-   "fetch_from": "lead_department.employee_name",
    "fieldname": "lead_name",
    "fieldtype": "Data",
-   "label": "T\u00ean l\u00e3nh \u0111\u1ea1o Ban"
+   "label": "L\u00e3nh \u0111\u1ea1o Ban",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_tlxo",
@@ -161,7 +162,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-29 10:16:03.940769",
+ "modified": "2025-10-29 10:29:32.525387",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Courier Registration",

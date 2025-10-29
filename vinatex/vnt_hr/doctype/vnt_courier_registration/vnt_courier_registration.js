@@ -23,7 +23,7 @@ frappe.ui.form.on("VNT Courier Registration", {
                 },
                 callback: function (r) {
                     if (r.message) {
-                        frm.set_value("lead_department", r.message);
+                        frm.set_value("lead_name", r.message);
                     }
                 }
             });

@@ -21,8 +21,8 @@ def get_reports_to(user):
 	if employee_doc.department:
 		approver = frappe.get_value("Department Approver", {"parent": employee_doc.department, "custom_level_1": True}, "approver", as_dict=True)
 		if approver:
-			approver_name = frappe.get_value("Employee", {"user_id": approver.approver}, "name", as_dict=True)
-			return approver_name.name if approver_name else ""
+			approver_name = frappe.get_value("Employee", {"user_id": approver.approver}, "employee_name", as_dict=True)
+			return approver_name.employee_name if approver_name else ""
 	return ""
 
 
