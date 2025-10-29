@@ -12,7 +12,9 @@
   "date",
   "title",
   "section_break_mjbw",
-  "noidung"
+  "noidung",
+  "attach",
+  "html"
  ],
  "fields": [
   {
@@ -51,12 +53,22 @@
    "fieldname": "noidung",
    "fieldtype": "Text Editor",
    "label": "N\u1ed9i dung"
+  },
+  {
+   "fieldname": "attach",
+   "fieldtype": "Attach",
+   "label": "\u0110\u00ednh k\u00e8m file",
+   "make_attachment_public": 1
+  },
+  {
+   "fieldname": "html",
+   "fieldtype": "HTML"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-28 13:54:47.283839",
+ "modified": "2025-10-29 08:34:50.424424",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT New Feed",

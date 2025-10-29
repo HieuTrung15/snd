@@ -23,7 +23,45 @@ class VNTBusinessTripRequest(Document):
         _apply_state_effects(self)
         
     def on_update_after_submit(self):
-        _apply_state_effects(self)  
+        _apply_state_effects(self)
+
+    def validate(self):
+        if not self.from_date or not self.to_date:
+            frappe.throw(_("Vui lòng nhập đầy đủ Từ ngày và Đến ngày"))
+
+        fd, td = getdate(self.from_date), getdate(self.to_date)
+        if fd > td:
+            frappe.throw(_("Từ ngày không được lớn hơn Đến ngày"))
+
+        conflict = frappe.db.sql(
+            """
+            SELECT name, from_date, to_date, workflow_state
+            FROM `tabVNT Business Trip Request`
+            WHERE employee = %(employee)s
+              AND docstatus != 2
+              AND name != %(name)s
+              AND COALESCE(workflow_state, '') NOT IN %(states)s
+              AND NOT (%(fd)s > to_date OR %(td)s < from_date)
+            LIMIT 1
+            """,
+            {
+                "employee": self.employee,
+                "name": self.name,
+                "fd": fd,
+                "td": td,
+                "states": REJECT_STATES,  # tuple/list OK
+            },
+            as_dict=True,
+        )
+
+        if conflict:
+            c = conflict[0]
+            frappe.throw(_(
+                f"Nhân viên đã có phiếu công tác {c.name} "
+                f"({c.workflow_state}) từ {c.from_date} đến {c.to_date}. "
+                f"Không thể tạo thêm phiếu trùng thời gian."
+            ))
+
 
 # ---------------- State handling ----------------
 def _apply_state_effects(doc: Document):
