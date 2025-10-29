@@ -1,0 +1,205 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:DKX-{#####}",
+ "creation": "2025-10-28 14:29:35.864319",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_tdso",
+  "company",
+  "department",
+  "from_date",
+  "to_date",
+  "column_break_tgvp",
+  "starting_place",
+  "destination",
+  "distance",
+  "note",
+  "items",
+  "section_break_xwlf",
+  "approver",
+  "approver_name",
+  "section_break_bsjc",
+  "employee",
+  "column_break_kxuy",
+  "car_type",
+  "approval_status",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_tdso",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "C\u00f4ng ty",
+   "options": "Company"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Ph\u00f2ng ban",
+   "options": "Department"
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "T\u1eeb ng\u00e0y",
+   "reqd": 1
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "\u0110\u1ebfn ng\u00e0y",
+   "reqd": 1
+  },
+  {
+   "fieldname": "starting_place",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "N\u01a1i \u0111i",
+   "reqd": 1
+  },
+  {
+   "fieldname": "destination",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "N\u01a1i \u0111\u1ebfn",
+   "reqd": 1
+  },
+  {
+   "fieldname": "distance",
+   "fieldtype": "Select",
+   "label": "Kho\u1ea3ng c\u00e1ch",
+   "options": "\nT\u1eeb 40 km tr\u1edf l\u00ean\nD\u01b0\u1edbi 40 km",
+   "reqd": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Data",
+   "label": "N\u1ed9i dung chi ti\u1ebft",
+   "reqd": 1
+  },
+  {
+   "fetch_if_empty": 1,
+   "fieldname": "items",
+   "fieldtype": "Table MultiSelect",
+   "label": "Danh s\u00e1ch nh\u00e2n s\u1ef1",
+   "options": "VNT Car Registration Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_xwlf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Nh\u00e2n s\u1ef1 l\u00e1i xe",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "car_type",
+   "fieldtype": "Select",
+   "label": "Ch\u1ecdn lo\u1ea1i xe",
+   "options": "\nBKS:30A-917.49\n\u0110i taxi ngo\u00e0i - L\u1ea5y h\u00f3a \u0111\u01a1n v\u1ec1 thanh to\u00e1n\nKh\u00f4ng thu\u1ed9c tr\u01b0\u1eddng h\u1ee3p \u0111\u01b0\u1ee3c ph\u00e2n xe\n\u0110i taxi Mai Linh"
+  },
+  {
+   "fieldname": "approval_status",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Tr\u1ea1ng th\u00e1i"
+  },
+  {
+   "fieldname": "column_break_tgvp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VNT Car Registration",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_kxuy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_bsjc",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "approver",
+   "fieldtype": "Link",
+   "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "approver_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean ng\u01b0\u1eddi ph\u00ea duy\u1ec7t"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-10-28 16:26:21.052653",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Car Registration",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Leave Approver",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
