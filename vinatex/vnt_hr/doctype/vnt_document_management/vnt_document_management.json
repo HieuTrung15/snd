@@ -18,6 +18,10 @@
   "column_break_fyg6",
   "sender",
   "handler",
+  "section_break_ebdu",
+  "legacy_id",
+  "column_break_xduu",
+  "source_url",
   "section_break_mugf",
   "attach",
   "amended_from"
@@ -112,13 +116,31 @@
    "fieldname": "handler",
    "fieldtype": "Data",
    "label": "Ng\u01b0\u1eddi x\u1eed l\u00fd"
+  },
+  {
+   "fieldname": "section_break_ebdu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "legacy_id",
+   "fieldtype": "Data",
+   "label": "ID item Share Point"
+  },
+  {
+   "fieldname": "column_break_xduu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "source_url",
+   "fieldtype": "Data",
+   "label": "Link SharePoint"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-29 17:20:41.532390",
+ "modified": "2025-10-29 17:32:59.674830",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
