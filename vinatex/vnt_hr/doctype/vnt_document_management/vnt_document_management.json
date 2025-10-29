@@ -10,14 +10,14 @@
   "employee_name",
   "date",
   "column_break_fdwp",
-  "s\u1ed1_hi\u1ec7u_v\u0103n_b\u1ea3n",
-  "tr\u00edch_y\u1ebfu",
+  "reference_number",
+  "summary",
   "section_break_oltr",
-  "ng\u00e0y_v\u0103n_b\u1ea3n",
-  "ng\u00e0y_\u0111\u1ebfn",
+  "document_date",
+  "received_date",
   "column_break_fyg6",
-  "n\u01a1i_g\u1eedi",
-  "ng\u01b0\u1eddi_x\u1eed_l\u00fd",
+  "sender",
+  "handler",
   "section_break_mugf",
   "attach",
   "amended_from"
@@ -49,49 +49,12 @@
    "reqd": 1
   },
   {
-   "fieldname": "s\u1ed1_hi\u1ec7u_v\u0103n_b\u1ea3n",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "S\u1ed1 hi\u1ec7u v\u0103n b\u1ea3n",
-   "reqd": 1
-  },
-  {
-   "fieldname": "tr\u00edch_y\u1ebfu",
-   "fieldtype": "Small Text",
-   "in_list_view": 1,
-   "label": "Tr\u00edch y\u1ebfu",
-   "reqd": 1
-  },
-  {
    "fieldname": "section_break_oltr",
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "ng\u00e0y_v\u0103n_b\u1ea3n",
-   "fieldtype": "Date",
-   "label": "Ng\u00e0y v\u0103n b\u1ea3n",
-   "reqd": 1
-  },
-  {
-   "fieldname": "ng\u00e0y_\u0111\u1ebfn",
-   "fieldtype": "Date",
-   "label": "Ng\u00e0y \u0111\u1ebfn",
-   "reqd": 1
-  },
-  {
    "fieldname": "column_break_fyg6",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "n\u01a1i_g\u1eedi",
-   "fieldtype": "Data",
-   "label": "N\u01a1i g\u1eedi",
-   "reqd": 1
-  },
-  {
-   "fieldname": "ng\u01b0\u1eddi_x\u1eed_l\u00fd",
-   "fieldtype": "Data",
-   "label": "Ng\u01b0\u1eddi x\u1eed l\u00fd"
   },
   {
    "fieldname": "section_break_mugf",
@@ -112,13 +75,50 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "reference_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "S\u1ed1 hi\u1ec7u v\u0103n b\u1ea3n",
+   "reqd": 1
+  },
+  {
+   "fieldname": "summary",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Tr\u00edch y\u1ebfu",
+   "reqd": 1
+  },
+  {
+   "fieldname": "document_date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y v\u0103n b\u1ea3n",
+   "reqd": 1
+  },
+  {
+   "fieldname": "received_date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y \u0111\u1ebfn",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sender",
+   "fieldtype": "Data",
+   "label": "N\u01a1i g\u1eedi",
+   "reqd": 1
+  },
+  {
+   "fieldname": "handler",
+   "fieldtype": "Data",
+   "label": "Ng\u01b0\u1eddi x\u1eed l\u00fd"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-29 17:14:54.992226",
+ "modified": "2025-10-29 17:20:41.532390",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
