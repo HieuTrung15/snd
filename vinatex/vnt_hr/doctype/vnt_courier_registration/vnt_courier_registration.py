@@ -34,3 +34,67 @@ def get_supplier_address(supplier):
 		if address:
 			return address.address_line1
 	return ""
+
+@frappe.whitelist()
+def get_courier_items():
+    """
+    Trả về list các dòng bưu gửi (đã flatten) để render bảng.
+    Mỗi dòng = 1 người nhận trong child + thông tin chung từ parent.
+    Chỉ trả các bản ghi mà user hiện tại được phép xem.
+    """
+
+    parent_doctype = "VNT Courier Registration"
+    child_doctype  = "VNT Courier Registration Item"
+
+    user = frappe.session.user
+
+    parent_filters = {}  # <-- filter phân quyền
+
+    parent_fields = [
+        "name",
+        "date",
+        "employee",
+        "qty",
+        "package_type",
+        "type_send",
+        "bao_phat",
+		"code_follow"
+    ]
+
+    parents = frappe.get_all(
+        parent_doctype,
+        filters=parent_filters,
+        fields=parent_fields,
+        order_by="date desc",
+        limit_page_length=200,
+    )
+
+    all_rows = []
+
+    for pr in parents:
+        child_rows = frappe.get_all(
+            child_doctype,
+            filters={"parent": pr["name"]},
+            fields=[
+                "receiver",
+                "phone",
+                "addr",
+            ],
+            limit_page_length=500,
+        )
+
+        for ch in child_rows:
+            all_rows.append({
+                "date_text": pr.get("date", "") or "",
+                "sender_employee": pr.get("employee", "") or "",
+                "receiver": ch.get("receiver", "") or "",
+                "address": ch.get("addr", "") or "",
+                "phone": ch.get("phone", "") or "",
+                "qty": pr.get("qty", "") or "",
+                "package_type": pr.get("package_type", "") or "",
+                "type_send": pr.get("type_send", "") or "",
+                "bao_phat": pr.get("bao_phat", "") or "",
+				"code_follow": pr.get("code_follow", "") or "",
+            })
+
+    return all_rows

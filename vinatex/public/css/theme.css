@@ -14,7 +14,7 @@ body {
 [data-theme="light"] {
 	--bg-color: #f3f6f9;
 	--disabled-control-bg: #f3f6f9;
-	--sidebar-bg-color: linear-gradient(to right, #3288f1, #80b6f9, #5aa0f5);
+	--sidebar-bg-color: linear-gradient(to right, #abd1ff, #80b6f9, #5aa0f5);
 	--border-radius-md: 5px;
 	--drop-down-item-bg: #f1f1f1;
 	--row-hover-bg: #9af8c4;
@@ -570,7 +570,7 @@ input[type=file]::-webkit-file-upload-button {
 } */
 
 .navbar-expand {
-	background-color: #3288f1;
+	background-color: #abd1ff !important;
 	border: none;
 	height: 40px;
 }
@@ -580,7 +580,7 @@ input[type=file]::-webkit-file-upload-button {
 		background-image: url(/files/navbar1280.png), url(/files/navbar1280jpg);
 		background-repeat: no-repeat;
 		background-size: 100% 100%;
-		background-color: #3288f1;
+		background-color: #abd1ff !important;
 		border: none;
 		height: 50px;
 	}
@@ -596,7 +596,7 @@ input[type=file]::-webkit-file-upload-button {
 		background-image: url(/files/navbar1280.png), url(/files/navbar1280.jpg);
 		background-repeat: no-repeat;
 		background-size: 100% 100%;
-		background-color: #3288f1;
+		background-color: #abd1ff !important;
 		border: none;
 		height: 50px;
 	}
@@ -686,7 +686,7 @@ input[type=file]::-webkit-file-upload-button {
 	.navbar-expand {
 		background-repeat: no-repeat;
 		background-size: 100% 100%;
-		background-color: #72abf0;
+		background-color:#abd1ff !important;
 		border: none;
 		height: 50px;
 	}
@@ -696,7 +696,7 @@ input[type=file]::-webkit-file-upload-button {
 	.navbar-expand {
 		background-repeat: no-repeat;
 		background-size: 100% 100%;
-		background-color: #3288f1;
+		background-color: #abd1ff !important;
 		border: none;
 		height: 50px;
 	}
