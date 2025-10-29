@@ -1,0 +1,147 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:CVDEN.{####}.{YYYY}",
+ "creation": "2025-10-29 16:27:38.345490",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "employee_name",
+  "date",
+  "column_break_fdwp",
+  "s\u1ed1_hi\u1ec7u_v\u0103n_b\u1ea3n",
+  "tr\u00edch_y\u1ebfu",
+  "section_break_oltr",
+  "ng\u00e0y_v\u0103n_b\u1ea3n",
+  "ng\u00e0y_\u0111\u1ebfn",
+  "column_break_fyg6",
+  "n\u01a1i_g\u1eedi",
+  "ng\u01b0\u1eddi_x\u1eed_l\u00fd",
+  "section_break_mugf",
+  "attach",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Ng\u01b0\u1eddi l\u1eadp",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean ng\u01b0\u1eddi l\u1eadp"
+  },
+  {
+   "fieldname": "column_break_fdwp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Ng\u00e0y l\u1eadp",
+   "reqd": 1
+  },
+  {
+   "fieldname": "s\u1ed1_hi\u1ec7u_v\u0103n_b\u1ea3n",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "S\u1ed1 hi\u1ec7u v\u0103n b\u1ea3n",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tr\u00edch_y\u1ebfu",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Tr\u00edch y\u1ebfu",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_oltr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "ng\u00e0y_v\u0103n_b\u1ea3n",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y v\u0103n b\u1ea3n",
+   "reqd": 1
+  },
+  {
+   "fieldname": "ng\u00e0y_\u0111\u1ebfn",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y \u0111\u1ebfn",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_fyg6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "n\u01a1i_g\u1eedi",
+   "fieldtype": "Data",
+   "label": "N\u01a1i g\u1eedi",
+   "reqd": 1
+  },
+  {
+   "fieldname": "ng\u01b0\u1eddi_x\u1eed_l\u00fd",
+   "fieldtype": "Data",
+   "label": "Ng\u01b0\u1eddi x\u1eed l\u00fd"
+  },
+  {
+   "fieldname": "section_break_mugf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "attach",
+   "fieldtype": "Attach",
+   "label": "\u0110\u00ednh k\u00e8m",
+   "make_attachment_public": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VNT Document Management",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-10-29 17:14:54.992226",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Document Management",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,5 +1,5 @@
 frappe.ui.form.on('VNT Business Trip Request', {
-  refresh(frm) {
+    refresh(frm) {
         if (!frm.doc.employee) {
             frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name")
             .then(r => {
@@ -7,7 +7,6 @@ frappe.ui.form.on('VNT Business Trip Request', {
                     frm.set_value("employee", r.message.name);
                 }
             });
-            
         }
 	},
 });
