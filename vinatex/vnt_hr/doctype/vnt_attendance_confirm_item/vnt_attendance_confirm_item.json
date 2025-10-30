@@ -26,21 +26,24 @@
    "fieldname": "date",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "label": "Ng\u00e0y"
+   "label": "Ng\u00e0y",
+   "read_only": 1
   },
   {
    "columns": 1,
    "fieldname": "time_in",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Gi\u1edd \u0111\u1ebfn"
+   "label": "Gi\u1edd \u0111\u1ebfn",
+   "read_only": 1
   },
   {
    "columns": 1,
    "fieldname": "time_out",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Gi\u1edd v\u1ec1"
+   "label": "Gi\u1edd v\u1ec1",
+   "read_only": 1
   },
   {
    "allow_on_submit": 1,
@@ -61,14 +64,14 @@
    "fieldname": "status",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Tr\u1ea1ng th\u00e1i"
+   "label": "Tr\u1ea1ng th\u00e1i",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_appj",
    "fieldtype": "Column Break"
   },
   {
-   "allow_on_submit": 1,
    "columns": 1,
    "fieldname": "confirm",
    "fieldtype": "Select",
@@ -82,7 +85,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-28 14:31:51.920843",
+ "modified": "2025-10-30 13:27:31.208221",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Attendance Confirm Item",

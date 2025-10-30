@@ -13,7 +13,7 @@ import frappe
 from frappe import _
 from frappe.model.workflow import get_workflow
 from frappe.query_builder import DocType
-from frappe.utils import date_diff, flt, getdate
+from frappe.utils import date_diff, flt, getdate, get_link_to_form, formatdate
 from frappe.model.document import Document
 
 from dateutil.relativedelta import relativedelta
@@ -36,6 +36,10 @@ from frappe.model.workflow import get_workflow_name
 # from eupapp.eupapp.doctype.overrides.workflow import gen_approve_channel
 
 
+class AttendanceAlreadyMarkedError(frappe.ValidationError):
+	pass
+
+
 class VntLeaveApplication(LeaveApplication):
 	LEAVE_TYPE = "Công tác"
 	
@@ -47,6 +51,11 @@ class VntLeaveApplication(LeaveApplication):
 	def before_submit(self):
 		self.status = "Approved"
 
+	
+	def on_submit(self):
+		_cancel_attendance_before_add_new_leave(self.get("employees"), self.from_date, self.to_date)
+		super().on_submit()
+
 
 	def on_update(self):
 		# chuyển sang theo dõi workflow_state
@@ -54,7 +63,38 @@ class VntLeaveApplication(LeaveApplication):
 			_handle_state_transition(self)
 
 
+	def validate_attendance(self):
+		attendance_dates = frappe.get_all(
+			"Attendance",
+			filters={
+				"employee": self.employee,
+				"attendance_date": ("between", [self.from_date, self.to_date]),
+				"status": ("in", ["Work From Home"]),
+				"docstatus": 1,
+				"half_day_status": ("!=", "Absent"),
+			},
+			fields=["name", "attendance_date"],
+			order_by="attendance_date",
+		)
+		if attendance_dates:
+			frappe.throw(
+				_("Attendance for employee {0} is already marked for the following dates: {1}").format(
+					self.employee,
+					(
+						"<br><ul><li>"
+						+ "</li><li>".join(
+							get_link_to_form("Attendance", a.name, label=formatdate(a.attendance_date))
+							for a in attendance_dates
+						)
+						+ "</li></ul>"
+					),
+				),
+				AttendanceAlreadyMarkedError,
+			)
+
+
 	def validate(self):
+		self.validate_attendance()
 		super().validate()
 		 # kiểm tra gửi đơn nghỉ phép năm, nghỉ không hưởng lương, lao động nam nghỉ do có vợ sinh con trước bao nhiêu ngày
 		days_notice = 0
@@ -146,19 +186,19 @@ def _handle_state_transition(doc: Document):
 
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Từ chối':
 		make_notification_logs({
-        "type": "Alert",
-        "subject": _("Phiếu đăng ký {0} của {1} đã bị lãnh đạo từ chối.").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
-        "document_type": doc.doctype,
-        "document_name": doc.name,
-    }, [approver_user])
+		"type": "Alert",
+		"subject": _("Phiếu đăng ký {0} của {1} đã bị lãnh đạo từ chối.").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
+		"document_type": doc.doctype,
+		"document_name": doc.name,
+	}, [approver_user])
 
 	if prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Từ chối':
 		make_notification_logs({
-        "type": "Alert",
-        "subject": _("Phiếu đăng ký {0} của {1} đã bị lãnh đạo tập đoàn từ chối.").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
-        "document_type": doc.doctype,
-        "document_name": doc.name,
-    }, [approver_user])
+		"type": "Alert",
+		"subject": _("Phiếu đăng ký {0} của {1} đã bị lãnh đạo tập đoàn từ chối.").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
+		"document_type": doc.doctype,
+		"document_name": doc.name,
+	}, [approver_user])
 
 
 def _notify_to_approver(doc: Document):
@@ -177,9 +217,9 @@ def _notify_to_approver(doc: Document):
 
 
 def get_employee_user_id(employee_name: str) -> str | None:
-    if not employee_name:
-        return None
-    return frappe.db.get_value("Employee", employee_name, "user_id")
+	if not employee_name:
+		return None
+	return frappe.db.get_value("Employee", employee_name, "user_id")
 
 
 def _notify_to_approver_2(doc: Document):
@@ -248,19 +288,19 @@ def ensure_todo(doc: Document, user: str):
 
 
 def _check_state_to_close_todo(doc: Document, user: str):
-    """Close open ToDos for the current approver on this document."""
-    names = frappe.get_all(
-      "ToDo",
-      filters={
-          "reference_type": doc.doctype,
-          "reference_name": doc.name,
-          "allocated_to": user,
-          "status": ["!=", "Cancelled"],
-      },
-      pluck="name",
-    )
-    for n in names:
-      frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
+	"""Close open ToDos for the current approver on this document."""
+	names = frappe.get_all(
+	  "ToDo",
+	  filters={
+		  "reference_type": doc.doctype,
+		  "reference_name": doc.name,
+		  "allocated_to": user,
+		  "status": ["!=", "Cancelled"],
+	  },
+	  pluck="name",
+	)
+	for n in names:
+	  frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
 
 
 @frappe.whitelist()

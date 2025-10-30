@@ -46,14 +46,16 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "C\u00f4ng ty",
-   "options": "Company"
+   "options": "Company",
+   "read_only": 1
   },
   {
    "fieldname": "department",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Ph\u00f2ng ban",
-   "options": "Department"
+   "options": "Department",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_qvgh",
@@ -62,13 +64,14 @@
   {
    "fieldname": "from_date",
    "fieldtype": "Date",
-   "label": "T\u1eeb ng\u00e0y"
+   "label": "T\u1eeb ng\u00e0y",
+   "read_only": 1
   },
   {
-   "allow_on_submit": 1,
    "fieldname": "to_date",
    "fieldtype": "Date",
-   "label": "\u0110\u1ebfn ng\u00e0y"
+   "label": "\u0110\u1ebfn ng\u00e0y",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_kkv3",
@@ -79,7 +82,8 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Nh\u00e2n vi\u00ean",
-   "options": "Employee"
+   "options": "Employee",
+   "read_only": 1
   },
   {
    "fetch_from": "employee.employee_name",
@@ -94,7 +98,8 @@
   {
    "fieldname": "email",
    "fieldtype": "Data",
-   "label": "Email"
+   "label": "Email",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_tuyt",
@@ -106,7 +111,8 @@
    "fieldname": "approver",
    "fieldtype": "Link",
    "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
-   "options": "User"
+   "options": "User",
+   "read_only": 1
   },
   {
    "fetch_from": "approver.full_name",
@@ -130,7 +136,6 @@
    "options": "VNT Attendance Confirm Item"
   },
   {
-   "allow_on_submit": 1,
    "description": "Ch\u1ecdn \u0111\u1ec3 ph\u00ea duy\u1ec7t ho\u1eb7c t\u1eeb ch\u1ed1i t\u1ea5t c\u1ea3.",
    "fieldname": "confirm",
    "fieldtype": "Select",
@@ -143,7 +148,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-28 15:45:30.275741",
+ "modified": "2025-10-30 13:24:13.080121",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Attendance Confirm",
@@ -169,6 +174,7 @@
    "read": 1,
    "report": 1,
    "role": "Employee",
+   "select": 1,
    "share": 1,
    "write": 1
   },

@@ -12,18 +12,29 @@ from frappe.utils import getdate
 # from hrms.hr.utils import get_holiday_list_for_employee(employee)
 
 
-class VNTAttendanceConfirm(Document): 
-    def on_update_after_submit(self):
+class VNTAttendanceConfirm(Document):
+    def on_submit(self):
         for row in self.get("items") or []:
             if not row.get("type"):
                 frappe.throw(_("Vui lòng điền giải trình cho ngày {0}.").format(
                     frappe.format_value(row.get("date"), {"fieldtype": "Date"})
                 ))
-        _notify_approver_pending(self)
+
+            if not row.get("confirm"):
+                frappe.throw(_("Vui lòng chọn đồng ý hoặc từ chối cho ngày {0}.").format(
+                    frappe.format_value(row.get("date"), {"fieldtype": "Date"})
+                ))
+        
         _make_attendance_from_confirmation(self)
         _close_employee_todos(self)
         _reject_attendance_from_confirmation(self)
 
+
+    def on_update(self):
+        # nếu các dòng trong items có giải trình và không có phê duyệt thì gửi thông báo đến người duyệt
+        pending = [row for row in (self.get("items") or []) if row.get("type") and not row.get("confirm")]
+        if pending:
+            _notify_approver_pending(self)
 
     def on_cancel(self):
         _cancel_attendance_from_confirmation(self)
@@ -282,7 +293,9 @@ def make_attendance_confirm():
     t0, _ = _day_bounds(month_from)
     _, t1 = _day_bounds(month_to)
     checkins_map = _bulk_fetch_checkins(emps, t0, t1)
-    leaves_set   = _bulk_fetch_leaves(emps, t0, t1)
+    leaves_set = _bulk_fetch_leaves(emps, t0, t1)
+    trip_set = _bulk_fetch_trip(emps, t0, t1)
+    attendance_set = _bulk_fetch_attendance(emps, t0, t1)
 
     results = []
     for emp in emps:
@@ -311,7 +324,7 @@ def make_attendance_confirm():
             att.email = emp.get("user_id")
             att.from_date = month_from
             att.approver = _employee_user_id(emp.get("reports_to")) if emp.get("reports_to") else None
-            att.docstatus = 1
+            # att.docstatus = 1
             is_new = True
 
         # Cập nhật to_date đến ngày hiện tại của tháng
@@ -324,9 +337,20 @@ def make_attendance_confirm():
         changed = False
         for d in working_days:
             key = (emp_name, d)
+            row = existing_by_date.get(d)
+
+            if key in attendance_set:
+                if row:
+                    att.remove(row)
+                    existing_by_date.pop(d, None)
+                    changed = True
+                continue
             # Tính status + thời gian vào/ra
             if key in leaves_set:
                 # Bỏ qua hoàn toàn ngày có Leave Application: không tạo item
+                continue
+            elif key in trip_set:
+                # Bỏ qua hoàn toàn ngày có Business Trip: không tạo item
                 continue
             else:
                 rec = checkins_map.get(key, {"first_in": None, "last_out": None, "cnt_in": 0, "cnt_out": 0})
@@ -365,7 +389,6 @@ def make_attendance_confirm():
             v_in  = fi.strftime("%H:%M:%S") if fi else None
             v_out = lo.strftime("%H:%M:%S") if lo else None
 
-            row = existing_by_date.get(d)
             if row:
                 # Update only when values changed
                 if (row.get("time_in") != v_in) or (row.get("time_out") != v_out) or (row.get("status") != status):
@@ -508,6 +531,26 @@ def _bulk_fetch_checkins(employees, d_start, d_end):
     return box
 
 
+def _bulk_fetch_attendance(employees, d_start, d_end):
+    """Trả về set[(emp, date)] cho các ngày đã có Attendance (docstatus != Cancelled)."""
+    if not employees:
+        return set()
+
+    emps = _emp_names(employees)
+    rows = frappe.db.sql(
+        """
+        SELECT employee, attendance_date
+        FROM `tabAttendance`
+        WHERE employee IN %(emps)s
+          AND attendance_date BETWEEN %(d0)s AND %(d1)s
+          AND docstatus != 2
+        """,
+        {"emps": emps, "d0": d_start.date(), "d1": d_end.date()},
+        as_dict=True,
+    )
+    return {(r["employee"], getdate(r["attendance_date"])) for r in rows}
+
+
 def _bulk_fetch_leaves(employees, d_start, d_end):
     """Trả về set[(emp, date)] cho các ngày có đơn nghỉ (không Rejected/Cancelled)."""
     if not employees:
@@ -529,6 +572,38 @@ def _bulk_fetch_leaves(employees, d_start, d_end):
 
     covered = set()
     for r in leaves:
+        emp = r["employee"]
+        d0  = getdate(r["from_date"])
+        d1  = getdate(r["to_date"])
+        cur = d0
+        while cur <= d1:
+            if d_start.date() <= cur <= d_end.date():
+                covered.add((emp, cur))
+            cur += timedelta(days=1)
+    return covered
+
+
+def _bulk_fetch_trip(employees, d_start, d_end):
+    """Trả về set[(emp, date)] cho các ngày có đơn đi công tác (không Rejected/Cancelled)."""
+    if not employees:
+        return set()
+
+    emps = _emp_names(employees)
+    trips = frappe.db.sql(
+        """
+        SELECT employee, from_date, to_date
+        FROM `tabVNT Business Trip Request`
+        WHERE employee IN %(emps)s
+          AND to_date   >= %(d0)s
+          AND from_date <= %(d1)s
+          AND workflow_state IN ('Đã duyệt')
+        """,
+        {"emps": emps, "d0": d_start.date(), "d1": d_end.date()},
+        as_dict=True,
+    )
+
+    covered = set()
+    for r in trips:
         emp = r["employee"]
         d0  = getdate(r["from_date"])
         d1  = getdate(r["to_date"])
@@ -654,6 +729,4 @@ def min_max_date(dates):
 #             frappe.delete_doc("ToDo", n, ignore_permissions=True, force=1)
 #         except Exception:
 #             frappe.log_error(frappe.get_traceback(), f"Không xoá được ToDo: {n}")
-
-
 
