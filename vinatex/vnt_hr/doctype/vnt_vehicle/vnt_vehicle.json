@@ -1,0 +1,75 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{driver}",
+ "creation": "2025-10-29 14:24:27.970130",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_6kds",
+  "name_car",
+  "car_id",
+  "driver",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_6kds",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "name_car",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "T\u00ean xe"
+  },
+  {
+   "fieldname": "car_id",
+   "fieldtype": "Data",
+   "label": "Bi\u1ec3n s\u1ed1 xe",
+   "reqd": 1
+  },
+  {
+   "fieldname": "driver",
+   "fieldtype": "Link",
+   "label": "T\u00e0i x\u1ebf",
+   "options": "Employee"
+  },
+  {
+   "default": "0",
+   "fieldname": "status",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-10-29 14:31:18.988085",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Vehicle",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
