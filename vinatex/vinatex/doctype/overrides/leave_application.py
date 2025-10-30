@@ -51,11 +51,6 @@ class VntLeaveApplication(LeaveApplication):
 	def before_submit(self):
 		self.status = "Approved"
 
-	
-	def on_submit(self):
-		_cancel_attendance_before_add_new_leave(self.get("employees"), self.from_date, self.to_date)
-		super().on_submit()
-
 
 	def on_update(self):
 		# chuyển sang theo dõi workflow_state
