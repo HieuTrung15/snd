@@ -96,21 +96,18 @@
   },
   {
    "fieldname": "document_date",
-   "fieldtype": "Date",
-   "label": "Ng\u00e0y v\u0103n b\u1ea3n",
-   "reqd": 1
+   "fieldtype": "Datetime",
+   "label": "Ng\u00e0y v\u0103n b\u1ea3n"
   },
   {
    "fieldname": "received_date",
-   "fieldtype": "Date",
-   "label": "Ng\u00e0y \u0111\u1ebfn",
-   "reqd": 1
+   "fieldtype": "Datetime",
+   "label": "Ng\u00e0y \u0111\u1ebfn"
   },
   {
    "fieldname": "sender",
    "fieldtype": "Data",
-   "label": "N\u01a1i g\u1eedi",
-   "reqd": 1
+   "label": "N\u01a1i g\u1eedi"
   },
   {
    "fieldname": "handler",
@@ -140,7 +137,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-29 17:32:59.674830",
+ "modified": "2025-10-30 13:37:09.918028",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
