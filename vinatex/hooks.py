@@ -192,7 +192,7 @@ scheduler_events = {
         # "00 01 1 * *": [
         #     "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.make_attendance_confirm",
         # ],
-        "0 9 * * *": [
+        "0 7 * * *": [
             "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.make_attendance_confirm",
         ],
 		#Chạy tính lại tuổi hàng năm
