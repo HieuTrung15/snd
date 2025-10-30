@@ -101,8 +101,9 @@ def _notify_confirmation(doc: Document, user: str):
 		return
 	subject = _("Xác nhận chấm công {0}").format(doc.employee_name or doc.employee or _("Nhân viên"))
 	message = _(
-		"Xác nhận bảng chấm công từ {0} đến {1}."
+		"XNCC của {0} từ {1} đến {2}."
 	).format(
+		frappe.format_value(doc.employee_name, {"fieldtype": "Data"}) if doc.employee_name else _("(chưa rõ)"),
 		frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
 		frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
 	)
@@ -172,7 +173,7 @@ def _notify_employee_result(doc: Document):
 	if not user:
 		return
 
-	subject = _("Bảng xác nhận chấm công đã được duyệt")
+	subject = _("Bảng xác nhận chấm công đã được duyệt.")
 	message = _("Bảng chấm công từ {0} đến {1} đã được duyệt.").format(
 		frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
 		frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
