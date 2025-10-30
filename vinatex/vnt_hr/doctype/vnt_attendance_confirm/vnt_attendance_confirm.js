@@ -2,6 +2,11 @@
 // For license information, please see license.txt
 // VGT00065
 frappe.ui.form.on("VNT Attendance Confirm", {
+	onload (frm) {
+		if (frm.doc.items && frm.doc.items.length == 0) {
+			frappe.msgprint(__('Không có dữ liệu để xác nhận.'));
+		}	
+	},
 	refresh(frm) {
         // frm.add_custom_button(__('Sync Timekeeper Data'), function() {
 		// 	frappe.call({
