@@ -11,4 +11,25 @@ frappe.ui.form.on('VNT Business Trip Request', {
 	},
 });
 
+frappe.ui.form.on('VNT Business Trip Request Items', {
+    employee(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        frappe.call({
+            method: "vinatex.vnt_hr.doctype.vnt_business_trip_request.vnt_business_trip_request.get_employee",
+            args: {
+                employee: row.employee
+            },
+            callback: function(r) {
+                if (r.message) {
+                    frappe.model.set_value(cdt, cdn, "employee_name", r.message.employee_name);
+                    frappe.model.set_value(cdt, cdn, "department", r.message.department);
+                    frappe.model.set_value(cdt, cdn, "designation", r.message.designation);
+                    frappe.model.set_value(cdt, cdn, "salutation", r.message.salutation);
+                }
+            }
+        })
+        
+    },
+});
+
 

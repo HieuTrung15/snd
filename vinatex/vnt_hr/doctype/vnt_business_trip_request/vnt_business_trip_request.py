@@ -225,6 +225,7 @@ def replace_attendance_for_business_trip(doc: Document):
     company = doc.get("company")
     destination = (doc.get("destination") or "").strip()
 
+    # tạo attendance
     d = start_date
     while d <= end_date:
         for emp in employees:
@@ -240,6 +241,30 @@ def replace_attendance_for_business_trip(doc: Document):
             att.insert(ignore_permissions=True)
             att.submit()
         d = add_days(d, 1)
+
+    # tạo đăng ký xe nếu có check đăng ký xe và submit luôn
+    for i in doc.items:
+        if i.need_car:
+            create_vehicle_request_for_business_trip(doc, i)
+
+def create_vehicle_request_for_business_trip(doc: Document, item):
+    vehicle_request = frappe.new_doc("VNT Car Registration")
+    vehicle_request.employee = doc.employee
+    vehicle_request.employee_name = doc.employee_name
+    vehicle_request.company = doc.company
+    vehicle_request.department = doc.department
+    
+    vehicle_request.from_date = doc.from_date
+    vehicle_request.to_date = doc.to_date
+    vehicle_request.purpose = doc.purpose
+    vehicle_request.start = item.start
+    vehicle_request.end = item.end
+    vehicle_request.approver = doc.approver
+    vehicle_request.company = doc.company
+    vehicle_request.status = "Submitted"
+    vehicle_request.insert(ignore_permissions=True)
+    vehicle_request.submit()
+
 
 def cancel_attendance_for_trip(doc: Document):
     employees = _collect_employees(doc)
@@ -263,3 +288,9 @@ def _notify_employees_rejected(doc: Document):
         "document_type": doc.doctype,
         "document_name": doc.name,
     }, users)
+
+
+@frappe.whitelist()
+def get_employee(employee):
+    user_id = frappe.db.get_value("Employee", employee, ["employee_name", "department", "designation", "salutation"], as_dict=True)
+    return user_id

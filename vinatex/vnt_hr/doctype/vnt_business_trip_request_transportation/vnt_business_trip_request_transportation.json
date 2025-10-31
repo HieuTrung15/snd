@@ -9,7 +9,13 @@
   "section_break_a54h",
   "transport_mode",
   "travel_route",
-  "note"
+  "note",
+  "column_break_rc7a",
+  "need_car",
+  "start",
+  "end",
+  "time",
+  "distance"
  ],
  "fields": [
   {
@@ -34,13 +40,52 @@
    "fieldtype": "Small Text",
    "in_list_view": 1,
    "label": "Note"
+  },
+  {
+   "fieldname": "column_break_rc7a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "need_car",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "\u0110\u0103ng k\u00fd xe"
+  },
+  {
+   "depends_on": "eval: doc.need_car == 1",
+   "fieldname": "start",
+   "fieldtype": "Data",
+   "label": "\u0110i\u1ec3m \u0111i",
+   "mandatory_depends_on": "eval: doc.need_car == 1"
+  },
+  {
+   "depends_on": "eval: doc.need_car == 1",
+   "fieldname": "end",
+   "fieldtype": "Data",
+   "label": "\u0110i\u1ec3m \u0111\u1ebfn",
+   "mandatory_depends_on": "eval: doc.need_car == 1"
+  },
+  {
+   "depends_on": "eval: doc.need_car == 1",
+   "fieldname": "time",
+   "fieldtype": "Datetime",
+   "label": "Th\u1eddi gian"
+  },
+  {
+   "depends_on": "eval: doc.need_car == 1",
+   "fieldname": "distance",
+   "fieldtype": "Select",
+   "label": "Kho\u1ea3ng c\u00e1ch",
+   "mandatory_depends_on": "eval: doc.need_car == 1",
+   "options": "\nT\u1eeb 40 km tr\u1edf l\u00ean\nD\u01b0\u1edbi 40 km"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-08 14:19:53.628469",
+ "modified": "2025-10-30 16:37:52.335611",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request Transportation",
