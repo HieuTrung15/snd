@@ -30,6 +30,10 @@ class VNTBusinessTripRequest(Document):
     def on_update_after_submit(self):
         _apply_state_effects(self)
 
+    def on_cancel(self):
+        cancel_attendance_for_trip(self)
+        cancel_vehicle_requests_for_trip(self)
+
     def validate(self):
         if not self.from_date or not self.to_date:
             frappe.throw(_("Vui lòng nhập đầy đủ Từ ngày và Đến ngày"))
@@ -132,6 +136,7 @@ def _apply_state_effects(doc: Document):
     if _in_state(state, REJECT_STATES):
         delete_todos_for_doc(doc)
         cancel_attendance_for_trip(doc)
+        cancel_vehicle_requests_for_trip(doc)
         _notify_employees_rejected(doc)
         return
 
@@ -295,7 +300,7 @@ def replace_attendance_for_business_trip(doc: Document):
         d = add_days(d, 1)
 
     # tạo đăng ký xe nếu có check đăng ký xe và submit luôn
-    for i in doc.items:
+    for i in doc.transportation:
         if i.need_car:
             create_vehicle_request_for_business_trip(doc, i)
 
@@ -305,14 +310,23 @@ def create_vehicle_request_for_business_trip(doc: Document, item):
     vehicle_request.employee_name = doc.employee_name
     vehicle_request.company = doc.company
     vehicle_request.department = doc.department
+    vehicle_request.distance = item.distance
+    vehicle_request.note = doc.purpose
+    
     
     vehicle_request.from_date = doc.from_date
     vehicle_request.to_date = doc.to_date
     vehicle_request.purpose = doc.purpose
     vehicle_request.start = item.start
     vehicle_request.end = item.end
-    vehicle_request.approver = doc.approver
+    approver_user = get_employee_user_id(doc.approver)
+    vehicle_request.approver = approver_user or doc.approver
     vehicle_request.company = doc.company
+    employees = sorted(_collect_employees(doc))
+    vehicle_request.set("list_emp", [])
+    for emp in employees:
+        vehicle_request.append("list_emp", {"employee": emp})
+    vehicle_request.business_trip = doc.name
     vehicle_request.status = "Submitted"
     vehicle_request.insert(ignore_permissions=True)
     vehicle_request.submit()
@@ -327,6 +341,36 @@ def cancel_attendance_for_trip(doc: Document):
     if end_date < start_date:
         start_date, end_date = end_date, start_date
     _delete_or_cancel_attendance(employees, start_date, end_date)
+
+def cancel_vehicle_requests_for_trip(doc: Document):
+    """Update linked car registrations when the trip is rejected or cancelled."""
+    if not doc.get("name"):
+        return
+    names = frappe.get_all(
+        "VNT Car Registration",
+        filters={
+            "business_trip": doc.name,
+            "docstatus": ["!=", 2],
+        },
+        pluck="name",
+    )
+    for name in names:
+        try:
+            car_doc = frappe.get_doc("VNT Car Registration", name)
+            car_doc.flags.ignore_permissions = True
+            car_doc.flags.ignore_validate_update_after_submit = True
+            cancle_state = "Đã hủy"
+            
+            if (car_doc.workflow_state or "").strip() != cancle_state or car_doc.workflow_state == "Đã duyệt":
+                car_doc.workflow_state = cancle_state
+                car_doc.cancel()
+                car_doc.save(ignore_permissions=True)
+            # frappe.throw(car_doc.workflow_state)
+        except Exception:
+            frappe.log_error(
+                frappe.get_traceback(),
+                f"Không thể cập nhật phiếu đăng ký xe liên kết {name} của phiếu công tác {doc.name}",
+            )
 
 
 def _notify_employees_rejected(doc: Document):
