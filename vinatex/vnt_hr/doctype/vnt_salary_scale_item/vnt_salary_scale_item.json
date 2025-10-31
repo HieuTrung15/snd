@@ -123,14 +123,15 @@
   {
    "fieldname": "10",
    "fieldtype": "Float",
-   "label": "B\u1eadc 10"
+   "label": "B\u1eadc 10",
+   "precision": "1"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-31 13:28:32.729560",
+ "modified": "2025-10-31 13:49:00.758058",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Salary Scale Item",
