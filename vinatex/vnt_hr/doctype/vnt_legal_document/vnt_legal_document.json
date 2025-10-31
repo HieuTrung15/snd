@@ -1,11 +1,12 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:{document_name}",
+ "autoname": "naming_series:",
  "creation": "2025-10-28 16:49:42.303930",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "naming_series",
   "employee",
   "employee_name",
   "date",
@@ -129,17 +130,23 @@
    "in_list_view": 1,
    "label": "N\u1ed9i dung",
    "reqd": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "options": "VB-.MM..YY.-.####"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-31 09:20:11.688224",
+ "modified": "2025-10-31 09:53:28.198373",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Legal Document",
- "naming_rule": "Expression",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -160,5 +167,6 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "document_name"
 }
