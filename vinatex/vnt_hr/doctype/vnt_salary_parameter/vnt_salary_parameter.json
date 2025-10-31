@@ -1,11 +1,12 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "naming_series:",
  "creation": "2025-10-31 14:27:58.746521",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_do34",
+  "naming_series",
   "employee",
   "employee_name",
   "date",
@@ -18,13 +19,10 @@
   "corporate_minimum_wage",
   "column_break_bene",
   "meal_allowance",
-  "travel_allowance"
+  "travel_allowance",
+  "amended_from"
  ],
  "fields": [
-  {
-   "fieldname": "section_break_do34",
-   "fieldtype": "Section Break"
-  },
   {
    "fieldname": "employee",
    "fieldtype": "Link",
@@ -89,16 +87,33 @@
    "fieldname": "travel_allowance",
    "fieldtype": "Currency",
    "label": "Ti\u1ec1n c\u00f4ng t\u00e1c ph\u00ed"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "options": "TSL-.MM..YY.-.####"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VNT Salary Parameter",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-31 14:41:00.753122",
+ "modified": "2025-10-31 14:45:26.073392",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Salary Parameter",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
