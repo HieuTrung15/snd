@@ -133,7 +133,7 @@ def compute_employee_month_context(
 			status_key = "future"
 		else:
 			key = (employee, day)
-
+			
 			if doj and day < doj:
 				status = STATUS_CODE["CHƯA VÀO LÀM"]
 				status_key = "pre_join"
@@ -152,6 +152,7 @@ def compute_employee_month_context(
 			else:
 				att = att_map.get(key)
 				if att:
+					# frappe.throw(att.get("status"))
 					att_status = (att.get("status") or "").strip()
 					leave_type = att.get("leave_type")
 					attendance_status = att_status
@@ -162,6 +163,7 @@ def compute_employee_month_context(
 						source = "attendance_present"
 						totals["tot_present"] += 1
 						value_units += 1.0
+						print(value_units)
 					elif att_status in ("Work Trip",):
 						units = 1.0
 						status = STATUS_CODE["CÔNG TÁC"]
@@ -261,13 +263,13 @@ def compute_employee_month_context(
 			source=source,
 		)
 
-	if manual_flag:
-		for key in totals:
-			totals[key] = None
-		category_totals = {}
-		value_units = None
-	else:
-		category_totals = dict(category_totals)
+	# if manual_flag:
+	# 	for key in totals:
+	# 		totals[key] = None
+	# 	category_totals = {}
+	# 	value_units = None
+	# else:
+	category_totals = dict(category_totals)
 
 	return {
 		"days": days,

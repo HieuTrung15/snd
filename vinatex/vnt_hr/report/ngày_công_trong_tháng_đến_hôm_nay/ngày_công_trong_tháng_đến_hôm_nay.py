@@ -57,7 +57,7 @@ def execute(filters=None):
 		or frappe.defaults.get_user_default("Company")
 		or frappe.defaults.get_global_default("company")
 	)
-
+	# sử dụng hàm chung trong attendance_month_common để tính toán số lượng ngày công,nghỉ phép
 	context = compute_employee_month_context(emp_doc, start_date, end_date, company)
 	if not context:
 		return _columns(), [{"value": 0.0}], LEGEND_HTML
@@ -67,7 +67,7 @@ def execute(filters=None):
 	day_details = context["day_details"]
 	totals = context["totals"]
 	category_totals = context["category_totals"]
-	manual_flag = context["manual_flag"]
+	# manual_flag = context["manual_flag"]
 
 	row = {
 		"value": None if context["value_units"] is None else float(context["value_units"]),
@@ -90,13 +90,16 @@ def execute(filters=None):
 	row["tot_miss"] = _safe_number(totals.get("tot_miss"), as_int=True)
 	row["tot_on_duty"] = _safe_number(totals.get("tot_business_trip"))
 	row["tot_unpaid_leave"] = (
-		None if manual_flag else float(category_totals.get("unpaid", 0.0))
+		# None if manual_flag else 
+		float(category_totals.get("unpaid", 0.0))
 	)
 	row["tot_paid_leave"] = (
-		None if manual_flag else float(category_totals.get("paid_leave", 0.0))
+		# None if manual_flag else 
+		float(category_totals.get("paid_leave", 0.0))
 	)
 	row["tot_social_leave"] = (
-		None if manual_flag else float(category_totals.get("regime", 0.0))
+		# None if manual_flag else 
+		float(category_totals.get("regime", 0.0))
 	)
 	row["tot_half_day"] = _safe_number(totals.get("tot_half_day"), as_int=True)
 	row["tot_not_joined"] = _safe_number(totals.get("tot_not_joined"), as_int=True)
