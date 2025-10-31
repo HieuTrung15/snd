@@ -11,12 +11,12 @@
  "idx": 0,
  "indicator_color": "",
  "is_hidden": 0,
- "label": "2. Qu\u1ea3n tr\u1ecb TCKT",
+ "label": "Qu\u1ea3n tr\u1ecb TCKT",
  "links": [],
- "modified": "2025-10-04 23:36:56.185574",
+ "modified": "2025-10-27 15:09:34.208638",
  "modified_by": "Administrator",
  "module": "VNT Accounts",
- "name": "2. Qu\u1ea3n tr\u1ecb TCKT",
+ "name": "Qu\u1ea3n tr\u1ecb TCKT",
  "number_cards": [],
  "owner": "Administrator",
  "parent_page": "",
@@ -25,5 +25,5 @@
  "roles": [],
  "sequence_id": 51.0,
  "shortcuts": [],
- "title": "2. Qu\u1ea3n tr\u1ecb TCKT"
+ "title": "Qu\u1ea3n tr\u1ecb TCKT"
 }

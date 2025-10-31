@@ -52,6 +52,11 @@ class VntLeaveApplication(LeaveApplication):
 		self.status = "Approved"
 
 
+	def on_cancel(self):
+		super().on_cancel()
+		_check_emp_checkin_after_cancel(self)
+
+
 	def on_update(self):
 		# chuyển sang theo dõi workflow_state
 		if self.has_value_changed("workflow_state"):
@@ -194,6 +199,53 @@ def _handle_state_transition(doc: Document):
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, [approver_user])
+
+
+def _check_emp_checkin_after_cancel(doc: Document):
+	"""kiểm tra nếu nhân viên đã có dữ liệu Employee Checkin trong khoảng nghỉ phép đã duyệt thì tạo attendance tương ứng."""
+	# kiểm tra dữ liệu Attendance
+	from frappe.utils import getdate
+	attendance_records = frappe.get_all(
+		"Attendance",
+		filters={
+			"employee": doc.employee,
+			"attendance_date": ("between", [doc.from_date, doc.to_date]),
+			"docstatus": 1,
+			"status": ("in", ["Present", "Work From Home"]),
+		},
+		fields=["name", "attendance_date", "status"],
+		order_by="attendance_date",
+	)
+	if attendance_records:
+		return  # đã có attendance thì không tạo nữa
+	# kiểm tra dữ liệu Employee Checkin
+	employee_checkins = frappe.get_all(
+		"Employee Checkin",
+		filters={
+			"employee": doc.employee,
+			"time": ("between", [str(doc.from_date) + " 00:00:00", str(doc.to_date) + " 23:59:59"]),
+		},
+		fields=["name", "time"],
+		order_by="time",
+	)
+	if not employee_checkins:
+		return  # không có dữ liệu checkin thì không làm gì
+	# tạo attendance cho các ngày có checkin
+	attendance_dates = set()
+	for checkin in employee_checkins:
+		checkin_date = getdate(checkin.time)
+		attendance_dates.add(checkin_date)
+	for att_date in attendance_dates:
+		new_attendance = frappe.new_doc("Attendance")
+		new_attendance.employee = doc.employee
+		new_attendance.employee_name = doc.employee_name
+		new_attendance.company = doc.company
+		new_attendance.department = doc.department
+		new_attendance.attendance_date = att_date
+		new_attendance.status = "Present"
+		new_attendance.docstatus = 1
+		new_attendance.insert(ignore_permissions=True)
+		frappe.db.commit()
 
 
 def _notify_to_approver(doc: Document):

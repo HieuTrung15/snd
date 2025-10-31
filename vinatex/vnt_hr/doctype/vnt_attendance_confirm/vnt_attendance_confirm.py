@@ -13,6 +13,10 @@ from frappe.utils import getdate
 
 
 class VNTAttendanceConfirm(Document):
+	def on_submit(self):
+		_cron_submit_attendance_confirm()
+
+
 	def on_update(self):
 		# nếu các dòng trong items có giải trình và không có phê duyệt thì gửi thông báo đến người duyệt
 		pending = [row for row in (self.get("items") or []) if row.get("type") and not row.get("confirm")]
@@ -34,6 +38,7 @@ class VNTAttendanceConfirm(Document):
 					))
 			_make_attendance_from_confirmation(self)
 			_reject_attendance_from_confirmation(self)
+			_close_approver_todos(self)
 
 	def on_cancel(self):
 		_cancel_attendance_from_confirmation(self)
@@ -51,6 +56,16 @@ def _resolve_employee_user(doc: Document) -> str | None:
 		return user
 	raw = doc.get("email")
 	if raw and frappe.db.get_value("Employee", {"user_id": raw}, "name") == doc.employee:
+		return raw
+	return None
+
+
+def _resolve_approver_user(doc: Document) -> str | None:
+	user = _employee_user_id(doc.approver)
+	if user:
+		return user
+	raw = doc.get("email")
+	if raw and frappe.db.get_value("Employee", {"user_id": raw}, "name") == doc.approver:
 		return raw
 	return None
 
@@ -195,22 +210,22 @@ def _cancel_attendance_from_confirmation(doc: Document):
 
 
 def _notify_approver_pending(doc: Document):
-	user = doc.get("approver")
+	emp = doc.get("approver")
+	user = _employee_user_id(emp)
 	if not user or not doc.items:
 		return
-	all_filled = all(bool(d.type) for d in doc.items)
-	if all_filled:
-		_ensure_todo_for_approver(doc, user)
 
-		subject = _("Chờ duyệt chấm công: {0}").format(doc.employee_name or doc.employee or _("Nhân viên"))
-		message = _(
-			"{0} đã gửi bảng chấm công từ {1} đến {2}.")
-		message = message.format(
-			doc.employee_name or doc.employee or _("Nhân viên"),
-			frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
-			frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
-		)
-		_send_notification(doc, user, subject, message)
+	_ensure_todo_for_approver(doc, user)
+
+	subject = _("Chờ duyệt chấm công: {0}").format(doc.employee_name or doc.employee or _("Nhân viên"))
+	message = _(
+		"{0} đã gửi bảng chấm công từ {1} đến {2}.")
+	message = message.format(
+		doc.employee_name or doc.employee or _("Nhân viên"),
+		frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
+		frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
+	)
+	_send_notification(doc, user, subject, message)
 
 
 def _ensure_todo_for_approver(doc: Document, user: str):
@@ -240,26 +255,39 @@ def _ensure_todo_for_approver(doc: Document, user: str):
 
 
 def _close_employee_todos(doc: Document):
-	fill_all = False
-	for row in doc.get("items") or []:
-		if row.get("type"):
-			fill_all = True
-	if fill_all:
-		employee_user = _resolve_employee_user(doc)
-		if not employee_user:
-			return
-		names = frappe.get_all(
-			"ToDo",
-			filters={
-				"reference_type": doc.doctype,
-				"reference_name": doc.name,
-				"allocated_to": employee_user,
-				"status": ["!=", "Cancelled"],
-			},
-			pluck="name",
-		)
-		for n in names:
-			frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
+	employee_user = _resolve_employee_user(doc)
+	if not employee_user:
+		return
+	names = frappe.get_all(
+		"ToDo",
+		filters={
+			"reference_type": doc.doctype,
+			"reference_name": doc.name,
+			"allocated_to": employee_user,
+			"status": ["!=", "Cancelled"],
+		},
+		pluck="name",
+	)
+	for n in names:
+		frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
+
+
+def _close_approver_todos(doc: Document):
+	approver_user = _resolve_approver_user(doc)
+	if not approver_user:
+		return
+	names = frappe.get_all(
+		"ToDo",
+		filters={
+			"reference_type": doc.doctype,
+			"reference_name": doc.name,
+			"allocated_to": approver_user,
+			"status": ["!=", "Cancelled"],
+		},
+		pluck="name",
+	)
+	for n in names:
+		frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
 
 
 def _notify_cancel_employee_result(doc: Document):
@@ -276,6 +304,36 @@ def _notify_cancel_employee_result(doc: Document):
 	)
 
 	_send_notification(doc, user, subject, message)
+
+
+@frappe.whitelist()
+def _cron_submit_attendance_confirm():
+	emps = _pick_employees(None)
+	"""Tìm các phiếu chấm công của từng employee, điền giá trị type = 'OK' và confirm = 'Đồng ý' cho các ngày chưa có giá trị. Sau đó submit phiếu.	"""
+	for emp in emps:
+		emp_name = emp["name"]
+		# Tìm phiếu tháng hiện tại (docstatus=1)
+		att_name = frappe.db.get_value(
+			"VNT Attendance Confirm",
+			{
+				"employee": emp_name,
+				"from_date": getdate(datetime.today().replace(day=1)),
+				"docstatus": 1,
+			},
+			"name",
+		)
+		if not att_name:
+			continue
+		att = frappe.get_doc("VNT Attendance Confirm", att_name)
+		changed = False
+		for row in att.get("items") or []:
+			if not row.get("type"):
+				row.type = "OK"
+				row.confirm = "Đồng ý"
+				changed = True
+		if changed:
+			att.save()
+			att.submit()
 
 
 @frappe.whitelist()
@@ -323,7 +381,8 @@ def make_attendance_confirm():
 			att.department = emp.get("department")
 			att.email = emp.get("user_id")
 			att.from_date = month_from
-			att.approver = _employee_user_id(emp.get("reports_to")) if emp.get("reports_to") else None
+			att.approver = emp.get("reports_to") or None
+			att.approver_name = emp.get("employee_name") or None
 			# att.docstatus = 1
 			is_new = True
 
@@ -340,10 +399,10 @@ def make_attendance_confirm():
 			row = existing_by_date.get(d)
 
 			if key in attendance_set:
-				if row:
-					att.remove(row)
-					existing_by_date.pop(d, None)
-					changed = True
+				# if row:
+				# 	att.remove(row)
+				# 	existing_by_date.pop(d, None)
+				# 	changed = True
 				continue
 			# Tính status + thời gian vào/ra
 			if key in leaves_set:
