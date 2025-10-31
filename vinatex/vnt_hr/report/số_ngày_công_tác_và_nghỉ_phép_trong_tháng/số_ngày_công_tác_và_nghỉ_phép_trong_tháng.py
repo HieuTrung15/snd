@@ -92,10 +92,10 @@ def execute(filters=None):
 		row[fieldname] = "/".join(labels) if labels else ""
 
 	total_value = tot_business_trip + tot_paid_leave
-	row["tot_business_trip"] = None if manual_flag else float(tot_business_trip)
-	row["tot_annual_leave"] = None if manual_flag else float(tot_paid_leave)
-	row["tot_total"] = None if manual_flag else float(total_value)
-	row["value"] = None if manual_flag else float(total_value)
+	row["tot_business_trip"] =  float(tot_business_trip)
+	row["tot_annual_leave"] =  float(tot_paid_leave)
+	row["tot_total"] =  float(total_value)
+	row["value"] =  float(total_value)
 
 	return columns, [row], LEGEND_HTML
 
