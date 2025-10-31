@@ -1,33 +1,180 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "format:\u0110KPH-{DD}-{MM}-{YYYY}-{employee_name}-{##}",
  "creation": "2025-10-29 14:00:35.582696",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "employee",
-  "employee_name"
+  "employee_name",
+  "column_break_wnzg",
+  "department",
+  "branch",
+  "section_break_nop0",
+  "start_time",
+  "end_time",
+  "column_break_uslj",
+  "date",
+  "section_break_3xn7",
+  "people",
+  "meet_online",
+  "column_break_rvle",
+  "party",
+  "link_online",
+  "section_break_hjxd",
+  "approver",
+  "approver_name",
+  "column_break_cn1n",
+  "follower",
+  "follower_name",
+  "amended_from"
  ],
  "fields": [
   {
    "fieldname": "employee",
    "fieldtype": "Link",
-   "label": "Ng\u01b0\u1eddi l\u1eadp",
+   "label": "M\u00e3 nh\u00e2n vi\u00ean",
    "options": "Employee"
   },
   {
+   "fetch_from": "employee.employee_name",
    "fieldname": "employee_name",
    "fieldtype": "Data",
-   "label": "T\u00ean ng\u01b0\u1eddi l\u1eadp"
+   "label": "T\u00ean ng\u01b0\u1eddi \u0111\u1ec1 xu\u1ea5t"
+  },
+  {
+   "fieldname": "column_break_wnzg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Ph\u00f2ng ban",
+   "options": "Department"
+  },
+  {
+   "fetch_from": "employee.branch",
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "V\u0103n ph\u00f2ng",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "section_break_nop0",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "start_time",
+   "fieldtype": "Time",
+   "label": "Th\u1eddi gian b\u1eaft \u0111\u1ea7u"
+  },
+  {
+   "fieldname": "end_time",
+   "fieldtype": "Time",
+   "label": "Th\u1eddi gian k\u1ebft th\u00fac"
+  },
+  {
+   "fieldname": "column_break_uslj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_3xn7",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "people",
+   "fieldtype": "Int",
+   "label": "S\u1ed1 ng\u01b0\u1eddi tham d\u1ef1 h\u1ecdp"
+  },
+  {
+   "fieldname": "meet_online",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "H\u1ecdp tr\u1ef1c tuy\u1ebfn",
+   "options": "\nC\u00f3\nKh\u00f4ng",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_rvle",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Ghi r\u00f5 s\u1ed1 l\u01b0\u1ee3ng hoa qu\u1ea3, b\u00e1nh ng\u1ecdt, tr\u00e0, n\u01b0\u1edbc su\u1ed1i",
+   "fieldname": "party",
+   "fieldtype": "Small Text",
+   "label": "Ti\u1ec7c tr\u00e0",
+   "max_height": "28px"
+  },
+  {
+   "fieldname": "section_break_hjxd",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fetch_from": "employee.reports_to",
+   "fieldname": "approver",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "ignore_user_permissions": 1,
+   "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "approver_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean ng\u01b0\u1eddi ph\u00ea duy\u1ec7t"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VNT Meeting Room Booking",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Data",
+   "label": "Ng\u00e0y h\u1ecdp"
+  },
+  {
+   "fieldname": "follower",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "ignore_user_permissions": 1,
+   "label": "Ng\u01b0\u1eddi theo d\u00f5i",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "follower_name",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Ng\u01b0\u1eddi theo d\u00f5i"
+  },
+  {
+   "fieldname": "column_break_cn1n",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.meet_online == 'C\u00f3'",
+   "fieldname": "link_online",
+   "fieldtype": "Small Text",
+   "label": "Link h\u1ecdp tr\u1ef1c tuy\u1ebfn",
+   "max_height": "28px"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2025-10-29 14:01:22.432428",
+ "modified": "2025-10-31 17:01:00.264507",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Meeting Room Booking",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
@@ -40,6 +187,31 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Leave Approver",
+   "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],
