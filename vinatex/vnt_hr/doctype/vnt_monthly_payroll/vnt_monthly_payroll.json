@@ -1,12 +1,13 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:BL-{month}{year}",
+ "autoname": "naming_series:",
  "creation": "2025-10-31 14:50:44.071900",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "section_break_ms0j",
+  "naming_series",
   "employee",
   "employee_name",
   "date",
@@ -90,17 +91,23 @@
    "fieldname": "items",
    "fieldtype": "Table",
    "options": "VNT Monthly Payroll Item"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "options": "BL-.MM..YY.-.##"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-31 16:40:10.518715",
+ "modified": "2025-10-31 17:11:17.340440",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Monthly Payroll",
- "naming_rule": "Expression",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
