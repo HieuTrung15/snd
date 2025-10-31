@@ -21,8 +21,10 @@
    "fieldname": "employee",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
+   "in_list_view": 1,
    "label": "Ng\u01b0\u1eddi l\u1eadp phi\u1ebfu",
-   "options": "Employee"
+   "options": "Employee",
+   "reqd": 1
   },
   {
    "fetch_from": "employee.employee_name",
@@ -38,12 +40,16 @@
   {
    "fieldname": "date",
    "fieldtype": "Date",
-   "label": "Ng\u00e0y l\u1eadp"
+   "in_list_view": 1,
+   "label": "Ng\u00e0y l\u1eadp",
+   "reqd": 1
   },
   {
    "fieldname": "title",
    "fieldtype": "Data",
-   "label": "Ti\u00eau \u0111\u1ec1 tin t\u1ee9c"
+   "in_list_view": 1,
+   "label": "Ti\u00eau \u0111\u1ec1 tin t\u1ee9c",
+   "reqd": 1
   },
   {
    "fieldname": "section_break_mjbw",
@@ -52,23 +58,27 @@
   {
    "fieldname": "noidung",
    "fieldtype": "Text Editor",
-   "label": "N\u1ed9i dung"
+   "in_list_view": 1,
+   "label": "N\u1ed9i dung",
+   "reqd": 1
   },
   {
    "fieldname": "attach",
    "fieldtype": "Attach",
    "label": "\u0110\u00ednh k\u00e8m file",
-   "make_attachment_public": 1
+   "make_attachment_public": 1,
+   "no_copy": 1
   },
   {
    "fieldname": "html",
-   "fieldtype": "HTML"
+   "fieldtype": "HTML",
+   "no_copy": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-29 08:34:50.424424",
+ "modified": "2025-10-31 09:29:23.716405",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT New Feed",

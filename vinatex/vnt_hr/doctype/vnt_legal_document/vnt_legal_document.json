@@ -101,8 +101,7 @@
    "fieldname": "attach",
    "fieldtype": "Attach",
    "label": "\u0110\u00ednh k\u00e8m",
-   "make_attachment_public": 1,
-   "reqd": 1
+   "make_attachment_public": 1
   },
   {
    "fieldname": "html",
@@ -136,7 +135,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-28 17:11:26.142520",
+ "modified": "2025-10-31 09:20:11.688224",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Legal Document",
