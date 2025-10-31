@@ -1,0 +1,123 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-31 14:27:58.746521",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_do34",
+  "employee",
+  "employee_name",
+  "date",
+  "column_break_fcef",
+  "from_date",
+  "to_date",
+  "section_break_ykdk",
+  "reference_salary",
+  "regional_minimum_wage",
+  "corporate_minimum_wage",
+  "column_break_bene",
+  "meal_allowance",
+  "travel_allowance"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_do34",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Ng\u01b0\u1eddi l\u1eadp",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fetch_if_empty": 1,
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean ng\u01b0\u1eddi l\u1eadp"
+  },
+  {
+   "fieldname": "column_break_fcef",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y l\u1eadp"
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "Th\u1eddi gian hi\u1ec7u l\u1ef1c t\u1eeb ng\u00e0y"
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "\u0110\u1ebfn ng\u00e0y"
+  },
+  {
+   "fieldname": "section_break_ykdk",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_bene",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "corporate_minimum_wage",
+   "fieldtype": "Currency",
+   "label": "L\u01b0\u01a1ng TT t\u1eadp \u0111o\u00e0n"
+  },
+  {
+   "fieldname": "reference_salary",
+   "fieldtype": "Currency",
+   "label": "L\u01b0\u01a1ng tham chi\u1ebfu"
+  },
+  {
+   "fieldname": "regional_minimum_wage",
+   "fieldtype": "Currency",
+   "label": "L\u01b0\u01a1ng t\u1ed1i thi\u1ec3u v\u00f9ng"
+  },
+  {
+   "fieldname": "meal_allowance",
+   "fieldtype": "Currency",
+   "label": "Ti\u1ec1n \u0103n ca"
+  },
+  {
+   "fieldname": "travel_allowance",
+   "fieldtype": "Currency",
+   "label": "Ti\u1ec1n c\u00f4ng t\u00e1c ph\u00ed"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-10-31 14:41:00.753122",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Salary Parameter",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
