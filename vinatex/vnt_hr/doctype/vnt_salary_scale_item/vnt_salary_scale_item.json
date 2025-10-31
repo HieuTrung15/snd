@@ -1,0 +1,144 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-31 11:01:43.620267",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "designation",
+  "column_break_gval",
+  "h\u1ec7_s\u1ed1_c\u00e1c_b\u1eadc_l\u01b0\u01a1ng_section",
+  "1",
+  "2",
+  "3",
+  "column_break_fkmn",
+  "4",
+  "5",
+  "6",
+  "column_break_fekj",
+  "7",
+  "8",
+  "9",
+  "10"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Ch\u1ee9c danh",
+   "options": "Designation"
+  },
+  {
+   "fieldname": "column_break_gval",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "h\u1ec7_s\u1ed1_c\u00e1c_b\u1eadc_l\u01b0\u01a1ng_section",
+   "fieldtype": "Section Break",
+   "label": "H\u1ec7 s\u1ed1 c\u00e1c b\u1eadc l\u01b0\u01a1ng"
+  },
+  {
+   "columns": 1,
+   "fieldname": "1",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "B\u1eadc 1",
+   "precision": "1"
+  },
+  {
+   "columns": 1,
+   "fieldname": "2",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "B\u1eadc 2",
+   "precision": "1"
+  },
+  {
+   "columns": 1,
+   "fieldname": "3",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "B\u1eadc 3",
+   "precision": "1"
+  },
+  {
+   "fieldname": "column_break_fkmn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "4",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "B\u1eadc 4",
+   "precision": "1"
+  },
+  {
+   "columns": 1,
+   "fieldname": "5",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "B\u1eadc 5",
+   "precision": "1"
+  },
+  {
+   "columns": 1,
+   "fieldname": "6",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "B\u1eadc 6",
+   "precision": "1"
+  },
+  {
+   "fieldname": "column_break_fekj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "7",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "B\u1eadc 7",
+   "precision": "1"
+  },
+  {
+   "columns": 1,
+   "fieldname": "8",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "B\u1eadc 8",
+   "precision": "1"
+  },
+  {
+   "columns": 1,
+   "fieldname": "9",
+   "fieldtype": "Float",
+   "in_preview": 1,
+   "label": "B\u1eadc 9",
+   "precision": "1"
+  },
+  {
+   "fieldname": "10",
+   "fieldtype": "Float",
+   "label": "B\u1eadc 10"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-10-31 13:28:32.729560",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Salary Scale Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
