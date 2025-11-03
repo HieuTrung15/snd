@@ -36,9 +36,9 @@ def _handle_state_transition(doc):
 	# lấy ra người duyệt
 	approver = doc.get("approver")
 	approver_user = get_employee_user_id(approver)
-	if prev_state == "Mới tạo" and curr_state == "Chờ phê duyệt":
+	if prev_state == "Mới tạo" and curr_state == "Chờ duyệt":
 		_notify_to_approver(doc, user=approver_user)
-	if prev_state == "Chờ phê duyệt" and curr_state == "Đã duyệt":
+	if prev_state == "Chờ duyệt" and curr_state == "Đã duyệt":
 		# Đóng todo khi đã duyệt
 		_check_state_to_close_todo(doc, user=approver_user)
 	# gửi thông báo cho người đăng ký
@@ -77,10 +77,10 @@ def _notify_to_approver(doc: Document, user: str | None):
 	"""Gửi thông báo đến người duyệt khi đơn được chuyển sang trạng thái 'Chờ duyệt'."""
 	make_notification_logs({
 		"type": "Alert",
-		"subject": _("Phiếu đăng ký {0} của {1} đang chờ duyệt.").format(doc.get("leave_type") or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
+		"subject": _("Phiếu đăng ký phòng họp của {0} ngày {1} đang chờ duyệt.").format(doc.employee_name or _("(không rõ)"), doc.date or _("(không rõ ngày đăng ký)")),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
-		"subject": _('Duyệt đăng ký {0} của {1}').format(doc.get("leave_type") or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
+		"subject": _('Duyệt đăng ký phòng họp của {0} ngày {1}').format(doc.employee_name or _("(không rõ)"), doc.date or _("(không rõ ngày đăng ký)")),
 	}, [user])
 	# tạo todo cho người duyệt
 	ensure_todo(doc, user)

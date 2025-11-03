@@ -22,8 +22,6 @@ frappe.ui.form.on("VNT Meeting Room Booking", {
                 }
             });
 			frm.set_value("date", frappe.datetime.get_today());
-			frm.set_value("start_time", "09:00");
-			frm.set_value("end_time", "10:00");
 		}
 	},
 });

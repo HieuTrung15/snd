@@ -8,13 +8,16 @@
  "field_order": [
   "\u0111\u0103ng_k\u00fd_xe_tab",
   "section_break_tdso",
-  "company",
   "employee",
   "employee_name",
-  "department",
   "column_break_tgvp",
+  "company",
+  "department",
+  "branch",
+  "section_break_7fxv",
   "distance",
   "note",
+  "column_break_chj2",
   "list_emp",
   "section_break_xwlf",
   "items",
@@ -40,6 +43,7 @@
   {
    "fieldname": "company",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "C\u00f4ng ty",
    "options": "Company"
   },
@@ -133,14 +137,14 @@
   {
    "fieldname": "employee",
    "fieldtype": "Link",
-   "label": "Ng\u01b0\u1eddi t\u1ea1o",
+   "label": "M\u00e3 nh\u00e2n vi\u00ean",
    "options": "Employee"
   },
   {
    "fetch_from": "employee.employee_name",
    "fieldname": "employee_name",
    "fieldtype": "Data",
-   "label": "T\u00ean ng\u01b0\u1eddi t\u1ea1o"
+   "label": "T\u00ean ng\u01b0\u1eddi \u0111\u1ec1 xu\u1ea5t"
   },
   {
    "fetch_if_empty": 1,
@@ -193,13 +197,27 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Business Trip"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "V\u0103n ph\u00f2ng",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "section_break_7fxv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_chj2",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-31 14:01:55.078921",
+ "modified": "2025-11-03 10:36:58.246022",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Car Registration",

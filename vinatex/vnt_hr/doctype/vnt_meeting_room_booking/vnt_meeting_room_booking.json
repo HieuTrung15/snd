@@ -16,18 +16,18 @@
   "end_time",
   "column_break_uslj",
   "date",
-  "section_break_3xn7",
   "people",
+  "section_break_3xn7",
   "meet_online",
-  "column_break_rvle",
-  "party",
   "link_online",
+  "party",
+  "column_break_rvle",
+  "follower",
+  "follower_name",
   "section_break_hjxd",
   "approver",
   "approver_name",
   "column_break_cn1n",
-  "follower",
-  "follower_name",
   "amended_from"
  ],
  "fields": [
@@ -41,6 +41,7 @@
    "fetch_from": "employee.employee_name",
    "fieldname": "employee_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "T\u00ean ng\u01b0\u1eddi \u0111\u1ec1 xu\u1ea5t"
   },
   {
@@ -67,13 +68,17 @@
   },
   {
    "fieldname": "start_time",
-   "fieldtype": "Time",
-   "label": "Th\u1eddi gian b\u1eaft \u0111\u1ea7u"
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Th\u1eddi gian b\u1eaft \u0111\u1ea7u",
+   "options": "8:00 AM\n8:30 AM\n9:00 AM\n9:30 AM\n10:00 AM\n10:30 AM\n11:00 AM\n11:30 AM\n12:00 PM\n12:30 PM\n1:00 PM\n1:30 PM\n2:00 PM\n2:30 PM\n3:00 PM\n3:30 PM\n4:00 PM\n4:30 PM\n5:00 PM\n5:30 PM\n6:00 PM\n6:30 PM\n7:00 PM\n7:30 PM\n8:00 PM\n8:30 PM\n9:00 PM"
   },
   {
    "fieldname": "end_time",
-   "fieldtype": "Time",
-   "label": "Th\u1eddi gian k\u1ebft th\u00fac"
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Th\u1eddi gian k\u1ebft th\u00fac",
+   "options": "8:00 AM\n8:30 AM\n9:00 AM\n9:30 AM\n10:00 AM\n10:30 AM\n11:00 AM\n11:30 AM\n12:00 PM\n12:30 PM\n1:00 PM\n1:30 PM\n2:00 PM\n2:30 PM\n3:00 PM\n3:30 PM\n4:00 PM\n4:30 PM\n5:00 PM\n5:30 PM\n6:00 PM\n6:30 PM\n7:00 PM\n7:30 PM\n8:00 PM\n8:30 PM\n9:00 PM"
   },
   {
    "fieldname": "column_break_uslj",
@@ -138,21 +143,22 @@
   {
    "fieldname": "date",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Ng\u00e0y h\u1ecdp"
   },
   {
    "fieldname": "follower",
    "fieldtype": "Link",
-   "hidden": 1,
    "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi theo d\u00f5i",
    "options": "Employee"
   },
   {
+   "fetch_from": "follower.employee_name",
    "fieldname": "follower_name",
    "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Ng\u01b0\u1eddi theo d\u00f5i"
+   "ignore_user_permissions": 1,
+   "label": "T\u00ean ng\u01b0\u1eddi theo d\u00f5i"
   },
   {
    "fieldname": "column_break_cn1n",
@@ -170,7 +176,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-31 17:01:00.264507",
+ "modified": "2025-11-03 15:49:49.079353",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Meeting Room Booking",
@@ -197,6 +203,7 @@
    "read": 1,
    "report": 1,
    "role": "Employee",
+   "select": 1,
    "share": 1,
    "write": 1
   },
@@ -219,5 +226,6 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "employee_name"
 }
