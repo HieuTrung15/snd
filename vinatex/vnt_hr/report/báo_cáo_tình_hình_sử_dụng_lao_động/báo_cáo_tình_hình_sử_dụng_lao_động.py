@@ -1,5 +1,20 @@
 import frappe
-from frappe.utils import getdate, get_first_day, get_last_day
+from frappe.utils import get_first_day, get_last_day, getdate
+
+CONTRACT_FIELDS = (
+    "contract_indef",
+    "contract_def",
+    "contract_probation",
+    "contract_none",
+    "contract_other",
+)
+
+CONTRACT_TYPE_TO_FIELD = {
+    "HĐLĐ không xác định thời hạn": "contract_indef",
+    "HĐLĐ xác định thời hạn": "contract_def",
+    "Hợp đồng thử việc": "contract_probation",
+    "Không giao kết HĐLĐ": "contract_none",
+}
 
 def execute(filters=None):
     columns = get_columns()
@@ -37,12 +52,14 @@ def get_columns():
 
 
 def get_data(filters):
+    filters = filters or {}
     from_date = getdate(filters.get("from_date")) if filters.get("from_date") else get_first_day(getdate())
     to_date = getdate(filters.get("to_date")) if filters.get("to_date") else get_last_day(getdate())
 
     departments = frappe.get_all("Department", filters={"company": filters.get("company"), "disabled": 0}, fields=["name"])
     data = []
     stt = 1
+    contract_summary = get_contract_summary(filters)
 
     for d in departments:
         dept_name = d.name
@@ -87,6 +104,8 @@ def get_data(filters):
         end_female = begin_female + increase_female - decrease_female
 
 
+        contract_counts = contract_summary.get(dept_name) or make_contract_zero()
+
         data.append({
             "department": dept_name,
             "begin_total": begin_total,
@@ -101,12 +120,60 @@ def get_data(filters):
             "decrease_transfer": decrease_transfer,
             "end_total": end_total,
             "end_female": end_female,
-            # "contract_indef": contract_indef,
-            # "contract_def": contract_def,
-            # "contract_probation": contract_probation,
-            # "contract_none": contract_none,
-            # "contract_other": contract_other,
+            "contract_indef": contract_counts["contract_indef"],
+            "contract_def": contract_counts["contract_def"],
+            "contract_probation": contract_counts["contract_probation"],
+            "contract_none": contract_counts["contract_none"],
+            "contract_other": contract_counts["contract_other"],
         })
         stt += 1
 
     return data
+
+
+def get_contract_summary(filters):
+    filters = filters or {}
+    conditions = [
+        "vc.validity = 1",
+        "vc.parenttype = 'Employee'",
+        "vc.parentfield = 'custom_vnt_contract'",
+        "emp.status = 'Active'",
+    ]
+    values = {}
+
+    if filters.get("company"):
+        conditions.append("emp.company = %(company)s")
+        values["company"] = filters.get("company")
+
+    where_clause = " AND ".join(conditions)
+    rows = frappe.db.sql(
+        f"""
+        SELECT
+            emp.department,
+            vc.parent,
+            vc.type
+        FROM `tabVNT Contract` AS vc
+        INNER JOIN `tabEmployee` AS emp ON emp.name = vc.parent
+        WHERE {where_clause}
+        """,
+        values,
+        as_dict=True,
+    )
+
+    summary = {}
+    for row in rows:
+        department = row.get("department")
+        if not department:
+            continue
+
+        fieldname = CONTRACT_TYPE_TO_FIELD.get(row.get("type"), "contract_other")
+        if department not in summary:
+            summary[department] = make_contract_zero()
+
+        summary[department][fieldname] += 1
+
+    return summary
+
+
+def make_contract_zero():
+    return {field: 0 for field in CONTRACT_FIELDS}
