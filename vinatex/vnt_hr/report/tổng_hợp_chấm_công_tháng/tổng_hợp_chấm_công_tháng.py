@@ -462,8 +462,11 @@ def _compute_employee_metrics(emp, days, holi_map, att_map, leave_map, leave_typ
 				metrics["paid"] += units
 				continue
 			if status == "On Leave":
-				category = _categorize_leave(leave_type, leave_group)
-				_add_category_units(metrics, category, units)
+				if _is_attendance_business_trip(leave_type):
+					_add_category_units(metrics, "business_trip", units)
+				else:
+					# Match grid behaviour: attendance marked On Leave counts as paid leave (P)
+					_add_category_units(metrics, "paid_leave", units)
 				continue
 			if status == "Absent":
 				continue
