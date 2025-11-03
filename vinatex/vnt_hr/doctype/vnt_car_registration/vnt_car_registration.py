@@ -17,22 +17,28 @@ class VNTCarRegistration(Document):
 def _handle_state_transition(doc: Document):
 	# xử lý chuyển trạng thái
 	prev_state, curr_state = _get_prev_and_curr_workflow_state(doc)
-	employee_user = doc.get("employee")
-	approver_user = get_employee_user_id(employee_user)
+	# thông báo cho lãnh đạo
+	approver = doc.get("approver")
+	approver_user = get_employee_user_id(approver)
+	# thông báo cho lãnh đạo tập đoàn
+	approver_lv2 = doc.get("approver_lv2")
+	approver_user_lv2 = get_employee_user_id(approver_lv2)
 	if curr_state == "Chờ lãnh đạo duyệt" and prev_state == "Mới tạo":
-		_notify_to_approver(doc)
+		_notify_to_approver(doc, user=approver_user)
 	if curr_state == "Đã duyệt" and prev_state == "Chờ lãnh đạo duyệt" or \
 		curr_state == "Chờ lãnh đạo tập đoàn duyệt" and prev_state == "Chờ lãnh đạo duyệt":
-		_check_state_to_close_todo(doc, doc.get("approver"))
+		_check_state_to_close_todo(doc, user=approver_user)
 	if curr_state == "Đã duyệt" and prev_state == "Chờ lãnh đạo tập đoàn duyệt":
-		_check_state_to_close_todo(doc, doc.get("approver_lv2"))
+		_check_state_to_close_todo(doc, user=approver_user_lv2)
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Chờ lãnh đạo tập đoàn duyệt':
-		_notify_to_approver_2(doc)
+		_notify_to_approver_2(doc, user=approver_user_lv2)
 	if curr_state == 'Từ chối':
-		_check_state_to_close_todo(doc, doc.get("approver"))
-		_check_state_to_close_todo(doc, doc.get("approver_lv2"))
+		_check_state_to_close_todo(doc, user=approver_user)
+		_check_state_to_close_todo(doc, user=approver_user_lv2)
 
 	# thông báo cho employee
+	employee_user = doc.get("employee")
+	approver_user = get_employee_user_id(employee_user)
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Đã duyệt':
 		make_notification_logs({
 			"type": "Alert",
@@ -74,32 +80,30 @@ def _handle_state_transition(doc: Document):
     }, [approver_user])
 		
 
-def _notify_to_approver(doc: Document):
+def _notify_to_approver(doc: Document, user: str | None):
 	"""Gửi thông báo đến người duyệt khi đơn được chuyển sang trạng thái 'Chờ lãnh đạo duyệt'."""
-	approver_emp = doc.get("approver")
 	make_notification_logs({
 		"type": "Alert",
 		"subject": _("Phiếu đăng ký xe của {0} đang chờ lãnh đạo duyệt.").format(doc.employee_name or _("(không rõ)")),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 		"subject": _('Duyệt đăng ký xe của {0}').format(doc.employee_name or _("(không rõ)")),
-	}, [approver_emp])
+	}, [user])
 	# tạo todo cho người duyệt
-	ensure_todo(doc, approver_emp)
+	ensure_todo(doc, user)
 
 
-def _notify_to_approver_2(doc: Document):
+def _notify_to_approver_2(doc: Document, user: str | None):
 	"""Gửi thông báo đến người duyệt khi đơn được chuyển sang trạng thái 'Chờ lãnh đạo tập đoàn duyệt'."""
-	approver_emp = doc.get("approver_lv2")
 	make_notification_logs({
 		"type": "Alert",
 		"subject": _("Phiếu đăng ký xe của {0} đang chờ lãnh đạo tập đoàn duyệt.").format(doc.employee_name or _("(không rõ)")),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 		"subject": _('Duyệt đăng ký xe của {0}').format(doc.employee_name or _("(không rõ)")),
-	}, [approver_emp])
+	}, [user])
 	# tạo todo cho người duyệt
-	ensure_todo(doc, approver_emp)
+	ensure_todo(doc, user)
 
 
 def get_employee_user_id(employee_name: str) -> str | None:
@@ -181,4 +185,6 @@ def get_reports_to(user):
 	if not employee_doc:
 		return
 	approver = frappe.get_value("Department Approver", {"parent": employee_doc.department, "custom_level_1": True}, "approver", as_dict=True)
-	return approver.approver if approver else ""
+	if approver:
+		approver_emp = frappe.get_value("Employee", {"user_id": approver.approver}, ["name", "employee_name"])
+	return approver_emp if approver else ""

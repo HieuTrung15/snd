@@ -115,11 +115,10 @@
    "ignore_user_permissions": 1,
    "in_list_view": 1,
    "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
-   "options": "User",
+   "options": "Employee",
    "reqd": 1
   },
   {
-   "fetch_from": "approver.full_name",
    "fieldname": "approver_name",
    "fieldtype": "Data",
    "label": "T\u00ean ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
@@ -161,7 +160,8 @@
   },
   {
    "fieldname": "column_break_lxjs",
-   "fieldtype": "Column Break"
+   "fieldtype": "Column Break",
+   "read_only": 1
   },
   {
    "default": "tanpv@vinatex.com.vn",
@@ -170,15 +170,16 @@
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi duy\u1ec7t c\u1ea5p 2",
-   "options": "User",
+   "options": "Employee",
    "read_only": 1
   },
   {
+   "default": "Ph\u1ea1m V\u0103n T\u00e2n",
    "depends_on": "eval: doc.distance == 'T\u1eeb 40 km tr\u1edf l\u00ean'",
-   "fetch_from": "approver_lv2.full_name",
    "fieldname": "approver_name_lv2",
    "fieldtype": "Data",
-   "label": "T\u00ean ng\u01b0\u1eddi ph\u00ea duy\u1ec7t c\u1ea5p 2"
+   "label": "T\u00ean ng\u01b0\u1eddi ph\u00ea duy\u1ec7t c\u1ea5p 2",
+   "read_only": 1
   },
   {
    "fieldname": "\u0111\u0103ng_k\u00fd_xe_tab",
@@ -199,6 +200,7 @@
    "label": "Business Trip"
   },
   {
+   "fetch_from": "employee.branch",
    "fieldname": "branch",
    "fieldtype": "Link",
    "label": "V\u0103n ph\u00f2ng",
@@ -217,7 +219,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-03 10:36:58.246022",
+ "modified": "2025-11-03 16:48:36.067555",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Car Registration",

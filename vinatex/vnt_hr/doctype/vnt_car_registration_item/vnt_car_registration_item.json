@@ -9,6 +9,7 @@
   "start",
   "end",
   "column_break_ow4i",
+  "date",
   "time",
   "note"
  ],
@@ -33,22 +34,28 @@
   },
   {
    "fieldname": "time",
-   "fieldtype": "Datetime",
+   "fieldtype": "Time",
    "in_list_view": 1,
-   "label": "Th\u1eddi gian \u0111i"
+   "label": "Gi\u1edd \u0111i"
   },
   {
    "fieldname": "note",
    "fieldtype": "Small Text",
    "in_list_view": 1,
    "label": "Ghi ch\u00fa"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Ng\u00e0y \u0111i"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-29 16:07:04.019132",
+ "modified": "2025-11-03 16:03:52.564994",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Car Registration Item",
