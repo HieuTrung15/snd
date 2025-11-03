@@ -1,0 +1,209 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-03 17:05:50.704838",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "amended_from",
+  "employee",
+  "employee_name",
+  "column_break_unsg",
+  "department",
+  "branch",
+  "section_break_8qmv",
+  "items",
+  "add_on",
+  "items_add_on",
+  "section_break_s8fm",
+  "m\u1ee5c_\u0111\u00edch",
+  "column_break_birp",
+  "approver",
+  "approver_name",
+  "section_break_w3lf",
+  "approver_lv2",
+  "approver_lv2_name",
+  "column_break_kcvx",
+  "follower",
+  "follower_name"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_8qmv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VNT External Products",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "M\u00e3 nh\u00e2n vi\u00ean",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean ng\u01b0\u1eddi \u0111\u1ec1 xu\u1ea5t"
+  },
+  {
+   "fieldname": "column_break_unsg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Ph\u00f2ng/ban",
+   "options": "Department"
+  },
+  {
+   "fetch_from": "employee.branch",
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "V\u0103n ph\u00f2ng",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Danh s\u00e1ch s\u1ea3n ph\u1ea9m \u0111\u1ed1i ngo\u1ea1i",
+   "options": "VNT External Products Item",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "add_on",
+   "fieldtype": "Check",
+   "label": "Th\u00eam s\u1ea3n ph\u1ea9m kh\u00e1c"
+  },
+  {
+   "depends_on": "eval: doc.add_on",
+   "fieldname": "items_add_on",
+   "fieldtype": "Table",
+   "label": "Danh s\u00e1ch s\u1ea3n ph\u1ea9m kh\u00e1c",
+   "options": "VNT External Products Item Add On"
+  },
+  {
+   "fieldname": "section_break_s8fm",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "m\u1ee5c_\u0111\u00edch",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "M\u1ee5c \u0111\u00edch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_birp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "approver",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "approver_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean ng\u01b0\u1eddi ph\u00ea duy\u1ec7t"
+  },
+  {
+   "fieldname": "section_break_w3lf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "approver_lv2",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "L\u00e3nh \u0111\u1ea1o T\u0110",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "approver_lv2_name",
+   "fieldtype": "Data",
+   "label": "L\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n"
+  },
+  {
+   "fieldname": "column_break_kcvx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "follower",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Ng\u01b0\u1eddi theo d\u00f5i",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "follower_name",
+   "fieldtype": "Data",
+   "label": "Ng\u01b0\u1eddi theo d\u00f5i"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-11-03 17:44:52.913752",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT External Products",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Leave Approver",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
