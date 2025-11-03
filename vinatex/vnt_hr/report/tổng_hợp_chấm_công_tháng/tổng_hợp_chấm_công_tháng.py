@@ -222,6 +222,7 @@ def _get_employees(filters, start_date, end_date):
 			custom_need_check = 1
 			OR COALESCE(attendance_device_id, '') != ''
 		)
+		AND branch = 'Văn phòng 1'
 		ORDER BY
 			CASE
 				WHEN designation = 'Tổng Giám đốc Tập đoàn' THEN -2
@@ -416,9 +417,10 @@ def _compute_employee_metrics(emp, days, holi_map, att_map, leave_map, leave_typ
 		"remote": 0.0,
 		"forget": 0.0,
 	}
+	forget_dates = []
 
 	if skip_manual:
-		return metrics, True
+		return metrics, True, forget_dates
 
 	for d in days:
 		if d < doj:
@@ -476,8 +478,9 @@ def _compute_employee_metrics(emp, days, holi_map, att_map, leave_map, leave_typ
 			continue
 
 		metrics["forget"] += 1.0
+		forget_dates.append(d)
 
-	return metrics, False
+	return metrics, False, forget_dates
 
 
 def _build_summary_rows(employees, days, holi_map, att_map, leave_map, leave_type_groups):
@@ -495,7 +498,7 @@ def _build_summary_rows(employees, days, holi_map, att_map, leave_map, leave_typ
 	}
 
 	for emp in employees:
-		metrics, skip_manual = _compute_employee_metrics(
+		metrics, skip_manual, forget_dates = _compute_employee_metrics(
 			emp,
 			days,
 			holi_map,
@@ -517,6 +520,7 @@ def _build_summary_rows(employees, days, holi_map, att_map, leave_map, leave_typ
 			"unpaid_days": "" if skip_manual else flt(metrics["unpaid"], 4),
 			"remote_days": "" if skip_manual else flt(metrics["remote"], 4),
 			"forget_days": "" if skip_manual else flt(metrics["forget"], 4),
+			"note": "" if skip_manual else _format_forget_notes(forget_dates),
 		}
 		rows.append(row)
 		if not skip_manual:
@@ -524,6 +528,14 @@ def _build_summary_rows(employees, days, holi_map, att_map, leave_map, leave_typ
 				totals[key] += row[key]
 
 	return rows, totals
+
+
+def _format_forget_notes(dates):
+	if not dates:
+		return ""
+	ordered_dates = sorted(set(dates))
+	formatted_days = ", ".join(d.strftime("%d/%m") for d in ordered_dates)
+	return _("Quên chấm công: {0}").format(formatted_days)
 
 
 @frappe.whitelist()
@@ -585,6 +597,7 @@ def download_summary_xlsx(filters):
 
 	header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
 	text_alignment = Alignment(horizontal="left", vertical="center")
+	note_alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
 	center_alignment = Alignment(horizontal="center", vertical="center")
 	total_alignment = Alignment(horizontal="right", vertical="center")
 	number_format = "0.00"
@@ -613,6 +626,7 @@ def download_summary_xlsx(filters):
 		"K": 16,
 		"L": 16,
 		"M": 16,
+		"N": 32,
 	}
 	for col, width in column_widths.items():
 		sheet.column_dimensions[col].width = width
@@ -653,6 +667,7 @@ def download_summary_xlsx(filters):
 	write_header(1, 11, 2, 11, _("Nghỉ không lương/ Nghỉ ốm/TS"))
 	write_header(1, 12, 2, 12, _("Làm việc Từ xa"))
 	write_header(1, 13, 2, 13, _("Quên chấm công"))
+	write_header(1, 14, 2, 14, _("Ghi chú"))
 
 	data_start_row = 3
 	current_row = data_start_row
@@ -672,6 +687,7 @@ def download_summary_xlsx(filters):
 			row["unpaid_days"],
 			row["remote_days"],
 			row["forget_days"],
+			row["note"],
 		]
 
 		for col_idx, value in enumerate(values, start=1):
@@ -679,10 +695,10 @@ def download_summary_xlsx(filters):
 			cell.border = border
 			if col_idx == 1:
 				cell.alignment = center_alignment
-			elif col_idx in (4,):
+			elif col_idx in (2, 3, 4):
 				cell.alignment = text_alignment
-			elif col_idx in (2, 3):
-				cell.alignment = text_alignment
+			elif col_idx == 14:
+				cell.alignment = note_alignment
 			else:
 				cell.alignment = center_alignment
 				cell.number_format = number_format if value != "" else "General"
@@ -716,6 +732,12 @@ def download_summary_xlsx(filters):
 			cell.border = border
 			cell.fill = total_fill
 			cell.number_format = number_format
+
+		note_total_cell = sheet.cell(row=current_row, column=14, value="")
+		note_total_cell.font = total_font
+		note_total_cell.alignment = note_alignment
+		note_total_cell.border = border
+		note_total_cell.fill = total_fill
 
 	sheet.freeze_panes = "A3"
 
