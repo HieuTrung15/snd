@@ -1,0 +1,49 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-03 16:11:16.698317",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "percent",
+  "from_cur",
+  "to_cur"
+ ],
+ "fields": [
+  {
+   "fieldname": "percent",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Thu\u1ebf su\u1ea5t",
+   "precision": "2"
+  },
+  {
+   "fieldname": "from_cur",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Thu nh\u1eadp ch\u1ecbu thu\u1ebf t\u1eeb"
+  },
+  {
+   "fieldname": "to_cur",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Thu nh\u1eadp ch\u1ecbu thu\u1ebf \u0111\u1ebfn"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-03 17:35:40.243244",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Salary Parameter Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

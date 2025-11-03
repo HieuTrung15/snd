@@ -6,34 +6,27 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_ms0j",
   "naming_series",
   "employee",
   "employee_name",
   "date",
+  "standard_working_days",
   "column_break_jaen",
   "month",
   "year",
   "company",
   "branch",
   "amended_from",
+  "get_salary",
   "section_break_fgrx",
   "items"
  ],
  "fields": [
   {
-   "fieldname": "section_break_ms0j",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "employee",
    "fieldtype": "Link",
    "label": "Ng\u01b0\u1eddi t\u1ea1o",
-   "no_copy": 1,
-   "options": "Employee",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
+   "options": "Employee"
   },
   {
    "fetch_from": "employee.employee_name",
@@ -68,6 +61,8 @@
    "options": "Company"
   },
   {
+   "fetch_from": "employee.branch",
+   "fetch_if_empty": 1,
    "fieldname": "branch",
    "fieldtype": "Link",
    "label": "Chi nh\u00e1nh",
@@ -97,13 +92,23 @@
    "fieldtype": "Select",
    "hidden": 1,
    "options": "BL-.MM..YY.-.##"
+  },
+  {
+   "fieldname": "standard_working_days",
+   "fieldtype": "Int",
+   "label": "S\u1ed1 ng\u00e0y c\u00f4ng chu\u1ea9n th\u00e1ng"
+  },
+  {
+   "fieldname": "get_salary",
+   "fieldtype": "Button",
+   "label": "T\u00ednh l\u01b0\u01a1ng"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-31 17:11:17.340440",
+ "modified": "2025-11-03 18:31:07.803726",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Monthly Payroll",

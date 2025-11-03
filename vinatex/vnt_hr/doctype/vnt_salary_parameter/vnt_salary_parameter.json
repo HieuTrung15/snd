@@ -13,6 +13,8 @@
   "column_break_fcef",
   "from_date",
   "to_date",
+  "giam_tru_gia_canh",
+  "giam_tru_npt",
   "section_break_ykdk",
   "reference_salary",
   "regional_minimum_wage",
@@ -20,7 +22,9 @@
   "column_break_bene",
   "meal_allowance",
   "travel_allowance",
-  "amended_from"
+  "amended_from",
+  "section_break_wtos",
+  "items"
  ],
  "fields": [
   {
@@ -103,13 +107,32 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "section_break_wtos",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "options": "VNT Salary Parameter Item"
+  },
+  {
+   "fieldname": "giam_tru_gia_canh",
+   "fieldtype": "Currency",
+   "label": "M\u1ee9c gi\u1ea3m tr\u1eeb gia c\u1ea3nh"
+  },
+  {
+   "fieldname": "giam_tru_npt",
+   "fieldtype": "Currency",
+   "label": "M\u1ee9c gi\u1ea3m tr\u1eeb NPT"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-31 14:45:26.073392",
+ "modified": "2025-11-03 17:03:43.906004",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Salary Parameter",
