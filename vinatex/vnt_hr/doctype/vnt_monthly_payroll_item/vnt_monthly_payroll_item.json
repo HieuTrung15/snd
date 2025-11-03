@@ -105,7 +105,8 @@
   {
    "fieldname": "luong_cb",
    "fieldtype": "Currency",
-   "label": "L\u01b0\u01a1ng c\u01a1 b\u1ea3n (7)"
+   "label": "L\u01b0\u01a1ng c\u01a1 b\u1ea3n (7)",
+   "precision": "3"
   },
   {
    "fetch_from": "employee.custom_allowance_coefficient_1",
@@ -118,7 +119,8 @@
   {
    "fieldname": "pc_dang1",
    "fieldtype": "Currency",
-   "label": "PC \u0110\u1ea3ng 1 (9)"
+   "label": "PC \u0110\u1ea3ng 1 (9)",
+   "precision": "3"
   },
   {
    "fetch_from": "employee.custom_allowance_coefficient_2",
@@ -131,12 +133,14 @@
   {
    "fieldname": "pc_kiem_nhiem1",
    "fieldtype": "Currency",
-   "label": "PC ki\u00eam nhi\u1ec7m 1 (11)"
+   "label": "PC ki\u00eam nhi\u1ec7m 1 (11)",
+   "precision": "3"
   },
   {
    "fieldname": "tong_luong_cb",
    "fieldtype": "Currency",
-   "label": "T\u1ed5ng l\u01b0\u01a1ng c\u01a1 b\u1ea3n & PC (12)"
+   "label": "T\u1ed5ng l\u01b0\u01a1ng c\u01a1 b\u1ea3n & PC (12)",
+   "precision": "3"
   },
   {
    "fieldname": "sophep",
@@ -151,7 +155,8 @@
   {
    "fieldname": "luong_nghiphep_vr",
    "fieldtype": "Currency",
-   "label": "L\u01b0\u01a1ng ng\u00e0y ngh\u1ec9 ph\u00e9p, VR (15)"
+   "label": "L\u01b0\u01a1ng ng\u00e0y ngh\u1ec9 ph\u00e9p, VR (15)",
+   "precision": "3"
   },
   {
    "fieldname": "nghi_kluong_bhxh",
@@ -173,80 +178,87 @@
   {
    "fieldname": "tien_luong_hqcv",
    "fieldtype": "Currency",
-   "label": "Ti\u1ec1n l\u01b0\u01a1ng HQCV (19)"
+   "label": "Ti\u1ec1n l\u01b0\u01a1ng HQCV (19)",
+   "precision": "3"
   },
   {
    "fieldname": "pc_dang2",
    "fieldtype": "Currency",
    "label": "PC \u0110\u1ea3ng 2 (20)",
-   "precision": "2"
+   "precision": "3"
   },
   {
    "fieldname": "pc_kiem_nhiem2",
    "fieldtype": "Currency",
-   "label": "PC ki\u00eam nhi\u1ec7m 2 (21)"
+   "label": "PC ki\u00eam nhi\u1ec7m 2 (21)",
+   "precision": "2"
   },
   {
    "fieldname": "tien_an",
    "fieldtype": "Currency",
-   "label": "Ti\u1ec1n \u0103n ca (22)"
+   "label": "Ti\u1ec1n \u0103n ca (22)",
+   "precision": "3"
   },
   {
    "fieldname": "tien_khoan_ct",
    "fieldtype": "Currency",
-   "label": "Ti\u1ec1n kho\u00e1n c\u00f4ng t\u00e1c ph\u00ed (23)"
+   "label": "Ti\u1ec1n kho\u00e1n c\u00f4ng t\u00e1c ph\u00ed (23)",
+   "precision": "3"
   },
   {
    "fieldname": "truylinh",
    "fieldtype": "Currency",
-   "label": "Truy l\u0129nh (24)"
+   "label": "Truy l\u0129nh (24)",
+   "precision": "3"
   },
   {
    "fieldname": "tong_thu_nhap",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "T\u1ed5ng thu nh\u1eadp (25)"
+   "label": "T\u1ed5ng thu nh\u1eadp (25)",
+   "precision": "3"
   },
   {
    "fieldname": "tong_tn_chiu_thue",
    "fieldtype": "Currency",
-   "label": "T\u1ed5ng thu nh\u1eadp ch\u1ecbu thu\u1ebf (26)"
+   "label": "T\u1ed5ng thu nh\u1eadp ch\u1ecbu thu\u1ebf (26)",
+   "precision": "3"
   },
   {
    "fieldname": "tru_bhxh",
    "fieldtype": "Currency",
-   "label": "Tr\u1eeb BHXH (27)"
+   "label": "Tr\u1eeb BHXH (27)",
+   "precision": "3"
   },
   {
    "fieldname": "tru_bhyt",
    "fieldtype": "Currency",
-   "label": "Tr\u1eeb BHYT(28)"
+   "label": "Tr\u1eeb BHYT(28)",
+   "precision": "3"
   },
   {
    "fieldname": "tru_bhtn",
    "fieldtype": "Currency",
-   "label": "Tr\u1eeb BHTN (29)"
+   "label": "Tr\u1eeb BHTN (29)",
+   "precision": "3"
   },
   {
    "fieldname": "xh_yt_tn",
    "fieldtype": "Currency",
-   "label": "B\u1ea3o hi\u1ec3m (XH, YT, TN) (30)"
+   "label": "B\u1ea3o hi\u1ec3m (XH, YT, TN) (30)",
+   "precision": "3"
   },
   {
    "fieldname": "doan_phi_cd",
    "fieldtype": "Currency",
-   "label": "\u0110o\u00e0n ph\u00ed C\u0110 (31)"
-  },
-  {
-   "default": "0",
-   "fieldname": "dang_vien",
-   "fieldtype": "Check",
-   "label": "\u0110\u1ea3ng vi\u00ean (32)"
+   "label": "\u0110o\u00e0n ph\u00ed C\u0110 (31)",
+   "precision": "3"
   },
   {
    "fieldname": "dang_phi",
    "fieldtype": "Currency",
-   "label": "\u0110\u1ea3ng ph\u00ed (33)"
+   "label": "\u0110\u1ea3ng ph\u00ed (33)",
+   "precision": "3"
   },
   {
    "fetch_from": "employee.custom_relation_number",
@@ -266,34 +278,40 @@
   {
    "fieldname": "thu_nhap_tinh_thue",
    "fieldtype": "Currency",
-   "label": "Thu nh\u1eadp t\u00ednh thu\u1ebf (36)"
+   "label": "Thu nh\u1eadp t\u00ednh thu\u1ebf (36)",
+   "precision": "3"
   },
   {
    "fieldname": "tncn_tam_thu",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Thu\u1ebf TNCN t\u1ea1m thu (37)"
+   "label": "Thu\u1ebf TNCN t\u1ea1m thu (37)",
+   "precision": "3"
   },
   {
    "fieldname": "khac",
    "fieldtype": "Currency",
-   "label": "Kh\u00e1c (38)"
+   "label": "Kh\u00e1c (38)",
+   "precision": "3"
   },
   {
    "fieldname": "truy_thu",
    "fieldtype": "Currency",
-   "label": "Truy thu thu\u1ebf TNCN (39)"
+   "label": "Truy thu thu\u1ebf TNCN (39)",
+   "precision": "3"
   },
   {
    "fieldname": "duoc_hoan_lai",
    "fieldtype": "Currency",
-   "label": "Thu\u1ebf TNCN \u0111\u01b0\u1ee3c ho\u00e0n l\u1ea1i (40)"
+   "label": "Thu\u1ebf TNCN \u0111\u01b0\u1ee3c ho\u00e0n l\u1ea1i (40)",
+   "precision": "3"
   },
   {
    "fieldname": "thuc_linh",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Th\u1ef1c l\u0129nh (41)"
+   "label": "Th\u1ef1c l\u0129nh (41)",
+   "precision": "3"
   },
   {
    "fieldname": "note",
@@ -363,13 +381,19 @@
   {
    "fieldname": "column_break_syvt",
    "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.custom_party_member",
+   "fieldname": "dang_vien",
+   "fieldtype": "Data",
+   "label": "\u0110\u1ea3ng vi\u00ean (32)"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-31 16:38:52.846944",
+ "modified": "2025-11-03 17:56:39.311494",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Monthly Payroll Item",
