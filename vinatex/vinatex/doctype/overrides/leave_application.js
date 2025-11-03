@@ -86,7 +86,7 @@ frappe.ui.form.on("Leave Application", {
 
 	refresh(frm) {
 		if (frm.is_new()) {
-			frm.set_value("custom_leave_group", "Nghỉ có hưởng lương, chế độ");
+			frm.set_value("custom_leave_group", "Nghỉ phép");
 			frm.set_value("leave_type", "Nghỉ phép năm");
 		}
 		toggle_reject_reason(frm);
