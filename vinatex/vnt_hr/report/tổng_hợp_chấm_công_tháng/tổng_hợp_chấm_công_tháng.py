@@ -13,7 +13,7 @@ STATUS_CODE = {
 	"CUỐI TUẦN": "T",        # Thứ 7/CN
 	"ĐI LÀM": "X",            # Đi làm
 	"VẮNG MẶT": "V",          # Vắng mặt
-	"QUÊN CHẤM CÔNG": "",
+	"CHẤM CÔNG BẤT THƯỜNG": "",
 	"CÔNG TÁC": "CT",
 	"NGHỈ NỬA NGÀY": "H",
 	"NGHỈ PHÉP": "P",
@@ -141,7 +141,7 @@ def execute(filters):
 				continue
 
 			# 6) Không có attendance/leave -> coi là quên chấm công
-			row[key] = STATUS_CODE["QUÊN CHẤM CÔNG"]
+			row[key] = STATUS_CODE["CHẤM CÔNG BẤT THƯỜNG"]
 			row["tot_miss"] += 1
 
 		if manual_flag:
@@ -175,7 +175,7 @@ def _columns_pivot(days):
 		{"fieldname": "tot_weekend", "label": "Cuối tuần", "fieldtype": "Int", "width": 100},
 		{"fieldname": "tot_business_trip", "label": "Công tác", "fieldtype": "Int", "width": 100, "precision": 2},
 		{"fieldname": "tot_absent",  "label": "Vắng",  "fieldtype": "Int", "width": 100},
-		{"fieldname": "tot_miss",    "label": "Quên chấm công","fieldtype": "Int", "width": 100},
+		{"fieldname": "tot_miss",    "label": "Chấm công bất thường","fieldtype": "Int", "width": 100},
 	]
 	return base
 
@@ -535,7 +535,7 @@ def _format_forget_notes(dates):
 		return ""
 	ordered_dates = sorted(set(dates))
 	formatted_days = ", ".join(d.strftime("%d/%m") for d in ordered_dates)
-	return _("Quên chấm công: {0}").format(formatted_days)
+	return _("Chấm công bất thường: {0}").format(formatted_days)
 
 
 @frappe.whitelist()
@@ -666,7 +666,7 @@ def download_summary_xlsx(filters):
 
 	write_header(1, 11, 2, 11, _("Nghỉ không lương/ Nghỉ ốm/TS"))
 	write_header(1, 12, 2, 12, _("Làm việc Từ xa"))
-	write_header(1, 13, 2, 13, _("Quên chấm công"))
+	write_header(1, 13, 2, 13, _("Chấm công bất thường"))
 	write_header(1, 14, 2, 14, _("Ghi chú"))
 
 	data_start_row = 3
