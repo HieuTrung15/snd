@@ -79,7 +79,7 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 				if (row.bhxh == "")
 					frappe.model.set_value(row.doctype, row.name, "tong_luong_cb", 0);
 				else if (
-					row.luong_cb + row.pc_dang1 + row.pc_kiem_nhiem1 >
+					toNumber(row.luong_cb) + toNumber(row.pc_dang1) + toNumber(row.pc_kiem_nhiem1) >
 					20 * r.message.reference_salary
 				)
 					frappe.model.set_value(
@@ -93,7 +93,9 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 						row.doctype,
 						row.name,
 						"tong_luong_cb",
-						row.luong_cb + row.pc_dang1 + row.pc_kiem_nhiem1
+						toNumber(row.luong_cb) +
+							toNumber(row.pc_dang1) +
+							toNumber(row.pc_kiem_nhiem1)
 					);
 
 				if (!row.bhxh)
@@ -127,7 +129,9 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 					row.doctype,
 					row.name,
 					"xh_yt_tn",
-					row.tru_bhxh + row.tru_bhyt + row.tru_bhtn
+					toNumber(row.tru_bhxh) +
+						toNumber(row.tru_bhyt) +
+						toNumber(row.tru_bhtn)
 				);
 
 				frappe.model.set_value(
@@ -145,9 +149,19 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 					r.message.so_ngay_nghi_vr
 				);
 
+				const standard_working_days = toNumber(frm.doc.standard_working_days);
+				if (!standard_working_days) {
+					frappe.model.set_value(row.doctype, row.name, "tong_thu_nhap", 0);
+					frappe.model.set_value(row.doctype, row.name, "thuc_linh", 0);
+					frm.refresh_field("items");
+					return;
+				}
+
+				const so_phep = toNumber(r.message.so_phep);
+				const so_ngay_nghi_vr = toNumber(r.message.so_ngay_nghi_vr);
 				let luong_nghiphep_vr =
-					(row.luong_cb / frm.doc.standard_working_days) *
-					(r.message.so_phep + r.message.so_ngay_nghi_vr);
+					(toNumber(row.luong_cb) / standard_working_days) *
+					(so_phep + so_ngay_nghi_vr);
 				frappe.model.set_value(
 					row.doctype,
 					row.name,
@@ -166,19 +180,19 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 					row.doctype,
 					row.name,
 					"ngay_cong",
-					frm.doc.standard_working_days -
-						row.sophep -
-						row.so_ngay_nghi_vr -
-						row.nghi_kluong_bhxh
+					standard_working_days -
+						so_phep -
+						so_ngay_nghi_vr -
+						toNumber(row.nghi_kluong_bhxh)
 				);
 
 				frappe.model.set_value(
 					row.doctype,
 					row.name,
 					"tien_luong_hqcv",
-					((row.he_so_cbnv * r.message.corporate_minimum_wage) /
-						frm.doc.standard_working_days) *
-						row.ngay_cong
+					((toNumber(row.he_so_cbnv) * toNumber(r.message.corporate_minimum_wage)) /
+						standard_working_days) *
+						toNumber(row.ngay_cong)
 				);
 
 				frappe.model.set_value(
@@ -198,8 +212,8 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 					row.doctype,
 					row.name,
 					"tien_an",
-					(r.message.meal_allowance / frm.doc.standard_working_days) *
-						row.ngay_cong
+					(toNumber(r.message.meal_allowance) / standard_working_days) *
+						toNumber(row.ngay_cong)
 				);
 				frappe.model.set_value(
 					row.doctype,
@@ -212,13 +226,13 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 					row.doctype,
 					row.name,
 					"tong_thu_nhap",
-					row.pc_dang2 +
-						row.pc_kiem_nhiem2 +
-						row.luong_nghiphep_vr +
-						row.tien_luong_hqcv +
-						row.tien_an +
-						row.tien_khoan_ct +
-						row.truylinh
+					toNumber(row.pc_dang2) +
+						toNumber(row.pc_kiem_nhiem2) +
+						toNumber(row.luong_nghiphep_vr) +
+						toNumber(row.tien_luong_hqcv) +
+						toNumber(row.tien_an) +
+						toNumber(row.tien_khoan_ct) +
+						toNumber(row.truylinh)
 				);
 
 				frappe.model.set_value(
@@ -345,4 +359,9 @@ function get_standard_working_days(frm, month, year) {
     }
     frm.set_value("standard_working_days", workingDays);
     frm.refresh_field("standard_working_days");
+}
+
+function toNumber(value) {
+	const num = Number(value);
+	return Number.isFinite(num) ? num : 0;
 }
