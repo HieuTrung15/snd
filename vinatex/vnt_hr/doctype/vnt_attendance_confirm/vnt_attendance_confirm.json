@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:XNCC-T{MM}-{employee_name}",
+ "autoname": "format:XNCC-Ng\u00e0y-{DD}/{MM}/{YYYY}-{employee_name}",
  "creation": "2025-09-18 21:12:44.660032",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -68,6 +68,7 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "to_date",
    "fieldtype": "Date",
    "label": "\u0110\u1ebfn ng\u00e0y",
@@ -110,7 +111,6 @@
    "fetch_if_empty": 1,
    "fieldname": "approver",
    "fieldtype": "Link",
-   "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
    "options": "User",
    "read_only": 1
@@ -149,7 +149,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-30 14:53:01.246199",
+ "modified": "2025-11-03 08:50:53.742919",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Attendance Confirm",
