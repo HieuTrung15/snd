@@ -16,7 +16,7 @@ function maybe_redirect(frm) {
   const rn = frm.doc?.reference_name;   // name của chứng từ đích
   // const st = frm.doc?.status;
 
-  const TARGETS = ['VNT Attendance Confirm', 'VNT Business Trip Request','Leave Application'];
+  const TARGETS = ['VNT Attendance Confirm', 'VNT Business Trip Request','Leave Application','VNT Car Registration'];
 
   if (!rt || !rn) return;
   if (!TARGETS.includes(rt)) return;

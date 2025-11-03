@@ -32,6 +32,12 @@ def _handle_state_transition(doc: Document):
 		_check_state_to_close_todo(doc, user=approver_user_lv2)
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Chờ lãnh đạo tập đoàn duyệt':
 		_notify_to_approver_2(doc, user=approver_user_lv2)
+		_notify_to_approver_2(doc)
+	if prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Đã duyệt':
+		_notify_to_employee(doc, "duyệt")
+	if (prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Từ chối'):
+		_notify_to_employee(doc, "từ chối")
+	
 	if curr_state == 'Từ chối':
 		_check_state_to_close_todo(doc, user=approver_user)
 		_check_state_to_close_todo(doc, user=approver_user_lv2)
@@ -105,6 +111,24 @@ def _notify_to_approver_2(doc: Document, user: str | None):
 	# tạo todo cho người duyệt
 	ensure_todo(doc, user)
 
+def _notify_to_employee(doc: Document, status: str):
+	"""Gửi thông báo đến list nhân viên(list_emp) khi đơn được duyệt hoặc từ chối."""
+	list_emp = doc.get("list_emp")
+	if not list_emp:
+		return
+	for emp in list_emp:
+		employee_user = get_employee_user_id(emp.employee)
+		if not employee_user:
+			continue
+		make_notification_logs({
+			"type": "Alert",
+			"subject": _("Phiếu đăng ký xe của {0} đã {1}.").format(
+				doc.employee_name or _("(không rõ)"),
+				status,
+			),
+			"document_type": doc.doctype,
+			"document_name": doc.name,
+		}, [employee_user])
 
 def get_employee_user_id(employee_name: str) -> str | None:
     if not employee_name:
