@@ -22,18 +22,18 @@
   "section_break_xwlf",
   "items",
   "section_break_3tb8",
+  "approver_name",
   "approver",
   "approver_lv2",
   "column_break_lxjs",
-  "approver_name",
   "approver_name_lv2",
-  "section_break_bsjc",
-  "amended_from",
   "\u0111i\u1ec1u_xe_tab",
   "driver",
+  "t\u00ean_nh\u00e2n_s\u1ef1_l\u00e1i_xe",
   "column_break_kxuy",
   "car_type",
-  "business_trip"
+  "business_trip",
+  "amended_from"
  ],
  "fields": [
   {
@@ -81,7 +81,6 @@
   },
   {
    "allow_on_submit": 1,
-   "depends_on": "eval: doc.workflow_state == '\u0110\u00e3 duy\u1ec7t'",
    "fieldname": "car_type",
    "fieldtype": "Select",
    "label": "Ch\u1ecdn lo\u1ea1i xe",
@@ -92,31 +91,17 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "VNT Car Registration",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
    "fieldname": "column_break_kxuy",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "section_break_bsjc",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "approver",
    "fieldtype": "Link",
+   "hidden": 1,
    "ignore_user_permissions": 1,
    "in_list_view": 1,
    "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
-   "options": "Employee",
-   "reqd": 1
+   "options": "Employee"
   },
   {
    "fieldname": "approver_name",
@@ -126,7 +111,6 @@
   },
   {
    "allow_on_submit": 1,
-   "depends_on": "eval: doc.workflow_state == '\u0110\u00e3 duy\u1ec7t'",
    "fieldname": "driver",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
@@ -168,6 +152,7 @@
    "depends_on": "eval: doc.distance == 'T\u1eeb 40 km tr\u1edf l\u00ean'",
    "fieldname": "approver_lv2",
    "fieldtype": "Link",
+   "hidden": 1,
    "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi duy\u1ec7t c\u1ea5p 2",
    "options": "Employee",
@@ -213,13 +198,30 @@
   {
    "fieldname": "column_break_chj2",
    "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fetch_from": "driver.employee_name",
+   "fieldname": "t\u00ean_nh\u00e2n_s\u1ef1_l\u00e1i_xe",
+   "fieldtype": "Data",
+   "label": "T\u00ean nh\u00e2n s\u1ef1 l\u00e1i xe"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VNT Car Registration",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-03 16:48:36.067555",
+ "modified": "2025-11-04 09:55:05.581841",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Car Registration",
@@ -263,11 +265,25 @@
    "share": 1,
    "submit": 1,
    "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Taskmaster",
+   "select": 1,
+   "share": 1,
+   "submit": 1,
+   "write": 1
   }
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "employee_name"
 }
