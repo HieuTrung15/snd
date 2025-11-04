@@ -243,7 +243,7 @@ def compute_employee_month_context(
 							source = "leave_full"
 							totals["tot_leave"] += 1
 					else:
-						status = STATUS_CODE["QUÊN CHẤM CÔNG"]
+						status = STATUS_CODE["CHẤM CÔNG BẤT THƯỜNG"]
 						status_key = "missing"
 						source = "missing"
 						totals["tot_miss"] += 1
