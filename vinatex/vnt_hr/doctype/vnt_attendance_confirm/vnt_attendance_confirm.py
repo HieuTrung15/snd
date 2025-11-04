@@ -336,6 +336,10 @@ def _cron_submit_attendance_confirm():
 			att.submit()
 
 
+def get_reports_to(user):
+	return frappe.get_value("Employee", {"name": user}, "employee_name")
+	
+
 @frappe.whitelist()
 def make_attendance_confirm():
 	# Upsert 1 phiếu/tháng cho mỗi nhân viên và thêm/cập nhật items theo từng ngày
@@ -358,7 +362,7 @@ def make_attendance_confirm():
 	results = []
 	for emp in emps:
 		emp_name = emp["name"]
-
+		approver_emp = get_reports_to(emp["reports_to"])
 		# Tìm phiếu tháng hiện tại (docstatus<2)
 		att_name = frappe.db.get_value(
 			"VNT Attendance Confirm",
@@ -382,7 +386,7 @@ def make_attendance_confirm():
 			att.email = emp.get("user_id")
 			att.from_date = month_from
 			att.approver = emp.get("reports_to") or None
-			att.approver_name = emp.get("employee_name") or None
+			att.approver_name = approver_emp or None
 			# att.docstatus = 1
 			is_new = True
 
