@@ -111,6 +111,7 @@
    "fetch_if_empty": 1,
    "fieldname": "approver",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
    "options": "User",
    "read_only": 1
@@ -119,6 +120,7 @@
    "fetch_from": "approver.full_name",
    "fieldname": "approver_name",
    "fieldtype": "Data",
+   "ignore_user_permissions": 1,
    "label": "T\u00ean ng\u01b0\u1eddi ph\u00ea duy\u1ec7t"
   },
   {
@@ -149,7 +151,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-03 08:50:53.742919",
+ "modified": "2025-11-04 08:29:50.214040",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Attendance Confirm",
