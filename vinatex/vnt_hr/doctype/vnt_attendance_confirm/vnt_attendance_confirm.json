@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:XNCC-Ng\u00e0y-{DD}/{MM}/{YYYY}-{employee_name}",
+ "autoname": "format:XNCC-T{MM}-{employee_name}",
  "creation": "2025-09-18 21:12:44.660032",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -151,7 +151,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-04 08:29:50.214040",
+ "modified": "2025-11-04 13:22:19.636190",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Attendance Confirm",

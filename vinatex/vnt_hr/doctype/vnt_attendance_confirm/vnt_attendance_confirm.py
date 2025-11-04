@@ -238,10 +238,9 @@ def _ensure_todo_for_approver(doc: Document, user: str):
 	if existing:
 		return
 
-	description = _("Duyệt bảng chấm công của {0} (từ {1} đến {2}).").format(
-		doc.employee_name or doc.employee or _("Nhân viên"),
+	description = _("Giải trình chấm công bất thường {0} của {1}.").format(
 		frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
-		frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
+		doc.employee_name or doc.employee or _("Nhân viên"),
 	)
 	new_todo = frappe.new_doc("ToDo")
 	new_todo.description = description
