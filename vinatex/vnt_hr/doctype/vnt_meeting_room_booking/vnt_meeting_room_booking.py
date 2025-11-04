@@ -9,16 +9,20 @@ from frappe.desk.doctype.notification_log.notification_log import make_notificat
 from frappe.model.document import Document
 
 
+OFFICE_MANAGER_ROLE = "Office Manager"
+
+
 class VNTMeetingRoomBooking(Document):
 	def validate(self):
 		self._validate_time_fields()
 		self._validate_room_availability()
 
-
 	def on_update(self):
 		# chuyển sang theo dõi workflow_state
 		if self.has_value_changed("workflow_state"):
 			_handle_state_transition(self)
+		if self.workflow_state == "Đã duyệt" and self.has_value_changed("room_name"):
+			_handle_room_assignment_update(self)
 
 	def on_update_after_submit(self):
 		self._validate_room_availability()
@@ -81,6 +85,7 @@ def _handle_state_transition(doc):
 	if prev_state == "Chờ duyệt" and curr_state == "Đã duyệt":
 		# Đóng todo khi đã duyệt
 		_check_state_to_close_todo(doc, user=approver_user)
+		_handle_room_assignment_post_approval(doc)
 	# gửi thông báo cho người đăng ký
 	employee = doc.get("employee")
 	employee_user = get_employee_user_id(employee)
@@ -179,6 +184,140 @@ def _check_state_to_close_todo(doc: Document, user: str):
 	)
 	for n in names:
 	  frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
+
+
+def _handle_room_assignment_post_approval(doc: Document):
+	if doc.room_name:
+		_close_office_manager_todos(doc)
+		_create_follower_follow_up(doc)
+	else:
+		_close_follower_todos(doc)
+		_notify_office_manager_for_missing_room(doc)
+
+
+def _handle_room_assignment_update(doc: Document):
+	if doc.room_name:
+		_close_office_manager_todos(doc)
+		_create_follower_follow_up(doc)
+	else:
+		_close_follower_todos(doc)
+		_notify_office_manager_for_missing_room(doc)
+
+
+def _notify_office_manager_for_missing_room(doc: Document):
+	users = _get_enabled_users_with_role(OFFICE_MANAGER_ROLE)
+	if not users:
+		return
+	description = _('Chọn phòng họp cho phiếu đăng ký {0} ngày {1} từ {2} đến {3}').format(
+		doc.name,
+		doc.date or _("(không rõ ngày đăng ký)"),
+		doc.start_time or _("(không rõ thời gian bắt đầu)"),
+		doc.end_time or _("(không rõ thời gian kết thúc)"),
+	)
+	subject = _('Phiếu đăng ký phòng họp {0} đã duyệt nhưng chưa chọn phòng').format(doc.name)
+	make_notification_logs({
+		"type": "Alert",
+		"subject": subject,
+		"document_type": doc.doctype,
+		"document_name": doc.name,
+	}, users)
+	for user in users:
+		_ensure_reference_todo(doc, user, description, priority="High")
+
+
+def _create_follower_follow_up(doc: Document):
+	follower_employee = doc.get("follower")
+	follower_user = get_employee_user_id(follower_employee)
+	if not follower_user:
+		return
+	description = _('Chuẩn bị phòng {0} cho cuộc họp của {1} ngày {2} từ {3} đến {4}').format(
+		doc.room_name or _("(không rõ phòng)"),
+		doc.employee_name or _("(không rõ)"),
+		doc.date or _("(không rõ ngày đăng ký)"),
+		doc.start_time or _("(không rõ thời gian bắt đầu)"),
+		doc.end_time or _("(không rõ thời gian kết thúc)"),
+	)
+	make_notification_logs({
+		"type": "Alert",
+		"subject": _('Chuẩn bị phòng {0} cho phiếu đăng ký {1}').format(doc.room_name or _("(không rõ phòng)"), doc.name),
+		"document_type": doc.doctype,
+		"document_name": doc.name,
+	}, [follower_user])
+	_ensure_reference_todo(doc, follower_user, description)
+
+
+def _close_office_manager_todos(doc: Document):
+	users = _get_enabled_users_with_role(OFFICE_MANAGER_ROLE)
+	if not users:
+		return
+	_close_todos_for_users(doc, users)
+
+
+def _close_follower_todos(doc: Document):
+	follower_employee = doc.get("follower")
+	if not follower_employee:
+		return
+	user = get_employee_user_id(follower_employee)
+	if not user:
+		return
+	_close_todos_for_users(doc, [user])
+
+
+def _close_todos_for_users(doc: Document, users: list[str]):
+	if not users:
+		return
+	names = frappe.get_all(
+		"ToDo",
+		filters={
+			"reference_type": doc.doctype,
+			"reference_name": doc.name,
+			"allocated_to": ["in", users],
+			"status": ["in", ["Open", "Overdue"]],
+		},
+		pluck="name",
+	)
+	for name in names:
+		frappe.db.set_value("ToDo", name, "status", "Closed", update_modified=False)
+
+
+def _ensure_reference_todo(doc: Document, user: str, description: str, priority: str = "Medium"):
+	if not user:
+		return
+	if frappe.db.exists("ToDo", {
+		"reference_type": doc.doctype,
+		"reference_name": doc.name,
+		"allocated_to": user,
+		"status": ["in", ["Open", "Overdue"]],
+	}):
+		return
+	new_todo = frappe.new_doc("ToDo")
+	new_todo.description = description
+	new_todo.allocated_to = user
+	new_todo.reference_type = doc.doctype
+	new_todo.reference_name = doc.name
+	new_todo.priority = priority
+	new_todo.status = "Open"
+	new_todo.insert(ignore_permissions=True)
+	frappe.db.commit()
+
+
+def _get_enabled_users_with_role(role: str) -> list[str]:
+	if not role:
+		return []
+	user_ids = frappe.get_all("Has Role", filters={"role": role}, pluck="parent")
+	if not user_ids:
+		return []
+	user_ids = list({user for user in user_ids if user not in {"Guest", "Administrator"}})
+	if not user_ids:
+		return []
+	return frappe.get_all(
+		"User",
+		filters={
+			"name": ["in", user_ids],
+			"enabled": 1,
+		},
+		pluck="name",
+	)
 
 
 def _get_prev_and_curr_workflow_state(doc: Document) -> tuple[str | None, str]:
