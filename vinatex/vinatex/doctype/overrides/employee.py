@@ -14,7 +14,14 @@ from erpnext.setup.doctype.employee.employee import (
 
 
 class VntEmployee(Employee):
-    pass
+    # hàm khi validate sẽ tính toán số lượng người phụ thuộc khi có tick is_dependent trong bảng custom_vnt_employee_tax, sau đó gán vào trường custom_relation_number
+    def validate(self):
+        total_dependent = 0
+        for row in self.get("custom_vnt_employee_tax"):
+            if row.is_dependent:
+                total_dependent += 1
+        self.custom_relation_number = total_dependent
+        
 
 @frappe.whitelist()
 def get_approver_by_department(department):
