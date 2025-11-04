@@ -12,29 +12,37 @@
   "department",
   "branch",
   "section_break_nop0",
-  "start_time",
-  "end_time",
-  "column_break_uslj",
   "date",
   "people",
+  "column_break_w7dm",
+  "start_time",
+  "end_time",
+  "column_break_lamh",
+  "list_emp",
   "section_break_3xn7",
   "meet_online",
   "link_online",
-  "party",
   "column_break_rvle",
+  "party",
+  "th\u00f4ng_tin_ng\u01b0\u1eddi_duy\u1ec7t_section",
+  "approver",
+  "column_break_koqu",
+  "approver_name",
+  "section_break_gzd4",
+  "list_room",
+  "section_break_hjxd",
+  "room_name",
+  "column_break_cn1n",
   "follower",
   "follower_name",
-  "section_break_hjxd",
-  "approver",
-  "approver_name",
-  "column_break_cn1n",
   "amended_from"
  ],
  "fields": [
   {
    "fieldname": "employee",
    "fieldtype": "Link",
-   "label": "M\u00e3 nh\u00e2n vi\u00ean",
+   "ignore_user_permissions": 1,
+   "label": "M\u00e3 nh\u00e2n s\u1ef1 \u0111\u1ec1 xu\u1ea5t",
    "options": "Employee"
   },
   {
@@ -42,7 +50,7 @@
    "fieldname": "employee_name",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "T\u00ean ng\u01b0\u1eddi \u0111\u1ec1 xu\u1ea5t"
+   "label": "T\u00ean nh\u00e2n s\u1ef1 \u0111\u1ec1 xu\u1ea5t"
   },
   {
    "fieldname": "column_break_wnzg",
@@ -71,18 +79,16 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Th\u1eddi gian b\u1eaft \u0111\u1ea7u",
-   "options": "8:00 AM\n8:30 AM\n9:00 AM\n9:30 AM\n10:00 AM\n10:30 AM\n11:00 AM\n11:30 AM\n12:00 PM\n12:30 PM\n1:00 PM\n1:30 PM\n2:00 PM\n2:30 PM\n3:00 PM\n3:30 PM\n4:00 PM\n4:30 PM\n5:00 PM\n5:30 PM\n6:00 PM\n6:30 PM\n7:00 PM\n7:30 PM\n8:00 PM\n8:30 PM\n9:00 PM"
+   "options": "8:00 AM\n8:30 AM\n9:00 AM\n9:30 AM\n10:00 AM\n10:30 AM\n11:00 AM\n11:30 AM\n12:00 PM\n12:30 PM\n1:00 PM\n1:30 PM\n2:00 PM\n2:30 PM\n3:00 PM\n3:30 PM\n4:00 PM\n4:30 PM\n5:00 PM\n5:30 PM\n6:00 PM\n6:30 PM\n7:00 PM\n7:30 PM\n8:00 PM\n8:30 PM\n9:00 PM",
+   "reqd": 1
   },
   {
    "fieldname": "end_time",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Th\u1eddi gian k\u1ebft th\u00fac",
-   "options": "8:00 AM\n8:30 AM\n9:00 AM\n9:30 AM\n10:00 AM\n10:30 AM\n11:00 AM\n11:30 AM\n12:00 PM\n12:30 PM\n1:00 PM\n1:30 PM\n2:00 PM\n2:30 PM\n3:00 PM\n3:30 PM\n4:00 PM\n4:30 PM\n5:00 PM\n5:30 PM\n6:00 PM\n6:30 PM\n7:00 PM\n7:30 PM\n8:00 PM\n8:30 PM\n9:00 PM"
-  },
-  {
-   "fieldname": "column_break_uslj",
-   "fieldtype": "Column Break"
+   "options": "8:00 AM\n8:30 AM\n9:00 AM\n9:30 AM\n10:00 AM\n10:30 AM\n11:00 AM\n11:30 AM\n12:00 PM\n12:30 PM\n1:00 PM\n1:30 PM\n2:00 PM\n2:30 PM\n3:00 PM\n3:30 PM\n4:00 PM\n4:30 PM\n5:00 PM\n5:30 PM\n6:00 PM\n6:30 PM\n7:00 PM\n7:30 PM\n8:00 PM\n8:30 PM\n9:00 PM",
+   "reqd": 1
   },
   {
    "fieldname": "section_break_3xn7",
@@ -91,7 +97,7 @@
   {
    "fieldname": "people",
    "fieldtype": "Int",
-   "label": "S\u1ed1 ng\u01b0\u1eddi tham d\u1ef1 h\u1ecdp"
+   "label": "S\u1ed1 ng\u01b0\u1eddi tham d\u1ef1"
   },
   {
    "fieldname": "meet_online",
@@ -109,18 +115,19 @@
    "description": "Ghi r\u00f5 s\u1ed1 l\u01b0\u1ee3ng hoa qu\u1ea3, b\u00e1nh ng\u1ecdt, tr\u00e0, n\u01b0\u1edbc su\u1ed1i",
    "fieldname": "party",
    "fieldtype": "Small Text",
+   "in_list_view": 1,
    "label": "Ti\u1ec7c tr\u00e0",
    "max_height": "28px"
   },
   {
    "fieldname": "section_break_hjxd",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Th\u00f4ng tin ph\u00f2ng h\u1ecdp"
   },
   {
    "fetch_from": "employee.reports_to",
    "fieldname": "approver",
    "fieldtype": "Link",
-   "hidden": 1,
    "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
    "options": "Employee"
@@ -128,7 +135,8 @@
   {
    "fieldname": "approver_name",
    "fieldtype": "Data",
-   "label": "T\u00ean ng\u01b0\u1eddi ph\u00ea duy\u1ec7t"
+   "label": "T\u00ean ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
+   "read_only": 1
   },
   {
    "fieldname": "amended_from",
@@ -142,23 +150,28 @@
   },
   {
    "fieldname": "date",
-   "fieldtype": "Data",
+   "fieldtype": "Date",
    "in_list_view": 1,
-   "label": "Ng\u00e0y h\u1ecdp"
+   "label": "Ng\u00e0y h\u1ecdp",
+   "reqd": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "follower",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi theo d\u00f5i",
-   "options": "Employee"
+   "options": "Employee",
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fetch_from": "follower.employee_name",
    "fieldname": "follower_name",
    "fieldtype": "Data",
    "ignore_user_permissions": 1,
-   "label": "T\u00ean ng\u01b0\u1eddi theo d\u00f5i"
+   "label": "T\u00ean ng\u01b0\u1eddi theo d\u00f5i",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_cn1n",
@@ -170,13 +183,60 @@
    "fieldtype": "Small Text",
    "label": "Link h\u1ecdp tr\u1ef1c tuy\u1ebfn",
    "max_height": "28px"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "room_name",
+   "fieldtype": "Link",
+   "label": "T\u00ean ph\u00f2ng",
+   "options": "VNT Meeting Room",
+   "read_only_depends_on": "eval:!frappe.user.has_role(\"Office Manager\")"
+  },
+  {
+   "description": "(Nh\u00e2n s\u1ef1 trong danh s\u00e1ch s\u1ebd nh\u1eadn \u0111\u01b0\u1ee3c th\u00f4ng b\u00e1o li\u00ean quan)",
+   "fieldname": "list_emp",
+   "fieldtype": "Table MultiSelect",
+   "ignore_user_permissions": 1,
+   "label": "Danh s\u00e1ch ng\u01b0\u1eddi tham d\u1ef1",
+   "options": "VNT Car Registration Employee"
+  },
+  {
+   "fieldname": "list_room",
+   "fieldtype": "Table",
+   "ignore_user_permissions": 1,
+   "label": "Danh s\u00e1ch ph\u00f2ng \u0111\u00e3 \u0111\u01b0\u1ee3c \u0111\u0103ng k\u00fd",
+   "options": "VNT Meeting Room Taken",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_lamh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_gzd4",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_w7dm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "th\u00f4ng_tin_ng\u01b0\u1eddi_duy\u1ec7t_section",
+   "fieldtype": "Section Break",
+   "label": "Th\u00f4ng tin ng\u01b0\u1eddi duy\u1ec7t"
+  },
+  {
+   "fieldname": "column_break_koqu",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
+ "is_calendar_and_gantt": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-03 15:49:49.079353",
+ "modified": "2025-11-04 17:45:32.630532",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Meeting Room Booking",
@@ -224,6 +284,7 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
+ "search_fields": "room_name",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

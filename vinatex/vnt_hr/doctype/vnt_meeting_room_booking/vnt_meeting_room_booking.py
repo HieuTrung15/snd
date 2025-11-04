@@ -1,34 +1,74 @@
 # Copyright (c) 2025, vinatex and contributors
 # For license information, please see license.txt
 
+from datetime import datetime
+
 import frappe
-from frappe.model.document import Document
 from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
+from frappe.model.document import Document
 
 
 class VNTMeetingRoomBooking(Document):
 	def validate(self):
-		# kiểm tra tạo trùng lặp theo ngày và giờ họp, phiếu mới phải có start_time và end_time nằm ngoài khoảng start_time và end_time của các phiếu đã duyệt
+		self._validate_time_fields()
+		self._validate_room_availability()
+
+
+	def on_update(self):
+		# chuyển sang theo dõi workflow_state
+		if self.has_value_changed("workflow_state"):
+			_handle_state_transition(self)
+
+	def on_update_after_submit(self):
+		self._validate_room_availability()
+
+
+	def _validate_time_fields(self):
+		start = _parse_time(self.start_time)
+		end = _parse_time(self.end_time)
+
+		if not start or not end:
+			frappe.throw(_("Vui lòng chọn đầy đủ thời gian bắt đầu và kết thúc hợp lệ."))
+
+		if start >= end:
+			frappe.throw(_("Thời gian kết thúc phải muộn hơn thời gian bắt đầu."))
+
+
+	def _validate_room_availability(self):
+		if self.workflow_state != "Đã duyệt" and self.docstatus != 1:
+			return
+
+		if not (self.date and self.room_name):
+			return
+
+		start = _parse_time(self.start_time)
+		end = _parse_time(self.end_time)
+
+		if not start or not end:
+			return
+
 		existing_bookings = frappe.get_all(
 			"VNT Meeting Room Booking",
 			filters={
 				"date": self.date,
-				"workflow_state": ["not in", ["Từ chối", "Hủy"]],
-				"name": ["!=", self.name]  # loại trừ chính nó khi cập nhật
+				"room_name": self.room_name,
+				"workflow_state": "Đã duyệt",
+				"docstatus": 1,
+				"name": ["!=", self.name],  # loại trừ chính nó
 			},
 			fields=["name", "start_time", "end_time"]
 		)
 
 		for booking in existing_bookings:
-			if (self.start_time < booking.end_time and self.end_time > booking.start_time):
-				frappe.throw(_("Thời gian đặt phòng bị trùng lặp với phiếu đã duyệt: {0}").format(booking.name))
+			booking_start = _parse_time(booking.start_time)
+			booking_end = _parse_time(booking.end_time)
 
+			if not booking_start or not booking_end:
+				continue
 
-	def on_update(self):
-	# chuyển sang theo dõi workflow_state
-		if self.has_value_changed("workflow_state"):
-			_handle_state_transition(self)
+			if _time_ranges_overlap(start, end, booking_start, booking_end):
+				frappe.throw(_("Thời gian đặt phòng bị trùng với phiếu đã duyệt: {0}").format(booking.name))
 
 
 def _handle_state_transition(doc):
@@ -72,6 +112,12 @@ def _handle_state_transition(doc):
 			"document_name": doc.name,
 		}, [employee_user])
 
+	# thông báo cho danh sách nhân sự
+	if prev_state == 'Chờ duyệt' and curr_state == 'Đã duyệt':
+		_notify_to_employee(doc, "duyệt")
+	if (prev_state == 'Chờ duyệt' and curr_state == 'Từ chối'):
+		_notify_to_employee(doc, "từ chối")
+
 
 def _notify_to_approver(doc: Document, user: str | None):
 	"""Gửi thông báo đến người duyệt khi đơn được chuyển sang trạng thái 'Chờ duyệt'."""
@@ -87,9 +133,9 @@ def _notify_to_approver(doc: Document, user: str | None):
 
 
 def get_employee_user_id(employee_name: str) -> str | None:
-    if not employee_name:
-        return None
-    return frappe.db.get_value("Employee", employee_name, "user_id")
+	if not employee_name:
+		return None
+	return frappe.db.get_value("Employee", employee_name, "user_id")
 
 
 def ensure_todo(doc: Document, user: str):
@@ -157,6 +203,41 @@ def _get_prev_and_curr_workflow_state(doc: Document) -> tuple[str | None, str]:
 	curr_state = (doc.get("workflow_state") or "").strip()
 	return prev_state, curr_state
 
+def _notify_to_employee(doc: Document, status: str):
+	"""Gửi thông báo đến list nhân viên(list_emp) khi đơn được duyệt hoặc từ chối."""
+	list_emp = doc.get("list_emp")
+	if not list_emp:
+		return
+	for emp in list_emp:
+		employee_user = get_employee_user_id(emp.employee)
+		if not employee_user:
+			continue
+		make_notification_logs({
+			"type": "Alert",
+			"subject": _("Phiếu đăng ký phòng họp của {0} đã {1}.").format(
+				doc.employee_name or _("(không rõ)"),
+				status,
+			),
+			"document_type": doc.doctype,
+			"document_name": doc.name,
+		}, [employee_user])
+
+# fomat: HH:MM AM/PM sang HH:MM:SS or HH:MM
+def _parse_time(value: str | None):
+	if not value:
+		return None
+	value = value.strip()
+	for fmt in ("%I:%M %p", "%H:%M:%S", "%H:%M"):
+		try:
+			return datetime.strptime(value, fmt).time()
+		except ValueError:
+			continue
+	return None
+
+
+def _time_ranges_overlap(start_a, end_a, start_b, end_b) -> bool:
+	return start_a < end_b and end_a > start_b
+
 
 @frappe.whitelist()
 def get_reports_to(user):
@@ -167,3 +248,21 @@ def get_reports_to(user):
 	if approver:
 		approver_name = frappe.get_value("Employee", {"user_id": approver.approver}, "employee_name")
 		return approver_name
+
+
+@frappe.whitelist()
+def get_taken_rooms(date: str | None):
+	if not date:
+		return []
+
+	return frappe.get_all(
+		"VNT Meeting Room Booking",
+		filters={
+			"date": date,
+			"workflow_state": "Đã duyệt",
+			"docstatus": 1,
+			"room_name": ["!=", None],
+		},
+		fields=["date", "room_name", "start_time", "end_time", "employee","employee_name"],
+		order_by="room_name asc, start_time asc"
+	)
