@@ -32,7 +32,7 @@ def _handle_state_transition(doc: Document):
 		_check_state_to_close_todo(doc, user=approver_user_lv2)
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Chờ lãnh đạo tập đoàn duyệt':
 		_notify_to_approver_2(doc, user=approver_user_lv2)
-		_notify_to_approver_2(doc)
+		# _notify_to_approver_2(doc)
 	if prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Đã duyệt':
 		_notify_to_employee(doc, "duyệt")
 	if (prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Từ chối'):

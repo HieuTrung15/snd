@@ -20,15 +20,17 @@
   {
    "fieldname": "item_code",
    "fieldtype": "Link",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "M\u00e3 s\u1ea3n ph\u1ea9m",
    "options": "Item"
   },
   {
    "fieldname": "item_name",
-   "fieldtype": "Data",
+   "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "T\u00ean s\u1ea3n ph\u1ea9m"
+   "label": "T\u00ean s\u1ea3n ph\u1ea9m",
+   "options": "\n\u00c1o s\u01a1 mi\nKh\u0103n\nPhi\u1ebfu mua h\u00e0ng 1tr\nPhi\u1ebfu mua h\u00e0ng 500k"
   },
   {
    "fieldname": "column_break_5eor",
@@ -45,7 +47,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-03 17:29:19.748187",
+ "modified": "2025-11-04 09:02:53.242454",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT External Products Item",
