@@ -35,9 +35,89 @@ frappe.ui.form.on("VNT Monthly Payroll", {
             get_standard_working_days(frm, month, year);
         }
     },
+	get_salary(frm) {
+		if (!frm.doc.company) {
+			frappe.msgprint(__("Vui lòng chọn Công ty trước khi lấy danh sách nhân sự."));
+			return;
+		}
 
-	compute_row(frm, row) {
-		if (!row || !row.employee) return;
+		const args = { company: frm.doc.company };
+		if (frm.doc.branch) {
+			args.branch = frm.doc.branch;
+		}
+
+		frappe
+			.call({
+				method:
+					"vinatex.vnt_hr.doctype.vnt_monthly_payroll.vnt_monthly_payroll.get_active_employees",
+				args,
+				freeze: true,
+				freeze_message: __("Đang lấy danh sách nhân sự..."),
+			})
+			.then((r) => {
+				const employees = Array.isArray(r?.message) ? r.message : [];
+				if (!employees.length) {
+					frappe.msgprint(__("Không tìm thấy nhân sự phù hợp điều kiện đã chọn."));
+					return save_then_compute(frm, { notify_no_new: false });
+				}
+
+				const existing = new Set(
+					(frm.doc.items || [])
+						.map((row) => row.employee)
+						.filter((employee) => !!employee)
+				);
+
+				let added = 0;
+				frm._vnt_skip_employee_compute = true;
+				try {
+					for (const emp of employees) {
+						if (existing.has(emp.name)) continue;
+
+						const row = frm.add_child("items");
+						frappe.model.set_value(row.doctype, row.name, "employee", emp.name);
+
+						if (emp.employment_type) {
+							frappe.model.set_value(
+								row.doctype,
+								row.name,
+								"employement_type",
+								emp.employment_type
+							);
+						}
+						if (emp.custom_party_member) {
+							frappe.model.set_value(
+								row.doctype,
+								row.name,
+								"dang_vien",
+								emp.custom_party_member
+							);
+						}
+						if (typeof emp.custom_relation_number !== "undefined") {
+							frappe.model.set_value(
+								row.doctype,
+								row.name,
+								"so_npt",
+								emp.custom_relation_number
+							);
+						}
+
+						added++;
+						existing.add(emp.name);
+					}
+				} finally {
+					frm._vnt_skip_employee_compute = false;
+				}
+
+				frm.refresh_field("items");
+				return save_then_compute(frm, {
+					added_count: added,
+					notify_no_new: true,
+				});
+			});
+	},
+
+	compute_row(frm, row, opts = {}) {
+		if (!row || !row.employee) return Promise.resolve();
 
 		const args = {
 			employee: row.employee,
@@ -45,13 +125,18 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 			month: frm.doc.month,
 			year: frm.doc.year,
 		};
+		const freeze = opts.freeze !== false;
+		const refresh = opts.refresh !== false;
 
-		frappe
+		return frappe
 			.call({
 				method:
 					"vinatex.vnt_hr.doctype.vnt_monthly_payroll.vnt_monthly_payroll.compute_item",
 				args,
-				freeze: true,
+				freeze,
+				freeze_message: freeze
+					? __("Đang tính lương cho {0}", [row.employee_name || row.employee])
+					: undefined,
 			})
 			.then((r) => {
 				if (!r || !r.message) return;
@@ -153,7 +238,9 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 				if (!standard_working_days) {
 					frappe.model.set_value(row.doctype, row.name, "tong_thu_nhap", 0);
 					frappe.model.set_value(row.doctype, row.name, "thuc_linh", 0);
-					frm.refresh_field("items");
+					if (refresh) {
+						frm.refresh_field("items");
+					}
 					return;
 				}
 
@@ -277,7 +364,10 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 				} else if (
 					row.employement_type === "HĐLĐ xác định thời hạn" ||
 					row.employement_type === "HĐLĐ không xác định thời hạn"
-				) {
+				)
+				if (
+					(row.tong_tn_chiu_thue - row.tru_bhxh - row.tru_bhyt - row.tru_bhtn - (r.message.giam_tru_npt * row.so_npt) - r.message.giam_tru_gia_canh) >= 0 )
+					{
 					frappe.model.set_value(
 						row.doctype,
 						row.name,
@@ -286,9 +376,12 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 							row.tru_bhxh -
 							row.tru_bhyt -
 							row.tru_bhtn -
-							(+r.message.giam_tru_npt || 4400000) * (+row.so_npt || 0) -
-							(+r.message.giam_tru_gia_canh || 11000000)
+							(+r.message.giam_tru_npt) * (+row.so_npt) -
+							(+r.message.giam_tru_gia_canh)
 					);
+				}
+				else
+				{
 				}
 
 				// ===== (37) Thuế TNCN: dùng THẲNG (36) và tính lũy tiến =====
@@ -334,7 +427,9 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 
                 //thu nhập thực lĩnh (41)
                 frappe.model.set_value(row.doctype, row.name, "thuc_linh", (row.tong_thu_nhap - row.xh_yt_tn - row.doan_phi_cd - row.dang_phi -row.tncn_tam_thu - row.khac - row.truy_thu + row.duoc_hoan_lai))
-				frm.refresh_field("items");
+				if (refresh) {
+					frm.refresh_field("items");
+				}
 			});
 	},
 });
@@ -342,6 +437,9 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 frappe.ui.form.on("VNT Monthly Payroll Item", {
 	employee(frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
+		if (frm._vnt_skip_employee_compute) {
+			return;
+		}
 		frm.events.compute_row(frm, row);
 	},
 });
@@ -359,6 +457,63 @@ function get_standard_working_days(frm, month, year) {
     }
     frm.set_value("standard_working_days", workingDays);
     frm.refresh_field("standard_working_days");
+}
+
+function save_then_compute(frm, opts = {}) {
+	const { added_count = 0, notify_no_new = false } = opts || {};
+
+	return frm
+		.save()
+		.then(() => run_salary_compute(frm, { added_count, notify_no_new }))
+		.catch((err) => {
+			console.error(err);
+			frappe.msgprint(
+				__("Không thể lưu chứng từ trước khi tính lương. Vui lòng kiểm tra dữ liệu và thử lại.")
+			);
+			throw err;
+		});
+}
+
+function run_salary_compute(frm, opts = {}) {
+	const { added_count = 0, notify_no_new = false } = opts || {};
+	const rowsToCompute = (frm.doc.items || []).filter((item) => item && item.employee);
+
+	if (!rowsToCompute.length) {
+		if (notify_no_new && added_count === 0) {
+			frappe.msgprint(__("Tất cả nhân sự đã có trong bảng lương."));
+		}
+		return Promise.resolve();
+	}
+
+	frappe.dom.freeze(__("Đang tính lương, vui lòng đợi..."));
+	return compute_all_items(frm, rowsToCompute)
+		.catch((err) => {
+			console.error(err);
+			frappe.msgprint(
+				__("Có lỗi xảy ra khi tính lương. Vui lòng kiểm tra nhật ký trình duyệt.")
+			);
+		})
+		.finally(() => {
+			frappe.dom.unfreeze();
+			frm.refresh_field("items");
+			if (notify_no_new && added_count === 0) {
+				frappe.msgprint(__("Tất cả nhân sự đã có trong bảng lương."));
+			}
+		});
+}
+
+function compute_all_items(frm, rows = []) {
+	const targets = rows.length ? rows : frm.doc.items || [];
+	const computables = targets.filter((row) => row && row.employee);
+	if (!computables.length) {
+		return Promise.resolve();
+	}
+
+	return computables.reduce((promise, row) => {
+		return promise.then(() =>
+			Promise.resolve(frm.events.compute_row(frm, row, { freeze: false, refresh: false }))
+		);
+	}, Promise.resolve());
 }
 
 function toNumber(value) {

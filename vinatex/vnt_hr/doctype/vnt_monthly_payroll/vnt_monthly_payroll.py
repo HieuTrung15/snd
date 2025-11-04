@@ -11,6 +11,32 @@ class VNTMonthlyPayroll(Document):
 
 
 @frappe.whitelist()
+def get_active_employees(company=None, branch=None):
+    """Return active employees filtered by company and branch (if provided)."""
+    filters = {"status": "Active"}
+    if company:
+        filters["company"] = company
+    if branch:
+        filters["branch"] = branch
+
+    return frappe.get_all(
+        "Employee",
+        filters=filters,
+        fields=[
+            "name",
+            "employee_name",
+            "designation",
+            "company",
+            "branch",
+            "employment_type",
+            "custom_party_member",
+            "custom_relation_number",
+        ],
+        order_by="employee_name asc",
+    )
+
+
+@frappe.whitelist()
 def compute_item(employee, company=None, month=None, year=None):
     """Tính các tham số dùng cho bảng lương theo kỳ (month, year) và employee."""
     if not month or not year:
