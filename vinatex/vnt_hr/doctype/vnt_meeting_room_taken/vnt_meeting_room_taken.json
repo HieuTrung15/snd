@@ -1,0 +1,75 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-04 15:55:45.424537",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "room_name",
+  "start_time",
+  "end_time",
+  "employee_name",
+  "date",
+  "employee"
+ ],
+ "fields": [
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Ng\u00e0y"
+  },
+  {
+   "fieldname": "room_name",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Ph\u00f2ng",
+   "options": "VNT Meeting Room"
+  },
+  {
+   "fieldname": "start_time",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Th\u1eddi gian t\u1eeb"
+  },
+  {
+   "fieldname": "end_time",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Th\u1eddi gian \u0111\u1ebfn"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "ignore_user_permissions": 1,
+   "label": "M\u00e3 ng\u01b0\u1eddi \u0111\u0103ng k\u00fd",
+   "options": "Employee"
+  },
+  {
+   "columns": 2,
+   "fetch_from": "employee.employee_name",
+   "fetch_if_empty": 1,
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "T\u00ean ng\u01b0\u1eddi \u0111\u0103ng k\u00fd"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-04 17:37:24.158188",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Meeting Room Taken",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
