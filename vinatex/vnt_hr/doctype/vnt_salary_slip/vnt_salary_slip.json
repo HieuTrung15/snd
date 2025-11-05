@@ -1,0 +1,86 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-05 16:27:04.101296",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_izlu",
+  "employee",
+  "employee_name",
+  "column_break_lh3s",
+  "month",
+  "year",
+  "section_break_vpkl",
+  "html"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_izlu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "M\u00e3 nh\u00e2n s\u1ef1",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean nh\u00e2n s\u1ef1"
+  },
+  {
+   "fieldname": "column_break_lh3s",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "month",
+   "fieldtype": "Select",
+   "label": "Th\u00e1ng l\u01b0\u01a1ng",
+   "options": "01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12"
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Int",
+   "label": "N\u0103m"
+  },
+  {
+   "fieldname": "section_break_vpkl",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html",
+   "fieldtype": "HTML",
+   "label": "B\u1ea3ng l\u01b0\u01a1ng chi ti\u1ebft"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-11-05 16:28:51.695351",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Salary Slip",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
