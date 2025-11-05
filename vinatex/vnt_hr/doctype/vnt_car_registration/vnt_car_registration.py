@@ -1,17 +1,24 @@
 # Copyright (c) 2025, vinatex and contributors
 # For license information, please see license.txt
 
+import json
 import frappe
+from frappe.utils import nowdate, get_url_to_form, cstr, formatdate, format_time
 from frappe import _
 from frappe.model.document import Document
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 
 
 class VNTCarRegistration(Document):
+	def validate(self):
+		# validate nếu danh sách nhân sự trùng ngày giờ đăng ký xe
+		_validate_employee_schedule(self)
+
 	def on_update(self):
 		# chuyển sang theo dõi workflow_state
 		if self.has_value_changed("workflow_state"):
 			_handle_state_transition(self)
+		_sync_business_trip_transportation(self)
 
 	
 def _handle_state_transition(doc: Document):
@@ -25,11 +32,16 @@ def _handle_state_transition(doc: Document):
 	approver_user_lv2 = get_employee_user_id(approver_lv2)
 	if curr_state == "Chờ lãnh đạo duyệt" and prev_state == "Mới tạo":
 		_notify_to_approver(doc, user=approver_user)
-	if curr_state == "Đã duyệt" and prev_state == "Chờ lãnh đạo duyệt" or \
-		curr_state == "Chờ lãnh đạo tập đoàn duyệt" and prev_state == "Chờ lãnh đạo duyệt":
+	if curr_state == "Đã duyệt" and prev_state == "Chờ lãnh đạo duyệt":
+		_check_state_to_close_todo(doc, user=approver_user)
+		_notify_to_user_receive(doc)
+		_notify_to_employee_list(doc)
+	if curr_state == "Chờ lãnh đạo tập đoàn duyệt" and prev_state == "Chờ lãnh đạo duyệt":
 		_check_state_to_close_todo(doc, user=approver_user)
 	if curr_state == "Đã duyệt" and prev_state == "Chờ lãnh đạo tập đoàn duyệt":
 		_check_state_to_close_todo(doc, user=approver_user_lv2)
+		_notify_to_user_receive(doc)
+		_notify_to_employee_list(doc)
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Chờ lãnh đạo tập đoàn duyệt':
 		_notify_to_approver_2(doc, user=approver_user_lv2)
 		# _notify_to_approver_2(doc)
@@ -84,7 +96,201 @@ def _handle_state_transition(doc: Document):
         "document_type": doc.doctype,
         "document_name": doc.name,
     }, [approver_user])
-		
+
+
+# gửi thông báo đến người quản lý văn phòng
+def _notify_to_office_manager(doc: Document):
+	"""Gửi thông báo đến những members trong User Group 'Nhận thông báo đăng ký xin xe' khi đơn được duyệt."""
+	user_group_name = "Nhận thông báo đăng ký xin xe"
+	user_list = frappe.get_all(
+		"User Group Member",
+		filters={"parent": user_group_name},
+		pluck="user",
+	)
+	if not user_list:
+		return
+	make_notification_logs({
+		"type": "Alert",
+		"subject": _("Phiếu đăng ký xe của {0} đã được duyệt. Vui lòng kiểm tra và sắp xếp xe.").format(doc.employee_name or _("(không rõ)")),
+		"document_type": doc.doctype,
+		"document_name": doc.name,
+	}, user_list)
+
+
+# gửi thông báo đến emp tham gia chuyến xe
+def _notify_to_employee_list(doc):
+	"""Gửi thông báo đến list nhân viên(list_emp) khi đơn được duyệt."""
+	list_emp = doc.get("list_emp")
+	if not list_emp:
+		return
+	for emp in list_emp:
+		employee_user = get_employee_user_id(emp.employee)
+		if not employee_user:
+			continue
+		make_notification_logs({
+			"type": "Alert",
+			"subject": _("Bạn đi cùng chuyến xe của {0}. Vui lòng kiểm tra thông tin chi tiết.").format(doc.employee_name or _("(không rõ)")),
+			"document_type": doc.doctype,
+			"document_name": doc.name,
+		}, [employee_user])
+
+
+# gửi thông báo đến người điều xe
+def _notify_to_user_receive(doc: Document):
+	"""Gửi thông báo đến những members trong User Group 'Nhận thông báo điều xe' khi đơn được duyệt.
+		Tạo bản ghi VNT Vehicle Control để người điều xe vào điền trong bản ghi này
+	"""
+	# tạo bản ghi mới trong vnt vehicle control
+	user_group_name = "Nhận thông báo điều xe"
+	user_list = frappe.get_all(
+		"User Group Member",
+		filters={"parent": user_group_name},
+		pluck="user",
+	)
+	employee_user = frappe.get_value('User', {'name': user_list[0]}, 'full_name')
+	items = doc.get("items") or []
+	if items:
+		vehicle_control = frappe.new_doc("VNT Vehicle Control")
+		vehicle_control.employee_name = employee_user
+		vehicle_control.date = nowdate()
+		for item in items:
+			vehicle_control.append(
+				"items",
+				{
+					"employee_name": doc.employee_name,
+					"start": item.start,
+					"end": item.end,
+					"time": item.time,
+					"date": item.date,
+					"id_parent": doc.name,
+					"id_child": item.name
+				},
+			)
+		vehicle_control.insert(ignore_permissions=True)
+		if vehicle_control:
+			make_notification_logs({
+				"type": "Alert",
+				"subject": _("Vui lòng điều xe cho phiếu đăng ký xe của {0} đã được duyệt.").format(doc.employee_name or _("(không rõ)")),
+				"document_type": 'VNT Vehicle Control',
+				"document_name": vehicle_control.name,
+			}, user_list)
+
+
+def _sync_business_trip_transportation(doc: Document):
+	if doc.docstatus != 1:
+		return
+
+	business_trip = doc.get("business_trip")
+	if not business_trip:
+		return
+
+	try:
+		trip_doc = frappe.get_doc("VNT Business Trip Request", business_trip)
+	except frappe.DoesNotExistError:
+		return
+
+	transportation = trip_doc.get("transportation") or []
+	if not transportation:
+		return
+
+	transport_map: dict[tuple[str, str, str, str], list] = {}
+	for row in transportation:
+		key = (
+			row.start,
+			row.end,
+			row.date,
+			row.time,
+		)
+		transport_map.setdefault(key, []).append(row)
+
+	for item in doc.get("items") or []:
+		driver = item.get("lái_xe")
+		if not driver:
+			continue
+
+		key = (
+			item.get("start"),
+			item.get("end"),
+			item.get("date"),
+			item.get("time"),
+		)
+		rows = transport_map.get(key)
+		if not rows:
+			continue
+
+		transport_row = rows.pop(0)
+		if transport_row.driver != driver:
+			frappe.db.set_value(
+				"VNT Business Trip Request Transportation",
+				transport_row.name,
+				"driver",
+				driver,
+			)
+			transport_row.driver = driver
+
+
+def _validate_employee_schedule(doc: Document):
+	list_emp = doc.get("list_emp") or []
+	items = [item for item in (doc.get("items") or []) if item.date]
+	if not list_emp or not items:
+		return
+
+	seen: set[str] = set()
+	employees: list[str] = []
+	for row in list_emp:
+		employee = row.get("employee")
+		if not employee:
+			continue
+		if employee in seen:
+			frappe.throw(
+				_("Nhân sự {0} đã được thêm vào danh sách. Vui lòng không chọn trùng.").format(
+					frappe.bold(employee)
+				)
+			)
+		seen.add(employee)
+		employees.append(employee)
+
+	if not employees:
+		return
+
+	current_name = doc.name if doc.name and not doc.is_new() else None
+
+	for employee in employees:
+		for item in items:
+			conflicts = frappe.db.sql(
+				"""
+				SELECT DISTINCT reg.name, itm.date, itm.time
+				FROM `tabVNT Car Registration` reg
+				INNER JOIN `tabVNT Car Registration Employee` emp ON emp.parent = reg.name
+				INNER JOIN `tabVNT Car Registration Item` itm ON itm.parent = reg.name
+				WHERE reg.docstatus != 2
+				  AND emp.employee = %(employee)s
+				  AND itm.date = %(date)s
+				  AND (%(time)s IS NULL OR itm.time IS NULL OR itm.time = %(time)s)
+				  AND (%(current)s IS NULL OR reg.name != %(current)s)
+				LIMIT 1
+				""",
+				{
+					"employee": employee,
+					"date": item.date,
+					"time": item.time,
+					"current": current_name,
+				},
+				as_dict=True,
+			)
+			if conflicts:
+				conflict = conflicts[0]
+				conflict_date = formatdate(conflict.date) if conflict.date else _("(không rõ)")
+				conflict_time = format_time(conflict.time) if conflict.time else _("(không rõ)")
+				frappe.throw(
+					_("Nhân sự {0} đã có đăng ký xe {1} vào ngày {2} lúc {3}. Vui lòng chọn thời gian khác.").format(
+						frappe.bold(employee),
+						frappe.bold(conflict.name),
+						conflict_date,
+						conflict_time,
+					)
+				)
+
 
 def _notify_to_approver(doc: Document, user: str | None):
 	"""Gửi thông báo đến người duyệt khi đơn được chuyển sang trạng thái 'Chờ lãnh đạo duyệt'."""
@@ -195,6 +401,34 @@ def _get_prev_and_curr_workflow_state(doc: Document) -> tuple[str | None, str]:
  
 	curr_state = (doc.get("workflow_state") or "").strip()
 	return prev_state, curr_state
+
+
+@frappe.whitelist()
+def get_list_employee_name(name):
+	return frappe.get_value("Employee", {"name": name}, 'employee_name')
+
+
+@frappe.whitelist()
+def get_employee_names(names: list[str] | str | None = None):
+	if not names:
+		return {}
+	if isinstance(names, str):
+		try:
+			names = json.loads(names)
+		except ValueError:
+			names = [names]
+	if not isinstance(names, (list, tuple, set)):
+		return {}
+	names = [n for n in names if n]
+	if not names:
+		return {}
+	records = frappe.get_all(
+		"Employee",
+		filters={"name": ["in", names]},
+		fields=["name", "employee_name"],
+		limit_page_length=0,
+	)
+	return {rec.name: rec.employee_name for rec in records}
 
 
 @frappe.whitelist()

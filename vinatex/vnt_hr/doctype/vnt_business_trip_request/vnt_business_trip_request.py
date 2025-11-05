@@ -1,4 +1,5 @@
 import frappe
+from frappe.utils import nowdate
 from frappe.model.document import Document
 from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
@@ -300,36 +301,124 @@ def replace_attendance_for_business_trip(doc: Document):
         d = add_days(d, 1)
 
     # tạo đăng ký xe nếu có check đăng ký xe và submit luôn
-    for i in doc.transportation:
-        if i.need_car:
-            create_vehicle_request_for_business_trip(doc, i)
+    transportation_rows = [row for row in (doc.transportation or []) if row.need_car]
+    if transportation_rows:
+        create_vehicle_request_for_business_trip(doc, transportation_rows)
 
-def create_vehicle_request_for_business_trip(doc: Document, item):
-    vehicle_request = frappe.new_doc("VNT Car Registration")
+def create_vehicle_request_for_business_trip(doc: Document, transportation_rows: list):
+    if not transportation_rows:
+        return
+
+    existing_name = frappe.db.get_value(
+        "VNT Car Registration",
+        {"business_trip": doc.name, "docstatus": ["!=", 2]},
+        "name",
+    )
+
+    if existing_name:
+        vehicle_request = frappe.get_doc("VNT Car Registration", existing_name)
+        vehicle_request.flags.ignore_permissions = True
+        vehicle_request.flags.ignore_validate_update_after_submit = True
+        vehicle_request.set("items", [])
+    else:
+        vehicle_request = frappe.new_doc("VNT Car Registration")
+        vehicle_request.business_trip = doc.name
+
     vehicle_request.employee = doc.employee
     vehicle_request.employee_name = doc.employee_name
     vehicle_request.company = doc.company
     vehicle_request.department = doc.department
-    vehicle_request.distance = item.distance
+    first_transport = transportation_rows[0]
+    vehicle_request.distance = getattr(first_transport, "distance", None)
     vehicle_request.note = doc.purpose
-    
-    
+
     vehicle_request.from_date = doc.from_date
     vehicle_request.to_date = doc.to_date
     vehicle_request.purpose = doc.purpose
-    vehicle_request.start = item.start
-    vehicle_request.end = item.end
-    approver_user = get_employee_user_id(doc.approver)
-    vehicle_request.approver = approver_user or doc.approver
+    vehicle_request.start = getattr(first_transport, "start", None)
+    vehicle_request.end = getattr(first_transport, "end", None)
+    # approver_user = get_employee_user_id(doc.approver)
+    vehicle_request.approver = doc.approver
+    vehicle_request.approver_lv2 = 'tanpv@vinatex.com.vn'
+    vehicle_request.approver_lv2_name = 'Phạm Văn Tân'
     vehicle_request.company = doc.company
     employees = sorted(_collect_employees(doc))
     vehicle_request.set("list_emp", [])
     for emp in employees:
         vehicle_request.append("list_emp", {"employee": emp})
-    vehicle_request.business_trip = doc.name
     vehicle_request.status = "Submitted"
-    vehicle_request.insert(ignore_permissions=True)
-    vehicle_request.submit()
+
+    for row in transportation_rows:
+        vehicle_request.append(
+            "items",
+            {
+                "start": row.start,
+                "end": row.end,
+                "time": row.time,
+                "date": row.date,
+            },
+        )
+    if existing_name:
+        vehicle_request.save(ignore_permissions=True)
+        if vehicle_request.docstatus == 0:
+            vehicle_request.submit()
+    else:
+        vehicle_request.insert(ignore_permissions=True)
+        vehicle_request.submit()
+
+    # gửi thông báo cho ngườ điều xe
+    # tạo bản ghi mới trong vnt vehicle control hoặc cập nhật nếu đã có
+    user_group_name = "Nhận thông báo điều xe"
+    user_list = frappe.get_all(
+        "User Group Member",
+        filters={"parent": user_group_name},
+        pluck="user",
+    )
+    if not user_list:
+        return
+
+    employee_user = frappe.get_value('User', {'name': user_list[0]}, 'full_name')
+    vehicle_control_name = frappe.db.get_value(
+        "VNT Vehicle Control Item",
+        {"id_parent": vehicle_request.name},
+        "parent",
+    )
+
+    if vehicle_control_name:
+        vehicle_control = frappe.get_doc("VNT Vehicle Control", vehicle_control_name)
+        vehicle_control.flags.ignore_permissions = True
+        vehicle_control.set("items", [])
+    else:
+        vehicle_control = frappe.new_doc("VNT Vehicle Control")
+        vehicle_control.set("date", nowdate())
+
+    vehicle_control.employee_name = employee_user
+
+    for item in vehicle_request.get("items") or []:
+        vehicle_control.append(
+            "items",
+            {
+                "employee_name": doc.employee_name,
+                "start": item.start,
+                "end": item.end,
+                "time": item.time,
+                "date": item.date,
+                "id_parent": vehicle_request.name,
+                "id_child": item.name,
+            },
+        )
+
+    if vehicle_control_name:
+        vehicle_control.save(ignore_permissions=True)
+    else:
+        vehicle_control.insert(ignore_permissions=True)
+
+    make_notification_logs({
+        "type": "Alert",
+        "subject": _("Vui lòng điều xe cho phiếu đăng ký xe của {0} đã được duyệt.").format(doc.employee_name or _("(không rõ)")),
+        "document_type": 'VNT Vehicle Control',
+        "document_name": vehicle_control.name,
+    }, user_list)
 
 
 def cancel_attendance_for_trip(doc: Document):

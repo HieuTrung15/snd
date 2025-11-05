@@ -17,8 +17,10 @@
   "section_break_7fxv",
   "distance",
   "note",
+  "business_trip",
   "column_break_chj2",
   "list_emp",
+  "people",
   "section_break_xwlf",
   "items",
   "section_break_3tb8",
@@ -29,10 +31,10 @@
   "approver_name_lv2",
   "\u0111i\u1ec1u_xe_tab",
   "driver",
-  "t\u00ean_nh\u00e2n_s\u1ef1_l\u00e1i_xe",
+  "out_of_service",
+  "services",
   "column_break_kxuy",
   "car_type",
-  "business_trip",
   "amended_from"
  ],
  "fields": [
@@ -66,7 +68,7 @@
    "fieldname": "note",
    "fieldtype": "Small Text",
    "in_list_view": 1,
-   "label": "N\u1ed9i dung chi ti\u1ebft",
+   "label": "N\u1ed9i dung",
    "reqd": 1
   },
   {
@@ -82,9 +84,9 @@
   {
    "allow_on_submit": 1,
    "fieldname": "car_type",
-   "fieldtype": "Select",
-   "label": "Ch\u1ecdn lo\u1ea1i xe",
-   "options": "\nBKS:30A-917.49\nBKS:30M-008.01\nBKS:30L-911.64\n\u0110i taxi ngo\u00e0i - L\u1ea5y h\u00f3a \u0111\u01a1n v\u1ec1 thanh to\u00e1n\nKh\u00f4ng thu\u1ed9c tr\u01b0\u1eddng h\u1ee3p \u0111\u01b0\u1ee3c ph\u00e2n xe\n\u0110i taxi Mai Linh"
+   "fieldtype": "Data",
+   "ignore_user_permissions": 1,
+   "label": "Ch\u1ecdn lo\u1ea1i xe"
   },
   {
    "fieldname": "column_break_tgvp",
@@ -114,27 +116,26 @@
    "fieldname": "driver",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
-   "label": "Nh\u00e2n s\u1ef1 l\u00e1i xe",
-   "options": "Employee"
+   "label": "L\u00e1i xe",
+   "options": "VNT Vehicle"
   },
   {
    "fieldname": "employee",
    "fieldtype": "Link",
-   "label": "M\u00e3 nh\u00e2n vi\u00ean",
+   "label": "M\u00e3 nh\u00e2n s\u1ef1 \u0111\u1ec1 xu\u1ea5t",
    "options": "Employee"
   },
   {
    "fetch_from": "employee.employee_name",
    "fieldname": "employee_name",
    "fieldtype": "Data",
-   "label": "T\u00ean ng\u01b0\u1eddi \u0111\u1ec1 xu\u1ea5t"
+   "label": "T\u00ean nh\u00e2n s\u1ef1 \u0111\u1ec1 xu\u1ea5t"
   },
   {
-   "fetch_if_empty": 1,
    "fieldname": "list_emp",
    "fieldtype": "Table MultiSelect",
    "ignore_user_permissions": 1,
-   "label": "Danh s\u00e1ch nh\u00e2n s\u1ef1",
+   "label": "Danh s\u00e1ch nh\u00e2n s\u1ef1 \u0111i xe",
    "options": "VNT Car Registration Employee",
    "reqd": 1
   },
@@ -151,11 +152,10 @@
    "default": "tanpv@vinatex.com.vn",
    "depends_on": "eval: doc.distance == 'T\u1eeb 40 km tr\u1edf l\u00ean'",
    "fieldname": "approver_lv2",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "hidden": 1,
    "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi duy\u1ec7t c\u1ea5p 2",
-   "options": "Employee",
    "read_only": 1
   },
   {
@@ -176,13 +176,15 @@
    "depends_on": "eval: doc.workflow_state == '\u0110\u00e3 duy\u1ec7t'",
    "fieldname": "\u0111i\u1ec1u_xe_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "\u0110i\u1ec1u xe"
   },
   {
    "fieldname": "business_trip",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Business Trip"
+   "fieldtype": "Link",
+   "label": "Business Trip",
+   "options": "VNT Business Trip Request",
+   "read_only": 1
   },
   {
    "fetch_from": "employee.branch",
@@ -200,13 +202,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "allow_on_submit": 1,
-   "fetch_from": "driver.employee_name",
-   "fieldname": "t\u00ean_nh\u00e2n_s\u1ef1_l\u00e1i_xe",
-   "fieldtype": "Data",
-   "label": "T\u00ean nh\u00e2n s\u1ef1 l\u00e1i xe"
-  },
-  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -215,13 +210,34 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval: doc.out_of_service",
+   "fieldname": "services",
+   "fieldtype": "Select",
+   "label": "Lo\u1ea1i d\u1ecbch v\u1ee5",
+   "options": "\n\u0110i taxi ngo\u00e0i - L\u1ea5y h\u00f3a \u0111\u01a1n v\u1ec1 thanh to\u00e1n\nKh\u00f4ng thu\u1ed9c tr\u01b0\u1eddng h\u1ee3p \u0111\u01b0\u1ee3c ph\u00e2n xe\n\u0110i taxi Mai Linh"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "out_of_service",
+   "fieldtype": "Check",
+   "label": "D\u1ecbch v\u1ee5 ngo\u00e0i"
+  },
+  {
+   "fieldname": "people",
+   "fieldtype": "Int",
+   "label": "S\u1ed1 ng\u01b0\u1eddi \u0111i xe",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-04 09:55:05.581841",
+ "modified": "2025-11-05 14:38:29.017203",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Car Registration",

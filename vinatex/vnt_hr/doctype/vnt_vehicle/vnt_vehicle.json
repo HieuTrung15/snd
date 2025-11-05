@@ -1,15 +1,15 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:{driver}",
+ "autoname": "format:{driver_name}",
  "creation": "2025-10-29 14:24:27.970130",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "section_break_6kds",
-  "name_car",
   "car_id",
   "driver",
+  "driver_name",
   "status"
  ],
  "fields": [
@@ -18,20 +18,16 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "name_car",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "T\u00ean xe"
-  },
-  {
    "fieldname": "car_id",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Bi\u1ec3n s\u1ed1 xe",
    "reqd": 1
   },
   {
    "fieldname": "driver",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "T\u00e0i x\u1ebf",
    "options": "Employee"
   },
@@ -42,12 +38,18 @@
    "in_list_view": 1,
    "label": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
    "reqd": 1
+  },
+  {
+   "fetch_from": "driver.employee_name",
+   "fieldname": "driver_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean t\u00e0i x\u1ebf"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-29 14:31:18.988085",
+ "modified": "2025-11-04 14:40:56.605749",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Vehicle",
@@ -64,6 +66,14 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Taskmaster",
+   "select": 1,
    "write": 1
   }
  ],
