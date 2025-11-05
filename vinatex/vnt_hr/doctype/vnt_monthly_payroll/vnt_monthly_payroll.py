@@ -159,23 +159,40 @@ def compute_item(employee, company=None, month=None, year=None):
             group_counts[group_name] = group_counts.get(group_name, 0.0) + float(qty)
 
     WORKING_STATUS_FULL = {"Present", "Work From Home", "On Duty"}
+    BUSINESS_TRIP_KEY = "công tác"
+
+    def normalize(value):
+        return (value or "").strip().casefold()
+
+    def is_business_trip(record):
+        return normalize(record.get("leave_group")) == BUSINESS_TRIP_KEY or normalize(record.get("leave_type")) == BUSINESS_TRIP_KEY
+
     for att in attendance_details:
         status = (att.status or "").strip()
-        leave_group = att.leave_group or "Khác"
+        leave_group = (att.leave_group or "Khác").strip()
+        business_trip = is_business_trip(att)
+        qty = 0.5 if status == "Half Day" else 1.0
+
         if status in WORKING_STATUS_FULL:
-            add_group_qty("Ngày công", 1.0)
+            add_group_qty("Ngày công", qty)
         elif status == "Half Day":
-            add_group_qty("Ngày công", 0.5)
+            add_group_qty("Ngày công", qty)
             if att.leave_type:
-                add_group_qty(leave_group, 0.5)
+                add_group_qty(leave_group, qty)
         else:
-            add_group_qty(leave_group, 1.0)
+            add_group_qty(leave_group, qty)
+            if business_trip:
+                add_group_qty("Ngày công", qty)
+
+        if business_trip:
+            add_group_qty("Công tác", qty)
 
     so_phep = group_counts.get("Nghỉ phép", 0.0)
     so_ngay_nghi_vr = group_counts.get("Nghỉ có hưởng lương, chế độ", 0.0)
     nghi_kluong_bhxh_1 = group_counts.get("Nghỉ việc riêng không hưởng lương", 0.0)
     nghi_kluong_bhxh_2 = group_counts.get("Nghỉ hưởng chế độ BHXH", 0.0)
     ngay_cong = group_counts.get("Ngày công", 0.0)
+    cong_tac = group_counts.get("Công tác", 0.0)
 
     # 4) Bậc thuế TNCN (child table)
     #    Sắp xếp theo from_cur tăng dần, chuẩn hoá 'to' = 0 => None (không giới hạn)
@@ -261,6 +278,8 @@ def compute_item(employee, company=None, month=None, year=None):
                 status_local = (att_row.status or "").strip()
                 if status_local in WORKING_STATUS_FULL:
                     return 1.0
+                if is_business_trip(att_row):
+                    return 0.5 if status_local == "Half Day" else 1.0
                 if status_local == "Half Day":
                     return 0.5
                 return 0.0
@@ -284,6 +303,7 @@ def compute_item(employee, company=None, month=None, year=None):
         "meal_allowance": param.meal_allowance,
         "travel_allowance": param.travel_allowance,
         "so_phep": so_phep,
+        "cong_tac": cong_tac,
         "so_ngay_nghi_vr": so_ngay_nghi_vr,
         "nghi_kluong_bhxh": (nghi_kluong_bhxh_1 or 0) + (nghi_kluong_bhxh_2 or 0),
         "tax_brackets": tax_brackets,
