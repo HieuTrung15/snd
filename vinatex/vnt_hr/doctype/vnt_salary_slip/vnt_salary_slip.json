@@ -12,6 +12,7 @@
   "month",
   "year",
   "section_break_vpkl",
+  "rendered_html",
   "html"
  ],
  "fields": [
@@ -49,6 +50,13 @@
   {
    "fieldname": "section_break_vpkl",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "rendered_html",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Rendered HTML",
+   "read_only": 1
   },
   {
    "fieldname": "html",
