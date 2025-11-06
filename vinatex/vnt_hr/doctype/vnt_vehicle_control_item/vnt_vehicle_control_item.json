@@ -27,6 +27,7 @@
   {
    "fieldname": "employee_name",
    "fieldtype": "Data",
+   "ignore_user_permissions": 1,
    "in_list_view": 1,
    "label": "Ng\u01b0\u1eddi \u0111\u1ec1 xu\u1ea5t"
   },
@@ -52,6 +53,7 @@
   {
    "fieldname": "driver",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "in_list_view": 1,
    "label": "L\u00e1i xe",
    "options": "VNT Vehicle"
@@ -96,7 +98,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-06 13:25:23.721132",
+ "modified": "2025-11-06 16:47:52.342483",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Vehicle Control Item",

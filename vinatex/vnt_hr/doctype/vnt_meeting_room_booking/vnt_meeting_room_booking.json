@@ -61,6 +61,7 @@
    "fetch_from": "employee.department",
    "fieldname": "department",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Ph\u00f2ng ban",
    "options": "Department"
   },
@@ -244,7 +245,7 @@
  "is_calendar_and_gantt": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-06 14:16:23.370025",
+ "modified": "2025-11-06 17:40:18.979472",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Meeting Room Booking",
