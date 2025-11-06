@@ -1,11 +1,13 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "naming_series:",
  "creation": "2025-11-05 16:27:04.101296",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "section_break_izlu",
+  "naming_series",
   "employee",
   "employee_name",
   "column_break_lh3s",
@@ -62,15 +64,21 @@
    "fieldname": "html",
    "fieldtype": "HTML",
    "label": "B\u1ea3ng l\u01b0\u01a1ng chi ti\u1ebft"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "options": "PL.-.MM..YY.-.#####"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-05 16:28:51.695351",
+ "modified": "2025-11-06 15:25:51.677066",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Salary Slip",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
