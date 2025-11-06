@@ -9,6 +9,7 @@
   "section_break_2adv",
   "item_code",
   "item_name",
+  "other_item",
   "column_break_mc5u",
   "qty"
  ],
@@ -28,7 +29,6 @@
   {
    "fieldname": "item_name",
    "fieldtype": "Select",
-   "in_list_view": 1,
    "label": "T\u00ean s\u1ea3n ph\u1ea9m",
    "options": "\n\u00c1o s\u01a1 mi\nKh\u0103n\nPhi\u1ebfu mua h\u00e0ng 1tr\nPhi\u1ebfu mua h\u00e0ng 500k"
   },
@@ -41,13 +41,19 @@
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "S\u1ed1 l\u01b0\u1ee3ng"
+  },
+  {
+   "fieldname": "other_item",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "S\u1ea3n ph\u1ea9m"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-04 09:03:09.503658",
+ "modified": "2025-11-05 17:31:03.994972",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT External Products Item Add On",

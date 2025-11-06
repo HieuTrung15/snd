@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:\u0110KSP\u0110N-{employee_name}",
+ "autoname": "format:\u0110KSP\u0110N-{employee_name}-{#####}",
  "creation": "2025-11-03 17:05:50.704838",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -29,12 +29,15 @@
   "approver_lv2_name",
   "column_break_kcvx",
   "follower",
-  "follower_name"
+  "follower_name",
+  "section_break_wmhh",
+  "html"
  ],
  "fields": [
   {
    "fieldname": "section_break_8qmv",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "L\u1ef1a ch\u1ecdn s\u1ea3n ph\u1ea9m \u0111\u1ed1i ngo\u1ea1i"
   },
   {
    "fieldname": "amended_from",
@@ -98,7 +101,8 @@
   },
   {
    "fieldname": "section_break_s8fm",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "M\u1ee5c \u0111\u00edch"
   },
   {
    "fieldname": "m\u1ee5c_\u0111\u00edch",
@@ -166,14 +170,23 @@
   },
   {
    "fieldname": "section_break_9am8",
+   "fieldtype": "Section Break",
+   "label": "\u0110\u1ec1 xu\u1ea5t s\u1ea3n ph\u1ea9m kh\u00e1c"
+  },
+  {
+   "fieldname": "section_break_wmhh",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html",
+   "fieldtype": "HTML"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-04 10:29:53.930491",
+ "modified": "2025-11-06 15:08:58.389680",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT External Products",
@@ -195,20 +208,18 @@
   },
   {
    "create": 1,
-   "delete": 1,
    "email": 1,
    "export": 1,
    "print": 1,
    "read": 1,
    "report": 1,
    "role": "Employee",
-   "select": 1,
    "share": 1,
+   "submit": 1,
    "write": 1
   },
   {
    "create": 1,
-   "delete": 1,
    "email": 1,
    "export": 1,
    "print": 1,
@@ -216,6 +227,7 @@
    "report": 1,
    "role": "Leave Approver",
    "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],
