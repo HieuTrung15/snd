@@ -306,6 +306,7 @@ def replace_attendance_for_business_trip(doc: Document):
     if transportation_rows:
         create_vehicle_request_for_business_trip(doc, transportation_rows)
 
+
 def create_vehicle_request_for_business_trip(doc: Document, transportation_rows: list):
     if not transportation_rows:
         return
@@ -390,6 +391,13 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
             update_modified=False,
         )
         vehicle_request.workflow_state = "Chờ lãnh đạo tập đoàn duyệt"
+
+        make_notification_logs({
+            "type": "Alert",
+            "subject": _("Phiếu đăng ký xe của {0} đang chờ duyệt.").format(doc.employee_name or None),
+            "document_type": 'VNT Car Registration',
+            "document_name": vehicle_request.name,
+        }, ['tanpv@vinatex.com.vn'])
 
     if not make_vehicle_control:
         return
