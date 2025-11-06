@@ -11,6 +11,8 @@
   "travel_route",
   "note",
   "driver",
+  "phone",
+  "car_id",
   "column_break_rc7a",
   "start",
   "end",
@@ -91,7 +93,24 @@
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "label": "L\u00e1i xe",
+   "no_copy": 1,
    "options": "VNT Vehicle",
+   "read_only": 1
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "ignore_user_permissions": 1,
+   "label": "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "car_id",
+   "fieldtype": "Data",
+   "ignore_user_permissions": 1,
+   "label": "Bi\u1ec3n s\u1ed1 xe",
+   "no_copy": 1,
    "read_only": 1
   }
  ],
@@ -99,7 +118,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-06 08:59:09.122691",
+ "modified": "2025-11-06 11:24:44.086399",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request Transportation",

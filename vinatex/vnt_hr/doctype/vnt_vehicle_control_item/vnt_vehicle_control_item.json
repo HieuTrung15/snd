@@ -14,6 +14,8 @@
   "column_break_7hdz",
   "time",
   "driver",
+  "phone",
+  "car_id",
   "id_parent",
   "id_child"
  ],
@@ -61,8 +63,8 @@
   {
    "fieldname": "id_parent",
    "fieldtype": "Data",
-   "hidden": 1,
-   "label": "ID parent"
+   "label": "Phi\u1ebfu \u0111\u0103ng k\u00fd xe",
+   "read_only": 1
   },
   {
    "fieldname": "id_child",
@@ -76,13 +78,25 @@
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Ng\u00e0y \u0111i"
+  },
+  {
+   "fetch_from": "driver.phone",
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i"
+  },
+  {
+   "fetch_from": "driver.car_id",
+   "fieldname": "car_id",
+   "fieldtype": "Data",
+   "label": "Bi\u1ec3n s\u1ed1 xe"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-05 15:37:43.488999",
+ "modified": "2025-11-06 13:25:23.721132",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Vehicle Control Item",

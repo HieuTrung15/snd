@@ -34,6 +34,8 @@ class VNTVehicleControl(Document):
 				continue
 
 			frappe.db.set_value("VNT Car Registration Item", row.id_child, "driver", row.driver)
+			frappe.db.set_value("VNT Car Registration Item", row.id_child, "phone", row.phone)
+			frappe.db.set_value("VNT Car Registration Item", row.id_child, "car_id", row.car_id)
 
 			car_item = next((item for item in (car.get("items") or []) if item.name == row.id_child), None)
 			if car_item and car_item.date:
@@ -110,3 +112,29 @@ def get_employee_user_id(employee_name: str) -> str | None:
     if not employee_name:
         return None
     return frappe.db.get_value("Employee", employee_name, "user_id")
+
+
+@frappe.whitelist()
+def get_taken_vehicles(date):
+	if not date:
+		return []
+
+	return frappe.db.sql(
+		"""
+		SELECT
+			item.id_parent,
+			item.driver,
+			item.start,
+			item.end,
+			item.date,
+			item.time
+			COALESCE(item.employee_name, parent.employee_name) AS employee_name
+		FROM `tabVNT Vehicle Control Item` item
+		INNER JOIN `tabVNT Vehicle Control` parent ON parent.name = item.parent
+		WHERE item.date = %(date)s
+		  AND COALESCE(item.driver, '') != ''
+		ORDER BY item.time, item.start, item.end
+		""",
+		{"date": date},
+		as_dict=True,
+	)

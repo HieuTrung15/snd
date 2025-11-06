@@ -10,6 +10,7 @@
   "car_id",
   "driver",
   "driver_name",
+  "phone",
   "status"
  ],
  "fields": [
@@ -29,7 +30,8 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "T\u00e0i x\u1ebf",
-   "options": "Employee"
+   "options": "Employee",
+   "reqd": 1
   },
   {
    "default": "0",
@@ -44,12 +46,19 @@
    "fieldname": "driver_name",
    "fieldtype": "Data",
    "label": "T\u00ean t\u00e0i x\u1ebf"
+  },
+  {
+   "fetch_from": "driver.cell_number",
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-04 14:40:56.605749",
+ "modified": "2025-11-06 11:22:53.271124",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Vehicle",

@@ -1,0 +1,69 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-06 09:55:31.841566",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_0jfs",
+  "start",
+  "end",
+  "date",
+  "time",
+  "driver",
+  "id_parent"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_0jfs",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "start",
+   "fieldtype": "Data",
+   "label": "\u0110i\u1ec3m \u0111i"
+  },
+  {
+   "fieldname": "end",
+   "fieldtype": "Data",
+   "label": "\u0110i\u1ec3m \u0111\u1ebfn"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y"
+  },
+  {
+   "fieldname": "time",
+   "fieldtype": "Time",
+   "label": "Gi\u1edd"
+  },
+  {
+   "fieldname": "driver",
+   "fieldtype": "Link",
+   "label": "L\u00e1i xe",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "id_parent",
+   "fieldtype": "Data",
+   "label": "Phi\u1ebfu \u0111\u0103ng k\u00fd xe"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-06 10:23:38.690432",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Vehicle Control Taken",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

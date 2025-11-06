@@ -11,6 +11,10 @@ body {
 	padding: 0px;
 }
 
+.link-item .link-text:hover {
+    text-decoration: underline;
+}
+
 [data-theme="light"] {
 	--bg-color: #f3f6f9;
 	--disabled-control-bg: #f3f6f9;

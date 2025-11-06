@@ -9,6 +9,8 @@
   "employee_name",
   "column_break_rcr0",
   "date",
+  "section_break_ldls",
+  "taken",
   "section_break_esrp",
   "items"
  ],
@@ -36,12 +38,23 @@
    "fieldname": "date",
    "fieldtype": "Date",
    "label": "Ng\u00e0y \u0111i\u1ec1u xe"
+  },
+  {
+   "fieldname": "section_break_ldls",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "taken",
+   "fieldtype": "Table",
+   "label": "Danh s\u00e1ch \u0111\u00e3 ph\u00e2n xe",
+   "options": "VNT Vehicle Control Item",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-04 16:48:07.877889",
+ "modified": "2025-11-06 10:15:09.080897",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Vehicle Control",
