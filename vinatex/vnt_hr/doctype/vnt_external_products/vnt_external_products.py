@@ -6,9 +6,17 @@ from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.model.document import Document
 
+_FOLLOWER_EMPLOYEE = "VGT00164"
+
 
 class VNTExternalProducts(Document):
 	"""Form đăng ký sản phẩm đối ngoại."""
+
+	def before_insert(self):
+		_set_default_follower(self)
+
+	def validate(self):
+		_set_default_follower(self)
 
 	def on_update(self):
 		# Chỉ xử lý khi trạng thái workflow đổi
@@ -42,7 +50,7 @@ def _handle_state_transition(doc: Document):
 	if curr_state == "Đã duyệt" and prev_state == "Chờ lãnh đạo tập đoàn duyệt":
 		_check_state_to_close_todo(doc, approver_lv2_user)
 		_notify_requester(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã được lãnh đạo tập đoàn duyệt."))
-		_notify_follower(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã được lãnh đạo tập đoàn duyệt."))
+		_notify_follower_prepare_gift(doc)
 
 	if prev_state == "Chờ lãnh đạo duyệt" and curr_state == "Từ chối":
 		_check_state_to_close_todo(doc, approver_user)
@@ -78,7 +86,7 @@ def _notify_to_approver_lv2(doc: Document, user: str | None):
 		return
 	make_notification_logs({
 		"type": "Alert",
-		"subject": _("Phiếu đăng ký sản phẩm đối ngoại của {0} đang chờ duyệt.").format(doc.employee_name or _("(không rõ)")),
+		"subject": _("Phiếu đăng ký sản phẩm đối ngoại của {0} đang chờ lãnh đạo tập đoàn duyệt.").format(doc.employee_name or _("(không rõ)")),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, [user])
@@ -100,6 +108,17 @@ def _notify_follower(doc: Document, template: str):
 	if not user:
 		return
 	subject = template.format(doc.employee_name or _("(không rõ)"))
+	_notify_users(doc, [user], subject)
+
+
+def _notify_follower_prepare_gift(doc: Document):
+	"""Nhắc người theo dõi chuẩn bị quà sau khi lãnh đạo tập đoàn duyệt."""
+	user = get_employee_user_id(doc.get("follower"))
+	if not user:
+		return
+	subject = _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã được lãnh đạo tập đoàn duyệt, vui lòng chuẩn bị quà.").format(
+		doc.employee_name or _("(không rõ)")
+	)
 	_notify_users(doc, [user], subject)
 
 
@@ -186,6 +205,13 @@ def _get_prev_and_curr_workflow_state(doc: Document) -> tuple[str | None, str]:
 
 	curr_state = (doc.get("workflow_state") or "").strip()
 	return prev_state, curr_state
+
+
+def _set_default_follower(doc: Document):
+	"""Gán cố định người theo dõi là nhân sự phụ trách quà tặng."""
+	doc.follower = _FOLLOWER_EMPLOYEE
+	emp_name = frappe.db.get_value("Employee", _FOLLOWER_EMPLOYEE, "employee_name") or ""
+	doc.follower_name = emp_name
 
 
 def get_employee_user_id(employee_name: str | None) -> str | None:
