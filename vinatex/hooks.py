@@ -67,7 +67,7 @@ doctype_js = {
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
-# doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
+doctype_calendar_js = {"VNT Car Registration" : "vinatex/doctype/overrides/vnt_car_registration_calendar.js"}
 jinja = {
     "methods": [
         "vinatex.vinatex.doctype.utils.numword_vi.number_to_words"

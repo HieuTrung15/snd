@@ -13,8 +13,8 @@ class VNTVehicleControl(Document):
 		if not self.items:
 			return
 
-		registrations: dict[str, Document] = {}
-		business_trips: dict[str, dict | None] = {}
+		registrations: dict[str, Document | None] = {}
+		trip_mappings: dict[str, dict | None] = {}
 		recipients: set[str] = set()
 		trip_dates: set[str] = set()
 
@@ -23,15 +23,19 @@ class VNTVehicleControl(Document):
 				continue
 
 			car = registrations.get(row.id_parent)
-			if not car:
-				car = frappe.db.exists("VNT Car Registration", row.id_parent) and frappe.get_doc("VNT Car Registration", row.id_parent)
-				if not car:
-					continue
+			if car is None:
+				try:
+					car = frappe.get_doc("VNT Car Registration", row.id_parent)
+				except frappe.DoesNotExistError:
+					car = None
 				registrations[row.id_parent] = car
 
-			frappe.db.set_value("VNT Car Registration Item", row.id_child, "lái_xe", row.driver)
+			if not car:
+				continue
 
-			car_item = next((item for item in car.get("items") if item.name == row.id_child), None)
+			frappe.db.set_value("VNT Car Registration Item", row.id_child, "driver", row.driver)
+
+			car_item = next((item for item in (car.get("items") or []) if item.name == row.id_child), None)
 			if car_item and car_item.date:
 				trip_dates.add(car_item.date)
 
@@ -41,28 +45,27 @@ class VNTVehicleControl(Document):
 					recipients.add(user)
 
 			trip_name = car.get("business_trip")
-			if not trip_name:
+			if not trip_name or not car_item:
 				continue
 
-			trip_info = business_trips.get(trip_name)
-			if trip_info is None:
+			mapping = trip_mappings.get(trip_name)
+			if mapping is None:
 				try:
 					trip_doc = frappe.get_doc("VNT Business Trip Request", trip_name)
 				except frappe.DoesNotExistError:
-					business_trips[trip_name] = None
+					trip_mappings[trip_name] = None
 					continue
-				transport_map = {}
+				mapping = {}
 				for transport in trip_doc.get("transportation") or []:
 					key = (transport.start, transport.end, transport.date, transport.time)
-					transport_map.setdefault(key, []).append(transport)
-				trip_info = {"doc": trip_doc, "map": transport_map}
-				business_trips[trip_name] = trip_info
+					mapping.setdefault(key, []).append(transport)
+				trip_mappings[trip_name] = mapping
 
-			if not trip_info or not car_item:
+			if not mapping:
 				continue
 
 			key = (car_item.start, car_item.end, car_item.date, car_item.time)
-			candidates = trip_info["map"].get(key)
+			candidates = mapping.get(key)
 			if not candidates:
 				continue
 

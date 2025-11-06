@@ -301,7 +301,7 @@ def replace_attendance_for_business_trip(doc: Document):
         d = add_days(d, 1)
 
     # tạo đăng ký xe nếu có check đăng ký xe và submit luôn
-    transportation_rows = [row for row in (doc.transportation or []) if row.need_car]
+    transportation_rows = [row for row in (doc.transportation or []) if row.transport_mode == "Xe"]
     if transportation_rows:
         create_vehicle_request_for_business_trip(doc, transportation_rows)
 

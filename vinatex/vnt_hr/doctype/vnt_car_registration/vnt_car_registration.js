@@ -3,6 +3,7 @@
 
 frappe.ui.form.on("VNT Car Registration", {
 	 refresh(frm) {
+        set_title(frm)
         if (frm.is_new()) {
             frappe.call({
                 method: "vinatex.vnt_hr.doctype.vnt_car_registration.vnt_car_registration.get_employee_name",

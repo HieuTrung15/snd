@@ -42,4 +42,10 @@ frappe.ui.form.on("VNT Attendance Confirm", "validate", function(frm) {
 			frappe.throw(__('Vui lòng điền giải trình cho ngày {0}.', [frappe.format(row.date, {fieldtype: 'Date'}) || row.idx]));
 		}
 	});
+
+	(frm.doc.items || []).forEach(function(row) {
+		if (!row.type && !row.confirm) {
+			frappe.throw(__('Vui lòng chọn Đồng ý/ Từ chối cho ngày {0}.', [frappe.format(row.date, {fieldtype: 'Date'}) || row.idx]));
+		}
+	});
 });
