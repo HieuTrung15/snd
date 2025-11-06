@@ -24,7 +24,7 @@
   "source_url",
   "section_break_mugf",
   "attach",
-  "amended_from"
+  "html"
  ],
  "fields": [
   {
@@ -71,16 +71,6 @@
    "make_attachment_public": 1
   },
   {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "VNT Document Management",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
    "fieldname": "reference_number",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -121,6 +111,7 @@
   {
    "fieldname": "legacy_id",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "ID item Share Point"
   },
   {
@@ -130,14 +121,19 @@
   {
    "fieldname": "source_url",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Link SharePoint"
+  },
+  {
+   "fieldname": "html",
+   "fieldtype": "HTML"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-30 13:37:09.918028",
+ "modified": "2025-11-06 15:44:46.846696",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
