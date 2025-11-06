@@ -235,6 +235,7 @@
    "fieldname": "note",
    "fieldtype": "Small Text",
    "label": "N\u1ed9i dung cu\u1ed9c h\u1ecdp",
+   "max_height": "50px",
    "reqd": 1
   }
  ],
@@ -243,7 +244,7 @@
  "is_calendar_and_gantt": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-06 14:05:08.833405",
+ "modified": "2025-11-06 14:16:23.370025",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Meeting Room Booking",
