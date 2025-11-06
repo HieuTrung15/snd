@@ -5,6 +5,7 @@ from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.utils import getdate, add_days
 import unicodedata
+from frappe.model.workflow import apply_workflow
 
 # ---------------- Utils ----------------
 def _norm(s: str) -> str:
@@ -324,11 +325,17 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
         vehicle_request = frappe.new_doc("VNT Car Registration")
         vehicle_request.business_trip = doc.name
 
+    requires_lv2 = any(row.distance == "Từ 40 km trở lên" for row in transportation_rows)
+
+    if requires_lv2:
+        first_transport = "Từ 40 km trở lên"
+    else:
+        first_transport = transportation_rows[0]
+
     vehicle_request.employee = doc.employee
     vehicle_request.employee_name = doc.employee_name
     vehicle_request.company = doc.company
     vehicle_request.department = doc.department
-    first_transport = transportation_rows[0]
     vehicle_request.distance = getattr(first_transport, "distance", None)
     vehicle_request.note = doc.purpose
 
@@ -339,14 +346,17 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
     vehicle_request.end = getattr(first_transport, "end", None)
     # approver_user = get_employee_user_id(doc.approver)
     vehicle_request.approver = doc.approver
-    vehicle_request.approver_lv2 = 'tanpv@vinatex.com.vn'
-    vehicle_request.approver_lv2_name = 'Phạm Văn Tân'
     vehicle_request.company = doc.company
+
+    if requires_lv2:
+        vehicle_request.distance = vehicle_request.distance or "Từ 40 km trở lên"
+        vehicle_request.approver_lv2 = 'tanpv@vinatex.com.vn'
+        vehicle_request.approver_name_lv2 = 'Phạm Văn Tân'
+
     employees = sorted(_collect_employees(doc))
     vehicle_request.set("list_emp", [])
     for emp in employees:
         vehicle_request.append("list_emp", {"employee": emp})
-    vehicle_request.status = "Submitted"
 
     for row in transportation_rows:
         vehicle_request.append(
@@ -358,13 +368,31 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
                 "date": row.date,
             },
         )
+    make_vehicle_control = False
     if existing_name:
         vehicle_request.save(ignore_permissions=True)
-        if vehicle_request.docstatus == 0:
+        if not requires_lv2 and vehicle_request.docstatus == 0:
             vehicle_request.submit()
+        make_vehicle_control = not requires_lv2 and vehicle_request.docstatus == 1
     else:
         vehicle_request.insert(ignore_permissions=True)
-        vehicle_request.submit()
+        if not requires_lv2:
+            vehicle_request.submit()
+        make_vehicle_control = not requires_lv2 and vehicle_request.docstatus == 1
+        vehicle_request.reload()
+
+    if requires_lv2:
+        frappe.db.set_value(
+            "VNT Car Registration",
+            vehicle_request.name,
+            "workflow_state",
+            "Chờ lãnh đạo tập đoàn duyệt",
+            update_modified=False,
+        )
+        vehicle_request.workflow_state = "Chờ lãnh đạo tập đoàn duyệt"
+
+    if not make_vehicle_control:
+        return
 
     # gửi thông báo cho ngườ điều xe
     # tạo bản ghi mới trong vnt vehicle control hoặc cập nhật nếu đã có

@@ -264,6 +264,7 @@ def _validate_employee_schedule(doc: Document):
 				INNER JOIN `tabVNT Car Registration Employee` emp ON emp.parent = reg.name
 				INNER JOIN `tabVNT Car Registration Item` itm ON itm.parent = reg.name
 				WHERE reg.docstatus != 2
+					AND reg.workflow_state = 'Đã hủy'
 				  AND emp.employee = %(employee)s
 				  AND itm.date = %(date)s
 				  AND (%(time)s IS NULL OR itm.time IS NULL OR itm.time = %(time)s)

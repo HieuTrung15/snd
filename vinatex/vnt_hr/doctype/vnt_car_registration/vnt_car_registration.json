@@ -102,7 +102,7 @@
    "hidden": 1,
    "ignore_user_permissions": 1,
    "in_list_view": 1,
-   "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
+   "label": "Ng\u01b0\u1eddi duy\u1ec7t",
    "options": "Employee"
   },
   {
@@ -163,7 +163,7 @@
    "depends_on": "eval: doc.distance == 'T\u1eeb 40 km tr\u1edf l\u00ean'",
    "fieldname": "approver_name_lv2",
    "fieldtype": "Data",
-   "label": "T\u00ean ng\u01b0\u1eddi ph\u00ea duy\u1ec7t c\u1ea5p 2",
+   "label": "Ng\u01b0\u1eddi duy\u1ec7t c\u1ea5p 2",
    "read_only": 1
   },
   {
@@ -230,6 +230,7 @@
    "fieldname": "people",
    "fieldtype": "Int",
    "label": "S\u1ed1 ng\u01b0\u1eddi \u0111i xe",
+   "no_copy": 1,
    "read_only": 1
   }
  ],
@@ -237,7 +238,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-05 14:38:29.017203",
+ "modified": "2025-11-06 15:27:15.549467",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Car Registration",
