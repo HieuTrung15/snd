@@ -173,7 +173,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-04 09:06:30.893226",
+ "modified": "2025-11-04 10:29:53.930491",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT External Products",
@@ -223,5 +223,6 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "employee_name"
 }
