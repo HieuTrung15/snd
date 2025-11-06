@@ -35,12 +35,14 @@ def _handle_state_transition(doc: Document):
 	if curr_state == "Đã duyệt" and prev_state == "Chờ lãnh đạo duyệt":
 		_check_state_to_close_todo(doc, user=approver_user)
 		_notify_to_user_receive(doc)
+		_notify_to_office_manager(doc)
 		_notify_to_employee_list(doc)
 	if curr_state == "Chờ lãnh đạo tập đoàn duyệt" and prev_state == "Chờ lãnh đạo duyệt":
 		_check_state_to_close_todo(doc, user=approver_user)
 	if curr_state == "Đã duyệt" and prev_state == "Chờ lãnh đạo tập đoàn duyệt":
 		_check_state_to_close_todo(doc, user=approver_user_lv2)
 		_notify_to_user_receive(doc)
+		_notify_to_office_manager(doc)
 		_notify_to_employee_list(doc)
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Chờ lãnh đạo tập đoàn duyệt':
 		_notify_to_approver_2(doc, user=approver_user_lv2)
@@ -111,7 +113,7 @@ def _notify_to_office_manager(doc: Document):
 		return
 	make_notification_logs({
 		"type": "Alert",
-		"subject": _("Phiếu đăng ký xe của {0} đã được duyệt. Vui lòng kiểm tra và sắp xếp xe.").format(doc.employee_name or _("(không rõ)")),
+		"subject": _("Phiếu đăng ký xe của {0} đã được duyệt. Vui lòng kiểm tra.").format(doc.employee_name or _("(không rõ)")),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, user_list)
