@@ -29,6 +29,7 @@ app_license = "mit"
 app_include_css = "/assets/vinatex/css/theme.css"
 app_include_js = [
 	"/assets/vinatex/js/title-wrap.js",
+	"/assets/vinatex/js/report_actions_override.js",
 ]
 
 # include js, css files in header of web template
