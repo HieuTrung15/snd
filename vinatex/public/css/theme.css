@@ -90,7 +90,7 @@ h6.uppercase {
 }
 
 /* Sidebar */
-/* .desk-sidebar .sidebar-item-container .desk-sidebar-item {
+.desk-sidebar .sidebar-item-container .desk-sidebar-item {
 	font-size: 13px;
 	margin-bottom: unset !important;
 }
@@ -100,7 +100,7 @@ h6.uppercase {
 	background-color: white !important;
 	border-bottom: 1px solid #d2d2d2;
 	border-radius: 8px !important;
-} */
+}
 
 /* .desk-sidebar-item .standard-sidebar-item .sidebar-child-item .nested-container {
 	background-color: #f3f6f9 !important;
@@ -902,39 +902,4 @@ input[type=file]::-webkit-file-upload-button {
 		border-bottom: 1px solid #d2d2d2;
 		margin-top: 2px;
 	}
-	
-}
-
-/* ====== SIDEBAR DESK (Workspaces) – NỀN GRADIENT CHO TOÀN KHỐI ====== */
-[data-page-route="Workspaces"] .layout-side-section,
-[data-page-route="Workspaces"] .layout-side-section .standard-sidebar,
-[data-page-route="Workspaces"] .workspace-sidebar,
-.desk-sidebar,
-.standard-sidebar {
-  background: linear-gradient(to right, #abd1ff, #80b6f9, #5aa0f5) !important;
-}
-
-/* ====== GỠ LỚP NỀN TRẮNG Ở PILL/ITEM ĐANG CHẶN MÀU ====== */
-.desk-sidebar .sidebar-item-container,
-.workspace-sidebar .link-item,
-.standard-sidebar .desk-sidebar-item {
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-}
-
-/* ====== MÀU HOVER/ACTIVE NHẸ DỊU ====== */
-.standard-sidebar .desk-sidebar-item:hover,
-.standard-sidebar .desk-sidebar-item.selected,
-.workspace-sidebar .link-item:hover,
-.workspace-sidebar .link-item.active {
-  background: rgba(255, 255, 255, 0.22) !important;
-  color: #0b0b0b !important;
-}
-
-/* ====== NHÓM/HEADER TRONG SIDEBAR ====== */
-.desk-sidebar .sidebar-group .sidebar-title,
-.workspace-sidebar .section-title {
-  color: #174ea6 !important;
-  background: transparent !important;
 }
