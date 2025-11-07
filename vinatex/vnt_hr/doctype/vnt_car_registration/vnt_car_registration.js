@@ -3,6 +3,7 @@
 
 frappe.ui.form.on("VNT Car Registration", {
 	 refresh(frm) {
+        update_emp_list_name(frm);
         if (frm.is_new()) {
             frappe.call({
                 method: "frappe.client.get_value",
@@ -13,7 +14,6 @@ frappe.ui.form.on("VNT Car Registration", {
                 },
                 callback: function (r) {
                     if (!r.message) return;
-                    // Kiểm tra nếu chưa có employee nào được thêm
                     const exists = frm.doc.list_emp?.some(
                         e => e.employee == r.message.name
                     );
@@ -23,6 +23,7 @@ frappe.ui.form.on("VNT Car Registration", {
                             employee_name: r.message.employee_name
                         });
                         frm.refresh_field("list_emp");
+                        update_emp_list_name(frm);
                     }
                 }
             });
@@ -74,37 +75,44 @@ frappe.ui.form.on("VNT Car Registration", {
         }
     },
     list_emp (frm) {
-        frm.set_value('people', frm.doc.list_emp.length)
+        // hiển thị tên nhân viên của trường TableMultiSelect
+        update_emp_list_name(frm);
     }
 });
 
 
-function set_title(frm) {
-	if (frm.doc.list_emp) {
-		let data = []
-		if (frm.fields_dict.list_emp.input_area.childNodes.length) {
-			data = frm.fields_dict.list_emp.input_area.childNodes
-		} else if (frm.fields_dict.list_emp.disp_area.childNodes.length) {
-			data = frm.fields_dict.list_emp.disp_area.childNodes
-		}
-		$.each(data, function (i, s) {
-			let value = ''
-			if (s.dataset) {
-				value = s.dataset.value || s.dataset.name
-			}
-			if (value) {
-				frappe.call({
-					method: "vinatex.vnt_hr.doctype.vnt_car_registration.vnt_car_registration.get_list_employee_name",
-					args: {
-                        "name": value
-                    },
-                    callback: function (r) {
-                        if (r.message) {
-                            s.innerHTML = s.innerHTML.replace(value, r.message)
-                        }
-                    }
-                });
-			}
-		});
+function update_emp_list_name(frm) {
+	if (!frm.doc) {
+		return;
 	}
+
+	let rows = frm.doc.list_emp || [];
+	if (typeof rows === "string") {
+		try {
+			rows = JSON.parse(rows);
+		} catch (e) {
+			rows = [];
+		}
+	}
+	if (!Array.isArray(rows)) {
+		rows = [];
+	}
+
+	const employee_ids = rows.map((row) => row.employee).filter(Boolean);
+	frm.set_value("people", employee_ids.length);
+
+	if (!employee_ids.length) {
+		frm.set_value("emp_list_name", "");
+		return;
+	}
+
+	frappe.call({
+		method: "vinatex.vnt_hr.doctype.vnt_car_registration.vnt_car_registration.get_employee_names",
+		args: { names: employee_ids },
+		callback: function (r) {
+			const mapping = r.message || {};
+			const names = employee_ids.map((id) => mapping[id] || id);
+			frm.set_value("emp_list_name", names.join(", "));
+		},
+	});
 }

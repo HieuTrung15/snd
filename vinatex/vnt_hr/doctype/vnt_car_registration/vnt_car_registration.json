@@ -20,6 +20,7 @@
   "business_trip",
   "column_break_chj2",
   "list_emp",
+  "emp_list_name",
   "people",
   "section_break_xwlf",
   "items",
@@ -135,7 +136,7 @@
    "fieldname": "list_emp",
    "fieldtype": "Table MultiSelect",
    "ignore_user_permissions": 1,
-   "label": "Danh s\u00e1ch nh\u00e2n s\u1ef1 \u0111i xe",
+   "label": "Ch\u1ecdn nh\u00e2n s\u1ef1 \u0111i c\u00f9ng",
    "options": "VNT Car Registration Employee",
    "reqd": 1
   },
@@ -232,13 +233,19 @@
    "label": "S\u1ed1 ng\u01b0\u1eddi \u0111i xe",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "emp_list_name",
+   "fieldtype": "Small Text",
+   "label": "Nh\u00e2n s\u1ef1 \u0111i xe",
+   "max_height": "50px"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-06 15:27:15.549467",
+ "modified": "2025-11-07 18:27:36.996595",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Car Registration",
