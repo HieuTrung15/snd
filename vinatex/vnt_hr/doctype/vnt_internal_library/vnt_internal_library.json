@@ -54,7 +54,7 @@
    "fieldname": "type",
    "fieldtype": "Select",
    "label": "L\u0129nh v\u1ef1c",
-   "options": "\nQu\u1ea3n tr\u1ecb chung\nTh\u1ecb tr\u01b0\u1eddng - Kh\u00e1ch h\u00e0ng\nQu\u1ea3n tr\u1ecb s\u1ea3n xu\u1ea5t\nT\u00e0i ch\u00ednh - Ki\u1ec3m so\u00e1t\nNh\u00e2n s\u1ef1\nK\u1ebft qu\u1ea3 SXKD\nK\u1ef9 n\u0103ng\nE-Book",
+   "options": "\nE-Book\nK\u1ef9 n\u0103ng\nNh\u00e2n s\u1ef1\nQu\u1ea3n tr\u1ecb\nS\u1ea3n xu\u1ea5t\nSXKD\nT\u00e0i ch\u00ednh\nTh\u1ecb tr\u01b0\u1eddng",
    "reqd": 1
   },
   {
@@ -121,7 +121,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-28 17:26:50.884593",
+ "modified": "2025-11-07 09:07:39.952193",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Internal Library",
