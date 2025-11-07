@@ -43,8 +43,10 @@ class VNTVehicleControl(Document):
 
 			for passenger in car.get("list_emp") or []:
 				user = get_employee_user_id(passenger.employee)
+				create_user = get_employee_user_id(car.get("employee"))
 				if user:
 					recipients.add(user)
+					recipients.add(create_user)
 
 			trip_name = car.get("business_trip")
 			if not trip_name or not car_item:

@@ -30,7 +30,7 @@ def _handle_state_transition(doc: Document):
 	approver_user = get_employee_user_id(approver)
 	# thông báo cho lãnh đạo tập đoàn
 	approver_lv2 = doc.get("approver_lv2")
-	approver_user_lv2 = get_employee_user_id(approver_lv2)
+	approver_user_lv2 = approver_lv2
 	if curr_state == "Chờ lãnh đạo duyệt" and prev_state == "Mới tạo":
 		_notify_to_approver(doc, user=approver_user)
 	if curr_state == "Đã duyệt" and prev_state == "Chờ lãnh đạo duyệt":
