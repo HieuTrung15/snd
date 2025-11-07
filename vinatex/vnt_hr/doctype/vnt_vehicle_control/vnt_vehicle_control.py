@@ -73,12 +73,9 @@ class VNTVehicleControl(Document):
 
 			transport_row = candidates.pop(0)
 			if transport_row.driver != row.driver:
-				frappe.db.set_value(
-					"VNT Business Trip Request Transportation",
-					transport_row.name,
-					"driver",
-					row.driver,
-				)
+				frappe.db.set_value("VNT Business Trip Request Transportation", transport_row.name, "driver", row.driver)
+				frappe.db.set_value("VNT Business Trip Request Transportation", transport_row.name, "phone", row.phone)
+				frappe.db.set_value("VNT Business Trip Request Transportation", transport_row.name, "car_id", row.car_id)
 
 		if not recipients:
 			return
@@ -127,7 +124,7 @@ def get_taken_vehicles(date):
 			item.start,
 			item.end,
 			item.date,
-			item.time
+			item.time,
 			COALESCE(item.employee_name, parent.employee_name) AS employee_name
 		FROM `tabVNT Vehicle Control Item` item
 		INNER JOIN `tabVNT Vehicle Control` parent ON parent.name = item.parent

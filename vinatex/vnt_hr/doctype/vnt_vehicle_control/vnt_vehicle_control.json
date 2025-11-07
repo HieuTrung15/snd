@@ -38,7 +38,9 @@
   {
    "fieldname": "date",
    "fieldtype": "Date",
-   "label": "Ng\u00e0y \u0111i\u1ec1u xe"
+   "in_list_view": 1,
+   "label": "Ng\u00e0y \u0111i\u1ec1u xe",
+   "reqd": 1
   },
   {
    "fieldname": "section_break_ldls",
@@ -55,7 +57,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-06 17:01:00.941369",
+ "modified": "2025-11-07 08:53:43.433685",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Vehicle Control",

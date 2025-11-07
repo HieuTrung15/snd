@@ -2,6 +2,9 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("VNT Car Registration", {
+    onload (frm) {
+        set_title(frm)
+    },
 	 refresh(frm) {
         set_title(frm)
         if (frm.is_new()) {

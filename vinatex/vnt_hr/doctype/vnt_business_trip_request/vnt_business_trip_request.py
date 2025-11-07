@@ -399,10 +399,29 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
             "document_name": vehicle_request.name,
         }, ['tanpv@vinatex.com.vn'])
 
+        # tạo todo
+        if frappe.db.exists("ToDo", {
+            "reference_type": doc.doctype,
+            "reference_name": doc.name,
+            "allocated_to": 'tanpv@vinatex.com.vn',
+            "status": ["!=", "Cancelled"],
+        }):
+            return
+        description = _('Duyệt đăng ký xe của {0}').format(doc.employee_name or _("(không rõ)"))
+        new_todo =  frappe.new_doc("ToDo")
+        new_todo.description = description
+        new_todo.allocated_to = 'tanpv@vinatex.com.vn'
+        new_todo.reference_type = doc.doctype
+        new_todo.reference_name = doc.name
+        new_todo.priority = "Medium"
+        new_todo.status = "Open"
+        new_todo.insert(ignore_permissions=True)
+        frappe.db.commit()
+
     if not make_vehicle_control:
         return
 
-    # gửi thông báo cho ngườ điều xe
+    # gửi thông báo cho ngườ điều xe (1 người)
     # tạo bản ghi mới trong vnt vehicle control hoặc cập nhật nếu đã có
     user_group_name = "Nhận thông báo điều xe"
     user_list = frappe.get_all(
@@ -426,7 +445,7 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
         vehicle_control.set("items", [])
     else:
         vehicle_control = frappe.new_doc("VNT Vehicle Control")
-        vehicle_control.set("date", nowdate())
+        # vehicle_control.set("date", nowdate())
 
     vehicle_control.employee_name = employee_user
 
@@ -455,6 +474,8 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
         "document_type": 'VNT Vehicle Control',
         "document_name": vehicle_control.name,
     }, user_list)
+    # tạo todo cho người điều xe
+    ensure_todo(vehicle_control, user_list[0])
 
 
 def cancel_attendance_for_trip(doc: Document):
