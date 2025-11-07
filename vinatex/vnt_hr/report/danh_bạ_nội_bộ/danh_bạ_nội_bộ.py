@@ -204,45 +204,35 @@ def build_emp_conditions(filters=None):
     return where_sql, params
 
 @frappe.whitelist()
-def get_company_representatives(company=None, rep_type=None):
+@frappe.whitelist()
+def get_company_representatives(company=None, rep_type=None, custom_industry=None):
     """
     Trả thông tin đại diện / kế toán trưởng theo Company.
 
     Params:
-        company   (str, optional): nếu truyền thì chỉ lấy cho 1 công ty đó (Company.name hoặc Company.company_name).
-        rep_type  (str, optional): "NDD" = Người đại diện, "KTT" = Kế toán trưởng.
-                                   Nếu None -> lấy cả hai.
-
-    Return: list[dict] với các field:
-        - company_name
-        - company_type
-        - representative_type  (NDD hoặc KTT)
-        - position             (chức danh ghi trong bảng con)
-        - employee_name
-        - email
-        - phone
+        company         (str, optional)
+        rep_type        (str, optional): "NDD" / "KTT"
+        custom_industry (str, optional): lọc theo Company.custom_industry
     """
 
-    # Build điều kiện động
     conds = []
     params = {}
 
-    # lọc theo company nếu có
     if company:
-        # ta cho phép tìm theo cả company.name lẫn company.company_name
-        # -> dùng OR
         conds.append("(c.name = %(company)s OR c.company_name = %(company)s)")
         params["company"] = company
 
-    # lọc theo loại đại diện nếu có (NDD / KTT)
     if rep_type in ("NDD", "KTT"):
         conds.append("rep.type = %(rep_type)s")
         params["rep_type"] = rep_type
     else:
-        # nếu không truyền rep_type -> chấp nhận cả 2 loại này
         conds.append("rep.type IN ('NDD','KTT')")
 
-    # join điều kiện
+    # NEW: lọc theo custom_industry
+    if custom_industry:
+        conds.append("c.custom_industry = %(custom_industry)s")
+        params["custom_industry"] = custom_industry
+
     where_sql = ""
     if conds:
         where_sql = "WHERE " + " AND ".join(conds)
@@ -268,8 +258,8 @@ def get_company_representatives(company=None, rep_type=None):
     """
 
     rows = frappe.db.sql(sql, params, as_dict=True)
-
     return rows
+
 
 
 def build_cpn_conditions(filters=None):
@@ -284,3 +274,21 @@ def build_cpn_conditions(filters=None):
 
     where_sql = f"WHERE {' AND '.join(conds)}" if conds else ""
     return where_sql, params
+
+@frappe.whitelist()
+def get_company_industries():
+    """
+    Trả về danh sách distinct Company.custom_industry
+    để fill vào <select> lọc ở tab Người đại diện.
+    """
+    rows = frappe.db.sql(
+        """
+        SELECT DISTINCT custom_industry
+        FROM `tabCompany`
+        WHERE IFNULL(custom_industry, '') != ''
+        ORDER BY custom_industry
+        """,
+        as_dict=True,
+    )
+    return [r.custom_industry for r in rows if r.get("custom_industry")]
+
