@@ -2,12 +2,28 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("VNT Car Registration", {
-    onload (frm) {
-        set_title(frm)
-    },
 	 refresh(frm) {
         set_title(frm)
         if (frm.is_new()) {
+            frappe.call({
+            method: "frappe.client.get_value",
+            args: {
+                doctype: "Employee",
+                filters: { user_id: frappe.session.user },
+                fieldname: ["name", "employee_name"]
+            },
+            callback: function (r) {
+                if (!r.message) return;
+
+                frm.add_child("list_emp", {
+                    employee: r.message.name,
+                    employee_name: r.message.employee_name
+                });
+                frm.refresh_field("list_emp");
+                set_title(frm)
+                
+            }
+            });
             frappe.call({
                 method: "vinatex.vnt_hr.doctype.vnt_car_registration.vnt_car_registration.get_employee_name",
                 args: {
