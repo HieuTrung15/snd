@@ -80,29 +80,72 @@ class VNTVehicleControl(Document):
 		if not recipients:
 			return
 
-		formatted_dates = sorted({formatdate(d, "dd-MM-yyyy") for d in trip_dates if d})
-		date_text = ", ".join(formatted_dates) if formatted_dates else _("(không rõ)")
-		target_doctype = self.doctype
-		target_docname = self.name
+		date_text_list = sorted({formatdate(d, "dd-MM-yyyy") for d in trip_dates if d})
+		date_text = ", ".join(date_text_list) if date_text_list else _("(không rõ)")
 
-		business_trip_name = next(
-			(
-				car.get("business_trip")
-				for car in registrations.values()
-				if car and car.get("business_trip")
-			),
-			None,
+		driver_by_date: dict[str, list[str]] = {}
+		for row in self.items:
+			if not row.driver:
+				continue
+			date_key = formatdate(row.date) if row.date else _("(không rõ)")
+			vehicle = frappe.db.get_value(
+				"VNT Vehicle",
+				row.driver,
+				["driver_name", "phone", "car_id"],
+				as_dict=True,
+			)
+			driver_name = vehicle.driver_name if (vehicle and vehicle.driver_name) else row.driver
+			phone = row.phone or (vehicle.phone if vehicle else "")
+			car_id = row.car_id or (vehicle.car_id if vehicle else "")
+			parts = [driver_name]
+			if phone:
+				parts.append(phone)
+			if car_id:
+				parts.append(car_id)
+			driver_by_date.setdefault(date_key, []).append(" - ".join(parts))
+
+		if driver_by_date:
+			driver_segments = []
+			for date_key in sorted(driver_by_date.keys()):
+				drivers = "; ".join(driver_by_date[date_key])
+				driver_segments.append(_("Ngày {0}: Lái xe - {1}").format(date_key, drivers))
+			driver_text = ". ".join(driver_segments)
+		else:
+			driver_text = _("(không rõ)")
+		target_doctype = "VNT Car Registration"
+		target_docname = next(
+			(car.name for car in registrations.values() if car and car.name),
+			self.name,
 		)
-		if business_trip_name:
-			target_doctype = "VNT Business Trip Request"
-			target_docname = business_trip_name
 
 		make_notification_logs({
 			"type": "Alert",
-			"subject": _("Bạn đã được điều xe cho chuyến đi ngày {0}. Vui lòng xem chi tiết.").format(date_text),
+			"subject": _("Bạn đã được điều xe cho chuyến đi. {0}.").format(
+				# date_text,
+				driver_text,
+			),
 			"document_type": target_doctype,
 			"document_name": target_docname,
 		}, list(recipients))
+		# close todo của người điều xe
+		user_group_name = "Nhận thông báo điều xe"
+		user_list = frappe.get_all(
+			"User Group Member",
+			filters={"parent": user_group_name},
+			pluck="user",
+		)
+		names = frappe.get_all(
+		"ToDo",
+		filters={
+			"reference_type": self.doctype,
+			"reference_name": self.name,
+			"allocated_to": user_list[0],
+			"status": ["!=", "Cancelled"],
+		},
+		pluck="name",
+		)
+		for n in names:
+			frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
 
 
 def get_employee_user_id(employee_name: str) -> str | None:

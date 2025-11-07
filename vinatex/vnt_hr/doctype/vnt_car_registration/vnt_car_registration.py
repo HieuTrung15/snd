@@ -13,6 +13,7 @@ class VNTCarRegistration(Document):
 	def validate(self):
 		# validate nếu danh sách nhân sự trùng ngày giờ đăng ký xe
 		_validate_employee_schedule(self)
+		_set_people_count(self)
 
 	def on_update(self):
 		# chuyển sang theo dõi workflow_state
@@ -172,10 +173,19 @@ def _notify_to_user_receive(doc: Document):
 		if vehicle_control:
 			make_notification_logs({
 				"type": "Alert",
-				"subject": _("Vui lòng điều xe cho phiếu đăng ký xe của {0} đã được duyệt.").format(doc.employee_name or _("(không rõ)")),
+				"subject": _("Điều xe cho phiếu đăng ký xe của {0}.").format(doc.employee_name or _("(không rõ)")),
 				"document_type": 'VNT Vehicle Control',
 				"document_name": vehicle_control.name,
 			}, user_list)
+			new_todo =  frappe.new_doc("ToDo")
+			new_todo.description = _("Điều xe cho phiếu đăng ký xe của {0}.").format(doc.employee_name or _("(không rõ)"))
+			new_todo.allocated_to = user_list[0]
+			new_todo.reference_type = 'VNT Vehicle Control'
+			new_todo.reference_name = vehicle_control.name
+			new_todo.priority = "Medium"
+			new_todo.status = "Open"
+			new_todo.insert(ignore_permissions=True)
+			frappe.db.commit()
 
 
 def _sync_business_trip_transportation(doc: Document):
@@ -295,6 +305,10 @@ def _validate_employee_schedule(doc: Document):
 				)
 
 
+def _set_people_count(doc: Document):
+	doc.people = len(doc.get("list_emp") or [])
+
+
 def _notify_to_approver(doc: Document, user: str | None):
 	"""Gửi thông báo đến người duyệt khi đơn được chuyển sang trạng thái 'Chờ lãnh đạo duyệt'."""
 	make_notification_logs({
@@ -302,7 +316,7 @@ def _notify_to_approver(doc: Document, user: str | None):
 		"subject": _("Phiếu đăng ký xe của {0} đang chờ lãnh đạo duyệt.").format(doc.employee_name or _("(không rõ)")),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
-		"subject": _('Duyệt đăng ký xe của {0}').format(doc.employee_name or _("(không rõ)")),
+		"subject": _('Duyệt đăng ký xe của {0}.').format(doc.employee_name or _("(không rõ)")),
 	}, [user])
 	# tạo todo cho người duyệt
 	ensure_todo(doc, user)
@@ -315,7 +329,7 @@ def _notify_to_approver_2(doc: Document, user: str | None):
 		"subject": _("Phiếu đăng ký xe của {0} đang chờ lãnh đạo tập đoàn duyệt.").format(doc.employee_name or _("(không rõ)")),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
-		"subject": _('Duyệt đăng ký xe của {0}').format(doc.employee_name or _("(không rõ)")),
+		"subject": _('Duyệt đăng ký xe của {0}.').format(doc.employee_name or _("(không rõ)")),
 	}, [user])
 	# tạo todo cho người duyệt
 	ensure_todo(doc, user)
@@ -355,7 +369,7 @@ def ensure_todo(doc: Document, user: str):
 		"status": ["!=", "Cancelled"],
 	}):
 		return
-	description = _('Duyệt đăng ký xe của {0}').format(doc.employee_name or _("(không rõ)"))
+	description = _('Duyệt đăng ký xe của {0}.').format(doc.employee_name or _("(không rõ)"))
 	new_todo =  frappe.new_doc("ToDo")
 	new_todo.description = description
 	new_todo.allocated_to = user

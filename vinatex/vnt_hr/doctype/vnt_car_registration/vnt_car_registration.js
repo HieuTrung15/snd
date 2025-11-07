@@ -3,26 +3,28 @@
 
 frappe.ui.form.on("VNT Car Registration", {
 	 refresh(frm) {
-        set_title(frm)
         if (frm.is_new()) {
             frappe.call({
-            method: "frappe.client.get_value",
-            args: {
-                doctype: "Employee",
-                filters: { user_id: frappe.session.user },
-                fieldname: ["name", "employee_name"]
-            },
-            callback: function (r) {
-                if (!r.message) return;
-
-                frm.add_child("list_emp", {
-                    employee: r.message.name,
-                    employee_name: r.message.employee_name
-                });
-                frm.refresh_field("list_emp");
-                set_title(frm)
-                
-            }
+                method: "frappe.client.get_value",
+                args: {
+                    doctype: "Employee",
+                    filters: { user_id: frappe.session.user },
+                    fieldname: ["name", "employee_name"]
+                },
+                callback: function (r) {
+                    if (!r.message) return;
+                    // Kiểm tra nếu chưa có employee nào được thêm
+                    const exists = frm.doc.list_emp?.some(
+                        e => e.employee == r.message.name
+                    );
+                    if (!exists) {
+                        frm.add_child("list_emp", {
+                            employee: r.message.name,
+                            employee_name: r.message.employee_name
+                        });
+                        frm.refresh_field("list_emp");
+                    }
+                }
             });
             frappe.call({
                 method: "vinatex.vnt_hr.doctype.vnt_car_registration.vnt_car_registration.get_employee_name",
@@ -73,7 +75,6 @@ frappe.ui.form.on("VNT Car Registration", {
     },
     list_emp (frm) {
         frm.set_value('people', frm.doc.list_emp.length)
-        set_title(frm)
     }
 });
 

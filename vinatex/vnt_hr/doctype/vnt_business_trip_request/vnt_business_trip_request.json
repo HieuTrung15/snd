@@ -12,18 +12,21 @@
   "column_break_mduw",
   "company",
   "department",
-  "destination",
+  "lead_depart",
   "section_break_vrfz",
   "from_date",
   "to_date",
   "section_break_dnxy",
+  "destination",
   "purpose",
   "section_break_vvh7",
   "approver",
+  "approver_lv2",
   "created_on",
   "naming_series",
   "column_break_dr5q",
   "approver_name",
+  "approver_name_lv2",
   "amended_from",
   "danh_s\u00e1ch_nh\u00e2n_vi\u00ean_\u0111i_c\u00f4ng_t\u00e1c_section",
   "items",
@@ -180,19 +183,40 @@
    "fetch_if_empty": 1,
    "fieldname": "approver_name",
    "fieldtype": "Read Only",
-   "label": "T\u00ean ng\u01b0\u1eddi duy\u1ec7t"
+   "label": "Ng\u01b0\u1eddi duy\u1ec7t",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_vrfz",
    "fieldtype": "Section Break",
    "label": "Th\u1eddi gian & N\u1ed9i dung"
+  },
+  {
+   "depends_on": "eval: doc.employee != doc.approver",
+   "fieldname": "approver_lv2",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "Ng\u01b0\u1eddi duy\u1ec7t c\u1ea5p 2",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "approver_name_lv2",
+   "fieldtype": "Data",
+   "label": "Ng\u01b0\u1eddi duy\u1ec7t c\u1ea5p 2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lead_depart",
+   "fieldtype": "Link",
+   "label": "Tr\u01b0\u1edfng ban",
+   "options": "Employee"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-06 11:14:55.017877",
+ "modified": "2025-11-07 09:50:03.722438",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request",
