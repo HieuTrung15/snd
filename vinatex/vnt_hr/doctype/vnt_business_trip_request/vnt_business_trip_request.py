@@ -37,8 +37,23 @@ class VNTBusinessTripRequest(Document):
         cancel_vehicle_requests_for_trip(self)
 
     def validate(self):
-        if not self.from_date or not self.to_date:
-            frappe.throw(_("Vui lòng nhập đầy đủ Từ ngày và Đến ngày"))
+        # danh sách phương tiện cần check
+        targets = [
+            "Ô tô TĐ (trên 40 km)",
+            "Máy bay (Đơn vị trả chi phí)",
+            "Máy bay (TĐ trả chi phí)",
+        ]
+        approver_lv2 = get_leave_approver_level_2(self.employee)
+        self.approver_lv2 = approver_lv2[0]
+        self.approver_name_lv2 = approver_lv2[1]
+        # mặc định False
+        self.check_vehicle_condition = 0
+
+        # duyệt qua bảng con (vehicle)
+        for row in self.vehicle or []:
+            if row.vehicle_type in targets:
+                self.check_vehicle_condition = 1
+                break
 
         fd, td = getdate(self.from_date), getdate(self.to_date)
         if fd > td:
@@ -72,6 +87,53 @@ class VNTBusinessTripRequest(Document):
                 f"({c.workflow_state}) từ {c.from_date} đến {c.to_date}. "
                 f"Không thể tạo thêm phiếu trùng thời gian."
             ))
+
+
+def get_leave_approver_level_2(employee: str):
+	# lấy approver trên Employee trước
+	emp = frappe.db.get_value("Employee", employee, ["leave_approver", "department"], as_dict=True)
+	if not emp:
+		return None
+
+	# nếu chưa có và có department → tìm trong Department Approver
+	# ƯU TIÊN custom flag custom_level_2 = 1
+	if emp:
+		approver = frappe.db.get_value(
+			"Department Approver",
+			{
+				"parent": emp.department,
+				"parentfield": "leave_approvers",
+				"custom_level_2": 1,      
+			},
+			["approver", "custom_approver_name"],
+		)
+	else :
+		approver = emp.leave_approver
+
+	return approver
+
+
+def _get_prev_and_curr_workflow_state(doc: Document) -> tuple[str | None, str]:
+	"""Trả về (previous_state, current_state) an toàn.
+	- Ưu tiên lấy previous từ get_doc_before_save() nếu có.
+	- Fallback lấy từ DB nếu chưa có trước đó (hoặc không ở on_update).
+	"""
+	prev_state = None
+	try:
+		before = doc.get_doc_before_save() if hasattr(doc, "get_doc_before_save") else None
+		if before:
+			prev_state = (before.get("workflow_state") or "").strip()
+	except Exception:
+		prev_state = None
+ 
+	if not prev_state and doc.get("name"):
+		try:
+			prev_state = (frappe.db.get_value(doc.doctype, doc.name, "workflow_state") or "").strip()
+		except Exception:
+			prev_state = None
+ 
+	curr_state = (doc.get("workflow_state") or "").strip()
+	return prev_state, curr_state
 
 
 def _check_emp_checkin_after_cancel(doc: Document):
@@ -123,23 +185,37 @@ def _check_emp_checkin_after_cancel(doc: Document):
 
 # ---------------- State handling ----------------
 def _apply_state_effects(doc: Document):
-    state = doc.get("workflow_state") or ""
-
-    if _in_state(state, PENDING_STATES):
+    prev_state, curr_state = _get_prev_and_curr_workflow_state(doc)
+    if prev_state == "Mới tạo" and curr_state == "Chờ lãnh đạo duyệt":
         _notify_if_pending(doc)
         return
 
-    if _in_state(state, APPROVED_STATES):
+    if prev_state == "Chờ lãnh đạo duyệt" and curr_state == "Chờ lãnh đạo tập đoàn duyệt":
+        close_todos_for_doc(doc)
+        _notify_if_pending_lv2(doc)
+
+    if prev_state == "Chờ lãnh đạo duyệt" and curr_state == "Đã duyệt" :
         close_todos_for_doc(doc)
         replace_attendance_for_business_trip(doc)
-        _notify_employees_approved(doc)
+        _notify_to_employee_list(doc)
+        return
+    
+    if prev_state == "Chờ lãnh đạo tập đoàn duyệt" and curr_state == "Đã duyệt":
+        close_todos_for_doc(doc)
+        replace_attendance_for_business_trip(doc)
+        _notify_to_employee_list_2(doc)
+        return
+    
+    if prev_state == "Chờ lãnh đạo duyệt" and curr_state == "Từ chối" \
+        or prev_state == "Chờ lãnh đạo tập đoàn duyệt" and curr_state == "Từ chối":
+        _notify_employees_rejected(doc)
         return
 
-    if _in_state(state, REJECT_STATES):
-        delete_todos_for_doc(doc)
+    if prev_state == "Đã duyệt" and curr_state == "Hủy":
+        # delete_todos_for_doc(doc)
         cancel_attendance_for_trip(doc)
         cancel_vehicle_requests_for_trip(doc)
-        _notify_employees_rejected(doc)
+        _notify_employees_cancelled(doc)
         return
 
 # ---------------- ToDo ----------------
@@ -203,16 +279,63 @@ def _notify_if_pending(doc: Document):
     }, [approver_user])
     ensure_todo(doc, approver_user)
 
-def _notify_employees_approved(doc: Document):
-    users = _get_employee_user_ids(doc)
+
+def _notify_if_pending_lv2(doc: Document):
+    approver = doc.get("approver_lv2")
+    if not approver:
+        return
+    if not approver or approver == doc.owner:
+        return
+    make_notification_logs({
+        "type": "Alert",
+        "subject": _("Phiếu đăng ký đi công tác của {0} đang chờ duyệt.").format(doc.employee_name),
+        "document_type": doc.doctype,
+        "document_name": doc.name,
+    }, [approver])
+    ensure_todo(doc, approver)
+
+
+# gửi thông báo đến emp tham gia chuyến xe
+def _notify_to_employee_list(doc):
+	"""Gửi thông báo đến nhân viên tạo phiếu và danh sách nhân sự trong items khi đơn được lãnh đạo duyệt."""
+	_send_trip_notification(
+		doc,
+		_("Đơn đi công tác của {0} từ ngày {1} đến ngày {2} đã được lãnh đạo duyệt").format(
+			doc.employee_name or _("(không rõ)"), doc.from_date, doc.to_date
+		),
+	)
+
+
+def _notify_to_employee_list_2(doc):
+    """Gửi thông báo đến nhân viên tạo phiếu và danh sách nhân sự trong items khi đơn được lãnh đạo tập đoàn duyệt."""
+    _send_trip_notification(
+        doc,
+        _("Đơn đi công tác của {0} từ ngày {1} đến ngày {2} đã được lãnh đạo tập đoàn duyệt.").format(
+            doc.employee_name or _("(không rõ)"), doc.from_date, doc.to_date
+        ),
+    )
+
+
+def _send_trip_notification(doc: Document, subject: str):
+    employees = _collect_employees(doc)
+    if not employees:
+        return
+
+    users = set()
+    for emp in employees:
+        user = get_employee_user_id(emp)
+        if user:
+            users.add(user)
+
     if not users:
         return
     make_notification_logs({
         "type": "Alert",
-        "subject": _("Phiếu công tác tại {0} đã được duyệt").format(doc.destination),
+        "subject": subject,
         "document_type": doc.doctype,
         "document_name": doc.name,
-    }, users)
+    }, list(users))
+
 
 def get_employee_user_id(employee_name: str) -> str | None:
     if not employee_name:
@@ -459,7 +582,20 @@ def _notify_employees_rejected(doc: Document):
         return
     make_notification_logs({
         "type": "Alert",
-        "subject": _("Phiếu công tác đã bị từ chối"),
+        "subject": _("Phiếu công tác đã bị từ chối."),
+        "document_type": doc.doctype,
+        "document_name": doc.name,
+    }, users)
+
+
+def _notify_employees_cancelled(doc: Document):
+    """Gửi Notification Log cho toàn bộ Employee thuộc phiếu khi bị hủy."""
+    users = _get_employee_user_ids(doc)
+    if not users:
+        return
+    make_notification_logs({
+        "type": "Alert",
+        "subject": _("Phiếu công tác đã bị hủy."),
         "document_type": doc.doctype,
         "document_name": doc.name,
     }, users)

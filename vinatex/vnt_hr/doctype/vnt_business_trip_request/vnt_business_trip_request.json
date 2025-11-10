@@ -12,10 +12,11 @@
   "column_break_mduw",
   "company",
   "department",
-  "lead_depart",
   "section_break_vrfz",
   "from_date",
   "to_date",
+  "vehicle",
+  "check_vehicle_condition",
   "section_break_dnxy",
   "destination",
   "purpose",
@@ -25,8 +26,8 @@
   "created_on",
   "naming_series",
   "column_break_dr5q",
-  "approver_name",
   "approver_name_lv2",
+  "approver_name",
   "amended_from",
   "danh_s\u00e1ch_nh\u00e2n_vi\u00ean_\u0111i_c\u00f4ng_t\u00e1c_section",
   "items",
@@ -85,9 +86,9 @@
    "fieldname": "approver",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
-   "label": "Approver",
+   "label": "Ng\u01b0\u1eddi duy\u1ec7t",
    "options": "Employee",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "amended_from",
@@ -183,6 +184,7 @@
    "fetch_if_empty": 1,
    "fieldname": "approver_name",
    "fieldtype": "Read Only",
+   "hidden": 1,
    "label": "Ng\u01b0\u1eddi duy\u1ec7t",
    "read_only": 1
   },
@@ -192,31 +194,38 @@
    "label": "Th\u1eddi gian & N\u1ed9i dung"
   },
   {
-   "depends_on": "eval: doc.employee != doc.approver",
    "fieldname": "approver_lv2",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
+   "hidden": 1,
    "ignore_user_permissions": 1,
-   "label": "Ng\u01b0\u1eddi duy\u1ec7t c\u1ea5p 2",
-   "options": "Employee"
+   "label": "Ng\u01b0\u1eddi duy\u1ec7t c\u1ea5p 2"
   },
   {
+   "depends_on": "eval: doc.check_vehicle_condition",
    "fieldname": "approver_name_lv2",
    "fieldtype": "Data",
    "label": "Ng\u01b0\u1eddi duy\u1ec7t c\u1ea5p 2",
    "read_only": 1
   },
   {
-   "fieldname": "lead_depart",
-   "fieldtype": "Link",
-   "label": "Tr\u01b0\u1edfng ban",
-   "options": "Employee"
+   "fieldname": "vehicle",
+   "fieldtype": "Table MultiSelect",
+   "label": "Ph\u01b0\u01a1ng ti\u1ec7n di chuy\u1ec3n",
+   "options": "VNT Trip Transportation"
+  },
+  {
+   "default": "0",
+   "fieldname": "check_vehicle_condition",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "\u0110i\u1ec1u ki\u1ec7n ch\u1ecdn workflow"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-07 09:50:03.722438",
+ "modified": "2025-11-10 18:03:42.746760",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request",
