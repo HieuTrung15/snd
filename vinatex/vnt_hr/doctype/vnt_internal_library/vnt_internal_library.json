@@ -30,8 +30,7 @@
    "ignore_user_permissions": 1,
    "in_list_view": 1,
    "label": "Ng\u01b0\u1eddi l\u1eadp",
-   "options": "Employee",
-   "reqd": 1
+   "options": "Employee"
   },
   {
    "fetch_from": "employee.employee_name",
@@ -48,15 +47,13 @@
    "fieldname": "date",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "label": "Ng\u00e0y l\u1eadp",
-   "reqd": 1
+   "label": "Ng\u00e0y l\u1eadp"
   },
   {
    "fieldname": "type",
    "fieldtype": "Select",
    "label": "L\u0129nh v\u1ef1c",
-   "options": "\nE-Book\nK\u1ef9 n\u0103ng\nNh\u00e2n s\u1ef1\nQu\u1ea3n tr\u1ecb\nS\u1ea3n xu\u1ea5t\nSXKD\nT\u00e0i ch\u00ednh\nTh\u1ecb tr\u01b0\u1eddng",
-   "reqd": 1
+   "options": "\nE-Book\nK\u1ef9 n\u0103ng\nNh\u00e2n s\u1ef1\nQu\u1ea3n tr\u1ecb\nS\u1ea3n xu\u1ea5t\nSXKD\nT\u00e0i ch\u00ednh\nTh\u1ecb tr\u01b0\u1eddng"
   },
   {
    "fieldname": "section_break_ttsz",
@@ -65,8 +62,7 @@
   {
    "fieldname": "document_name",
    "fieldtype": "Data",
-   "label": "N\u1ed9i dung t\u00e0i li\u1ec7u",
-   "reqd": 1
+   "label": "N\u1ed9i dung t\u00e0i li\u1ec7u"
   },
   {
    "fieldname": "column_break_decd",
@@ -76,8 +72,7 @@
    "fieldname": "year",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "N\u0103m",
-   "reqd": 1
+   "label": "N\u0103m"
   },
   {
    "fieldname": "section_break_karl",
@@ -87,8 +82,7 @@
    "fieldname": "attach",
    "fieldtype": "Attach",
    "label": "\u0110\u00ednh k\u00e8m",
-   "make_attachment_public": 1,
-   "reqd": 1
+   "make_attachment_public": 1
   },
   {
    "fieldname": "html",
@@ -108,14 +102,12 @@
    "fieldname": "training_program",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Ch\u01b0\u01a1ng tr\u00ecnh",
-   "reqd": 1
+   "label": "Ch\u01b0\u01a1ng tr\u00ecnh"
   },
   {
    "fieldname": "instructor",
    "fieldtype": "Data",
-   "label": "Gi\u1ea3ng vi\u00ean",
-   "reqd": 1
+   "label": "Gi\u1ea3ng vi\u00ean"
   },
   {
    "fieldname": "naming_series",
@@ -128,7 +120,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-07 11:13:49.885576",
+ "modified": "2025-11-10 15:59:28.713549",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Internal Library",
