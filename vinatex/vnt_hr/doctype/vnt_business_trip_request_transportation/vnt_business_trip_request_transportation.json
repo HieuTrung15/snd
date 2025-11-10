@@ -7,30 +7,20 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_a54h",
-  "transport_mode",
-  "note",
-  "driver",
-  "phone",
-  "car_id",
-  "column_break_rc7a",
   "start",
   "end",
   "date",
   "time",
-  "distance"
+  "column_break_rc7a",
+  "note",
+  "driver",
+  "phone",
+  "car_id"
  ],
  "fields": [
   {
    "fieldname": "section_break_a54h",
    "fieldtype": "Section Break"
-  },
-  {
-   "columns": 1,
-   "fieldname": "transport_mode",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Transport Mode",
-   "options": "\nM\u00e1y bay\nT\u00e0u\nXe"
   },
   {
    "fieldname": "note",
@@ -47,7 +37,8 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "\u0110i\u1ec3m \u0111i",
-   "mandatory_depends_on": "eval: doc.transport_mode == \"Xe\""
+   "mandatory_depends_on": "eval: doc.transport_mode == \"Xe\"",
+   "reqd": 1
   },
   {
    "columns": 2,
@@ -55,7 +46,8 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "\u0110i\u1ec3m \u0111\u1ebfn",
-   "mandatory_depends_on": "eval: doc.transport_mode == \"Xe\""
+   "mandatory_depends_on": "eval: doc.transport_mode == \"Xe\"",
+   "reqd": 1
   },
   {
    "columns": 1,
@@ -98,19 +90,13 @@
    "label": "Bi\u1ec3n s\u1ed1 xe",
    "no_copy": 1,
    "read_only": 1
-  },
-  {
-   "fieldname": "distance",
-   "fieldtype": "Select",
-   "label": "Kho\u1ea3ng c\u00e1ch",
-   "options": "\nT\u1eeb 40 km tr\u1edf l\u00ean\nD\u01b0\u1edbi 40 km"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-07 10:12:30.565074",
+ "modified": "2025-11-10 16:18:48.536842",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request Transportation",

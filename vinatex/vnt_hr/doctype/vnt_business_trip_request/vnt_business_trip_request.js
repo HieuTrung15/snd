@@ -9,6 +9,30 @@ frappe.ui.form.on('VNT Business Trip Request', {
             });
         }
 	},
+    vehicle(frm) {
+        // lấy danh sách được chọn
+        let selected = frm.doc.vehicle || [];
+
+        // nếu là MultiSelectList, sẽ là array
+        // nếu là MultiSelect thường (string), convert:
+        if (typeof selected === 'string') {
+            selected = selected.split('\n').filter(v => v && v.trim());
+        }
+
+        // Xoá bảng cũ (tuỳ bạn, hoặc merge thì sửa lại)
+        frm.clear_table('transportation');
+
+        const today = frappe.datetime.get_today();
+        const now = frappe.datetime.now_time();
+
+        selected.forEach(v => {
+            const row = frm.add_child('transportation');
+            row.date = today;
+            row.time = now;
+        });
+
+        frm.refresh_field('transportation');
+    }
 });
 
 frappe.ui.form.on('VNT Business Trip Request Items', {
