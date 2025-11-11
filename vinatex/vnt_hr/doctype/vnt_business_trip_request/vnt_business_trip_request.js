@@ -1,4 +1,19 @@
 frappe.ui.form.on('VNT Business Trip Request', {
+    after_save(frm) {
+        // Chỉ auto chạy 1 lần khi còn ở state "Mới tạo"
+        if (frm.doc.workflow_state === "Mới tạo") {
+            frappe.call({
+                method: "frappe.model.workflow.apply_workflow",
+                args: {
+                    doc: frm.doc,
+                    action: "Chuyển duyệt", // action trong workflow
+                },
+                callback() {
+                    frm.reload_doc();
+                }
+            });
+        }
+    },
     refresh(frm) {
         if (!frm.doc.employee) {
             frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name")
