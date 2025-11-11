@@ -1,0 +1,108 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{item_name}",
+ "creation": "2025-11-10 15:15:25.228947",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "item_name",
+  "column_break_dyoj",
+  "qty_remain",
+  "qty_current",
+  "unit",
+  "section_break_i2pq",
+  "list_items"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Data",
+   "label": "M\u00e3 s\u1ea3n ph\u1ea9m"
+  },
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean s\u1ea3n ph\u1ea9m"
+  },
+  {
+   "fieldname": "qty_remain",
+   "fieldtype": "Float",
+   "label": "T\u1ed3n \u0111\u1ea7u k\u1ef3"
+  },
+  {
+   "fieldname": "qty_current",
+   "fieldtype": "Float",
+   "label": "T\u1ed3n hi\u1ec7n t\u1ea1i"
+  },
+  {
+   "fieldname": "unit",
+   "fieldtype": "Data",
+   "label": "\u0110\u01a1n v\u1ecb t\u00ednh"
+  },
+  {
+   "fieldname": "column_break_dyoj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_i2pq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "list_items",
+   "fieldtype": "Table",
+   "label": "Danh s\u00e1ch s\u1ea3n ph\u1ea9m \u0111\u1ed1i ngo\u1ea1i",
+   "options": "VNT External Products Items List"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-11-11 11:21:15.165470",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT External Products List",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee",
+   "share": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Office Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

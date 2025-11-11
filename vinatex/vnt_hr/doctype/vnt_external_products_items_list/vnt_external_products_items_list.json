@@ -1,0 +1,86 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-10 14:59:57.708638",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "item_name",
+  "unit",
+  "qty",
+  "type",
+  "qty_current"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "M\u00e3 s\u1ea3n ph\u1ea9m",
+   "options": "VNT External Products List"
+  },
+  {
+   "fetch_from": "item_code.item_name",
+   "fetch_if_empty": 1,
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "in_list_view": 1,
+   "label": "T\u00ean s\u1ea3n ph\u1ea9m"
+  },
+  {
+   "columns": 1,
+   "fetch_from": "item_code.unit",
+   "fetch_if_empty": 1,
+   "fieldname": "unit",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "\u0110\u01a1n v\u1ecb t\u00ednh"
+  },
+  {
+   "columns": 1,
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "S\u1ed1 l\u01b0\u1ee3ng",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fetch_if_empty": 1,
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Lo\u1ea1i",
+   "options": "\nNh\u1eadp\nXu\u1ea5t",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fetch_from": "item_code.qty_current",
+   "fetch_if_empty": 1,
+   "fieldname": "qty_current",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "T\u1ed3n hi\u1ec7n t\u1ea1i",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-11 11:22:52.641598",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT External Products Items List",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

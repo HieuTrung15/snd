@@ -80,7 +80,7 @@ def _handle_state_transition(doc):
 	# lấy ra người duyệt
 	approver = doc.get("approver")
 	approver_user = get_employee_user_id(approver)
-	if prev_state == "Mới tạo" and curr_state == "Chờ duyệt":
+	if curr_state == "Chờ duyệt":
 		_notify_to_approver(doc, user=approver_user)
 	if prev_state == "Chờ duyệt" and curr_state == "Đã duyệt":
 		# Đóng todo khi đã duyệt

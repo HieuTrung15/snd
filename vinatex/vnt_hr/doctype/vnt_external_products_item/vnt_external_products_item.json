@@ -20,7 +20,6 @@
   {
    "fieldname": "item_code",
    "fieldtype": "Link",
-   "hidden": 1,
    "in_list_view": 1,
    "label": "M\u00e3 s\u1ea3n ph\u1ea9m",
    "options": "Item"
@@ -47,7 +46,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-04 09:02:53.242454",
+ "modified": "2025-11-11 10:32:39.538486",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT External Products Item",

@@ -204,7 +204,6 @@ def build_emp_conditions(filters=None):
     return where_sql, params
 
 @frappe.whitelist()
-@frappe.whitelist()
 def get_company_representatives(company=None, rep_type=None, custom_industry=None):
     """
     Trả thông tin đại diện / kế toán trưởng theo Company.
