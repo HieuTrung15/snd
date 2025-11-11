@@ -1,7 +1,8 @@
 # apps/vinatex/vinatex/patches/utils/rocket_chat.py
 
-from rocketchat_API.rocketchat import RocketChat
 import frappe
+from rocketchat_API.rocketchat import RocketChat
+from urllib.parse import urlsplit, urlunsplit
 
 SERVER_URL  = "http://14.225.164.136:3000"
 # BOT_USER_ID = "coJbfrAQHpSK3Q4gh"    # User ID từ My Account → Profile
@@ -71,9 +72,10 @@ def send_rocket_message(to_users, message, link=None, title=None):
     normalized_users = list(dict.fromkeys(normalized_users))
 
     # Bước 3: build text
+    sanitized_link = _sanitize_url(link)
     text = f"*{title}*\n{message}" if title else message
-    if link:
-        text += f"\n➡️ [Xem chi tiết]({link})"
+    if sanitized_link:
+        text += f"\n➡️ [Xem chi tiết]({sanitized_link})"
 
     # Bước 4: gửi
     results = []
@@ -82,6 +84,24 @@ def send_rocket_message(to_users, message, link=None, title=None):
         results.append(res.json())
 
     return results
+
+
+def _sanitize_url(link):
+    """Loại bỏ port 8000 khỏi URL nếu có."""
+    if not link:
+        return link
+
+    try:
+        parts = urlsplit(link)
+    except ValueError:
+        return link
+
+    if parts.port != 8000:
+        return link
+
+    netloc = parts.hostname or ""
+    sanitized = urlunsplit((parts.scheme, netloc, parts.path, parts.query, parts.fragment))
+    return sanitized or link
 
 
 
