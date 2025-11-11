@@ -20,6 +20,12 @@ PENDING_STATES  = {"Chờ duyệt"}
 APPROVED_STATES = {"Đã duyệt", "Duyệt"}
 REJECT_STATES   = {"Từ chối", "Hủy", "Huỷ", "Đã hủy"}
 
+create_car_regis = [
+    "Ô tô TĐ (trên 40 km)",
+    "Ô tô TĐ (dưới 40 km)",
+    "Ô tô (TĐ chịu chi phí)",
+]
+
 class VNTBusinessTripRequest(Document):
     def on_update(self):
         _apply_state_effects(self)
@@ -424,8 +430,13 @@ def replace_attendance_for_business_trip(doc: Document):
             att.submit()
         d = add_days(d, 1)
 
-    # tạo đăng ký xe nếu có check đăng ký xe và submit luôn
-    transportation_rows = [row for row in (doc.transportation or []) if row.transport_mode == "Xe"]
+    # tạo đăng ký xe nếu có phương tiện thuộc danh sách yêu cầu đăng ký xe
+    transportation_rows = []
+    for row in (doc.transportation or []):
+        vehicle_item = (getattr(row, "vehicle_item", "") or "").strip()
+        if vehicle_item in create_car_regis:
+            transportation_rows.append(row)
+
     if transportation_rows:
         create_vehicle_request_for_business_trip(doc, transportation_rows)
 

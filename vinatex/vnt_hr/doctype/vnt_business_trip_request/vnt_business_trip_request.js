@@ -25,28 +25,33 @@ frappe.ui.form.on('VNT Business Trip Request', {
         }
 	},
     vehicle(frm) {
-        // lấy danh sách được chọn
-        let selected = frm.doc.vehicle || [];
+        const targets = [
+            "Ô tô TĐ (trên 40 km)",
+            "Ô tô TĐ (dưới 40 km)",
+            "Ô tô (TĐ chịu chi phí)",
+        ];
 
-        // nếu là MultiSelectList, sẽ là array
-        // nếu là MultiSelect thường (string), convert:
-        if (typeof selected === 'string') {
-            selected = selected.split('\n').filter(v => v && v.trim());
-        }
+        // frm.doc.vehicle là CHILD TABLE, mảng object
+        const vehicles = frm.doc.vehicle || [];
 
-        // Xoá bảng cũ (tuỳ bạn, hoặc merge thì sửa lại)
-        frm.clear_table('transportation');
+        // Xoá hết bảng con transportation rồi tạo lại
+        frm.clear_table("transportation");
 
         const today = frappe.datetime.get_today();
-        const now = frappe.datetime.now_time();
+        const now   = frappe.datetime.now_time();
 
-        selected.forEach(v => {
-            const row = frm.add_child('transportation');
+        vehicles.forEach(v => {
+            const val = v.vehicle_type;  // lấy giá trị text thực sự
+
+            if (!val || !targets.includes(val)) return;  // chỉ xử lý nếu nằm trong targets
+
+            const row = frm.add_child("transportation");
+            row.vehicle_item = val;  // gán đúng giá trị vào trường vehicle_item
             row.date = today;
             row.time = now;
         });
 
-        frm.refresh_field('transportation');
+        frm.refresh_field("transportation");
     }
 });
 
