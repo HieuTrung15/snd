@@ -1,10 +1,13 @@
 # Copyright (c) 2025, vinatex and contributors
 # For license information, please see license.txt
 
+from collections import defaultdict
+
 import frappe
 from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.model.document import Document
+from frappe.utils import flt
 
 _FOLLOWER_EMPLOYEE = "VGT00164"
 
@@ -14,9 +17,11 @@ class VNTExternalProducts(Document):
 
 	def before_insert(self):
 		_set_default_follower(self)
+		_set_default_list_item_type(self)
 
 	def validate(self):
 		_set_default_follower(self)
+		_set_default_list_item_type(self)
 
 	def on_update(self):
 		# Chỉ xử lý khi trạng thái workflow đổi
@@ -46,11 +51,13 @@ def _handle_state_transition(doc: Document):
 		if not has_second_level:
 			_notify_requester(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã được lãnh đạo duyệt."))
 			_notify_follower(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã được lãnh đạo duyệt."))
+		_record_inventory_movements(doc)
 
 	if curr_state == "Đã duyệt" and prev_state == "Chờ lãnh đạo tập đoàn duyệt":
 		_check_state_to_close_todo(doc, approver_lv2_user)
 		_notify_requester(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã được lãnh đạo tập đoàn duyệt."))
 		_notify_follower_prepare_gift(doc)
+		_record_inventory_movements(doc)
 
 	if prev_state == "Chờ lãnh đạo duyệt" and curr_state == "Từ chối":
 		_check_state_to_close_todo(doc, approver_user)
@@ -212,6 +219,48 @@ def _set_default_follower(doc: Document):
 	doc.follower = _FOLLOWER_EMPLOYEE
 	emp_name = frappe.db.get_value("Employee", _FOLLOWER_EMPLOYEE, "employee_name") or ""
 	doc.follower_name = emp_name
+
+
+def _set_default_list_item_type(doc: Document):
+	"""Mặc định loại giao dịch của bảng con là Xuất."""
+	for row in doc.get("list_items") or []:
+		row_type = (row.get("type") or "").strip()
+		if not row_type:
+			row.type = "Xuất"
+
+
+def _record_inventory_movements(doc: Document):
+	"""Đẩy phát sinh được duyệt sang danh mục tồn kho."""
+	child_rows = [row for row in doc.get("list_items") or [] if row.get("item_code")]
+	if not child_rows:
+		return
+
+	rows_by_item = defaultdict(list)
+	for row in child_rows:
+		item_name = row.get("item_code")
+		qty = flt(row.get("qty"))
+		if not item_name or not qty:
+			continue
+		rows_by_item[item_name].append((row, qty))
+
+	for item_name, entries in rows_by_item.items():
+		try:
+			item_doc = frappe.get_doc("VNT External Products List", item_name)
+		except frappe.DoesNotExistError:
+			continue
+
+		needs_save = False
+		for row, qty in entries:
+			child = item_doc.append("list_items", {})
+			child.item_code = item_name
+			child.item_name = row.get("item_name") or item_doc.item_name
+			child.unit = row.get("unit") or item_doc.unit
+			child.qty = qty
+			child.type = (row.get("type") or "Xuất").strip() or "Xuất"
+			needs_save = True
+
+		if needs_save:
+			item_doc.save(ignore_permissions=True)
 
 
 def get_employee_user_id(employee_name: str | None) -> str | None:

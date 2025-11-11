@@ -13,7 +13,7 @@
   "department",
   "branch",
   "section_break_8qmv",
-  "items",
+  "list_items",
   "section_break_9am8",
   "add_on",
   "items_add_on",
@@ -79,13 +79,6 @@
    "fieldtype": "Link",
    "label": "V\u0103n ph\u00f2ng",
    "options": "Branch"
-  },
-  {
-   "fieldname": "items",
-   "fieldtype": "Table",
-   "label": "Danh s\u00e1ch s\u1ea3n ph\u1ea9m \u0111\u1ed1i ngo\u1ea1i",
-   "options": "VNT External Products Item",
-   "reqd": 1
   },
   {
    "default": "0",
@@ -172,6 +165,7 @@
   {
    "fieldname": "section_break_9am8",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "\u0110\u1ec1 xu\u1ea5t s\u1ea3n ph\u1ea9m kh\u00e1c"
   },
   {
@@ -187,13 +181,20 @@
    "fieldtype": "Small Text",
    "label": "\u0110\u1ed1i t\u00e1c",
    "max_height": "40px"
+  },
+  {
+   "fieldname": "list_items",
+   "fieldtype": "Table",
+   "label": "Danh s\u00e1ch s\u1ea3n ph\u1ea9m",
+   "options": "VNT External Products Items List",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-06 15:40:59.683516",
+ "modified": "2025-11-11 15:51:57.370081",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT External Products",
