@@ -7,6 +7,7 @@ from frappe.utils import nowdate, get_url_to_form, cstr, formatdate, format_time
 from frappe import _
 from frappe.model.document import Document
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
+from vinatex.patches.utils.rocket_chat import send_rocket_message
 
 
 class VNTCarRegistration(Document):
@@ -67,6 +68,12 @@ def _handle_state_transition(doc: Document):
 			"document_type": doc.doctype,
 			"document_name": doc.name,
 		}, [approver_user])
+		send_rocket_message(
+			to_users=approver_user,
+			title=":bell: Thông báo",
+			message=_("Phiếu đăng ký xe của {0} đã được lãnh đạo duyệt").format(doc.employee_name or _("(không rõ)")),
+			link=get_url_to_form(doc.doctype, doc.name)
+		)
 
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Chờ lãnh đạo tập đoàn duyệt':
 		make_notification_logs({
@@ -75,6 +82,12 @@ def _handle_state_transition(doc: Document):
 			"document_type": doc.doctype,
 			"document_name": doc.name,
 		}, [approver_user])
+		send_rocket_message(
+			to_users=approver_user,
+			title=":bell: Thông báo",
+			message=_("Phiếu đăng ký xe của {0} đang chờ lãnh đạo tập đoàn duyệt").format(doc.employee_name or _("(không rõ)")),
+			link=get_url_to_form(doc.doctype, doc.name)
+		)
 
 	if prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Đã duyệt':
 		make_notification_logs({
@@ -83,6 +96,12 @@ def _handle_state_transition(doc: Document):
 			"document_type": doc.doctype,
 			"document_name": doc.name,
 		}, [approver_user])
+		send_rocket_message(
+			to_users=approver_user,
+			title=":bell: Thông báo",
+			message=_("Phiếu đăng ký xe của {0} đã được lãnh đạo tập đoàn duyệt").format(doc.employee_name or _("(không rõ)")),
+			link=get_url_to_form(doc.doctype, doc.name)
+		)
 
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Từ chối':
 		make_notification_logs({
@@ -91,6 +110,12 @@ def _handle_state_transition(doc: Document):
         "document_type": doc.doctype,
         "document_name": doc.name,
     }, [approver_user])
+		send_rocket_message(
+			to_users=approver_user,
+			title=":bell: Thông báo",
+			message=_("Phiếu đăng ký xe của {0} đã bị lãnh đạo từ chối.").format(doc.employee_name or _("(không rõ)")),
+			link=get_url_to_form(doc.doctype, doc.name)
+		)
 
 	if prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Từ chối':
 		make_notification_logs({
@@ -99,6 +124,12 @@ def _handle_state_transition(doc: Document):
         "document_type": doc.doctype,
         "document_name": doc.name,
     }, [approver_user])
+		send_rocket_message(
+			to_users=approver_user,
+			title=":bell: Thông báo",
+			message=_("Phiếu đăng ký xe của {0} đã bị lãnh đạo tập đoàn từ chối.").format(doc.employee_name or _("(không rõ)")),
+			link=get_url_to_form(doc.doctype, doc.name)
+		)
 
 
 # gửi thông báo đến người quản lý văn phòng
@@ -118,6 +149,12 @@ def _notify_to_office_manager(doc: Document):
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, user_list)
+	send_rocket_message(
+		to_users=user_list,
+		title=":bell: Thông báo",
+		message=_("Phiếu đăng ký xe của {0} đã được duyệt. Vui lòng kiểm tra.").format(doc.employee_name or _("(không rõ)")),
+		link=get_url_to_form(doc.doctype, doc.name)
+	)
 
 
 # gửi thông báo đến emp tham gia chuyến xe
@@ -136,6 +173,12 @@ def _notify_to_employee_list(doc):
 			"document_type": doc.doctype,
 			"document_name": doc.name,
 		}, [employee_user])
+		send_rocket_message(
+			to_users=employee_user,
+			title=":bell: Thông báo",
+			message=_("Bạn đi cùng chuyến xe của {0}. Vui lòng kiểm tra thông tin chi tiết.").format(doc.employee_name or _("(không rõ)")),
+			link=get_url_to_form(doc.doctype, doc.name)
+		)
 
 
 # gửi thông báo đến người điều xe
@@ -177,6 +220,12 @@ def _notify_to_user_receive(doc: Document):
 				"document_type": 'VNT Vehicle Control',
 				"document_name": vehicle_control.name,
 			}, user_list)
+			send_rocket_message(
+				to_users=user_list,
+				title=":bell: Thông báo",
+				message=_("Điều xe cho phiếu đăng ký xe của {0}.").format(doc.employee_name or _("(không rõ)")),
+				link=get_url_to_form(doc.doctype, doc.name)
+			)
 			new_todo =  frappe.new_doc("ToDo")
 			new_todo.description = _("Điều xe cho phiếu đăng ký xe của {0}.").format(doc.employee_name or _("(không rõ)"))
 			new_todo.allocated_to = user_list[0]
@@ -318,6 +367,12 @@ def _notify_to_approver(doc: Document, user: str | None):
 		"document_name": doc.name,
 		"subject": _('Duyệt đăng ký xe của {0}.').format(doc.employee_name or _("(không rõ)")),
 	}, [user])
+	send_rocket_message(
+		to_users=user,
+		title=":bell: Thông báo",
+		message= _("Phiếu đăng ký xe của {0} đang chờ lãnh đạo duyệt.").format(doc.employee_name or _("(không rõ)")),
+		link=get_url_to_form(doc.doctype, doc.name)
+	)
 	# tạo todo cho người duyệt
 	ensure_todo(doc, user)
 
@@ -331,6 +386,12 @@ def _notify_to_approver_2(doc: Document, user: str | None):
 		"document_name": doc.name,
 		"subject": _('Duyệt đăng ký xe của {0}.').format(doc.employee_name or _("(không rõ)")),
 	}, [user])
+	send_rocket_message(
+		to_users=user,
+		title=":bell: Thông báo",
+		message= _('Duyệt đăng ký xe của {0}.').format(doc.employee_name or _("(không rõ)")),
+		link=get_url_to_form(doc.doctype, doc.name)
+	)
 	# tạo todo cho người duyệt
 	ensure_todo(doc, user)
 
@@ -352,6 +413,12 @@ def _notify_to_employee(doc: Document, status: str):
 			"document_type": doc.doctype,
 			"document_name": doc.name,
 		}, [employee_user])
+		send_rocket_message(
+			to_users=employee_user,
+			title=":bell: Thông báo",
+			message=_("Phiếu đăng ký xe của {0} đã {1}.").format(doc.employee_name or _("(không rõ)"),status,),
+			link=get_url_to_form(doc.doctype, doc.name)
+		)
 
 def get_employee_user_id(employee_name: str) -> str | None:
     if not employee_name:
