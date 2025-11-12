@@ -1,11 +1,11 @@
 import frappe
-from frappe.utils import nowdate
+from frappe.utils import getdate, add_days, nowdate, get_url_to_form
 from frappe.model.document import Document
 from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
-from frappe.utils import getdate, add_days, nowdate
 import unicodedata
 from frappe.model.workflow import apply_workflow
+from vinatex.patches.utils.rocket_chat import send_rocket_message
 
 # ---------------- Utils ----------------
 def _norm(s: str) -> str:
@@ -441,6 +441,32 @@ def replace_attendance_for_business_trip(doc: Document):
     if transportation_rows:
         create_vehicle_request_for_business_trip(doc, transportation_rows)
 
+    list_vehicle = [row.as_dict() for row in doc.vehicle]
+    result = any(r.get("vehicle_type") == "Máy bay (TĐ trả chi phí)" for r in list_vehicle)
+
+    # nếu có máy báy gửi thông báo đến quản lý văn phòng
+    if result:
+        _notify_to_office_manager(doc)
+
+
+def _notify_to_office_manager(doc: Document):
+	"""Gửi thông báo đến những members trong User Group 'Nhận thông báo đăng ký xin xe' khi đơn được duyệt."""
+	user_group_name = "Nhận thông báo đăng ký xin xe"
+	user_list = frappe.get_all(
+		"User Group Member",
+		filters={"parent": user_group_name},
+		pluck="user",
+	)
+
+	if not user_list:
+		return
+	make_notification_logs({
+		"type": "Alert",
+		"subject": _("Công tác của {0} cần vé máy bay. Vui lòng kiểm tra.").format(doc.employee_name or _("(không rõ)")),
+		"document_type": doc.doctype,
+		"document_name": doc.name,
+	}, user_list)
+
 
 def create_vehicle_request_for_business_trip(doc: Document, transportation_rows: list):
     if not transportation_rows:
@@ -548,6 +574,23 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
     }, user_list)
     # tạo todo cho người điều xe
     ensure_todo(vehicle_control, user_list[0])
+    if frappe.db.exists("ToDo", {
+        "reference_type": doc.doctype,
+        "reference_name": doc.name,
+        "allocated_to": user_list[0],
+        "status": ["!=", "Cancelled"],
+    }):
+        return
+    description = _("Vui lòng điều xe cho phiếu đăng ký xe của {0} đã được duyệt.").format(doc.employee_name or _("(không rõ)"))
+    frappe.get_doc({
+        "doctype": "ToDo",
+        "description": description,
+        "allocated_to": user_list[0],
+        "reference_type": "VNT Vehicle Control",
+        "reference_name": vehicle_control.name,
+        "priority": "Medium",
+        "status": "Open",
+    }).insert(ignore_permissions=True)
 
 
 def cancel_attendance_for_trip(doc: Document):
