@@ -113,11 +113,12 @@ def _notify_confirmation(doc: Document, user: str):
 		return
 	subject = _("Xác nhận chấm công {0}").format(doc.employee_name or doc.employee or _("Nhân viên"))
 	message = _(
-		"XNCC của {0} từ {1} đến {2}."
+		"XNCC của {0} ngày {1}."
 	).format(
 		frappe.format_value(doc.employee_name, {"fieldtype": "Data"}) if doc.employee_name else _("(chưa rõ)"),
-		frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
-		frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
+		add_days(today(), -1)
+		# frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
+		# frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
 	)
 	mapped_employee = frappe.db.get_value("Employee", {"user_id": user}, "name")
 	if mapped_employee and mapped_employee != doc.employee:
