@@ -54,6 +54,7 @@
    "fetch_if_empty": 1,
    "fieldname": "employee_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Employee Name"
   },
   {
@@ -248,7 +249,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-09 10:39:00.916220",
+ "modified": "2025-11-12 08:53:49.039465",
  "modified_by": "Administrator",
  "module": "VNT Accounts",
  "name": "VNT Payment Request",

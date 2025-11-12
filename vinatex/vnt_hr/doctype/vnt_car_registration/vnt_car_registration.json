@@ -129,6 +129,7 @@
    "fetch_from": "employee.employee_name",
    "fieldname": "employee_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "T\u00ean nh\u00e2n s\u1ef1 \u0111\u1ec1 xu\u1ea5t"
   },
   {
@@ -245,7 +246,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-11 23:00:37.409575",
+ "modified": "2025-11-12 08:54:52.849894",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Car Registration",
