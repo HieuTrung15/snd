@@ -12,6 +12,7 @@
   "column_break_mduw",
   "company",
   "department",
+  "branch",
   "section_break_vrfz",
   "from_date",
   "to_date",
@@ -219,13 +220,21 @@
    "fieldtype": "Check",
    "hidden": 1,
    "label": "\u0110i\u1ec1u ki\u1ec7n ch\u1ecdn workflow"
+  },
+  {
+   "fetch_from": "employee.branch",
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Chi nh\u00e1nh",
+   "options": "Branch",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-11 09:00:15.111643",
+ "modified": "2025-11-11 22:04:20.813570",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request",

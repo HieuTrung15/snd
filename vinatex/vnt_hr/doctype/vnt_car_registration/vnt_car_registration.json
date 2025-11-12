@@ -60,10 +60,9 @@
   {
    "fieldname": "distance",
    "fieldtype": "Select",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Kho\u1ea3ng c\u00e1ch",
-   "options": "\nT\u1eeb 40 km tr\u1edf l\u00ean\nD\u01b0\u1edbi 40 km",
-   "reqd": 1
+   "options": "\nT\u1eeb 40 km tr\u1edf l\u00ean\nD\u01b0\u1edbi 40 km"
   },
   {
    "fieldname": "note",
@@ -237,6 +236,7 @@
   {
    "fieldname": "emp_list_name",
    "fieldtype": "Small Text",
+   "hidden": 1,
    "label": "Nh\u00e2n s\u1ef1 \u0111i xe",
    "max_height": "50px"
   }
@@ -245,7 +245,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-07 18:27:36.996595",
+ "modified": "2025-11-11 23:00:37.409575",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Car Registration",

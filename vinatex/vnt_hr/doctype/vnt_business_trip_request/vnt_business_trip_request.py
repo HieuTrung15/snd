@@ -3,7 +3,7 @@ from frappe.utils import nowdate
 from frappe.model.document import Document
 from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
-from frappe.utils import getdate, add_days
+from frappe.utils import getdate, add_days, nowdate
 import unicodedata
 from frappe.model.workflow import apply_workflow
 
@@ -431,12 +431,13 @@ def replace_attendance_for_business_trip(doc: Document):
         d = add_days(d, 1)
 
     # tạo đăng ký xe nếu có phương tiện thuộc danh sách yêu cầu đăng ký xe
+    item_val = [row.as_dict() for row in doc.transportation]
     transportation_rows = []
-    for row in (doc.transportation or []):
-        vehicle_item = (getattr(row, "vehicle_item", "") or "").strip()
+    for row in item_val:
+        vehicle_item = (getattr(row, "vehicle_item", "") or "")
         if vehicle_item in create_car_regis:
             transportation_rows.append(row)
-
+    # frappe.throw(f"{transportation_rows}")
     if transportation_rows:
         create_vehicle_request_for_business_trip(doc, transportation_rows)
 
@@ -465,7 +466,7 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
     vehicle_request.company = doc.company
     vehicle_request.department = doc.department
     vehicle_request.branch = doc.branch
-    vehicle_request.distance = doc.distance
+    # vehicle_request.distance = doc.distance
     vehicle_request.note = doc.purpose
     # approver_user = get_employee_user_id(doc.approver)
     vehicle_request.approver = doc.approver
@@ -487,6 +488,10 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
                 "note": row.note
             },
         )
+    vehicle_request.docstatus = 1
+    vehicle_request.worlflow_state = "Đã duyệt"
+    vehicle_request.insert(ignore_permissions=True)
+    frappe.db.commit()
 
     # gửi thông báo cho ngườ điều xe (1 người)
     # tạo bản ghi mới trong vnt vehicle control hoặc cập nhật nếu đã có
@@ -512,7 +517,7 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
         vehicle_control.set("items", [])
     else:
         vehicle_control = frappe.new_doc("VNT Vehicle Control")
-        # vehicle_control.set("date", nowdate())
+        vehicle_control.set("date", nowdate())
 
     vehicle_control.employee_name = employee_user
 
