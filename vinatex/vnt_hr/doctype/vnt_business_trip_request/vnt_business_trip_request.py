@@ -435,9 +435,9 @@ def replace_attendance_for_business_trip(doc: Document):
     transportation_rows = []
     for row in item_val:
         vehicle_item = (getattr(row, "vehicle_item", "") or "")
-        if vehicle_item in create_car_regis:
-            transportation_rows.append(row)
-    # frappe.throw(f"{transportation_rows}")
+        # if vehicle_item in create_car_regis:
+        transportation_rows.append(row)
+    # frappe.throw(f"{item_val}")
     if transportation_rows:
         create_vehicle_request_for_business_trip(doc, transportation_rows)
 
@@ -492,7 +492,7 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
     vehicle_request.company = doc.company
     vehicle_request.department = doc.department
     vehicle_request.branch = doc.branch
-    # vehicle_request.distance = doc.distance
+    vehicle_request.distance = "Dưới 40 km"
     vehicle_request.note = doc.purpose
     # approver_user = get_employee_user_id(doc.approver)
     vehicle_request.approver = doc.approver
@@ -568,12 +568,12 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
 
     make_notification_logs({
         "type": "Alert",
-        "subject": _("Vui lòng điều xe cho phiếu đăng ký xe của {0} đã được duyệt.").format(doc.employee_name or _("(không rõ)")),
+        "subject": _("Vui lòng điều xe cho phiếu đăng ký xe của {0}.").format(doc.employee_name or _("(không rõ)")),
         "document_type": 'VNT Vehicle Control',
         "document_name": vehicle_control.name,
     }, user_list)
     # tạo todo cho người điều xe
-    ensure_todo(vehicle_control, user_list[0])
+    # ensure_todo(vehicle_control, user_list[0])
     if frappe.db.exists("ToDo", {
         "reference_type": doc.doctype,
         "reference_name": doc.name,
@@ -581,7 +581,7 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
         "status": ["!=", "Cancelled"],
     }):
         return
-    description = _("Vui lòng điều xe cho phiếu đăng ký xe của {0} đã được duyệt.").format(doc.employee_name or _("(không rõ)"))
+    description = _("Vui lòng điều xe cho phiếu đăng ký xe của {0}.").format(doc.employee_name or _("(không rõ)"))
     frappe.get_doc({
         "doctype": "ToDo",
         "description": description,

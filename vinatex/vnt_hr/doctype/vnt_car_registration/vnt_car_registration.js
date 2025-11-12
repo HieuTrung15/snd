@@ -18,7 +18,6 @@ frappe.ui.form.on("VNT Car Registration", {
         }
     },
 	 refresh(frm) {
-        update_emp_list_name(frm);
         if (frm.is_new()) {
             frappe.call({
                 method: "frappe.client.get_value",
@@ -38,7 +37,6 @@ frappe.ui.form.on("VNT Car Registration", {
                             employee_name: r.message.employee_name
                         });
                         frm.refresh_field("list_emp");
-                        update_emp_list_name(frm);
                     }
                 }
             });
@@ -69,8 +67,8 @@ frappe.ui.form.on("VNT Car Registration", {
 	},
     distance(frm) {
         if (frm.doc.distance) {
-            frm.set_value("approver_lv2", "VGT00079")
-            frm.set_value("approver_name_lv2", "Phạm Văn Tân")
+            // frm.set_value("approver_lv2", "tanpv@vinatex.com.vn")
+            // frm.set_value("approver_name_lv2", "Phạm Văn Tân")
         }
     },
     driver(frm) {
@@ -91,7 +89,6 @@ frappe.ui.form.on("VNT Car Registration", {
     },
     list_emp (frm) {
         // hiển thị tên nhân viên của trường TableMultiSelect
-        update_emp_list_name(frm);
     }
 });
 

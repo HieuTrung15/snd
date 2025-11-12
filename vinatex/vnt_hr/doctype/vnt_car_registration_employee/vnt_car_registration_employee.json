@@ -26,6 +26,7 @@
    "fetch_from": "employee.employee_name",
    "fieldname": "full_name",
    "fieldtype": "Data",
+   "ignore_user_permissions": 1,
    "label": "H\u1ecd v\u00e0 t\u00ean"
   }
  ],
@@ -33,7 +34,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-05 14:39:10.483410",
+ "modified": "2025-11-12 10:52:11.337020",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Car Registration Employee",

@@ -47,17 +47,7 @@ def get_timekeeping_data_morning():
     # start_dt = datetime.combine(get_today, time.min)
     # end_dt = datetime.combine(get_today, time.max)
 
-    rows = []
-    devices = _device_list()
-    for d in devices:
-        rows.extend(_fetch_from_device(
-            ip=d["ip"],
-            port=d["port"],
-            comm_key=d.get("comm_key") or 0,
-            start_dt=start_dt,
-            end_dt=end_dt,
-            branch=d["branch"]
-        ))
+    rows = _collect_unique_rows(start_dt=start_dt, end_dt=end_dt)
     if not rows:
         frappe.msgprint(_("Không có dữ liệu chấm công nào được lấy từ máy chấm công."))
         return
@@ -143,17 +133,7 @@ def get_timekeeping_data_evening():
     end_dt   = datetime.combine(d_today, time.max)     # 23:59:59.999999 hôm nay
     # end_dt   = datetime.combine(date(2025, 9, 30), time.max)
     # Lấy dữ liệu mới từ thiết bị
-    rows = []
-    devices = _device_list()
-    for d in devices:
-        rows.extend(_fetch_from_device(
-            ip=d["ip"],
-            port=d["port"],
-            comm_key=d.get("comm_key") or 0,
-            start_dt=start_dt,
-            end_dt=end_dt,
-            branch=d["branch"]
-        ))
+    rows = _collect_unique_rows(start_dt=start_dt, end_dt=end_dt)
     if not rows:
         frappe.msgprint(_("Không có dữ liệu chấm công nào được lấy từ máy chấm công."))
         return
@@ -263,6 +243,27 @@ def get_timekeeping_data_evening():
 
 def _device_list():
     return frappe.get_all('Timekeeper Config', filters={'is_active': 1}, fields=['ip', 'port', 'comm_key', 'name', 'branch'])
+
+
+def _collect_unique_rows(start_dt: datetime, end_dt: datetime):
+    """lấy dữ liệu từ tất cả các máy chấm công, sau đó loại bỏ các bản ghi trùng nhau."""
+    rows, seen = [], set()
+    for d in _device_list():
+        device_rows = _fetch_from_device(
+            ip=d["ip"],
+            port=d["port"],
+            comm_key=d.get("comm_key") or 0,
+            start_dt=start_dt,
+            end_dt=end_dt,
+            branch=d["branch"],
+        )
+        for row in device_rows:
+            key = (row["user_id"], row["timestamp"], row["branch"])
+            if key in seen:
+                continue
+            seen.add(key)
+            rows.append(row)
+    return rows
 
 
 def _fetch_from_device(ip: str, branch: str, port: int, comm_key: int, start_dt: datetime, end_dt: datetime):
