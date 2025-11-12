@@ -8,7 +8,7 @@ import frappe
 from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.model.document import Document
-from frappe.utils import getdate
+from frappe.utils import getdate, add_days, today
 # from hrms.hr.utils import get_holiday_list_for_employee(employee)
 
 
@@ -96,10 +96,7 @@ def _ensure_todo_for_confirmation(doc: Document, user: str):
 	if mapped_employee and mapped_employee != doc.employee:
 		return
 
-	description = _("Xác nhận chấm công {0} đến {1}.").format(
-		frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
-		frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
-	)
+	description = _("Xác nhận chấm công ngày {0}").format(add_days(today(), -1))
 	new_todo = frappe.new_doc("ToDo")
 	new_todo.description = description
 	new_todo.allocated_to = user
