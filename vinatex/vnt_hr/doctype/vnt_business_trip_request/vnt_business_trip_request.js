@@ -29,7 +29,7 @@ frappe.ui.form.on('VNT Business Trip Request', {
             "Ô tô TĐ (trên 40 km)",
             "Ô tô TĐ (dưới 40 km)",
             "Ô tô (TĐ chịu chi phí)",
-            // "Máy bay (TĐ trả chi phí)"
+            "Máy bay (TĐ trả chi phí)"
         ];
 
         // frm.doc.vehicle là CHILD TABLE, mảng object

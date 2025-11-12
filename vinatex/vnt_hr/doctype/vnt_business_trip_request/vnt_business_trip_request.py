@@ -435,8 +435,8 @@ def replace_attendance_for_business_trip(doc: Document):
     transportation_rows = []
     for row in item_val:
         vehicle_item = (getattr(row, "vehicle_item", "") or "")
-        # if vehicle_item in create_car_regis:
-        transportation_rows.append(row)
+        if vehicle_item in create_car_regis:
+            transportation_rows.append(row)
     # frappe.throw(f"{item_val}")
     if transportation_rows:
         create_vehicle_request_for_business_trip(doc, transportation_rows)
