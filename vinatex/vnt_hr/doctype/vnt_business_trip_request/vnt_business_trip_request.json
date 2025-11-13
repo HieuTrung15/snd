@@ -23,12 +23,12 @@
   "purpose",
   "section_break_vvh7",
   "approver",
-  "approver_lv2",
+  "approver_name",
   "created_on",
   "naming_series",
   "column_break_dr5q",
+  "approver_lv2",
   "approver_name_lv2",
-  "approver_name",
   "amended_from",
   "danh_s\u00e1ch_nh\u00e2n_vi\u00ean_\u0111i_c\u00f4ng_t\u00e1c_section",
   "items",
@@ -84,13 +84,12 @@
   },
   {
    "fetch_from": "employee.reports_to",
-   "fetch_if_empty": 1,
    "fieldname": "approver",
    "fieldtype": "Link",
+   "hidden": 1,
    "ignore_user_permissions": 1,
-   "label": "Ng\u01b0\u1eddi duy\u1ec7t",
-   "options": "Employee",
-   "read_only": 1
+   "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t c\u1ea5p 1",
+   "options": "Employee"
   },
   {
    "fieldname": "amended_from",
@@ -182,31 +181,16 @@
    "label": "Note"
   },
   {
-   "fetch_from": "approver.employee_name",
-   "fetch_if_empty": 1,
-   "fieldname": "approver_name",
-   "fieldtype": "Read Only",
-   "hidden": 1,
-   "label": "Ng\u01b0\u1eddi duy\u1ec7t",
-   "read_only": 1
-  },
-  {
    "fieldname": "section_break_vrfz",
    "fieldtype": "Section Break",
    "label": "Th\u1eddi gian & N\u1ed9i dung"
   },
   {
-   "fieldname": "approver_lv2",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "ignore_user_permissions": 1,
-   "label": "Ng\u01b0\u1eddi duy\u1ec7t c\u1ea5p 2"
-  },
-  {
    "depends_on": "eval: doc.check_vehicle_condition",
    "fieldname": "approver_name_lv2",
    "fieldtype": "Data",
-   "label": "Ng\u01b0\u1eddi duy\u1ec7t c\u1ea5p 2",
+   "ignore_user_permissions": 1,
+   "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t c\u1ea5p 2",
    "read_only": 1
   },
   {
@@ -219,7 +203,6 @@
    "default": "0",
    "fieldname": "check_vehicle_condition",
    "fieldtype": "Check",
-   "hidden": 1,
    "label": "\u0110i\u1ec1u ki\u1ec7n ch\u1ecdn workflow"
   },
   {
@@ -229,13 +212,28 @@
    "label": "Chi nh\u00e1nh",
    "options": "Branch",
    "reqd": 1
+  },
+  {
+   "fieldname": "approver_name",
+   "fieldtype": "Data",
+   "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t c\u1ea5p 1",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.check_vehicle_condition",
+   "fieldname": "approver_lv2",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "ignore_user_permissions": 1,
+   "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t c\u1ea5p 2",
+   "options": "Employee"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-12 11:16:04.764623",
+ "modified": "2025-11-13 18:13:32.047577",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request",
