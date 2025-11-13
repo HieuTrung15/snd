@@ -1,25 +1,39 @@
 frappe.ui.form.on('VNT Business Trip Request', {
-    after_save(frm) {
-        // Chỉ auto chạy 1 lần khi còn ở state "Mới tạo"
-        if (frm.doc.workflow_state === "Mới tạo") {
-            frappe.call({
-                method: "frappe.model.workflow.apply_workflow",
-                args: {
-                    doc: frm.doc,
-                    action: "Chuyển duyệt", // action trong workflow
-                },
-                callback() {
-                    frm.reload_doc();
-                }
-            });
-        }
-    },
+    // after_save(frm) {
+    //     // Chỉ auto chạy 1 lần khi còn ở state "Mới tạo"
+    //     if (frm.doc.workflow_state === "Mới tạo") {
+    //         frappe.call({
+    //             method: "frappe.model.workflow.apply_workflow",
+    //             args: {
+    //                 doc: frm.doc,
+    //                 action: "Chuyển duyệt", // action trong workflow
+    //             },
+    //             callback() {
+    //                 frm.reload_doc();
+    //             }
+    //         });
+    //     }
+    // },
     refresh(frm) {
-        if (!frm.doc.employee) {
-            frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name")
-            .then(r => {
-                if (r && r.message && r.message.name) {
-                    frm.set_value("employee", r.message.name);
+        if (frm.is_new()) {
+            if (!frm.doc.employee) {
+                frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name")
+                .then(r => {
+                    if (r && r.message && r.message.name) {
+                        frm.set_value("employee", r.message.name);
+                    }
+                });
+            }
+            frappe.call({
+                method: "vinatex.vnt_hr.doctype.vnt_car_registration.vnt_car_registration.get_reports_to",
+                args: {
+                    user: frappe.session.user
+                },
+                callback: function (r) {
+                    if (r.message) {
+                        // frm.set_value("approver", r.message[0]);
+                        frm.set_value("approver_name", r.message[1]);
+                    }
                 }
             });
         }
@@ -31,6 +45,11 @@ frappe.ui.form.on('VNT Business Trip Request', {
             "Ô tô (TĐ chịu chi phí)",
             "Máy bay (TĐ trả chi phí)"
         ];
+        const conditionTargets = [
+            "Ô tô TĐ (trên 40 km)",
+            "Máy bay (Đơn vị trả chi phí)",
+            "Máy bay (TĐ trả chi phí)",
+        ];
 
         // frm.doc.vehicle là CHILD TABLE, mảng object
         const vehicles = frm.doc.vehicle || [];
@@ -41,18 +60,42 @@ frappe.ui.form.on('VNT Business Trip Request', {
         const today = frappe.datetime.get_today();
         const now   = frappe.datetime.now_time();
 
+        let hasVehicleCondition = false;
+
         vehicles.forEach(v => {
             const val = v.vehicle_type;  // lấy giá trị text thực sự
 
-            if (!val || !targets.includes(val)) return;  // chỉ xử lý nếu nằm trong targets
+            if (!val) return;
 
-            const row = frm.add_child("transportation");
-            row.vehicle_item = val;  // gán đúng giá trị vào trường vehicle_item
-            row.date = today;
-            row.time = now;
+            if (targets.includes(val)) {
+                const row = frm.add_child("transportation");
+                row.vehicle_item = val;  // gán đúng giá trị vào trường vehicle_item
+                row.date = today;
+                row.time = now;
+            }
+
+            if (!hasVehicleCondition && conditionTargets.includes(val)) {
+                hasVehicleCondition = true;
+            }
         });
-
         frm.refresh_field("transportation");
+        frm.set_value("check_vehicle_condition", hasVehicleCondition ? 1 : 0);
+        if (hasVehicleCondition) {
+            frappe.call({
+                method: "vinatex.vnt_hr.doctype.vnt_business_trip_request.vnt_business_trip_request.get_leave_approver_level_2",
+                args: {
+                    employee: frm.doc.employee,
+                },
+                callback (r) {
+                    if (r.message) {
+                        console.log("abc", r.message)
+                        frm.set_value("approver_lv2", r.message.name);
+                        frm.set_value("approver_name_lv2", r.message.employee_name);
+
+                    }
+                }
+			});
+        }
     }
 });
 
@@ -76,5 +119,4 @@ frappe.ui.form.on('VNT Business Trip Request Items', {
         
     },
 });
-
 
