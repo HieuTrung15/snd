@@ -27,6 +27,8 @@ class VNTExternalProductsList(Document):
 				row.unit = unit
 			if current_qty is not None and not getattr(row, "qty_current", None):
 				row.qty_current = current_qty
+			if not getattr(row, "type", None):
+				row.type = "Nhập"
 
 	def _sync_inventory_balance(self):
 		child_items = self.get("list_items") or []
