@@ -39,4 +39,14 @@ frappe.ui.form.on("VNT External Products", {
             });
         }
 	},
+	is_all(frm) {
+        const targetValue = frappe.utils.cint(frm.doc.is_all);
+        if (!frm.doc.list_items || !frm.doc.list_items.length) {
+            return;
+        }
+        frm.doc.list_items.forEach(row => {
+            frappe.model.set_value(row.doctype, row.name, "is_export", targetValue);
+        });
+        frm.refresh_field("list_items");
+	},
 });

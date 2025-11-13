@@ -51,6 +51,6 @@ function set_child_defaults(frm, cdt, cdn) {
 	}
 
 	if (!row.type) {
-		row.type = "Xuất";
+		row.type = "Nhập";
 	}
 }

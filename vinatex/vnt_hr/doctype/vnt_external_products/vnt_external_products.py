@@ -7,7 +7,8 @@ import frappe
 from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.model.document import Document
-from frappe.utils import flt
+from frappe.utils import cint, cstr, flt, get_url_to_form
+from vinatex.patches.utils.rocket_chat import send_rocket_message
 
 _FOLLOWER_EMPLOYEE = "VGT00164"
 
@@ -18,15 +19,22 @@ class VNTExternalProducts(Document):
 	def before_insert(self):
 		_set_default_follower(self)
 		_set_default_list_item_type(self)
+		_apply_is_all_flag(self)
 
 	def validate(self):
 		_set_default_follower(self)
 		_set_default_list_item_type(self)
+		_apply_is_all_flag(self)
+		_sync_inventory_export_flags(self)
 
 	def on_update(self):
 		# Chỉ xử lý khi trạng thái workflow đổi
 		if self.has_value_changed("workflow_state"):
 			_handle_state_transition(self)
+
+	def on_update_after_submit(self):
+		_apply_is_all_flag(self, persist=True)
+		_sync_inventory_export_flags(self)
 
 
 def _handle_state_transition(doc: Document):
@@ -78,12 +86,8 @@ def _notify_to_approver(doc: Document, user: str | None):
 	"""Nhắc lãnh đạo cấp 1 duyệt và tạo ToDo."""
 	if not user:
 		return
-	make_notification_logs({
-		"type": "Alert",
-		"subject": _("Phiếu đăng ký sản phẩm đối ngoại của {0} đang chờ duyệt.").format(doc.employee_name or _("(không rõ)")),
-		"document_type": doc.doctype,
-		"document_name": doc.name,
-	}, [user])
+	subject = _("Phiếu đăng ký sản phẩm đối ngoại của {0} đang chờ duyệt.").format(doc.employee_name or _("(không rõ)"))
+	_notify_users(doc, [user], subject)
 	ensure_todo(doc, user)
 
 
@@ -91,12 +95,8 @@ def _notify_to_approver_lv2(doc: Document, user: str | None):
 	"""Nhắc lãnh đạo tập đoàn duyệt và tạo ToDo."""
 	if not user:
 		return
-	make_notification_logs({
-		"type": "Alert",
-		"subject": _("Phiếu đăng ký sản phẩm đối ngoại của {0} đang chờ lãnh đạo tập đoàn duyệt.").format(doc.employee_name or _("(không rõ)")),
-		"document_type": doc.doctype,
-		"document_name": doc.name,
-	}, [user])
+	subject = _("Phiếu đăng ký sản phẩm đối ngoại của {0} đang chờ lãnh đạo tập đoàn duyệt.").format(doc.employee_name or _("(không rõ)"))
+	_notify_users(doc, [user], subject)
 	ensure_todo(doc, user)
 
 
@@ -123,14 +123,16 @@ def _notify_follower_prepare_gift(doc: Document):
 	user = get_employee_user_id(doc.get("follower"))
 	if not user:
 		return
-	subject = _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã được lãnh đạo tập đoàn duyệt, vui lòng chuẩn bị quà.").format(
-		doc.employee_name or _("(không rõ)")
+	item_summary = _format_export_items(doc)
+	subject = _("Chuẩn bị sản phẩm đối ngoại cho {0}: {1}").format(
+		doc.employee_name or _("(không rõ)"),
+		item_summary,
 	)
 	_notify_users(doc, [user], subject)
 
 
 def _notify_users(doc: Document, users: list[str] | set[str], subject: str):
-	"""Wrapper tạo notification log."""
+	"""Wrapper tạo notification log và thông báo Rocket.Chat."""
 	unique_users = {u for u in users if u}
 	if not unique_users:
 		return
@@ -140,6 +142,12 @@ def _notify_users(doc: Document, users: list[str] | set[str], subject: str):
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, list(unique_users))
+	send_rocket_message(
+		to_users=list(unique_users),
+		title=":bell: Thông báo",
+		message=subject,
+		link=get_url_to_form(doc.doctype, doc.name),
+	)
 
 
 def _collect_requester_users(doc: Document) -> set[str]:
@@ -229,12 +237,23 @@ def _set_default_list_item_type(doc: Document):
 			row.type = "Xuất"
 
 
+def _apply_is_all_flag(doc: Document, *, persist: bool = False):
+	"""Nếu bật is_all thì đánh dấu tất cả dòng đã xuất."""
+	if not cint(doc.get("is_all")):
+		return
+	for row in doc.get("list_items") or []:
+		row.is_export = 1
+		if persist and row.get("name"):
+			frappe.db.set_value(row.doctype, row.name, "is_export", 1, update_modified=False)
+
+
 def _record_inventory_movements(doc: Document):
 	"""Đẩy phát sinh được duyệt sang danh mục tồn kho."""
 	child_rows = [row for row in doc.get("list_items") or [] if row.get("item_code")]
 	if not child_rows:
 		return
 
+	doc_name = cstr(doc.name)
 	rows_by_item = defaultdict(list)
 	for row in child_rows:
 		item_name = row.get("item_code")
@@ -251,16 +270,78 @@ def _record_inventory_movements(doc: Document):
 
 		needs_save = False
 		for row, qty in entries:
+			child_identifier = _build_inventory_child_name(doc_name, row.get("name"))
+			if not child_identifier:
+				continue
+			child_values = {
+				"item_code": item_name,
+				"item_name": row.get("item_name") or item_doc.item_name,
+				"unit": row.get("unit") or item_doc.unit,
+				"qty": qty,
+				"type": (row.get("type") or "Xuất").strip() or "Xuất",
+				"is_export": cint(row.get("is_export")),
+			}
+			if frappe.db.exists("VNT External Products Items List", child_identifier):
+				frappe.db.set_value("VNT External Products Items List", child_identifier, child_values, update_modified=False)
+				continue
+
 			child = item_doc.append("list_items", {})
-			child.item_code = item_name
-			child.item_name = row.get("item_name") or item_doc.item_name
-			child.unit = row.get("unit") or item_doc.unit
-			child.qty = qty
-			child.type = (row.get("type") or "Xuất").strip() or "Xuất"
+			child.name = child_identifier
+			child.item_code = child_values["item_code"]
+			child.item_name = child_values["item_name"]
+			child.unit = child_values["unit"]
+			child.qty = child_values["qty"]
+			child.type = child_values["type"]
+			child.is_export = child_values["is_export"]
 			needs_save = True
 
 		if needs_save:
 			item_doc.save(ignore_permissions=True)
+
+
+def _format_export_items(doc: Document) -> str:
+	"""Tạo mô tả ngắn gọn danh sách sản phẩm cần chuẩn bị."""
+	entries: list[str] = []
+	for row in doc.get("list_items") or []:
+		item_name = (row.get("item_name") or row.get("item_code") or "").strip()
+		if not item_name:
+			continue
+		qty = flt(row.get("qty"))
+		unit = (row.get("unit") or "").strip()
+		if qty:
+			qty_str = f"{qty:g}"
+			if unit:
+				qty_str = f"{qty_str} {unit}"
+			entries.append(f"{item_name} ({qty_str})")
+		else:
+			entries.append(item_name)
+	return ", ".join(entries) if entries else _("(không có sản phẩm)")
+
+
+def _sync_inventory_export_flags(doc: Document):
+	"""Đồng bộ cờ is_export sang bảng tồn kho sau khi doc đã duyệt."""
+	if doc.docstatus != 1:
+		return
+	doc_name = cstr(doc.name)
+	for row in doc.get("list_items") or []:
+		child_identifier = _build_inventory_child_name(doc_name, row.get("name"))
+		if not child_identifier:
+			continue
+		if not frappe.db.exists("VNT External Products Items List", child_identifier):
+			continue
+		frappe.db.set_value(
+			"VNT External Products Items List",
+			child_identifier,
+			"is_export",
+			cint(row.get("is_export")),
+			update_modified=False,
+		)
+
+
+def _build_inventory_child_name(doc_name: str | None, child_name: str | None) -> str | None:
+	if not doc_name or not child_name:
+		return None
+	return f"{cstr(doc_name)}-{cstr(child_name)}"
 
 
 def get_employee_user_id(employee_name: str | None) -> str | None:

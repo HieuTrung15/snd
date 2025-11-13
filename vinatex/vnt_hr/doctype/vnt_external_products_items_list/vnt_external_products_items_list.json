@@ -10,7 +10,8 @@
   "unit",
   "qty",
   "type",
-  "qty_current"
+  "qty_current",
+  "is_export"
  ],
  "fields": [
   {
@@ -49,13 +50,13 @@
   },
   {
    "columns": 1,
+   "depends_on": "eval:doc.external_doctype==\"VNT External Products List\"",
    "fetch_if_empty": 1,
    "fieldname": "type",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Lo\u1ea1i",
-   "options": "\nNh\u1eadp\nXu\u1ea5t",
-   "reqd": 1
+   "options": "\nNh\u1eadp\nXu\u1ea5t"
   },
   {
    "columns": 1,
@@ -66,13 +67,22 @@
    "in_list_view": 1,
    "label": "T\u1ed3n hi\u1ec7n t\u1ea1i",
    "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "depends_on": "eval:doc.external_doctype==\"VNT External Products List\"",
+   "fieldname": "is_export",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "\u0110\u00e3 xu\u1ea5t"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-11 11:22:52.641598",
+ "modified": "2025-11-13 23:45:52.618531",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT External Products Items List",
