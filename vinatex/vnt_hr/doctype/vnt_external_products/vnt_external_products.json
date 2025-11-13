@@ -13,6 +13,8 @@
   "department",
   "branch",
   "section_break_8qmv",
+  "is_all",
+  "employee_receive",
   "list_items",
   "section_break_9am8",
   "add_on",
@@ -53,6 +55,7 @@
   {
    "fieldname": "employee",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "M\u00e3 nh\u00e2n vi\u00ean",
    "options": "Employee"
   },
@@ -71,6 +74,7 @@
    "fetch_from": "employee.department",
    "fieldname": "department",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Ph\u00f2ng/ban",
    "options": "Department"
   },
@@ -78,6 +82,7 @@
    "fetch_from": "employee.branch",
    "fieldname": "branch",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "V\u0103n ph\u00f2ng",
    "options": "Branch"
   },
@@ -114,6 +119,7 @@
    "fieldname": "approver",
    "fieldtype": "Link",
    "hidden": 1,
+   "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
    "options": "Employee"
   },
@@ -130,6 +136,7 @@
    "fieldname": "approver_lv2",
    "fieldtype": "Link",
    "hidden": 1,
+   "ignore_user_permissions": 1,
    "label": "L\u00e3nh \u0111\u1ea1o T\u0110",
    "options": "Employee"
   },
@@ -146,6 +153,7 @@
    "fieldname": "follower",
    "fieldtype": "Link",
    "hidden": 1,
+   "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi theo d\u00f5i",
    "options": "Employee"
   },
@@ -189,13 +197,32 @@
    "label": "Danh s\u00e1ch s\u1ea3n ph\u1ea9m",
    "options": "VNT External Products Items List",
    "reqd": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "depends_on": "eval: doc.workflow_state == '\u0110\u00e3 duy\u1ec7t'",
+   "fieldname": "is_all",
+   "fieldtype": "Check",
+   "label": "\u0110\u00e3 xu\u1ea5t \u0111\u1ee7 s\u1ea3n ph\u1ea9m y\u00eau c\u1ea7u",
+   "permlevel": 1,
+   "read_only_depends_on": "eval:!frappe.user.has_role(\"Office Manager\")"
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval: doc.workflow_state == '\u0110\u00e3 duy\u1ec7t'",
+   "fieldname": "employee_receive",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "Nh\u00e2n s\u1ef1 nh\u1eadn b\u00e0n giao s\u1ea3n ph\u1ea9m",
+   "options": "Employee"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-12 08:55:51.449351",
+ "modified": "2025-11-13 23:20:03.535913",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT External Products",
@@ -237,6 +264,30 @@
    "role": "Leave Approver",
    "share": 1,
    "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Office Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Office Manager",
+   "share": 1,
    "write": 1
   }
  ],

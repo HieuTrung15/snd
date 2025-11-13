@@ -4,7 +4,7 @@ import frappe
 from rocketchat_API.rocketchat import RocketChat
 from urllib.parse import urlsplit, urlunsplit
 
-SERVER_URL  = "http://14.225.164.136:3000"
+SERVER_URL  = "https://chat.vinatex.com.vn"
 # BOT_USER_ID = "coJbfrAQHpSK3Q4gh"    # User ID từ My Account → Profile
 # BOT_TOKEN   = "PACpeEU-WnuBvzdclmCurNEYkU5jiRZAFoKgAfhYROw"      # Personal Access Token
 
@@ -29,9 +29,11 @@ def send_rocket_message(to_users, message, link=None, title=None):
         - Bỏ @ đầu
         - Nếu là email thì lấy phần trước @
     """
-
+    # frappe.throw("a")
     # Bước 1: chuẩn hoá thành list thô (flatten 1 cấp)
     raw_list = []
+    if not to_users:
+        return []
 
     if isinstance(to_users, str):
         # Cho phép: "a,b;c"
