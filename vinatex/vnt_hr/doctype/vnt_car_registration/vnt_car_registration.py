@@ -34,6 +34,8 @@ def _handle_state_transition(doc: Document):
 	approver_user_lv2 = get_employee_user_id(approver_lv2)
 	if curr_state == "Chờ lãnh đạo duyệt" and prev_state == "Mới tạo":
 		_notify_to_approver(doc, user=approver_user)
+	if curr_state == "Chờ lãnh đạo tập đoàn duyệt" and prev_state == "Mới tạo":
+		_notify_to_approver_2(doc, user=approver_user)
 	if curr_state == "Đã duyệt" and prev_state == "Chờ lãnh đạo duyệt":
 		_check_state_to_close_todo(doc, user=approver_user)
 		_notify_to_user_receive(doc)

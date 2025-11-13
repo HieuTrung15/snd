@@ -25,8 +25,8 @@
   "section_break_xwlf",
   "items",
   "section_break_3tb8",
-  "approver_name",
   "approver",
+  "approver_name",
   "column_break_lxjs",
   "approver_name_lv2",
   "\u0111i\u1ec1u_xe_tab",
@@ -95,17 +95,18 @@
    "fieldtype": "Column Break"
   },
   {
+   "fetch_from": "employee.reports_to",
    "fieldname": "approver",
    "fieldtype": "Link",
-   "hidden": 1,
    "ignore_user_permissions": 1,
    "in_list_view": 1,
-   "label": "Ng\u01b0\u1eddi duy\u1ec7t",
+   "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t c\u1ea5p 1",
    "options": "Employee"
   },
   {
    "fieldname": "approver_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t c\u1ea5p 1",
    "read_only": 1
   },
@@ -237,7 +238,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-12 17:07:12.705373",
+ "modified": "2025-11-13 13:34:07.955891",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Car Registration",
