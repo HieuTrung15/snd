@@ -19,7 +19,7 @@
    "fieldname": "item_code",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "M\u00e3 s\u1ea3n ph\u1ea9m",
+   "label": "S\u1ea3n ph\u1ea9m",
    "options": "VNT External Products List"
   },
   {
@@ -71,18 +71,18 @@
   {
    "allow_on_submit": 1,
    "default": "0",
-   "depends_on": "eval:doc.external_doctype==\"VNT External Products List\"",
    "fieldname": "is_export",
    "fieldtype": "Check",
    "in_list_view": 1,
-   "label": "\u0110\u00e3 xu\u1ea5t"
+   "label": "\u0110\u00e3 xu\u1ea5t",
+   "read_only_depends_on": "eval:!frappe.user.has_role(\"Office Manager\")"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-13 23:45:52.618531",
+ "modified": "2025-11-14 14:31:58.197445",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT External Products Items List",
