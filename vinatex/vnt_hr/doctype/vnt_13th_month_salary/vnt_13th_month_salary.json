@@ -1,0 +1,128 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:BL{luong_thang}-{year}",
+ "creation": "2025-11-13 16:29:39.225857",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "date",
+  "luong_thang",
+  "column_break_pjpo",
+  "company",
+  "branch",
+  "year",
+  "get_emp_list",
+  "section_break_jylh",
+  "items",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Ng\u01b0\u1eddi t\u1ea1o",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Ng\u00e0y t\u1ea1o",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_pjpo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fetch_if_empty": 1,
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "C\u00f4ng ty",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Chi nh\u00e1nh",
+   "options": "Branch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "luong_thang",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "L\u01b0\u01a1ng th\u00e1ng",
+   "options": "T13\nAL",
+   "reqd": 1
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Int",
+   "label": "N\u0103m",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_jylh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Danh s\u00e1ch chi ti\u1ebft",
+   "options": "VNT 13th Month Salary Item"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VNT 13th Month Salary",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "get_emp_list",
+   "fieldtype": "Button",
+   "label": "L\u1ea5y danh s\u00e1ch nh\u00e2n s\u1ef1"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-11-13 16:53:43.421789",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT 13th Month Salary",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

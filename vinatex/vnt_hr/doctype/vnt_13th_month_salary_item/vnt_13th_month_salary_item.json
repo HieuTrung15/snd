@@ -1,0 +1,260 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-13 16:34:31.255689",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "department",
+  "column_break_rpnf",
+  "nguoi_phu_thuoc",
+  "loai_hdld",
+  "section_break_lidi",
+  "t1",
+  "t2",
+  "t3",
+  "t4",
+  "column_break_fmzh",
+  "t5",
+  "t6",
+  "t7",
+  "t8",
+  "column_break_obyf",
+  "t9",
+  "t10",
+  "t11",
+  "t12",
+  "section_break_ljor",
+  "tong_luong_di_lam",
+  "binh_quan_thang",
+  "column_break_zhfc",
+  "xep_loai",
+  "he_so",
+  "tien_luong_bo_sung",
+  "section_break_mqpn",
+  "thu_nhap_tinh_thue",
+  "column_break_ksvf",
+  "thue_tam_thu",
+  "truy_linh",
+  "column_break_kyvg",
+  "thu_nhap_thuc_linh"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "H\u1ecd v\u00e0 t\u00ean",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "employee.department",
+   "fetch_if_empty": 1,
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Ph\u00f2ng/ban",
+   "options": "Department"
+  },
+  {
+   "fieldname": "column_break_rpnf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.custom_relation_number",
+   "fetch_if_empty": 1,
+   "fieldname": "nguoi_phu_thuoc",
+   "fieldtype": "Int",
+   "label": "Ng\u01b0\u1eddi ph\u1ee5 thu\u1ed9c"
+  },
+  {
+   "fetch_from": "employee.employment_type",
+   "fetch_if_empty": 1,
+   "fieldname": "loai_hdld",
+   "fieldtype": "Link",
+   "label": "Lo\u1ea1i H\u0110L\u0110",
+   "options": "Employment Type"
+  },
+  {
+   "fieldname": "section_break_lidi",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "t1",
+   "fieldtype": "Currency",
+   "label": "Th\u00e1ng 1",
+   "precision": "3"
+  },
+  {
+   "fieldname": "t2",
+   "fieldtype": "Currency",
+   "label": "Th\u00e1ng 2",
+   "precision": "3"
+  },
+  {
+   "fieldname": "t3",
+   "fieldtype": "Currency",
+   "label": "Th\u00e1ng 3",
+   "precision": "3"
+  },
+  {
+   "fieldname": "t4",
+   "fieldtype": "Currency",
+   "label": "Th\u00e1ng 4",
+   "precision": "3"
+  },
+  {
+   "fieldname": "column_break_fmzh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "t5",
+   "fieldtype": "Currency",
+   "label": "Th\u00e1ng 5",
+   "precision": "3"
+  },
+  {
+   "fieldname": "t6",
+   "fieldtype": "Currency",
+   "label": "Th\u00e1ng 6",
+   "precision": "3"
+  },
+  {
+   "fieldname": "t7",
+   "fieldtype": "Currency",
+   "label": "Th\u00e1ng 7",
+   "precision": "3"
+  },
+  {
+   "fieldname": "t8",
+   "fieldtype": "Currency",
+   "label": "Th\u00e1ng 8",
+   "precision": "3"
+  },
+  {
+   "fieldname": "column_break_obyf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "t9",
+   "fieldtype": "Currency",
+   "label": "Th\u00e1ng 9",
+   "precision": "3"
+  },
+  {
+   "fieldname": "t10",
+   "fieldtype": "Currency",
+   "label": "Th\u00e1ng 10",
+   "precision": "3"
+  },
+  {
+   "fieldname": "t11",
+   "fieldtype": "Currency",
+   "label": "Th\u00e1ng 11",
+   "precision": "3"
+  },
+  {
+   "fieldname": "t12",
+   "fieldtype": "Currency",
+   "label": "Th\u00e1ng 12",
+   "precision": "3"
+  },
+  {
+   "fieldname": "section_break_ljor",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "tong_luong_di_lam",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "T\u1ed5ng l\u01b0\u01a1ng \u0111i l\u00e0m n\u0103m",
+   "precision": "3"
+  },
+  {
+   "fieldname": "binh_quan_thang",
+   "fieldtype": "Currency",
+   "label": "B\u00ecnh qu\u00e2n th\u00e1ng",
+   "precision": "3"
+  },
+  {
+   "fieldname": "column_break_zhfc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "xep_loai",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "X\u1ebfp lo\u1ea1i",
+   "options": "A\nB\nC\nD\nE\nXS\nT\u1ed1t\nKh\u00e1\nTB\nK\u00e9m"
+  },
+  {
+   "columns": 1,
+   "fieldname": "he_so",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "H\u1ec7 s\u1ed1",
+   "precision": "2"
+  },
+  {
+   "fieldname": "tien_luong_bo_sung",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Ti\u1ec1n l\u01b0\u01a1ng b\u1ed5 sung",
+   "precision": "3"
+  },
+  {
+   "fieldname": "section_break_mqpn",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "thu_nhap_tinh_thue",
+   "fieldtype": "Currency",
+   "label": "Thu nh\u1eadp t\u00ednh thu\u1ebf",
+   "precision": "3"
+  },
+  {
+   "fieldname": "thue_tam_thu",
+   "fieldtype": "Currency",
+   "label": "Thu\u1ebf TNCN t\u1ea1m thu",
+   "precision": "3"
+  },
+  {
+   "fieldname": "column_break_ksvf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_kyvg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "thu_nhap_thuc_linh",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Thu nh\u1eadp th\u1ef1c l\u0129nh",
+   "precision": "3"
+  },
+  {
+   "fieldname": "truy_linh",
+   "fieldtype": "Currency",
+   "label": "Truy l\u0129nh",
+   "precision": "3"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-13 17:40:09.399847",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT 13th Month Salary Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
