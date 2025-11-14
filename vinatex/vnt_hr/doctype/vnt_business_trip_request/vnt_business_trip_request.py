@@ -442,7 +442,6 @@ def replace_attendance_for_business_trip(doc: Document):
 		vehicle_item = (getattr(row, "vehicle_item", "") or "")
 		if vehicle_item in create_car_regis:
 			transportation_rows.append(row)
-	# frappe.throw(f"{item_val}")
 	if transportation_rows:
 		create_vehicle_request_for_business_trip(doc, transportation_rows)
 
@@ -578,24 +577,16 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
 		"document_name": vehicle_control.name,
 	}, user_list)
 	# tạo todo cho người điều xe
-	# ensure_todo(vehicle_control, user_list[0])
-	if frappe.db.exists("ToDo", {
-		"reference_type": doc.doctype,
-		"reference_name": doc.name,
-		"allocated_to": user_list[0],
-		"status": ["!=", "Cancelled"],
-	}):
-		return
 	description = _("Vui lòng điều xe cho phiếu đăng ký xe của {0}.").format(doc.employee_name or _("(không rõ)"))
-	frappe.get_doc({
-		"doctype": "ToDo",
-		"description": description,
-		"allocated_to": user_list[0],
-		"reference_type": "VNT Vehicle Control",
-		"reference_name": vehicle_control.name,
-		"priority": "Medium",
-		"status": "Open",
-	}).insert(ignore_permissions=True)
+	new_todo =  frappe.new_doc('ToDo')
+	new_todo.description = description
+	new_todo.allocated_to = user_list[0]
+	new_todo.reference_type = "VNT Vehicle Control"
+	new_todo.reference_name = vehicle_control.name
+	new_todo.priority = "Medium"
+	new_todo.status = "Open"
+	new_todo.save(ignore_permissions=True)
+	frappe.db.commit()
 
 
 def cancel_attendance_for_trip(doc: Document):
@@ -679,7 +670,7 @@ def get_leave_approver_level_2(employee: str):
 		return None
 
 	# nếu chưa có và có department → tìm trong Department Approver
-		# ƯU TIÊN custom flag custom_level_2 = 1
+	# ƯU TIÊN custom flag custom_level_2 = 1
 	if emp:
 		approver = frappe.db.get_value(
 			"Department Approver",
