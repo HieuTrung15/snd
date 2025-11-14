@@ -46,13 +46,13 @@ Joining, Thông tin công tác
 Job Applicant, Ứng viên tuyển dụng
 Offer Date, Ngày gửi thư mời
 Contract End Date, Ngày hết hạn hợp đồng
-Attendance & Leaves, Chấm công & Nghỉ phép
+Attendance & Leaves, Chấm công & Nghỉ
 Attendance Device ID (Biometric/RF tag ID), Mã thiêt bị chấm công (Biometric/RF tag ID)
 Applicable Holiday List, Danh sách ngày nghỉ lễ áp dụng
 Default Shift, Ca làm việc mặc định,
 Shift, Ca
 Shift Type, Loại ca làm việc
-Leave Approver, Người duyệt nghỉ phép
+Leave Approver, Người phê duyệt
 Cost to Company (CTC), Tổng chi phí nhân sự (CTC)
 Salary Currency, Đơn vị tiền tệ tiền lương
 BHXH Infor, Thông tin BHXH
@@ -101,10 +101,10 @@ Add / Remove Columns, Thêm/ Xóa cột
 Reset to default, Khôi phục về mặc định
 Employee Grievance, Khiếu nại nhân sự
 Employee Checkin, Chấm công nhân viên
-Leave Application, Đơn xin nghỉ phép
+Leave Application, Đơn xin nghỉ
 Attendance Request, Yêu cầu điều chỉnh chấm công
 Attendance, Chấm công
-Leave Allocation, Phân bổ nghỉ phép
+Leave Allocation, Phân bổ nghỉ
 Filter By, Lọc theo
 Assigned To, Tạo công việc cho
 Created By, Được tạo bởi
@@ -175,19 +175,19 @@ New User,Người dùng mới
 No activities to show,Không có hoạt động để hiển thị
 Monthly Rank, Xếp hạng theo tháng
 Rank,Xếp hạng
-Leave Type,Loại nghỉ phép
-Allocated Leaves, Thống kê số ngày phép còn lại
-Total Allocated Leaves, Tổng số ngày phép được cấp
-Expired Leaves,Ngày phép hết hạn
-Used Leaves,Ngày phép đã sử dụng
-Leaves Pending Approval,Ngày phép đang chờ phê duyệt
-Available Leaves,Ngày phép còn lại
+Leave Type,Loại nghỉ
+Allocated Leaves, Thống kê số ngày nghỉ còn lại
+Total Allocated Leaves, Tổng số ngày nghỉ được cấp
+Expired Leaves,Ngày nghỉ hết hạn
+Used Leaves,Ngày nghỉ đã sử dụng
+Leaves Pending Approval,Ngày nghỉ đang chờ phê duyệt
+Available Leaves,Ngày nghỉ còn lại
 Dates & Reason,Ngày nghỉ & Lý do
 Reason,Lý do
 From Time,Từ giờ
 To Time,Đến giờ
 Approval,Phê duyệt
-Leave Approver Name,Tên người phê duyệt nghỉ phép
+Leave Approver Name,Người phê duyệt nghỉ
 Half Day Date,Ngày nghỉ nửa ngày
 Half Shift,Ca làm nửa ngày
 First half of shift,Sáng
@@ -213,9 +213,9 @@ Domain,Lĩnh vực/Ngành
 Default Holiday List,Danh sách ngày nghỉ lễ mặc định
 Company Representative,Người đại diện
 Enabled,Đang hoạt động
-Leave Block List,Danh sách chặn nghỉ phép
+Leave Block List,Danh sách chặn nghỉ
 Days for which Holidays are blocked for this department.,Các ngày nghỉ không được phép áp dụng cho phòng/ban này.
-Leaves,Nghỉ phép
+Leaves,Nghỉ
 Hiring Count,Số NS tuyển mới
 Attrition Count,Số NS nghỉ
 Collapse,Thu gọn
