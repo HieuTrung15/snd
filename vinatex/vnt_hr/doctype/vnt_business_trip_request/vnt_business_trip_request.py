@@ -550,6 +550,8 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
 		vehicle_control.set("date", nowdate())
 
 	vehicle_control.employee_name = employee_user
+	vehicle_control.employee = doc.employee_name
+	vehicle_control.id_parent = vehicle_request.name
 
 	for item in vehicle_request.get("items") or []:
 		vehicle_control.append(

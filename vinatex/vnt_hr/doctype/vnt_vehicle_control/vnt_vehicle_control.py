@@ -10,6 +10,17 @@ from frappe.utils import formatdate
 
 class VNTVehicleControl(Document):
 	def on_update(self):
+		required_rows = [
+			row for row in (self.items or [])
+			if row.id_parent and row.id_child
+		]
+		has_full_driver = bool(required_rows) and all(row.driver for row in required_rows)
+		new_status = "Đã điều xe" if has_full_driver else "Chưa điều xe"
+
+		if self.status != new_status:
+			self.db_set("status", new_status, update_modified=False)
+			self.status = new_status
+
 		if not self.items:
 			return
 

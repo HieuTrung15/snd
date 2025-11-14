@@ -201,6 +201,8 @@ def _notify_to_user_receive(doc: Document):
 		vehicle_control = frappe.new_doc("VNT Vehicle Control")
 		vehicle_control.employee_name = employee_user
 		vehicle_control.date = nowdate()
+		vehicle_control.employee = doc.employee_name
+		vehicle_control.id_parent = doc.name
 		for item in items:
 			vehicle_control.append(
 				"items",
