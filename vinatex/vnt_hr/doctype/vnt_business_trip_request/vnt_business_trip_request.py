@@ -665,7 +665,7 @@ def get_employee(employee):
 @frappe.whitelist()
 def get_leave_approver_level_2(employee: str):
 	# lấy approver trên Employee trước
-	emp = frappe.db.get_value("Employee", employee, ["leave_approver", "department"], as_dict=True)
+	emp = frappe.db.get_value("Employee", employee, ["department",  "reports_to"], as_dict=True)
 	if not emp:
 		return None
 
@@ -681,7 +681,8 @@ def get_leave_approver_level_2(employee: str):
 			},
 			"approver",
 		)
-	else :
-		approver = emp.leave_approver
-	emp_id = frappe.db.get_value("Employee", {"user_id": approver}, ["name", "employee_name"], as_dict=True)
-	return emp_id
+		if not approver:
+			employee_name = frappe.db.get_value("Employee", employee,"employee_name", as_dict=True)
+			return {"employee": employee, "employee_name": employee_name.employee_name}
+		emp_id = frappe.db.get_value("Employee", {"user_id": approver}, ["name", "employee_name"], as_dict=True)
+		return emp_id
