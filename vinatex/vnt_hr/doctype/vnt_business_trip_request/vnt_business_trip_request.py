@@ -266,8 +266,8 @@ def ensure_todo(doc: Document, user: str):
 	new_todo =  frappe.new_doc("ToDo")
 	new_todo.description = description
 	new_todo.allocated_to = user
-	new_todo.reference_type = doc.doctype,
-	new_todo.reference_name = doc.name,
+	new_todo.reference_type = doc.doctype
+	new_todo.reference_name = doc.name
 	new_todo.priority = "Medium"
 	new_todo.status = "Open"
 	new_todo.save()
