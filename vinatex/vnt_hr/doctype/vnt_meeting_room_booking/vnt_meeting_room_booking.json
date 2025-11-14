@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:\u0110KPH-{DD}-{MM}-{YYYY}-{employee_name}-{##}",
+ "autoname": "naming_series:",
  "creation": "2025-10-29 14:00:35.582696",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -36,20 +36,22 @@
   "column_break_cn1n",
   "follower",
   "follower_name",
-  "amended_from"
+  "amended_from",
+  "naming_series"
  ],
  "fields": [
   {
    "fieldname": "employee",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
-   "label": "M\u00e3 nh\u00e2n s\u1ef1 \u0111\u1ec1 xu\u1ea5t",
+   "label": "T\u00ean nh\u00e2n s\u1ef1 \u0111\u1ec1 xu\u1ea5t",
    "options": "Employee"
   },
   {
    "fetch_from": "employee.employee_name",
    "fieldname": "employee_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "T\u00ean nh\u00e2n s\u1ef1 \u0111\u1ec1 xu\u1ea5t"
   },
@@ -154,6 +156,7 @@
    "fieldname": "date",
    "fieldtype": "Date",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Ng\u00e0y h\u1ecdp",
    "reqd": 1
   },
@@ -238,6 +241,12 @@
    "label": "N\u1ed9i dung cu\u1ed9c h\u1ecdp",
    "max_height": "50px",
    "reqd": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Data",
+   "label": "Naming series",
+   "options": "\u0110KPH-.MM.YY.-.####"
   }
  ],
  "grid_page_length": 50,
@@ -245,11 +254,11 @@
  "is_calendar_and_gantt": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-06 17:40:18.979472",
+ "modified": "2025-11-14 13:17:03.157883",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Meeting Room Booking",
- "naming_rule": "Expression",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {

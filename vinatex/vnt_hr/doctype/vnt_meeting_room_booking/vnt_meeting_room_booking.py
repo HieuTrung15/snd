@@ -7,6 +7,8 @@ import frappe
 from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.model.document import Document
+from frappe.utils import get_url_to_form
+from vinatex.patches.utils.rocket_chat import send_rocket_message
 
 
 OFFICE_MANAGER_ROLE = "Office Manager"
@@ -90,32 +92,33 @@ def _handle_state_transition(doc):
 	employee = doc.get("employee")
 	employee_user = get_employee_user_id(employee)
 	if prev_state == 'Chờ duyệt' and curr_state == 'Đã duyệt':
-		make_notification_logs({
-			"type": "Alert",
-			"subject": _("Phiếu đăng ký phòng họp của {0} đã được lãnh đạo duyệt").format(doc.employee_name or _("(không rõ)")),
-			"document_type": doc.doctype,
-			"document_name": doc.name,
-		}, [employee_user])
+		subject = _("Phiếu đăng ký phòng họp của {0} đã được lãnh đạo duyệt").format(doc.employee_name or _("(không rõ)"))
+		message = _("Phiếu ngày {0} từ {1} đến {2} đã được duyệt.").format(
+			doc.date or _("(không rõ ngày đăng ký)"),
+			doc.start_time or _("(không rõ thời gian bắt đầu)"),
+			doc.end_time or _("(không rõ thời gian kết thúc)"),
+		)
+		_notify_users(doc, [employee_user], subject, message)
 
-	
+
 	if prev_state == 'Chờ duyệt' and curr_state == 'Từ chối':
-		make_notification_logs({
-			"type": "Alert",
-			"subject": _("Phiếu đăng ký phòng họp của {0} ngày {1} từ {2} đến {3} đã bị từ chối").format(doc.employee_name or 
-			_("(không rõ)"), doc.date or _("(không rõ ngày đăng ký)"), doc.start_time or _("(không rõ thời gian bắt đầu)"), doc.end_time or _("(không rõ thời gian kết thúc)")),
-			"document_type": doc.doctype,
-			"document_name": doc.name,
-		}, [employee_user])
+		subject = _("Phiếu đăng ký phòng họp của {0} ngày {1} từ {2} đến {3} đã bị từ chối").format(
+			doc.employee_name or _("(không rõ)"),
+			doc.date or _("(không rõ ngày đăng ký)"),
+			doc.start_time or _("(không rõ thời gian bắt đầu)"),
+			doc.end_time or _("(không rõ thời gian kết thúc)"),
+		)
+		_notify_users(doc, [employee_user], subject, subject)
 
 
 	if prev_state == 'Đã duyệt' and curr_state == 'Hủy':
-		make_notification_logs({
-			"type": "Alert",
-			"subject": _("Phiếu đăng ký phòng họp của {0} ngày {1} từ {2} đến {3} đã bị hủy").format(doc.employee_name or
-			 _("(không rõ)"), doc.date or _("(không rõ ngày đăng ký)"), doc.start_time or _("(không rõ thời gian bắt đầu)"), doc.end_time or _("(không rõ thời gian kết thúc)")),
-			"document_type": doc.doctype,
-			"document_name": doc.name,
-		}, [employee_user])
+		subject = _("Phiếu đăng ký phòng họp của {0} ngày {1} từ {2} đến {3} đã bị hủy").format(
+			doc.employee_name or _("(không rõ)"),
+			doc.date or _("(không rõ ngày đăng ký)"),
+			doc.start_time or _("(không rõ thời gian bắt đầu)"),
+			doc.end_time or _("(không rõ thời gian kết thúc)"),
+		)
+		_notify_users(doc, [employee_user], subject, subject)
 
 	# thông báo cho danh sách nhân sự
 	if prev_state == 'Chờ duyệt' and curr_state == 'Đã duyệt':
@@ -126,13 +129,15 @@ def _handle_state_transition(doc):
 
 def _notify_to_approver(doc: Document, user: str | None):
 	"""Gửi thông báo đến người duyệt khi đơn được chuyển sang trạng thái 'Chờ duyệt'."""
-	make_notification_logs({
-		"type": "Alert",
-		"subject": _("Phiếu đăng ký phòng họp của {0} ngày {1} đang chờ duyệt.").format(doc.employee_name or _("(không rõ)"), doc.date or _("(không rõ ngày đăng ký)")),
-		"document_type": doc.doctype,
-		"document_name": doc.name,
-		"subject": _('Duyệt đăng ký phòng họp của {0} ngày {1}').format(doc.employee_name or _("(không rõ)"), doc.date or _("(không rõ ngày đăng ký)")),
-	}, [user])
+	subject = _('Duyệt đăng ký phòng họp của {0} ngày {1}').format(
+		doc.employee_name or _("(không rõ)"),
+		doc.date or _("(không rõ ngày đăng ký)"),
+	)
+	message = _('Phiếu đăng ký phòng họp của {0} ngày {1} đang chờ duyệt.').format(
+		doc.employee_name or _("(không rõ)"),
+		doc.date or _("(không rõ ngày đăng ký)"),
+	)
+	_notify_users(doc, [user], subject, message)
 	# tạo todo cho người duyệt
 	ensure_todo(doc, user)
 
@@ -168,6 +173,36 @@ def ensure_todo(doc: Document, user: str):
 	new_todo.status = "Open"
 	new_todo.insert(ignore_permissions=True)
 	frappe.db.commit()
+
+
+def _notify_users(doc: Document, users, subject: str, message: str | None = None):
+	if isinstance(users, (list, tuple, set)):
+		target_users = {u for u in users if u}
+	elif users:
+		target_users = {users}
+	else:
+		target_users = set()
+
+	if not target_users:
+		return
+
+	recipients = list(target_users)
+	payload = {
+		"type": "Alert",
+		"subject": subject,
+		"document_type": doc.doctype,
+		"document_name": doc.name,
+	}
+	if message:
+		payload["message"] = message
+
+	make_notification_logs(payload, recipients)
+	send_rocket_message(
+		to_users=recipients,
+		title=":bell: Thông báo",
+		message=f"*{subject}*\n{message}" if message else subject,
+		link=get_url_to_form(doc.doctype, doc.name),
+	)
 
 
 def _check_state_to_close_todo(doc: Document, user: str):
@@ -214,13 +249,8 @@ def _notify_office_manager_for_missing_room(doc: Document):
 		doc.start_time or _("(không rõ thời gian bắt đầu)"),
 		doc.end_time or _("(không rõ thời gian kết thúc)"),
 	)
-	subject = _('Phiếu đăng ký phòng họp {0} đã duyệt nhưng chưa chọn phòng').format(doc.name)
-	make_notification_logs({
-		"type": "Alert",
-		"subject": subject,
-		"document_type": doc.doctype,
-		"document_name": doc.name,
-	}, users)
+	subject = _('Chọn phòng họp cho phiếu đăng ký {0} ').format(doc.name)
+	_notify_users(doc, users, subject, description)
 	for user in users:
 		_ensure_reference_todo(doc, user, description, priority="High")
 
@@ -237,12 +267,8 @@ def _create_follower_follow_up(doc: Document):
 		doc.start_time or _("(không rõ thời gian bắt đầu)"),
 		doc.end_time or _("(không rõ thời gian kết thúc)"),
 	)
-	make_notification_logs({
-		"type": "Alert",
-		"subject": _('Chuẩn bị phòng {0} cho phiếu đăng ký {1}').format(doc.room_name or _("(không rõ phòng)"), doc.name),
-		"document_type": doc.doctype,
-		"document_name": doc.name,
-	}, [follower_user])
+	subject = _('Chuẩn bị phòng {0} cho phiếu đăng ký {1}').format(doc.room_name or _("(không rõ phòng)"), doc.name)
+	_notify_users(doc, [follower_user], subject, description)
 	_ensure_reference_todo(doc, follower_user, description)
 
 
@@ -351,15 +377,16 @@ def _notify_to_employee(doc: Document, status: str):
 		employee_user = get_employee_user_id(emp.employee)
 		if not employee_user:
 			continue
-		make_notification_logs({
-			"type": "Alert",
-			"subject": _("Phiếu đăng ký phòng họp của {0} đã {1}.").format(
-				doc.employee_name or _("(không rõ)"),
-				status,
-			),
-			"document_type": doc.doctype,
-			"document_name": doc.name,
-		}, [employee_user])
+		subject = _("Phiếu đăng ký phòng họp của {0} đã {1}.").format(
+			doc.employee_name or _("(không rõ)"),
+			status,
+		)
+		message = _("Ngày {0} từ {1} đến {2}.").format(
+			doc.date or _("(không rõ ngày đăng ký)"),
+			doc.start_time or _("(không rõ thời gian bắt đầu)"),
+			doc.end_time or _("(không rõ thời gian kết thúc)"),
+		)
+		_notify_users(doc, [employee_user], subject, message)
 
 # fomat: HH:MM AM/PM sang HH:MM:SS or HH:MM
 def _parse_time(value: str | None):

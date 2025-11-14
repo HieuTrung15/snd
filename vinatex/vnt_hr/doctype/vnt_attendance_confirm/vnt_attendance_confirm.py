@@ -8,8 +8,9 @@ import frappe
 from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.model.document import Document
-from frappe.utils import getdate, add_days, today
+from frappe.utils import getdate, add_days, today, get_url_to_form
 # from hrms.hr.utils import get_holiday_list_for_employee(employee)
+from vinatex.patches.utils.rocket_chat import send_rocket_message
 
 
 class VNTAttendanceConfirm(Document):
@@ -70,16 +71,31 @@ def _resolve_approver_user(doc: Document) -> str | None:
 	return None
 
 
-def _send_notification(doc: Document, user: str, subject: str, message: str):
-	if not user:
+def _send_notification(doc: Document, user: str | list[str] | tuple[str, ...], subject: str, message: str):
+	if isinstance(user, (list, tuple, set)):
+		target_users = {u for u in user if u}
+	elif user:
+		target_users = {user}
+	else:
+		target_users = set()
+
+	if not target_users:
 		return
+
+	recipients = list(target_users)
 	make_notification_logs({
 		"type": "Alert",
 		"subject": subject,
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 		"message": message,
-	}, [user])
+	}, recipients)
+	send_rocket_message(
+		to_users=recipients,
+		title=":bell: Thông báo",
+		message=f"*{subject}*\n{message}" if message else subject,
+		link=get_url_to_form(doc.doctype, doc.name),
+	)
 
 
 def _ensure_todo_for_confirmation(doc: Document, user: str):
@@ -789,4 +805,3 @@ def min_max_date(dates):
 #             frappe.delete_doc("ToDo", n, ignore_permissions=True, force=1)
 #         except Exception:
 #             frappe.log_error(frappe.get_traceback(), f"Không xoá được ToDo: {n}")
-
