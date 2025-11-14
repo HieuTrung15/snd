@@ -8,10 +8,10 @@
  "field_order": [
   "item_code",
   "item_name",
+  "unit",
   "column_break_dyoj",
   "qty_remain",
   "qty_current",
-  "unit",
   "section_break_i2pq",
   "list_items"
  ],
@@ -19,6 +19,7 @@
   {
    "fieldname": "item_code",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "M\u00e3 s\u1ea3n ph\u1ea9m"
   },
   {
@@ -59,7 +60,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-11 11:21:15.165470",
+ "modified": "2025-11-14 14:52:58.124688",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT External Products List",
