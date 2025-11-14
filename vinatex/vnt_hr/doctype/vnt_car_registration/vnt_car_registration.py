@@ -237,7 +237,7 @@ def _notify_to_user_receive(doc: Document):
 			new_todo.reference_name = vehicle_control.name
 			new_todo.priority = "Medium"
 			new_todo.status = "Open"
-			new_todo.insert(ignore_permissions=True)
+			new_todo.save()
 			frappe.db.commit()
 
 
@@ -440,6 +440,7 @@ def ensure_todo(doc: Document, user: str):
 		"status": ["!=", "Cancelled"],
 	}):
 		return
+
 	description = _('Duyệt đăng ký xe của {0}.').format(doc.employee_name or _("(không rõ)"))
 	new_todo =  frappe.new_doc("ToDo")
 	new_todo.description = description
@@ -448,7 +449,7 @@ def ensure_todo(doc: Document, user: str):
 	new_todo.reference_name = doc.name
 	new_todo.priority = "Medium"
 	new_todo.status = "Open"
-	new_todo.insert(ignore_permissions=True)
+	new_todo.save()
 	frappe.db.commit()
 
 

@@ -263,15 +263,15 @@ def ensure_todo(doc: Document, user: str):
 	destination = doc.get("destination") or _("(chưa xác định địa điểm)")
 	employee = doc.get("employee_name") or _("(không rõ người tạo)")
 	description = _("Duyệt phiếu đăng ký công tác tại {0}, do {1} tạo.").format(destination, employee)
-	frappe.get_doc({
-		"doctype": "ToDo",
-		"description": description,
-		"allocated_to": user,
-		"reference_type": doc.doctype,
-		"reference_name": doc.name,
-		"priority": "Medium",
-		"status": "Open",
-	}).insert(ignore_permissions=True)
+	new_todo =  frappe.new_doc("ToDo")
+	new_todo.description = description
+	new_todo.allocated_to = user
+	new_todo.reference_type = doc.doctype,
+	new_todo.reference_name = doc.name,
+	new_todo.priority = "Medium"
+	new_todo.status = "Open"
+	new_todo.save()
+	frappe.db.commit()
 
 # ---------------- Notifications ----------------
 def _notify_if_pending(doc: Document):
