@@ -1,0 +1,83 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-14 13:55:02.960348",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "type",
+  "he_so",
+  "column_break_cqev",
+  "so_tien_phu_cap",
+  "from_date",
+  "to_date"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Lo\u1ea1i ph\u1ee5 c\u1ea5p",
+   "options": "VNT Allowance Type"
+  },
+  {
+   "columns": 2,
+   "fieldname": "he_so",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "H\u1ec7 s\u1ed1 ph\u1ee5 c\u1ea5p",
+   "precision": "2"
+  },
+  {
+   "columns": 2,
+   "fieldname": "so_tien_phu_cap",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Ti\u1ec1n PC/th\u00e1ng"
+  },
+  {
+   "fieldname": "column_break_cqev",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Th\u1eddi gian h\u01b0\u1edfng t\u1eeb ng\u00e0y"
+  },
+  {
+   "columns": 1,
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "\u0110\u1ebfn ng\u00e0y"
+  },
+  {
+   "columns": 2,
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Nh\u00e2n s\u1ef1",
+   "options": "Employee"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-14 13:58:56.319654",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Allowance Detail Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
