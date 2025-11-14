@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "naming_series:",
+ "autoname": "format:P\u0110X-{date}-{##}",
  "creation": "2025-11-04 15:32:46.901948",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -15,8 +15,7 @@
   "section_break_ldls",
   "taken",
   "section_break_esrp",
-  "items",
-  "naming_series"
+  "items"
  ],
  "fields": [
   {
@@ -25,10 +24,12 @@
   },
   {
    "fieldname": "employee_name",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "in_list_view": 1,
-   "label": "Ng\u01b0\u1eddi ph\u00e2n xe"
+   "label": "Ng\u01b0\u1eddi ph\u00e2n xe",
+   "no_copy": 1,
+   "options": "Employee"
   },
   {
    "fieldname": "column_break_rcr0",
@@ -74,25 +75,17 @@
    "fieldname": "status",
    "fieldtype": "Data",
    "hidden": 1,
-   "in_list_view": 1,
    "label": "Tr\u1ea1ng th\u00e1i"
-  },
-  {
-   "fieldname": "naming_series",
-   "fieldtype": "Select",
-   "hidden": 1,
-   "label": "Naming Series",
-   "options": "P\u0110X.-.MM..YY.-.####"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-14 15:12:24.463138",
+ "modified": "2025-11-14 15:15:19.677223",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Vehicle Control",
- "naming_rule": "By \"Naming Series\" field",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
