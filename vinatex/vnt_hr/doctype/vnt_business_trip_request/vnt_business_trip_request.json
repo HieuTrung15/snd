@@ -203,6 +203,7 @@
    "default": "0",
    "fieldname": "check_vehicle_condition",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "\u0110i\u1ec1u ki\u1ec7n ch\u1ecdn workflow"
   },
   {
@@ -233,7 +234,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-13 18:13:32.047577",
+ "modified": "2025-11-14 15:26:29.570360",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request",
