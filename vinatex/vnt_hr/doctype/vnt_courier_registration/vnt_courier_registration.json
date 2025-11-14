@@ -54,6 +54,7 @@
   {
    "fieldname": "employee",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi g\u1eedi",
    "options": "Employee",
    "reqd": 1
@@ -162,7 +163,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-29 10:52:36.118276",
+ "modified": "2025-11-13 18:42:34.339504",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Courier Registration",
