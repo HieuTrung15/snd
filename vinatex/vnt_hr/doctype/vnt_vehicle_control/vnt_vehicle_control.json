@@ -24,12 +24,11 @@
   },
   {
    "fieldname": "employee_name",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "ignore_user_permissions": 1,
    "in_list_view": 1,
    "label": "Ng\u01b0\u1eddi ph\u00e2n xe",
-   "no_copy": 1,
-   "options": "Employee"
+   "no_copy": 1
   },
   {
    "fieldname": "column_break_rcr0",
@@ -81,7 +80,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-14 15:15:19.677223",
+ "modified": "2025-11-14 17:42:40.328192",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Vehicle Control",
