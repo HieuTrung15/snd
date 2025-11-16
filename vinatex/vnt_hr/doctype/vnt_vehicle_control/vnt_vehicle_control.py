@@ -5,7 +5,8 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
-from frappe.utils import formatdate
+from frappe.utils import formatdate, get_url_to_form
+from vinatex.patches.utils.rocket_chat import send_rocket_message
 
 
 class VNTVehicleControl(Document):
@@ -120,9 +121,13 @@ class VNTVehicleControl(Document):
 		if driver_by_date:
 			driver_segments = []
 			for date_key in sorted(driver_by_date.keys()):
-				drivers = "; ".join(driver_by_date[date_key])
-				driver_segments.append(_("Ngày {0}: Lái xe - {1}").format(date_key, drivers))
-			driver_text = ". ".join(driver_segments)
+				driver_lines = [
+					_("Lái xe - {0}").format(driver_info)
+					for driver_info in driver_by_date[date_key]
+				]
+				drivers = ";\n".join(driver_lines)
+				driver_segments.append(_("Ngày {0}: {1}").format(date_key, drivers))
+			driver_text = "\n".join(driver_segments)
 		else:
 			driver_text = _("(không rõ)")
 		target_doctype = "VNT Car Registration"
@@ -140,6 +145,15 @@ class VNTVehicleControl(Document):
 			"document_type": target_doctype,
 			"document_name": target_docname,
 		}, list(recipients))
+		send_rocket_message(
+			to_users=list(recipients),
+			title=":bell: Thông báo",
+			message=_("Bạn đã được điều xe cho chuyến đi. {0}.").format(
+				# date_text,
+				driver_text,
+			),
+			link=get_url_to_form(target_doctype, target_docname)
+    	)
 		# close todo của người điều xe
 		user_group_name = "Nhận thông báo điều xe"
 		user_list = frappe.get_all(

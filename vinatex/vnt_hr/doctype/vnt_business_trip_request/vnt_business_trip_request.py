@@ -287,6 +287,12 @@ def _notify_if_pending(doc: Document):
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, [approver_user])
+	send_rocket_message(
+        to_users=approver_user,
+        title=":bell: Thông báo",
+        message=_("Phiếu đăng ký đi công tác của {0} đang chờ duyệt").format(doc.employee_name),
+        link=get_url_to_form(doc.doctype, doc.name)
+    )
 	ensure_todo(doc, approver_user)
 
 
@@ -303,6 +309,12 @@ def _notify_if_pending_lv2(doc: Document):
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, [approver_user])
+	send_rocket_message(
+        to_users=approver_user,
+        title=":bell: Thông báo",
+        message=_("Phiếu đăng ký đi công tác của {0} đang chờ duyệt.").format(doc.employee_name),
+        link=get_url_to_form(doc.doctype, doc.name)
+    )
 	ensure_todo(doc, approver_user)
 
 
@@ -346,6 +358,13 @@ def _send_trip_notification(doc: Document, subject: str):
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, list(users))
+	send_rocket_message(
+        to_users=list(user),
+        title=":bell: Thông báo",
+        message=subject,
+        link=get_url_to_form(doc.doctype, doc.name)
+    )
+	
 
 
 def get_employee_user_id(employee_name: str) -> str | None:
@@ -470,6 +489,12 @@ def _notify_to_office_manager(doc: Document):
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, user_list)
+	send_rocket_message(
+        to_users=user_list,
+        title=":bell: Thông báo",
+        message=_("Công tác của {0} cần vé máy bay. Vui lòng kiểm tra.").format(doc.employee_name or _("(không rõ)")),
+        link=get_url_to_form(doc.doctype, doc.name)
+    )
 
 
 def create_vehicle_request_for_business_trip(doc: Document, transportation_rows: list):
@@ -643,6 +668,12 @@ def _notify_employees_rejected(doc: Document):
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, users)
+	send_rocket_message(
+        to_users=users,
+        title=":bell: Thông báo",
+        message=_("Phiếu công tác đã bị từ chối."),
+        link=get_url_to_form(doc.doctype, doc.name)
+    )
 
 
 def _notify_employees_cancelled(doc: Document):
@@ -656,6 +687,12 @@ def _notify_employees_cancelled(doc: Document):
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, users)
+	send_rocket_message(
+        to_users=users,
+        title=":bell: Thông báo",
+        message=_("Phiếu công tác đã bị hủy."),
+        link=get_url_to_form(doc.doctype, doc.name)
+    )
 
 
 @frappe.whitelist()
