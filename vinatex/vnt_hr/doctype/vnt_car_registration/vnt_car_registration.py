@@ -35,19 +35,19 @@ def _handle_state_transition(doc: Document):
 	if curr_state == "Chờ lãnh đạo duyệt" and prev_state == "Mới tạo":
 		_notify_to_approver(doc, user=approver_user)
 	if curr_state == "Chờ lãnh đạo tập đoàn duyệt" and prev_state == "Mới tạo":
-		_notify_to_approver_2(doc, user=approver_user)
+		_notify_to_approver_2(doc, user=approver_user_lv2)
 	if curr_state == "Đã duyệt" and prev_state == "Chờ lãnh đạo duyệt":
 		_check_state_to_close_todo(doc, user=approver_user)
 		_notify_to_user_receive(doc)
 		_notify_to_office_manager(doc)
-		_notify_to_employee_list(doc)
+		# _notify_to_employee_list(doc)
 	if curr_state == "Chờ lãnh đạo tập đoàn duyệt" and prev_state == "Chờ lãnh đạo duyệt":
 		_check_state_to_close_todo(doc, user=approver_user)
 	if curr_state == "Đã duyệt" and prev_state == "Chờ lãnh đạo tập đoàn duyệt":
 		_check_state_to_close_todo(doc, user=approver_user_lv2)
 		_notify_to_user_receive(doc)
 		_notify_to_office_manager(doc)
-		_notify_to_employee_list(doc)
+		# _notify_to_employee_list(doc)
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Chờ lãnh đạo tập đoàn duyệt':
 		_notify_to_approver_2(doc, user=approver_user_lv2)
 		# _notify_to_approver_2(doc)
@@ -401,28 +401,28 @@ def _notify_to_approver_2(doc: Document, user: str | None):
 
 def _notify_to_employee(doc: Document, status: str):
 	"""Gửi thông báo đến list nhân viên(list_emp) khi đơn được duyệt hoặc từ chối."""
-	list_emp = doc.get("list_emp")
-	if not list_emp:
+	# list_emp = doc.get("list_emp")
+	# if not list_emp:
+	# 	return
+	# for emp in list_emp:
+	employee_user = get_employee_user_id(doc.employee)
+	if not employee_user:
 		return
-	for emp in list_emp:
-		employee_user = get_employee_user_id(emp.employee)
-		if not employee_user:
-			continue
-		make_notification_logs({
-			"type": "Alert",
-			"subject": _("Phiếu đăng ký xe của {0} đã {1}.").format(
-				doc.employee_name or _("(không rõ)"),
-				status,
-			),
-			"document_type": doc.doctype,
-			"document_name": doc.name,
-		}, [employee_user])
-		send_rocket_message(
-			to_users=employee_user,
-			title=":bell: Thông báo",
-			message=_("Phiếu đăng ký xe của {0} đã {1}.").format(doc.employee_name or _("(không rõ)"),status,),
-			link=get_url_to_form(doc.doctype, doc.name)
-		)
+	make_notification_logs({
+		"type": "Alert",
+		"subject": _("Phiếu đăng ký xe của {0} đã {1}.").format(
+			doc.employee_name or _("(không rõ)"),
+			status,
+		),
+		"document_type": doc.doctype,
+		"document_name": doc.name,
+	}, [employee_user])
+	send_rocket_message(
+		to_users=employee_user,
+		title=":bell: Thông báo",
+		message=_("Phiếu đăng ký xe của {0} đã {1}.").format(doc.employee_name or _("(không rõ)"),status,),
+		link=get_url_to_form(doc.doctype, doc.name)
+	)
 
 def get_employee_user_id(employee_name: str) -> str | None:
     if not employee_name:
