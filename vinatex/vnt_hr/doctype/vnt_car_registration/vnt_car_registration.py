@@ -8,6 +8,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from vinatex.patches.utils.rocket_chat import send_rocket_message
+from frappe.model.workflow import apply_workflow
 
 
 class VNTCarRegistration(Document):
@@ -59,6 +60,11 @@ def _handle_state_transition(doc: Document):
 	if curr_state == 'Từ chối':
 		_check_state_to_close_todo(doc, user=approver_user)
 		_check_state_to_close_todo(doc, user=approver_user_lv2)
+
+	# thêm trường hợp các trưởng ban tạo < 40 thì duyệt luôn, các ld cũng thế
+	# đã thêm transition trong wf
+	if not (doc.employee and doc.approver and doc.approver_lv2):
+		return
 
 	# thông báo cho employee
 	employee_user = doc.get("employee")
@@ -528,10 +534,28 @@ def get_employee_name(user):
 
 @frappe.whitelist()
 def get_reports_to(user):
-	employee_doc = frappe.get_value("Employee", {"user_id": user}, "department", as_dict=True)
+	employee_doc = frappe.get_value(
+		"Employee",
+		{"user_id": user},
+		["name", "employee_name", "department"],
+		as_dict=True,
+	)
 	if not employee_doc:
-		return
-	approver = frappe.get_value("Department Approver", {"parent": employee_doc.department, "custom_level_1": True}, "approver", as_dict=True)
+		return ""
+
+	approver = frappe.get_value(
+		"Department Approver",
+		{"parent": employee_doc.department, "custom_level_1": True},
+		"approver",
+		as_dict=True,
+	)
 	if approver:
-		approver_emp = frappe.get_value("Employee", {"user_id": approver.approver}, ["name", "employee_name"])
-	return approver_emp if approver else ""
+		approver_emp = frappe.get_value(
+			"Employee",
+			{"user_id": approver.approver},
+			["name", "employee_name"],
+		)
+		if approver_emp:
+			return approver_emp
+
+	return employee_doc.name, employee_doc.employee_name
