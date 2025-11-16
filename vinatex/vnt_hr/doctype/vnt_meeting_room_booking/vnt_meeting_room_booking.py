@@ -6,12 +6,13 @@ from datetime import datetime
 import frappe
 from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
+from frappe.desk.form.assign_to import close_all_assignments as frappe_close_assignments
 from frappe.model.document import Document
 from frappe.utils import get_url_to_form
 from vinatex.patches.utils.rocket_chat import send_rocket_message
 
 
-OFFICE_MANAGER_ROLE = "Office Manager"
+MEETING_ROOM_NOTIFICATION_USER_GROUP = "Nhận thông báo phân phòng họp"
 
 
 class VNTMeetingRoomBooking(Document):
@@ -28,6 +29,8 @@ class VNTMeetingRoomBooking(Document):
 
 	def on_update_after_submit(self):
 		self._validate_room_availability()
+		if self.workflow_state == "Đã duyệt" and self.has_value_changed("room_name"):
+			_handle_room_assignment_update(self)
 
 
 	def _validate_time_fields(self):
@@ -225,6 +228,8 @@ def _handle_room_assignment_post_approval(doc: Document):
 	if doc.room_name:
 		_close_office_manager_todos(doc)
 		_create_follower_follow_up(doc)
+		_notify_room_assignment_to_requester(doc)
+		_close_all_assignments(doc)
 	else:
 		_close_follower_todos(doc)
 		_notify_office_manager_for_missing_room(doc)
@@ -234,13 +239,15 @@ def _handle_room_assignment_update(doc: Document):
 	if doc.room_name:
 		_close_office_manager_todos(doc)
 		_create_follower_follow_up(doc)
+		_notify_room_assignment_to_requester(doc)
+		_close_all_assignments(doc)
 	else:
 		_close_follower_todos(doc)
 		_notify_office_manager_for_missing_room(doc)
 
 
 def _notify_office_manager_for_missing_room(doc: Document):
-	users = _get_enabled_users_with_role(OFFICE_MANAGER_ROLE)
+	users = _get_enabled_users_in_user_group(MEETING_ROOM_NOTIFICATION_USER_GROUP)
 	if not users:
 		return
 	description = _('Chọn phòng họp cho phiếu đăng ký {0} ngày {1} từ {2} đến {3}').format(
@@ -273,7 +280,7 @@ def _create_follower_follow_up(doc: Document):
 
 
 def _close_office_manager_todos(doc: Document):
-	users = _get_enabled_users_with_role(OFFICE_MANAGER_ROLE)
+	users = _get_enabled_users_in_user_group(MEETING_ROOM_NOTIFICATION_USER_GROUP)
 	if not users:
 		return
 	_close_todos_for_users(doc, users)
@@ -306,6 +313,12 @@ def _close_todos_for_users(doc: Document, users: list[str]):
 		frappe.db.set_value("ToDo", name, "status", "Closed", update_modified=False)
 
 
+def _close_all_assignments(doc: Document):
+	if not (doc and doc.name):
+		return
+	frappe_close_assignments(doc.doctype, doc.name, ignore_permissions=True)
+
+
 def _ensure_reference_todo(doc: Document, user: str, description: str, priority: str = "Medium"):
 	if not user:
 		return
@@ -327,10 +340,14 @@ def _ensure_reference_todo(doc: Document, user: str, description: str, priority:
 	frappe.db.commit()
 
 
-def _get_enabled_users_with_role(role: str) -> list[str]:
-	if not role:
+def _get_enabled_users_in_user_group(user_group_name: str) -> list[str]:
+	if not user_group_name:
 		return []
-	user_ids = frappe.get_all("Has Role", filters={"role": role}, pluck="parent")
+	user_ids = frappe.get_all(
+		"User Group Member",
+		filters={"parent": user_group_name},
+		pluck="user",
+	)
 	if not user_ids:
 		return []
 	user_ids = list({user for user in user_ids if user not in {"Guest", "Administrator"}})
@@ -387,6 +404,37 @@ def _notify_to_employee(doc: Document, status: str):
 			doc.end_time or _("(không rõ thời gian kết thúc)"),
 		)
 		_notify_users(doc, [employee_user], subject, message)
+
+
+def _notify_room_assignment_to_requester(doc: Document):
+	"""Thông báo khi phiếu đã được chọn phòng cho người đăng ký và list nhân sự đi kèm."""
+	if doc.workflow_state != "Đã duyệt" or not doc.room_name:
+		return
+
+	target_users = set()
+
+	employee_user = get_employee_user_id(doc.get("employee"))
+	if employee_user:
+		target_users.add(employee_user)
+
+	for emp in doc.get("list_emp") or []:
+		emp_user = get_employee_user_id(emp.employee)
+		if emp_user:
+			target_users.add(emp_user)
+
+	if not target_users:
+		return
+
+	subject = _("Phiếu đăng ký phòng họp của {0} đã được bố trí tại phòng {1}.").format(
+		doc.employee_name or _("(không rõ)"),
+		doc.room_name,
+	)
+	message = _("Ngày {0} từ {1} đến {2}.").format(
+		doc.date or _("(không rõ ngày đăng ký)"),
+		doc.start_time or _("(không rõ thời gian bắt đầu)"),
+		doc.end_time or _("(không rõ thời gian kết thúc)"),
+	)
+	_notify_users(doc, target_users, subject, message)
 
 # fomat: HH:MM AM/PM sang HH:MM:SS or HH:MM
 def _parse_time(value: str | None):
