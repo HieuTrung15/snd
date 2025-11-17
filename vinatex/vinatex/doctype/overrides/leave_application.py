@@ -31,6 +31,7 @@ from hrms.hr.utils import get_holiday_dates_for_employee
 from frappe.utils.data import get_url_to_form
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.model.workflow import get_workflow_name
+from vinatex.patches.utils.rocket_chat import send_rocket_message
 
 # from eupapp.eup_hr.doctype.xac_nhan_cham_cong.xac_nhan_cham_cong import update_event
 # from eupapp.eupapp.doctype.overrides.workflow import gen_approve_channel
@@ -186,6 +187,8 @@ def _handle_state_transition(doc: Document):
 			"document_type": doc.doctype,
 			"document_name": doc.name,
 		}, [approver_user])
+		if doc.employee == doc.custom_approver:
+			_notify_to_general_manager(doc)
 
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Từ chối':
 		make_notification_logs({
@@ -202,6 +205,35 @@ def _handle_state_transition(doc: Document):
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, [approver_user])
+
+
+def _notify_to_general_manager(doc: Document):
+	user_group_name = "Gửi thông báo cho tổng giám đốc"
+	user_list = frappe.get_all(
+		"User Group Member",
+		filters={"parent": user_group_name},
+		pluck="user",
+	)
+	make_notification_logs({
+		"type": "Alert",
+		"subject": _("{0} đã được duyệt đăng ký nghỉ phép từ {1} đến {2}").format(
+			doc.employee_name,
+			formatdate(doc.from_date, "dd-MM-yyyy"),
+			formatdate(doc.to_date, "dd-MM-yyyy"),
+		),
+		"document_type": doc.doctype,
+		"document_name": doc.name,
+	}, user_list)
+	send_rocket_message(
+		to_users=user_list,
+		title=":bell: Thông báo",
+		message=_("{0} đã được duyệt đăng ký nghỉ phép từ {1} đến {2}").format(
+			doc.employee_name,
+			formatdate(doc.from_date, "dd-MM-yyyy"),
+			formatdate(doc.to_date, "dd-MM-yyyy"),
+		),
+		link=get_url_to_form(doc.doctype, doc.name)
+	)
 
 
 def _check_emp_checkin_after_cancel(doc: Document):
