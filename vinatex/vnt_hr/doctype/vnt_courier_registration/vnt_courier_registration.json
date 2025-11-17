@@ -163,7 +163,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-13 18:42:34.339504",
+ "modified": "2025-11-17 09:35:40.751805",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Courier Registration",
@@ -202,5 +202,6 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "employee"
 }
