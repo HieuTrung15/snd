@@ -177,10 +177,10 @@ Monthly Rank, Xếp hạng theo tháng
 Rank,Xếp hạng
 Leave Type,Loại nghỉ
 Allocated Leaves, Thống kê số ngày nghỉ còn lại
-Total Allocated Leaves, Tổng số ngày nghỉ được cấp
+Total Allocated Leaves, Ngày nghỉ được cấp
 Expired Leaves,Ngày nghỉ hết hạn
 Used Leaves,Ngày nghỉ đã sử dụng
-Leaves Pending Approval,Ngày nghỉ đang chờ phê duyệt
+Leaves Pending Approval,Ngày nghỉ chờ duyệt
 Available Leaves,Ngày nghỉ còn lại
 Dates & Reason,Ngày nghỉ & Lý do
 Reason,Lý do
@@ -311,7 +311,7 @@ Left, Nghỉ việc
 Short text Employee Type, Tên viết tắt loại HĐ
 Submit this Leave Application to confirm., Xác nhận gửi đơn xin nghỉ phép này để Trưởng/Phó Ban duyệt.
 Employee Leave Balance, Số ngày phép còn lại
-Allocated Leaves, Ngày phép đã được Cấp
+Allocated Leaves, Ngày nghỉ đã được cấp
 No leaves have been allocated., Chưa có ngày phép nào được cấp.
 Permanently Submit,"Xác nhận gửi, không thể hoàn tác"
 Application period cannot be outside leave allocation period, Thời gian xin nghỉ không được nằm ngoài thời gian phân bổ nghỉ phép
@@ -417,3 +417,21 @@ Business Trip, Phiếu công tác
 VNT 13th Month Salary,Bảng lương tháng 13 & Tết Âm lịch
 VNT Allowance Type, Loại phụ cấp
 VNT Allowance Detail, Danh sách phụ cấp chi tiết
+Edit Full Form,Chỉnh sửa toàn bộ biểu mẫu
+Due Date,Ngày đến hạn
+Priority,Độ ưu tiên
+Allocated To,Phân công cho
+Reference,Tham chiếu
+Reference Type,Loại tham chiếu
+Reference Name,Tên tài liệu tham chiếu
+Assigned By,Phân công bởi
+Assigned To,Được giao cho
+Set all private,Đặt tất cả là riêng tư
+Drag and drop files here or upload from, Kéo và thả tệp vào đây hoặc tải lên từ
+My Device, Thiết bị của tôi
+Library, Thư viện
+Search or type a command (Ctrl + G), Tìm kiếm hoặc nhập lệnh (Ctl + G)
+Assignments, Công việc được giao
+Assign a user, Giao cho một người dùng
+See all Activity, Xem tất cả hoạt động
+Reload Report, Tải lại báo cáo
