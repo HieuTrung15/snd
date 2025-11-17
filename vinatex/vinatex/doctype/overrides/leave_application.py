@@ -171,6 +171,13 @@ def _handle_state_transition(doc: Document):
 			"document_type": doc.doctype,
 			"document_name": doc.name,
 		}, [approver_user])
+		send_rocket_message(
+			to_users=approver_user,
+			title=":bell: Thông báo",
+			message=_("Phiếu đăng ký {0} của {1} đã được lãnh đạo duyệt").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
+			link=get_url_to_form(doc.doctype, doc.name)
+		)
+
 
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Chờ lãnh đạo tập đoàn duyệt':
 		make_notification_logs({
@@ -179,6 +186,12 @@ def _handle_state_transition(doc: Document):
 			"document_type": doc.doctype,
 			"document_name": doc.name,
 		}, [approver_user])
+		send_rocket_message(
+			to_users=approver_user,
+			title=":bell: Thông báo",
+			message=_("Phiếu đăng ký {0} của {1} đang chờ lãnh đạo tập đoàn duyệt").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
+			link=get_url_to_form(doc.doctype, doc.name)
+		)
 
 	if prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Đã duyệt':
 		make_notification_logs({
@@ -187,6 +200,12 @@ def _handle_state_transition(doc: Document):
 			"document_type": doc.doctype,
 			"document_name": doc.name,
 		}, [approver_user])
+		send_rocket_message(
+			to_users=approver_user,
+			title=":bell: Thông báo",
+			message=_("Phiếu đăng ký {0} của {1} đã được lãnh đạo tập đoàn duyệt").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
+			link=get_url_to_form(doc.doctype, doc.name)
+		)
 		if doc.employee == doc.custom_approver:
 			_notify_to_general_manager(doc)
 
@@ -196,7 +215,13 @@ def _handle_state_transition(doc: Document):
 		"subject": _("Phiếu đăng ký {0} của {1} đã bị lãnh đạo từ chối.").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
-	}, [approver_user])
+		}, [approver_user])
+		send_rocket_message(
+			to_users=approver_user,
+			title=":bell: Thông báo",
+			message=_("Phiếu đăng ký {0} của {1} đã bị lãnh đạo từ chối.").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
+			link=get_url_to_form(doc.doctype, doc.name)
+		)
 
 	if prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Từ chối':
 		make_notification_logs({
@@ -204,7 +229,13 @@ def _handle_state_transition(doc: Document):
 		"subject": _("Phiếu đăng ký {0} của {1} đã bị lãnh đạo tập đoàn từ chối.").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
-	}, [approver_user])
+		}, [approver_user])
+		send_rocket_message(
+			to_users=approver_user,
+			title=":bell: Thông báo",
+			message=_("Phiếu đăng ký {0} của {1} đã bị lãnh đạo tập đoàn từ chối.").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
+			link=get_url_to_form(doc.doctype, doc.name)
+		)
 
 
 def _notify_to_general_manager(doc: Document):
@@ -295,6 +326,12 @@ def _notify_to_approver(doc: Document):
 		"document_name": doc.name,
 		"subject": _('Duyệt đăng ký {0} của {1}').format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
 	}, [approver])
+	send_rocket_message(
+        to_users=approver,
+        title=":bell: Thông báo",
+        message=_("Phiếu đăng ký {0} của {1} đang chờ lãnh đạo duyệt.").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
+        link=get_url_to_form(doc.doctype, doc.name)
+    )
 	# tạo todo cho người duyệt
 	ensure_todo(doc, approver)
 
@@ -315,8 +352,14 @@ def _notify_to_approver_2(doc: Document):
 		"subject": _("Phiếu đăng ký {0} của {1} đang chờ lãnh đạo duyệt.").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
-		"subject": _('Duyệt đăng ký {0} của {1}').format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
+		# "subject": _('Duyệt đăng ký {0} của {1}').format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
 	}, [approver])
+	send_rocket_message(
+        to_users=approver,
+        title=":bell: Thông báo",
+        message=_("Phiếu đăng ký {0} của {1} đang chờ lãnh đạo duyệt.").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
+        link=get_url_to_form(doc.doctype, doc.name)
+    )
 	# tạo todo cho người duyệt
 	ensure_todo(doc, approver)
 
@@ -584,20 +627,20 @@ def get_leave_type(
 	return vals
 
 
-def system_notification(message, doctype, docname, emails=''):
-	subject = {
-		"type": "Alert",
-				"subject": message,
-				'document_type': doctype,
-				'document_name': docname
-	}
-	make_notification_logs(subject, emails)
+# def system_notification(message, doctype, docname, emails=''):
+# 	subject = {
+# 		"type": "Alert",
+# 				"subject": message,
+# 				'document_type': doctype,
+# 				'document_name': docname
+# 	}
+# 	make_notification_logs(subject, emails)
 	
 	
-def notify(self, actor, receiver):
-	# url = get_url_to_form(self.doctype, self.name)
-	message = _(f"Phiếu đăng ký nghỉ phép") + " của " + actor
-	system_notification(message, self.doctype, self.name, receiver)
+# def notify(self, actor, receiver):
+# 	# url = get_url_to_form(self.doctype, self.name)
+# 	message = _(f"Phiếu đăng ký nghỉ phép") + " của " + actor
+# 	system_notification(message, self.doctype, self.name, receiver)
 
 
 
