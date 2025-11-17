@@ -8,12 +8,12 @@
  "field_order": [
   "naming_series",
   "employee",
-  "employee_name",
   "date",
-  "column_break_euur",
   "from_date",
   "to_date",
+  "column_break_euur",
   "regional_minimum_wage",
+  "note",
   "section_break_aksj",
   "items",
   "amended_from"
@@ -25,13 +25,6 @@
    "label": "Ng\u01b0\u1eddi l\u1eadp",
    "options": "Employee",
    "search_index": 1
-  },
-  {
-   "fetch_from": "employee.employee_name",
-   "fetch_if_empty": 1,
-   "fieldname": "employee_name",
-   "fieldtype": "Data",
-   "label": "T\u00ean ng\u01b0\u1eddi l\u1eadp"
   },
   {
    "fieldname": "column_break_euur",
@@ -82,13 +75,18 @@
    "fieldtype": "Select",
    "hidden": 1,
    "options": "TBLCB-.MM..YY.-.####"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Ghi ch\u00fa"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-31 13:30:45.890292",
+ "modified": "2025-11-17 14:59:00.857267",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Salary Scale",
