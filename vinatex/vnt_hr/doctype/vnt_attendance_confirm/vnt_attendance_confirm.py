@@ -8,7 +8,7 @@ import frappe
 from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.model.document import Document
-from frappe.utils import getdate, add_days, today, get_url_to_form
+from frappe.utils import getdate, get_url_to_form
 # from hrms.hr.utils import get_holiday_list_for_employee(employee)
 from vinatex.patches.utils.rocket_chat import send_rocket_message
 
@@ -98,21 +98,56 @@ def _send_notification(doc: Document, user: str | list[str] | tuple[str, ...], s
 	)
 
 
-def _ensure_todo_for_confirmation(doc: Document, user: str):
+def _normalize_confirmation_dates(dates: list[date] | None = None) -> list[date]:
+	if not dates:
+		return []
+	norm = []
+	for d in dates:
+		if not d:
+			continue
+		norm.append(getdate(d))
+	return sorted(set(norm))
+
+
+def _format_date_value(value: date | None) -> str:
+	if not value:
+		return _("(chưa rõ)")
+	return frappe.format_value(value, {"fieldtype": "Date"})
+
+
+def _ensure_todo_for_confirmation(doc: Document, user: str, dates: list[date] | None = None):
 	if not user:
 		return
 	if frappe.db.exists("ToDo", {
 		"reference_type": doc.doctype,
 		"reference_name": doc.name,
 		"allocated_to": user,
-		"status": ["!=", "Cancelled"],
+		"status": ["not in", ["Closed", "Cancelled"]],
 	}):
 		return
 	mapped_employee = frappe.db.get_value("Employee", {"user_id": user}, "name")
 	if mapped_employee and mapped_employee != doc.employee:
 		return
 
-	description = _("Xác nhận chấm công ngày {0}").format(add_days(today(), -1))
+	norm_dates = _normalize_confirmation_dates(dates)
+	start_date = norm_dates[0] if norm_dates else (getdate(doc.from_date) if doc.from_date else None)
+	end_date = norm_dates[-1] if norm_dates else (getdate(doc.to_date) if doc.to_date else start_date)
+	start_label = _format_date_value(start_date)
+	end_label = _format_date_value(end_date)
+
+	if norm_dates:
+		if len(norm_dates) == 1:
+			description = _("Xác nhận chấm công ngày {0}").format(start_label)
+		else:
+			description = _("Xác nhận chấm công các ngày từ {0} đến {1} ({2} ngày)").format(
+				start_label, end_label, len(norm_dates)
+			)
+	else:
+		if start_label == end_label:
+			description = _("Xác nhận chấm công ngày {0}").format(start_label)
+		else:
+			description = _("Xác nhận chấm công từ {0} đến {1}").format(start_label, end_label)
+
 	new_todo = frappe.new_doc("ToDo")
 	new_todo.description = description
 	new_todo.allocated_to = user
@@ -124,18 +159,28 @@ def _ensure_todo_for_confirmation(doc: Document, user: str):
 	frappe.db.commit()
 
 
-def _notify_confirmation(doc: Document, user: str):
+def _notify_confirmation(doc: Document, user: str, dates: list[date] | None = None):
 	if not user:
 		return
 	subject = _("Xác nhận chấm công {0}").format(doc.employee_name or doc.employee or _("Nhân viên"))
-	message = _(
-		"XNCC của {0} ngày {1}."
-	).format(
-		frappe.format_value(doc.employee_name, {"fieldtype": "Data"}) if doc.employee_name else _("(chưa rõ)"),
-		add_days(today(), -1)
-		# frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
-		# frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
-	)
+	norm_dates = _normalize_confirmation_dates(dates)
+	start_date = norm_dates[0] if norm_dates else (getdate(doc.from_date) if doc.from_date else None)
+	end_date = norm_dates[-1] if norm_dates else (getdate(doc.to_date) if doc.to_date else start_date)
+	start_label = _format_date_value(start_date)
+	end_label = _format_date_value(end_date)
+
+	if norm_dates and len(norm_dates) == 1:
+		message = _("XNCC của {0} ngày {1}.").format(
+			frappe.format_value(doc.employee_name, {"fieldtype": "Data"}) if doc.employee_name else _("(chưa rõ)"),
+			start_label,
+		)
+	else:
+		message = _("XNCC của {0} từ {1} đến {2}.").format(
+			frappe.format_value(doc.employee_name, {"fieldtype": "Data"}) if doc.employee_name else _("(chưa rõ)"),
+			start_label,
+			end_label,
+		)
+
 	mapped_employee = frappe.db.get_value("Employee", {"user_id": user}, "name")
 	if mapped_employee and mapped_employee != doc.employee:
 		return
@@ -411,6 +456,7 @@ def make_attendance_confirm():
 		existing_by_date = {getdate(r.get("date")): r for r in (att.get("items") or [])}
 
 		changed = False
+		added_dates: list[date] = []
 		for d in working_days:
 			key = (emp_name, d)
 			row = existing_by_date.get(d)
@@ -480,15 +526,20 @@ def make_attendance_confirm():
 					"status": status,
 				})
 				changed = True
+				added_dates.append(d)
 
+		user = _resolve_employee_user(att)
 		if is_new:
 			att.insert(ignore_permissions=True)
-			user = _resolve_employee_user(att)
-			_ensure_todo_for_confirmation(att, user)
-			_notify_confirmation(att, user)
+			if added_dates:
+				_ensure_todo_for_confirmation(att, user, added_dates)
+				_notify_confirmation(att, user, added_dates)
 			results.append(att.name)
 		elif changed:
 			att.save()
+			if added_dates:
+				_ensure_todo_for_confirmation(att, user, added_dates)
+				_notify_confirmation(att, user, added_dates)
 			results.append(att.name)
 	return results
 

@@ -250,13 +250,18 @@ def _notify_office_manager_for_missing_room(doc: Document):
 	users = _get_enabled_users_in_user_group(MEETING_ROOM_NOTIFICATION_USER_GROUP)
 	if not users:
 		return
-	description = _('Chọn phòng họp cho phiếu đăng ký {0} ngày {1} từ {2} đến {3}').format(
-		doc.name,
+	description = _('Cấp phòng họp cho phiếu đăng ký của {0} ngày {1} từ {2} đến {3}').format(
+		doc.employee_name or _("(không rõ)"),
 		doc.date or _("(không rõ ngày đăng ký)"),
 		doc.start_time or _("(không rõ thời gian bắt đầu)"),
 		doc.end_time or _("(không rõ thời gian kết thúc)"),
 	)
-	subject = _('Chọn phòng họp cho phiếu đăng ký {0} ').format(doc.name)
+	subject =  _('Cấp phòng họp cho phiếu đăng ký của {0} ngày {1} từ {2} đến {3}').format(
+		doc.employee_name or _("(không rõ)"),
+		doc.date or _("(không rõ ngày đăng ký)"),
+		doc.start_time or _("(không rõ thời gian bắt đầu)"),
+		doc.end_time or _("(không rõ thời gian kết thúc)"),
+	)
 	_notify_users(doc, users, subject, description)
 	for user in users:
 		_ensure_reference_todo(doc, user, description, priority="High")
