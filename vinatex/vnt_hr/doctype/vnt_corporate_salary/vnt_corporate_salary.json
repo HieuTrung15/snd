@@ -8,7 +8,6 @@
  "field_order": [
   "naming_series",
   "employee",
-  "employee_name",
   "date",
   "column_break_euur",
   "from_date",
@@ -23,26 +22,23 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "hidden": 1,
+   "label": "Naming Series",
    "options": "TBLT\u0110-.MM..YY.-.####"
   },
   {
    "fieldname": "employee",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Ng\u01b0\u1eddi l\u1eadp",
    "options": "Employee",
-   "search_index": 1
-  },
-  {
-   "fetch_from": "employee.employee_name",
-   "fetch_if_empty": 1,
-   "fieldname": "employee_name",
-   "fieldtype": "Data",
-   "label": "T\u00ean ng\u01b0\u1eddi l\u1eadp"
+   "reqd": 1
   },
   {
    "fieldname": "date",
    "fieldtype": "Date",
-   "label": "Ng\u00e0y l\u1eadp"
+   "in_list_view": 1,
+   "label": "Ng\u00e0y l\u1eadp",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_euur",
@@ -51,7 +47,9 @@
   {
    "fieldname": "from_date",
    "fieldtype": "Date",
-   "label": "Th\u1eddi gian hi\u1ec7u l\u1ef1c t\u1eeb ng\u00e0y"
+   "in_list_view": 1,
+   "label": "Th\u1eddi gian hi\u1ec7u l\u1ef1c t\u1eeb ng\u00e0y",
+   "reqd": 1
   },
   {
    "fieldname": "to_date",
@@ -66,12 +64,16 @@
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Danh s\u00e1ch b\u1eadc l\u01b0\u01a1ng",
-   "options": "VNT Corporate Salary Item"
+   "options": "VNT Corporate Salary Item",
+   "reqd": 1
   },
   {
    "fieldname": "corporate_minimum_wage",
    "fieldtype": "Currency",
-   "label": "L\u01b0\u01a1ng t\u1ed1i thi\u1ec3u t\u1eadp \u0111o\u00e0n"
+   "in_list_view": 1,
+   "label": "L\u01b0\u01a1ng t\u1ed1i thi\u1ec3u t\u1eadp \u0111o\u00e0n",
+   "non_negative": 1,
+   "reqd": 1
   },
   {
    "fieldname": "amended_from",
@@ -88,7 +90,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-31 14:43:59.588771",
+ "modified": "2025-11-17 15:35:05.101137",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Corporate Salary",
