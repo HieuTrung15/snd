@@ -2,6 +2,21 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("VNT External Products", {
+    after_save(frm) {
+        // Chỉ auto chạy 1 lần khi còn ở state "Mới tạo"
+        if (frm.doc.workflow_state === "Mới tạo") {
+            frappe.call({
+                method: "frappe.model.workflow.apply_workflow",
+                args: {
+                    doc: frm.doc,
+                    action: "Chuyển duyệt", // action trong workflow
+                },
+                callback() {
+                    frm.reload_doc();
+                }
+            });
+        }
+    },
 	refresh(frm) {
         frm.set_df_property("follower_name", "read_only", 1);
         frm.set_df_property("follower", "read_only", 1);
