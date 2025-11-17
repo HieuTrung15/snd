@@ -22,9 +22,10 @@
   {
    "fieldname": "employee",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Ng\u01b0\u1eddi l\u1eadp",
    "options": "Employee",
-   "search_index": 1
+   "reqd": 1
   },
   {
    "fieldname": "column_break_euur",
@@ -33,7 +34,8 @@
   {
    "fieldname": "from_date",
    "fieldtype": "Date",
-   "label": "Th\u1eddi gian hi\u1ec7u l\u1ef1c t\u1eeb ng\u00e0y"
+   "label": "Th\u1eddi gian hi\u1ec7u l\u1ef1c t\u1eeb ng\u00e0y",
+   "reqd": 1
   },
   {
    "fieldname": "to_date",
@@ -43,12 +45,15 @@
   {
    "fieldname": "date",
    "fieldtype": "Date",
-   "label": "Ng\u00e0y l\u1eadp"
+   "label": "Ng\u00e0y l\u1eadp",
+   "reqd": 1
   },
   {
    "fieldname": "regional_minimum_wage",
    "fieldtype": "Currency",
-   "label": "L\u01b0\u01a1ng t\u1ed1i thi\u1ec3u v\u00f9ng"
+   "label": "L\u01b0\u01a1ng t\u1ed1i thi\u1ec3u v\u00f9ng",
+   "non_negative": 1,
+   "reqd": 1
   },
   {
    "fieldname": "section_break_aksj",
@@ -58,7 +63,8 @@
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Danh s\u00e1ch b\u1eadc l\u01b0\u01a1ng",
-   "options": "VNT Salary Scale Item"
+   "options": "VNT Salary Scale Item",
+   "reqd": 1
   },
   {
    "fieldname": "amended_from",
@@ -86,7 +92,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-17 14:59:00.857267",
+ "modified": "2025-11-17 15:27:16.396989",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Salary Scale",
