@@ -56,7 +56,7 @@
    "fieldname": "employee",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
-   "label": "T\u00ean nh\u00e2n s\u1ef1",
+   "label": "Ng\u01b0\u1eddi \u0111\u1ec1 xu\u1ea5t",
    "options": "Employee"
   },
   {
@@ -222,7 +222,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-14 14:27:18.797349",
+ "modified": "2025-11-17 08:44:46.454628",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT External Products",

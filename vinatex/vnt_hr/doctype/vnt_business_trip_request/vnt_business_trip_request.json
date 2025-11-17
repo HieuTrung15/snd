@@ -42,7 +42,7 @@
    "ignore_user_permissions": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Employee",
+   "label": "Ng\u01b0\u1eddi \u0111\u1ec1 xu\u1ea5t",
    "options": "Employee",
    "reqd": 1
   },
@@ -234,7 +234,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-14 15:26:29.570360",
+ "modified": "2025-11-17 08:43:47.624564",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request",
