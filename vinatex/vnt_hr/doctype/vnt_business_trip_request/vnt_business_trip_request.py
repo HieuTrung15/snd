@@ -1,5 +1,5 @@
 import frappe
-from frappe.utils import getdate, add_days, nowdate, get_url_to_form
+from frappe.utils import getdate, add_days, nowdate, get_url_to_form, formatdate
 from frappe.model.document import Document
 from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
@@ -208,12 +208,14 @@ def _apply_state_effects(doc: Document):
 		close_todos_for_doc(doc)
 		replace_attendance_for_business_trip(doc)
 		_notify_to_employee_list(doc)
+		_notify_to_general_manager(doc)
 		return
 	
 	if prev_state == "Chờ lãnh đạo tập đoàn duyệt" and curr_state == "Đã duyệt":
 		close_todos_for_doc(doc)
 		replace_attendance_for_business_trip(doc)
 		_notify_to_employee_list_2(doc)
+		_notify_to_general_manager(doc)
 		return
 	
 	if prev_state == "Chờ lãnh đạo duyệt" and curr_state == "Từ chối" \
@@ -227,6 +229,48 @@ def _apply_state_effects(doc: Document):
 		cancel_vehicle_requests_for_trip(doc)
 		_notify_employees_cancelled(doc)
 		return
+
+
+def _notify_to_general_manager(doc: Document):
+	# Lấy ra employee
+	employee = doc.employee
+	emp = frappe.db.get_value("Employee", employee, ["department"], as_dict=True)
+	if not emp:
+		return None
+	if emp:
+		# lấy ra người nhận thông báo trong department
+		approver = frappe.db.get_value(
+			"Department Approver",
+			{
+				"parent": emp.department,
+				"parentfield": "leave_approvers",
+				"custom_receiver_noti": 1,      
+			},
+			"approver",
+		)
+		# gửi thông báo đến người đc check
+		if approver:
+			make_notification_logs({
+				"type": "Alert",
+				"subject": _("{0} đã được duyệt đi công tác từ {1} đến {2}").format(
+					doc.employee_name,
+					formatdate(doc.from_date, "dd-MM-yyyy"),
+					formatdate(doc.to_date, "dd-MM-yyyy"),
+				),
+				"document_type": doc.doctype,
+				"document_name": doc.name,
+			}, [approver])
+			send_rocket_message(
+				to_users=approver,
+				title=":bell: Thông báo",
+				message=_("{0} đã được duyệt đi công tác từ {1} đến {2}").format(
+					doc.employee_name,
+					formatdate(doc.from_date, "dd-MM-yyyy"),
+					formatdate(doc.to_date, "dd-MM-yyyy"),
+				),
+				link=get_url_to_form(doc.doctype, doc.name)
+			)
+
 
 # ---------------- ToDo ----------------
 def close_todos_for_doc(doc: Document):
