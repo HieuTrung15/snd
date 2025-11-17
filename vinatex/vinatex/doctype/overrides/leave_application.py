@@ -43,8 +43,8 @@ class AttendanceAlreadyMarkedError(frappe.ValidationError):
 class VntLeaveApplication(LeaveApplication):
 	LEAVE_TYPE = "Công tác"
 	
-	def save(self):
-		super().save()
+	# def save(self):
+	# 	super().save()
 		# notify(self, self.employee_name, self.leave_approver)
 			
 			
@@ -160,6 +160,9 @@ def _handle_state_transition(doc: Document):
 		_check_state_to_close_todo(doc, doc.get("leave_approver"))
 		_check_state_to_close_todo(doc, doc.get("custom_second_approver"))
 
+	if curr_state == "Chờ lãnh đạo tập đoàn duyệt" and prev_state == "Mới tạo":
+		_notify_to_approver_2(doc)
+
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Đã duyệt':
 		make_notification_logs({
 			"type": "Alert",
@@ -252,15 +255,16 @@ def _notify_to_approver(doc: Document):
 	"""Gửi thông báo đến người duyệt khi đơn được chuyển sang trạng thái 'Chờ lãnh đạo duyệt'."""
 	leave_type = doc.get("leave_type")
 	approver_emp = doc.get("leave_approver")
+	approver = get_employee_user_id(approver_emp)
 	make_notification_logs({
 		"type": "Alert",
 		"subject": _("Phiếu đăng ký {0} của {1} đang chờ lãnh đạo duyệt.").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 		"subject": _('Duyệt đăng ký {0} của {1}').format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
-	}, [approver_emp])
+	}, [approver])
 	# tạo todo cho người duyệt
-	ensure_todo(doc, approver_emp)
+	ensure_todo(doc, approver)
 
 
 def get_employee_user_id(employee_name: str) -> str | None:
@@ -273,15 +277,16 @@ def _notify_to_approver_2(doc: Document):
 	"""Gửi thông báo đến người duyệt khi đơn được chuyển sang trạng thái 'Chờ lãnh đạo duyệt'."""
 	leave_type = doc.get("leave_type")
 	approver_emp = doc.get("custom_second_approver")
+	approver = get_employee_user_id(approver_emp)
 	make_notification_logs({
 		"type": "Alert",
 		"subject": _("Phiếu đăng ký {0} của {1} đang chờ lãnh đạo duyệt.").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 		"subject": _('Duyệt đăng ký {0} của {1}').format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
-	}, [approver_emp])
+	}, [approver])
 	# tạo todo cho người duyệt
-	ensure_todo(doc, approver_emp)
+	ensure_todo(doc, approver)
 
 
 def _get_prev_and_curr_workflow_state(doc: Document) -> tuple[str | None, str]:
@@ -330,18 +335,19 @@ def ensure_todo(doc: Document, user: str):
 	new_todo.reference_name = doc.name
 	new_todo.priority = "Medium"
 	new_todo.status = "Open"
-	new_todo.insert(ignore_permissions=True)
+	new_todo.save(ignore_permissions=True)
 	frappe.db.commit()
 
 
 def _check_state_to_close_todo(doc: Document, user: str):
 	"""Close open ToDos for the current approver on this document."""
+	approver = get_employee_user_id(user)
 	names = frappe.get_all(
 	  "ToDo",
 	  filters={
 		  "reference_type": doc.doctype,
 		  "reference_name": doc.name,
-		  "allocated_to": user,
+		  "allocated_to": approver,
 		  "status": ["!=", "Cancelled"],
 	  },
 	  pluck="name",
@@ -383,8 +389,11 @@ def get_leave_approver_level_2(employee: str):
 			},
 			"approver",
 		)
-	else :
-		approver = emp.leave_approver
+		if not approver:
+			employee_name = frappe.db.get_value("Employee", employee,"employee_name", as_dict=True)
+			return {"employee": employee, "employee_name": employee_name.employee_name}
+		emp_id = frappe.db.get_value("Employee", {"user_id": approver}, ["name", "employee_name"], as_dict=True)
+		return emp_id
 
 	return approver
 
