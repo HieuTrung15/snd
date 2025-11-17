@@ -9,10 +9,41 @@
   "section_break_izlu",
   "naming_series",
   "employee",
-  "employee_name",
   "column_break_lh3s",
   "month",
   "year",
+  "section_break_attj",
+  "so_ngay_cong",
+  "so_ngay_nghi_tinh_phep",
+  "so_ngay_nghi_viec_rieng_co_huong_luong",
+  "so_ngay_nghi_khong_luong",
+  "he_so_luong_co_ban",
+  "hs_pc_dang",
+  "column_break_yyhd",
+  "hs_pc_kiem_nhiem",
+  "luong_co_ban",
+  "pc_dang",
+  "pc_kiem_nhiem",
+  "so_nguoi_phu_thuoc",
+  "section_break_vadx",
+  "he_so_luong_cbcv",
+  "luong_cbcv",
+  "pc_dang2",
+  "pc_kiem_nhiem2",
+  "cong_tac_phi",
+  "column_break_sexp",
+  "luong_ngay_phep",
+  "luong_ngay_nghi_co_huong_luong",
+  "truy_linh",
+  "tien_an_ca",
+  "tong_thu_nhap",
+  "c\u00e1c_kho\u1ea3n_tr\u1eeb_v\u00e0o_l\u01b0\u01a1ng_section",
+  "xh_yt_tn",
+  "cong_doan",
+  "column_break_zajn",
+  "thue_tncn",
+  "thue_tncn_nam_truoc",
+  "thuc_linh",
   "section_break_vpkl",
   "rendered_html",
   "html"
@@ -27,12 +58,6 @@
    "fieldtype": "Link",
    "label": "M\u00e3 nh\u00e2n s\u1ef1",
    "options": "Employee"
-  },
-  {
-   "fetch_from": "employee.employee_name",
-   "fieldname": "employee_name",
-   "fieldtype": "Data",
-   "label": "T\u00ean nh\u00e2n s\u1ef1"
   },
   {
    "fieldname": "column_break_lh3s",
@@ -68,13 +93,196 @@
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "label": "Naming Series",
    "options": "PL.-.MM..YY.-.#####"
+  },
+  {
+   "fieldname": "section_break_attj",
+   "fieldtype": "Section Break",
+   "label": "TH\u00d4NG TIN CHUNG"
+  },
+  {
+   "fieldname": "so_ngay_cong",
+   "fieldtype": "Float",
+   "label": "S\u1ed1 ng\u00e0y c\u00f4ng",
+   "precision": "2"
+  },
+  {
+   "fieldname": "so_ngay_nghi_tinh_phep",
+   "fieldtype": "Float",
+   "label": "S\u1ed1 ng\u00e0y ngh\u1ec9 t\u00ednh ph\u00e9p",
+   "precision": "2"
+  },
+  {
+   "fieldname": "column_break_yyhd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "so_ngay_nghi_viec_rieng_co_huong_luong",
+   "fieldtype": "Float",
+   "label": "S\u1ed1 ng\u00e0y ngh\u1ec9 vi\u1ec7c ri\u00eang c\u00f3 h\u01b0\u1edfng l\u01b0\u01a1ng",
+   "precision": "2"
+  },
+  {
+   "fieldname": "so_ngay_nghi_khong_luong",
+   "fieldtype": "Float",
+   "label": "S\u1ed1 ng\u00e0y ngh\u1ec9 kh\u00f4ng l\u01b0\u01a1ng/Ngh\u1ec9 \u1ed1m/TS nam",
+   "precision": "2"
+  },
+  {
+   "fieldname": "he_so_luong_co_ban",
+   "fieldtype": "Float",
+   "label": "H\u1ec7 s\u1ed1 l\u01b0\u01a1ng c\u01a1 b\u1ea3n",
+   "precision": "2"
+  },
+  {
+   "fieldname": "hs_pc_dang",
+   "fieldtype": "Float",
+   "label": "H\u1ec7 s\u1ed1 PC \u0110\u1ea3ng",
+   "precision": "2"
+  },
+  {
+   "fieldname": "hs_pc_kiem_nhiem",
+   "fieldtype": "Float",
+   "label": "H\u1ec7 s\u1ed1 PC ki\u00eam nhi\u1ec7m",
+   "precision": "2"
+  },
+  {
+   "fieldname": "luong_co_ban",
+   "fieldtype": "Currency",
+   "label": "L\u01b0\u01a1ng c\u01a1 b\u1ea3n",
+   "precision": "3"
+  },
+  {
+   "fieldname": "pc_dang",
+   "fieldtype": "Currency",
+   "label": "PC \u0110\u1ea3ng",
+   "precision": "3"
+  },
+  {
+   "fieldname": "pc_kiem_nhiem",
+   "fieldtype": "Currency",
+   "label": "PC ki\u00eam nhi\u1ec7m",
+   "precision": "3"
+  },
+  {
+   "fieldname": "so_nguoi_phu_thuoc",
+   "fieldtype": "Int",
+   "label": "S\u1ed1 ng\u01b0\u1eddi ph\u1ee5 thu\u1ed9c"
+  },
+  {
+   "fieldname": "section_break_vadx",
+   "fieldtype": "Section Break",
+   "label": "T\u1ed4NG THU NH\u1eacP"
+  },
+  {
+   "fieldname": "he_so_luong_cbcv",
+   "fieldtype": "Float",
+   "label": "H\u1ec7 s\u1ed1 l\u01b0\u01a1ng CBCV",
+   "precision": "2"
+  },
+  {
+   "fieldname": "luong_cbcv",
+   "fieldtype": "Currency",
+   "label": "L\u01b0\u01a1ng CBCV",
+   "precision": "3"
+  },
+  {
+   "fieldname": "column_break_sexp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pc_dang2",
+   "fieldtype": "Currency",
+   "label": "PC \u0110\u1ea3ng",
+   "precision": "3"
+  },
+  {
+   "fieldname": "pc_kiem_nhiem2",
+   "fieldtype": "Currency",
+   "label": "PC ki\u00eam nhi\u1ec7m",
+   "precision": "3"
+  },
+  {
+   "fieldname": "luong_ngay_phep",
+   "fieldtype": "Currency",
+   "label": "L\u01b0\u01a1ng ng\u00e0y ph\u00e9p",
+   "precision": "3"
+  },
+  {
+   "fieldname": "luong_ngay_nghi_co_huong_luong",
+   "fieldtype": "Currency",
+   "label": "L\u01b0\u01a1ng ng\u00e0y ngh\u1ec9 VR c\u00f3 h\u01b0\u1edfng l\u01b0\u01a1ng",
+   "precision": "3"
+  },
+  {
+   "fieldname": "cong_tac_phi",
+   "fieldtype": "Currency",
+   "label": "C\u00f4ng t\u00e1c ph\u00ed",
+   "precision": "3"
+  },
+  {
+   "fieldname": "truy_linh",
+   "fieldtype": "Currency",
+   "label": "Truy l\u0129nh",
+   "precision": "3"
+  },
+  {
+   "fieldname": "tien_an_ca",
+   "fieldtype": "Currency",
+   "label": "Ti\u1ec1n \u0103n ca",
+   "precision": "3"
+  },
+  {
+   "fieldname": "tong_thu_nhap",
+   "fieldtype": "Currency",
+   "label": "T\u1ed5ng thu nh\u1eadp",
+   "precision": "3"
+  },
+  {
+   "fieldname": "c\u00e1c_kho\u1ea3n_tr\u1eeb_v\u00e0o_l\u01b0\u01a1ng_section",
+   "fieldtype": "Section Break",
+   "label": "C\u00c1C KHO\u1ea2N TR\u1eea V\u00c0O L\u01af\u01a0NG"
+  },
+  {
+   "fieldname": "xh_yt_tn",
+   "fieldtype": "Currency",
+   "label": "BHXH, BHYT, BHTN (10,5%)",
+   "precision": "3"
+  },
+  {
+   "fieldname": "cong_doan",
+   "fieldtype": "Currency",
+   "label": "C\u00f4ng \u0111o\u00e0n ph\u00ed (1%)",
+   "precision": "3"
+  },
+  {
+   "fieldname": "column_break_zajn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "thue_tncn",
+   "fieldtype": "Currency",
+   "label": "Thu\u1ebf TNCN t\u1ea1m thu",
+   "precision": "3"
+  },
+  {
+   "fieldname": "thue_tncn_nam_truoc",
+   "fieldtype": "Currency",
+   "label": "Thu\u1ebf TCNC n\u0103m tr\u01b0\u1edbc",
+   "precision": "3"
+  },
+  {
+   "fieldname": "thuc_linh",
+   "fieldtype": "Currency",
+   "label": "Th\u1ef1c l\u0129nh",
+   "precision": "3"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-06 15:25:51.677066",
+ "modified": "2025-11-17 14:02:06.149777",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Salary Slip",
