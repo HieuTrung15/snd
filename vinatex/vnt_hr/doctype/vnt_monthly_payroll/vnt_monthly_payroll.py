@@ -300,7 +300,7 @@ def get_employee_salary_history(employee):
             "parenttype": "Employee",
             "parentfield": "custom_emp_salary_history",
         },
-        fields=["name", "he_so", "from_date", "to_date"],
+        fields=["name", "he_so", "from_date", "to_date", "muc_luong"],
         order_by="from_date asc, creation asc",
     )
 
