@@ -104,3 +104,20 @@ frappe.ui.form.on("Employee Education", {
         }
     }
 })
+
+frappe.ui.form.on("VNT Employee Salary History", {
+  he_so: function(frm, cdt, cdn) {
+    const row = locals[cdt][cdn];
+    if (row.he_so && row.muc_luong_cs_tap_doan) {
+      row.muc_luong = row.he_so * row.muc_luong_cs_tap_doan;
+      frm.refresh_field("custom_emp_salary_history");
+    }
+  },
+  muc_luong_cs_tap_doan: function(frm, cdt, cdn) {
+    const row = locals[cdt][cdn];
+    if (row.he_so && row.muc_luong_cs_tap_doan) {
+      row.muc_luong = row.he_so * row.muc_luong_cs_tap_doan;
+      frm.refresh_field("custom_emp_salary_history");
+    }
+  }
+})

@@ -287,6 +287,17 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		payload.latest_salary_coefficient !== null
 			? toNumber(payload.latest_salary_coefficient)
 			: null;
+	const hasCurrentSalaryAmount =
+		typeof payload.current_salary_amount !== "undefined" &&
+		payload.current_salary_amount !== null;
+	const hasPreviousSalaryAmount =
+		typeof payload.previous_salary_amount !== "undefined" &&
+		payload.previous_salary_amount !== null;
+	const latestSalaryAmount =
+		typeof payload.latest_salary_amount !== "undefined" &&
+		payload.latest_salary_amount !== null
+			? toNumber(payload.latest_salary_amount)
+			: null;
 
 	let heSoCbnv = hasCurrentCoefficient
 		? toNumber(payload.current_salary_coefficient)
@@ -297,6 +308,16 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		frappe.model.set_value(row.doctype, row.name, "he_so_cbnv", heSoCbnv);
 	}
 	row.he_so_cbnv = heSoCbnv;
+
+	if (hasCurrentSalaryAmount || latestSalaryAmount !== null) {
+		const mucLuongHqcv = hasCurrentSalaryAmount
+			? toNumber(payload.current_salary_amount)
+			: latestSalaryAmount !== null
+				? latestSalaryAmount
+				: toNumber(row.muc_luong_theo_hqcv);
+		frappe.model.set_value(row.doctype, row.name, "muc_luong_theo_hqcv", mucLuongHqcv);
+		row.muc_luong_theo_hqcv = mucLuongHqcv;
+	}
 
 	let heSoCbnvCu = hasPreviousCoefficient
 		? toNumber(payload.previous_salary_coefficient)
@@ -312,6 +333,25 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 	} else {
 		row.he_so_cbnv_cu = "";
 		frappe.model.set_value(row.doctype, row.name, "he_so_cbnv_cu", "");
+	}
+
+	if (previousWorkingDays > 0) {
+		if (hasPreviousSalaryAmount) {
+			const mucLuongHqcvCu = toNumber(payload.previous_salary_amount);
+			row.muc_luong_theo_hqcv_cu = mucLuongHqcvCu;
+			frappe.model.set_value(
+				row.doctype,
+				row.name,
+				"muc_luong_theo_hqcv_cu",
+				mucLuongHqcvCu
+			);
+		} else {
+			row.muc_luong_theo_hqcv_cu = "";
+			frappe.model.set_value(row.doctype, row.name, "muc_luong_theo_hqcv_cu", "");
+		}
+	} else {
+		row.muc_luong_theo_hqcv_cu = "";
+		frappe.model.set_value(row.doctype, row.name, "muc_luong_theo_hqcv_cu", "");
 	}
 
 	row.employement_type = currentContractType;
@@ -440,13 +480,13 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 
 	frappe.model.set_value(row.doctype, row.name, "nghi_kluong_bhxh", payload.nghi_kluong_bhxh);
 
-	const tienLuongHQCV = ((heSoCbnv * corporateMinWage) / standardWorkingDays) * currentWorkingDays;
+	const tienLuongHQCV = ((row.muc_luong_theo_hqcv) / standardWorkingDays) * currentWorkingDays;
 	frappe.model.set_value(row.doctype, row.name, "tien_luong_hqcv", tienLuongHQCV);
 	row.tien_luong_hqcv = tienLuongHQCV;
 
 	const tienLuongHQCVCu =
 		previousWorkingDays > 0 && hasPreviousCoefficient
-			? ((heSoCbnvCu * corporateMinWage) / standardWorkingDays) * previousWorkingDays
+			? ((muc_luong_theo_hqcv_cu) / standardWorkingDays) * previousWorkingDays
 			: 0;
 	frappe.model.set_value(row.doctype, row.name, "tien_luong_hqcv_cu", tienLuongHQCVCu);
 	row.tien_luong_hqcv_cu = tienLuongHQCVCu;

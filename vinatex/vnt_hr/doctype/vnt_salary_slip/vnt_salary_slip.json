@@ -46,7 +46,8 @@
   "thuc_linh",
   "section_break_vpkl",
   "rendered_html",
-  "html"
+  "html",
+  "amended_from"
  ],
  "fields": [
   {
@@ -277,12 +278,23 @@
    "fieldtype": "Currency",
    "label": "Th\u1ef1c l\u0129nh",
    "precision": "3"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VNT Salary Slip",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2025-11-17 14:02:06.149777",
+ "modified": "2025-11-18 13:58:54.958141",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Salary Slip",
@@ -306,5 +318,6 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "employee"
 }
