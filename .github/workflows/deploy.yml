@@ -12,16 +12,14 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup SSH key
+      - name: Install sshpass
         run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d > id_ci_key
-          chmod 600 id_ci_key
-          # debug xem key đọc được không (tạm thời, sau khi ok có thể xoá 2 dòng dưới)
-          ssh-keygen -lf id_ci_key || echo "ssh-keygen failed"
+          sudo apt-get update
+          sudo apt-get install -y sshpass
 
-      - name: Run deploy via SSH
+      - name: Deploy via SSH with password
         run: |
-          ssh -i id_ci_key -o StrictHostKeyChecking=no frappe@14.225.164.136 << 'EOF'
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no frappe@14.225.164.136 << 'EOF'
             cd /home/frappe/frappe-bench
             ./deploy_vinatex.sh
           EOF
