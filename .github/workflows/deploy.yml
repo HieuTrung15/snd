@@ -16,6 +16,8 @@ jobs:
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d > id_ci_key
           chmod 600 id_ci_key
+          # debug xem key đọc được không (tạm thời, sau khi ok có thể xoá 2 dòng dưới)
+          ssh-keygen -lf id_ci_key || echo "ssh-keygen failed"
 
       - name: Run deploy via SSH
         run: |
