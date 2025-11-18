@@ -16,9 +16,9 @@ def get_columns():
     return [
         {"label": _("Mã nhân viên"),   "fieldname": "employee",       "fieldtype": "Data",     "width": 140},
         {"label": _("Tên nhân viên"),  "fieldname": "employee_name",  "fieldtype": "Data",     "width": 180},
-        {"label": _("Phòng ban"),      "fieldname": "department",     "fieldtype": "Data",     "width": 180},
+        {"label": _("Phòng/ban"),      "fieldname": "department",     "fieldtype": "Data",     "width": 180},
         {"label": _("Công ty"),        "fieldname": "company",        "fieldtype": "Data",     "width": 200},
-        {"label": _("Giờ chấm công"),  "fieldname": "time",           "fieldtype": "Datetime", "width": 170},
+        {"label": _("Giờ chấm công"),  "fieldname": "time",           "fieldtype": "Datetime", "width": 190},
     ]
 
 def _get_date_range(filters):
