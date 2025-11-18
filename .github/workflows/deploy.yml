@@ -12,10 +12,13 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Setup SSH key
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d > id_ci_key
+          chmod 600 id_ci_key
+
       - name: Run deploy via SSH
         run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > id_ci_key
-          chmod 600 id_ci_key
           ssh -i id_ci_key -o StrictHostKeyChecking=no frappe@14.225.164.136 << 'EOF'
             cd /home/frappe/frappe-bench
             ./deploy_vinatex.sh
