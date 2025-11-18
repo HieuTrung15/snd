@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import escape_html, flt, get_first_day, get_last_day, getdate
+from frappe.utils import escape_html, flt, get_first_day, get_last_day, getdate, now_datetime
 
 
 class VNTMonthlyPayroll(Document):
@@ -26,27 +26,23 @@ class VNTMonthlyPayroll(Document):
             if not employee:
                 continue
 
-            slip = self._get_existing_salary_slip(employee)
-            if slip:
-                slip_doc = frappe.get_doc("VNT Salary Slip", slip.name)
-            else:
-                slip_doc = frappe.new_doc("VNT Salary Slip")
-
+            self._cancel_existing_salary_slips(employee)
+            slip_doc = frappe.new_doc("VNT Salary Slip")
             slip_doc.flags.ignore_permissions = True
             slip_doc.employee = employee
             slip_doc.employee_name = item.employee_name or None
             slip_doc.month = self.month
             slip_doc.year = self.year
+            slip_fields = self._build_salary_slip_fields(item)
+            for fieldname, value in slip_fields.items():
+                slip_doc.set(fieldname, value)
             rendered_html = self._render_salary_slip_html(item)
             slip_doc.rendered_html = rendered_html
             slip_doc.html = rendered_html
 
-            if slip_doc.is_new():
-                # Use a predictable name to prevent duplication per kỳ lương
-                slip_doc.set_new_name(self._build_salary_slip_name(employee))
-                slip_doc.insert(ignore_permissions=True)
-            else:
-                slip_doc.save(ignore_permissions=True)
+            slip_doc.set_new_name(self._build_salary_slip_name(employee))
+            slip_doc.insert(ignore_permissions=True)
+            slip_doc.submit()
 
     def delete_salary_slips(self):
         if not (self.month and self.year):
@@ -69,27 +65,78 @@ class VNTMonthlyPayroll(Document):
 
         for slip in slips:
             slip_doc = frappe.get_doc("VNT Salary Slip", slip.name)
+            slip_doc.flags.ignore_permissions = True
             if slip_doc.docstatus == 1:
                 slip_doc.cancel()
             slip_doc.delete(ignore_permissions=True)
 
-    def _get_existing_salary_slip(self, employee):
-        return frappe.db.get_value(
+    def _cancel_existing_salary_slips(self, employee):
+        if not (self.month and self.year):
+            return
+
+        existing_slips = frappe.get_all(
             "VNT Salary Slip",
-            {
+            filters={
                 "employee": employee,
                 "month": self.month,
                 "year": self.year,
-                "docstatus": ("!=", 2),
+                "docstatus": ("in", [0, 1]),
             },
-            ["name"],
-            as_dict=True,
+            fields=["name", "docstatus"],
         )
+
+        for slip in existing_slips:
+            slip_doc = frappe.get_doc("VNT Salary Slip", slip.name)
+            slip_doc.flags.ignore_permissions = True
+            if slip_doc.docstatus == 1:
+                slip_doc.cancel()
+            else:
+                slip_doc.delete(ignore_permissions=True)
 
     def _build_salary_slip_name(self, employee):
         month = (self.month or "").zfill(2)
         year = str(self.year or "")
-        return f"{employee}-{year}{month}"
+        suffix = now_datetime().strftime("%Y%m%d%H%M%S")
+        unique_part = frappe.generate_hash(length=4)
+        return f"{employee}-{year}{month}-{suffix}{unique_part}"
+
+    def _build_salary_slip_fields(self, item):
+        standard_days = flt(self.standard_working_days) or 0
+        luong_cb = flt(item.luong_cb)
+        so_phep = flt(item.sophep)
+        so_vr = flt(item.so_ngay_nghi_vr)
+        daily_salary = (luong_cb / standard_days) if standard_days else 0
+        luong_nghi_phep = daily_salary * so_phep
+        luong_nghi_vr = daily_salary * so_vr
+
+        return {
+            "so_ngay_cong": flt(item.ngay_cong),
+            "so_ngay_nghi_tinh_phep": so_phep,
+            "so_ngay_nghi_viec_rieng_co_huong_luong": so_vr,
+            "so_ngay_nghi_khong_luong": flt(item.nghi_kluong_bhxh),
+            "he_so_luong_co_ban": flt(item.hs_luong_cb),
+            "hs_pc_dang": flt(item.hs_pc_dang_1),
+            "hs_pc_kiem_nhiem": flt(item.hs_pc_kiem_nhiem1),
+            "luong_co_ban": luong_cb,
+            "pc_dang": flt(item.pc_dang1),
+            "pc_kiem_nhiem": flt(item.pc_kiem_nhiem1),
+            "so_nguoi_phu_thuoc": flt(item.so_npt),
+            "he_so_luong_cbcv": flt(item.he_so_cbnv),
+            "luong_cbcv": flt(item.tien_luong_hqcv),
+            "pc_dang2": flt(item.pc_dang2),
+            "pc_kiem_nhiem2": flt(item.pc_kiem_nhiem2),
+            "luong_ngay_phep": luong_nghi_phep,
+            "luong_ngay_nghi_co_huong_luong": luong_nghi_vr,
+            "cong_tac_phi": flt(item.tien_khoan_ct),
+            "truy_linh": flt(item.truylinh),
+            "tien_an_ca": flt(item.tien_an),
+            "tong_thu_nhap": flt(item.tong_thu_nhap),
+            "xh_yt_tn": flt(item.xh_yt_tn),
+            "cong_doan": flt(item.doan_phi_cd),
+            "thue_tncn": flt(item.tncn_tam_thu),
+            "thue_tncn_nam_truoc": flt(item.truy_thu) - flt(item.duoc_hoan_lai),
+            "thuc_linh": flt(item.thuc_linh),
+        }
 
     def _render_salary_slip_html(self, item):
         standard_days = flt(self.standard_working_days) or 0
@@ -440,15 +487,29 @@ def compute_item(employee, company=None, month=None, year=None):
     def ensure_date(value, fallback):
         return getdate(value) if value else fallback
 
-    def find_salary_coefficient(target_date):
+    def find_salary_entry(target_date):
         if not target_date or not salary_history:
             return None
         for entry in reversed(salary_history):
             start = ensure_date(entry.get("from_date"), baseline_date)
             end = ensure_date(entry.get("to_date"), far_future)
             if start <= target_date <= end:
-                return float(entry.get("he_so") or 0)
+                return entry
         return None
+
+    def find_salary_value(target_date, fieldname):
+        entry = find_salary_entry(target_date)
+        if not entry:
+            return None
+        return flt(entry.get(fieldname))
+
+    def find_salary_coefficient(target_date):
+        value = find_salary_value(target_date, "he_so")
+        return value if value is not None else None
+
+    def find_salary_amount(target_date):
+        value = find_salary_value(target_date, "muc_luong")
+        return value if value is not None else None
 
     def annotate_contract(contract):
         if not contract:
@@ -481,6 +542,8 @@ def compute_item(employee, company=None, month=None, year=None):
     previous_contract_type = previous_contract.get("type") if previous_contract else None
     current_salary_coefficient = find_salary_coefficient(current_overlap_start)
     previous_salary_coefficient = find_salary_coefficient(previous_overlap_start)
+    current_salary_amount = find_salary_amount(current_overlap_start)
+    previous_salary_amount = find_salary_amount(previous_overlap_start)
 
     total_working_days = float(ngay_cong or 0)
     previous_working_days = 0.0
@@ -537,4 +600,7 @@ def compute_item(employee, company=None, month=None, year=None):
         "current_salary_coefficient": current_salary_coefficient,
         "previous_salary_coefficient": previous_salary_coefficient,
         "latest_salary_coefficient": find_salary_coefficient(period_end) or find_salary_coefficient(period_start),
+        "current_salary_amount": current_salary_amount,
+        "previous_salary_amount": previous_salary_amount,
+        "latest_salary_amount": find_salary_amount(period_end) or find_salary_amount(period_start),
     }

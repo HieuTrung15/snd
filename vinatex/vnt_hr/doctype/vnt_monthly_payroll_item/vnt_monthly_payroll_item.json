@@ -29,11 +29,13 @@
   "column_break_wqlt",
   "ngay_cong",
   "he_so_cbnv",
+  "muc_luong_theo_hqcv",
   "tien_luong_hqcv",
   "cho_phep_dong_bhxh",
   "column_break_yqwo",
   "ngay_cong_cu",
   "he_so_cbnv_cu",
+  "muc_luong_theo_hqcv_cu",
   "tien_luong_hqcv_cu",
   "section_break_sxyr",
   "pc_dang2",
@@ -461,13 +463,25 @@
    "fieldname": "cho_phep_dong_bhxh",
    "fieldtype": "Check",
    "label": "Cho ph\u00e9p \u0111\u00f3ng BHXH n\u1ebfu ng\u00e0y c\u00f4ng \u0111i l\u00e0m th\u1ef1c t\u1ebf d\u01b0\u1edbi 14 ng\u00e0y"
+  },
+  {
+   "fieldname": "muc_luong_theo_hqcv",
+   "fieldtype": "Currency",
+   "label": "M\u1ee9c l\u01b0\u01a1ng theo HQCV",
+   "precision": "3"
+  },
+  {
+   "fieldname": "muc_luong_theo_hqcv_cu",
+   "fieldtype": "Currency",
+   "label": "M\u1ee9c l\u01b0\u01a1ng theo HQCV c\u0169",
+   "precision": "3"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-05 15:56:48.127054",
+ "modified": "2025-11-18 13:35:42.552341",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Monthly Payroll Item",
