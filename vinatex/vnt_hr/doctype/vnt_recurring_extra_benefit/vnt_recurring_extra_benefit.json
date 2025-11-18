@@ -1,0 +1,131 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-11-18 14:19:40.468322",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_del6",
+  "naming_series",
+  "employee",
+  "date",
+  "column_break_rbgs",
+  "month",
+  "year",
+  "type",
+  "get_emp_list",
+  "section_break_ulhi",
+  "items",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_del6",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Ng\u01b0\u1eddi l\u1eadp",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Ng\u00e0y l\u1eadp",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_rbgs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "month",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Th\u00e1ng",
+   "reqd": 1
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Link",
+   "label": "Lo\u1ea1i ph\u1ee5 c\u1ea5p",
+   "options": "VNT Allowance Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "get_emp_list",
+   "fieldtype": "Button",
+   "label": "T\u00ednh ph\u1ee5 c\u1ea5p"
+  },
+  {
+   "fieldname": "section_break_ulhi",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Chi ti\u1ebft",
+   "options": "VNT Recurring Extra Benefit Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VNT Recurring Extra Benefit",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Naming Series",
+   "options": "PC.-.MM..YY.-.####"
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "N\u0103m",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-11-18 15:06:02.002501",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Recurring Extra Benefit",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

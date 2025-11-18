@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-18 14:27:21.186224",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "designation",
+  "allowance_type",
+  "he_so",
+  "amount",
+  "so_thang",
+  "tong",
+  "thue_tncn",
+  "thuc_linh"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Nh\u00e2n s\u1ef1",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "employee.designation",
+   "fetch_if_empty": 1,
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Ch\u1ee9c v\u1ee5",
+   "options": "Designation"
+  },
+  {
+   "columns": 1,
+   "fieldname": "allowance_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Lo\u1ea1i PC",
+   "options": "VNT Allowance Type"
+  },
+  {
+   "columns": 1,
+   "fieldname": "he_so",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "HS PC \u0111\u1eb7c th\u00f9",
+   "precision": "2"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Ti\u1ec1n ph\u1ee5 c\u1ea5p h\u00e0ng th\u00e1ng",
+   "precision": "3"
+  },
+  {
+   "fieldname": "tong",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "T\u1ed5ng",
+   "precision": "3"
+  },
+  {
+   "fieldname": "thue_tncn",
+   "fieldtype": "Currency",
+   "label": "Thu\u1ebf TNCN",
+   "precision": "3"
+  },
+  {
+   "fieldname": "thuc_linh",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Thu nh\u1eadp th\u1ef1c l\u0129nh",
+   "precision": "3"
+  },
+  {
+   "fieldname": "so_thang",
+   "fieldtype": "Int",
+   "label": "S\u1ed1 th\u00e1ng h\u01b0\u1edfng"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-18 14:48:34.817130",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Recurring Extra Benefit Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
