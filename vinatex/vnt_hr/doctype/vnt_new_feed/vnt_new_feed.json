@@ -7,7 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "employee",
-  "employee_name",
+  "department",
   "column_break_zjk3",
   "date",
   "title",
@@ -25,13 +25,6 @@
    "label": "Ng\u01b0\u1eddi l\u1eadp phi\u1ebfu",
    "options": "Employee",
    "reqd": 1
-  },
-  {
-   "fetch_from": "employee.employee_name",
-   "fetch_if_empty": 1,
-   "fieldname": "employee_name",
-   "fieldtype": "Data",
-   "label": "T\u00ean ng\u01b0\u1eddi l\u1eadp"
   },
   {
    "fieldname": "column_break_zjk3",
@@ -73,12 +66,20 @@
    "fieldname": "html",
    "fieldtype": "HTML",
    "no_copy": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fetch_if_empty": 1,
+   "fieldname": "department",
+   "fieldtype": "Data",
+   "label": "Ph\u00f2ng/ban",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-31 09:29:23.716405",
+ "modified": "2025-11-18 08:46:31.635058",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT New Feed",
