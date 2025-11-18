@@ -2,7 +2,7 @@ name: Deploy vinatex to ERPNext server
 
 on:
   push:
-    branches: [ "develop" ]   # << dùng develop
+    branches: [ "develop" ]
 
 jobs:
   deploy:
@@ -12,12 +12,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: 14.225.164.136
-          username: frappe
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
+      - name: Run deploy via SSH
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > id_ci_key
+          chmod 600 id_ci_key
+          ssh -i id_ci_key -o StrictHostKeyChecking=no frappe@14.225.164.136 << 'EOF'
             cd /home/frappe/frappe-bench
             ./deploy_vinatex.sh
+          EOF
