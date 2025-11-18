@@ -166,7 +166,7 @@ def _columns_pivot(days):
 			"fieldname": f"d{d.day:02d}",
 			"label": f"{d.day:02d}",
 			"fieldtype": "Data",
-			"width": 42,
+			"width": 44
 		})
 	base += [
 		{"fieldname": "tot_present", "label": "Đi làm",  "fieldtype": "Int", "width": 100},
