@@ -132,3 +132,122 @@ def _get_data(filters: dict):
 		row["company"] = row.get("company") or ""
 		row["department"] = row.get("department") or ""
 	return results
+
+# Nếu file này chưa có 2 hàm dưới thì giữ lại, nếu có rồi thì khỏi thêm
+def _get_employee_of_user() -> str | None:
+    return frappe.db.get_value(
+        "Employee",
+        {"user_id": frappe.session.user, "status": "Active"},
+        "name",
+    )
+
+
+def _get_year_month_defaults(year: int | None = None, month: int | None = None) -> dict:
+    """Trả về year, month, previous_month dùng chung cho KPI."""
+    dt = now_datetime()
+    year = cint(year or dt.year)
+    month = cint(month or dt.month)
+
+    if not 1 <= month <= 12:
+        frappe.throw(_("Vui lòng chọn Tháng hợp lệ."))
+
+    previous_month = month - 1 if month > 1 else None
+
+    return {
+        "year": year,
+        "month": month,
+        "previous_month": previous_month,
+    }
+
+
+@frappe.whitelist()
+def get_salary_kpi(year: int | None = None, month: int | None = None):
+    """
+    Trả về 4 KPI + thông tin context:
+    - year_to_date_net: Thực lĩnh từ đầu năm
+    - previous_month_salary: Lương tháng trước
+    - previous_month_allowance: Phụ cấp tháng trước
+    - current_month_salary: Lương tháng hiện tại
+    - kèm: employee, employee_name, year, month, previous_month
+    """
+
+    # 1. Xác định employee theo user đăng nhập
+    employee = _get_employee_of_user()
+    if not employee:
+        frappe.throw(_("Tài khoản của bạn chưa được liên kết với hồ sơ nhân sự nào."))
+
+    # 2. Xác định năm / tháng / tháng trước
+    ym = _get_year_month_defaults(year, month)
+
+    params = {
+        "employee": employee,
+        "year": ym["year"],
+        "month": f"{ym['month']:02d}",
+    }
+
+    # Lấy thêm thông tin nhân sự
+    emp_doc = frappe.db.get_value(
+        "Employee",
+        employee,
+        ["employee_name", "company", "department"],
+        as_dict=True,
+    ) or {}
+
+    # Subquery tính phụ cấp thực lĩnh theo từng bảng lương
+    item_subquery = """
+        SELECT
+            parent,
+            SUM(COALESCE(thuc_linh, 0)) AS total_allowance_net
+        FROM `tabVNT Salary Slip Item`
+        GROUP BY parent
+    """
+
+    select_fields = [
+        # Thực lĩnh từ đầu năm
+        "SUM(COALESCE(slip.thuc_linh, 0)) AS year_to_date_net",
+        # Lương tháng hiện tại
+        "SUM(CASE WHEN slip.month = %(month)s THEN COALESCE(slip.thuc_linh, 0) ELSE 0 END) AS current_month_salary",
+    ]
+
+    prev_month = ym["previous_month"]
+    if prev_month:
+        params["prev_month"] = f"{prev_month:02d}"
+        select_fields.append(
+            "SUM(CASE WHEN slip.month = %(prev_month)s THEN COALESCE(slip.thuc_linh, 0) ELSE 0 END) AS previous_month_salary"
+        )
+        select_fields.append(
+            "SUM(CASE WHEN slip.month = %(prev_month)s THEN COALESCE(item.total_allowance_net, 0) ELSE 0 END) AS previous_month_allowance"
+        )
+    else:
+        # Tháng 1: không có tháng trước → 0
+        select_fields.append("0 AS previous_month_salary")
+        select_fields.append("0 AS previous_month_allowance")
+
+    sql = f"""
+        SELECT
+            {", ".join(select_fields)}
+        FROM `tabVNT Salary Slip` AS slip
+        LEFT JOIN ({item_subquery}) AS item ON item.parent = slip.name
+        WHERE slip.docstatus = 1
+          AND slip.year = %(year)s
+          AND slip.employee = %(employee)s
+    """
+
+    result = frappe.db.sql(sql, params, as_dict=True)
+    row = result[0] if result else {}
+
+    return {
+        # 4 KPI
+        "year_to_date_net": row.get("year_to_date_net") or 0,
+        "previous_month_salary": row.get("previous_month_salary") or 0,
+        "previous_month_allowance": row.get("previous_month_allowance") or 0,
+        "current_month_salary": row.get("current_month_salary") or 0,
+        # Thông tin context cho front-end
+        "employee": employee,
+        "employee_name": emp_doc.get("employee_name") or "",
+        "company": emp_doc.get("company") or "",
+        "department": emp_doc.get("department") or "",
+        "year": ym["year"],
+        "month": ym["month"],
+        "previous_month": ym["previous_month"],
+    }
