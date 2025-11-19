@@ -531,7 +531,7 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 	frappe.model.set_value(row.doctype, row.name, "tong_tn_chiu_thue", tongThuNhapChiuThue);
 
 	if (row.dang_vien === "Chính thức") {
-		frappe.model.set_value(row.doctype, row.name, "dang_phi", tongThuNhapChiuThue * 0.001);
+		frappe.model.set_value(row.doctype, row.name, "dang_phi", tongThuNhapChiuThue * 0.01);
 	} else {
 		frappe.model.set_value(row.doctype, row.name, "dang_phi", 0);
 	}
