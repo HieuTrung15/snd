@@ -550,7 +550,8 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		frappe.model.set_value(row.doctype, row.name, "thu_nhap_tinh_thue", 0);
 	} else if (
 		row.employement_type === "HĐLĐ xác định thời hạn" ||
-		row.employement_type === "HĐLĐ không xác định thời hạn"
+		row.employement_type === "HĐLĐ không xác định thời hạn" ||
+		row.employement_type === "Không giao kết HĐLĐ"
 	) {
 		const taxableBase =
 			tongThuNhapChiuThue -
