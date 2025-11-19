@@ -20,6 +20,7 @@ frappe.ui.form.on("VNT Monthly Payroll", {
             const year = parseInt(frm.doc.year, 10);
             get_standard_working_days(frm, month, year);
         }
+        add_download_button(frm);
     },
     month (frm) {
         if (frm.doc.month && frm.doc.year) {
@@ -203,6 +204,21 @@ frappe.ui.form.on("VNT Monthly Payroll Item", {
 		frm.events.compute_row(frm, row, { freeze: false });
 	},
 });
+
+function add_download_button(frm) {
+	if (frm.is_new() || !frm.doc.name) {
+		return;
+	}
+
+	frm.add_custom_button(__("Tải xuống Excel"), () => {
+		const method =
+			"vinatex.vnt_hr.doctype.vnt_monthly_payroll.vnt_monthly_payroll.download_payroll_excel";
+		const params = new URLSearchParams({ docname: frm.doc.name });
+		const url = `/api/method/${method}?${params.toString()}`;
+		const fullUrl = frappe.urllib.get_full_url(url);
+		window.open(fullUrl);
+	});
+}
 
 
 // ===== HÀM DỊCH VỤ: số ngày công tiêu chuẩn (không T7-CN) =====
@@ -536,17 +552,18 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		frappe.model.set_value(row.doctype, row.name, "dang_phi", 0);
 	}
 
-	if (
-		tongThuNhapChiuThue > 2000000 &&
-		row.employement_type !== "HĐLĐ xác định thời hạn" &&
-		row.employement_type !== "HĐLĐ không xác định thời hạn"
-	) {
+	const isFormalContract =
+		row.employement_type === "Hợp đồng thử việc" ||
+		row.employement_type === "Hợp đồng học nghề" ||
+		row.employement_type === "Hợp đồng đào tạo nghề" ||
+		row.employement_type === "Hợp đồng tập nghề";
+
+	if (tongThuNhapChiuThue > 2000000 && isFormalContract) 
+	{
 		frappe.model.set_value(row.doctype, row.name, "thu_nhap_tinh_thue", tongThuNhapChiuThue);
-	} else if (
-		tongThuNhapChiuThue <= 2000000 &&
-		row.employement_type !== "HĐLĐ xác định thời hạn" &&
-		row.employement_type !== "HĐLĐ không xác định thời hạn"
-	) {
+	} 
+	else if (tongThuNhapChiuThue <= 2000000 && isFormalContract)
+ 	{
 		frappe.model.set_value(row.doctype, row.name, "thu_nhap_tinh_thue", 0);
 	} else if (
 		row.employement_type === "HĐLĐ xác định thời hạn" ||
