@@ -5,17 +5,19 @@
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
- "field_order": [
-  "employee",
-  "designation",
-  "allowance_type",
-  "he_so",
-  "amount",
-  "so_thang",
-  "tong",
-  "thue_tncn",
-  "thuc_linh"
- ],
+  "field_order": [
+   "employee",
+   "designation",
+   "allowance_type",
+   "he_so",
+   "amount",
+   "so_thang",
+   "tong",
+   "thue_tncn",
+   "thuc_linh",
+   "salary_slip",
+   "salary_slip_item"
+  ],
  "fields": [
   {
    "fieldname": "employee",
@@ -79,6 +81,23 @@
    "fieldname": "so_thang",
    "fieldtype": "Int",
    "label": "S\u1ed1 th\u00e1ng h\u01b0\u1edfng"
+  },
+  {
+   "fieldname": "salary_slip",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Salary Slip",
+   "options": "VNT Salary Slip",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "salary_slip_item",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Salary Slip Item",
+   "print_hide": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

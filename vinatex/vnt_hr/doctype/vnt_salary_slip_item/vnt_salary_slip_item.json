@@ -1,0 +1,93 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-19 09:09:12.848711",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "allowance_type",
+  "he_so",
+  "amount",
+  "so_thang",
+  "tong",
+  "thue_tncn",
+  "thuc_linh",
+  "recurring_extra_benefit"
+ ],
+ "fields": [
+  {
+   "fieldname": "allowance_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Lo\u1ea1i ph\u1ee5 c\u1ea5p",
+   "options": "VNT Allowance Type"
+  },
+  {
+   "columns": 1,
+   "fieldname": "he_so",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "HS ph\u1ee5 c\u1ea5p",
+   "precision": "2"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Ti\u1ec1n ph\u1ee5 c\u1ea5p h\u00e0ng th\u00e1ng",
+   "precision": "3"
+  },
+  {
+   "columns": 1,
+   "fieldname": "so_thang",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "S\u1ed1 th\u00e1ng h\u01b0\u1edfng"
+  },
+  {
+   "fieldname": "tong",
+   "fieldtype": "Currency",
+   "label": "T\u1ed5ng",
+   "precision": "3"
+  },
+  {
+   "fieldname": "thue_tncn",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Thu\u1ebf TNCN",
+   "precision": "3"
+  },
+  {
+   "fieldname": "thuc_linh",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Thu nh\u1eadp th\u1ef1c l\u0129nh",
+   "precision": "3"
+  },
+  {
+   "fieldname": "recurring_extra_benefit",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Recurring Benefit",
+   "options": "VNT Recurring Extra Benefit",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-19 09:21:47.031166",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Salary Slip Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

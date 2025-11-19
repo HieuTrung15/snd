@@ -44,6 +44,14 @@
   "thue_tncn",
   "thue_tncn_nam_truoc",
   "thuc_linh",
+  "section_break_nyeq",
+  "items",
+  "section_break_aisw",
+  "tong_phu_cap",
+  "column_break_ejjw",
+  "tong_thue_tncn_phu_cap",
+  "column_break_kxam",
+  "tong_thuc_linh_phu_cap",
   "section_break_vpkl",
   "rendered_html",
   "html",
@@ -288,13 +296,59 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "section_break_nyeq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Danh s\u00e1ch ph\u1ee5 c\u1ea5p",
+   "options": "VNT Salary Slip Item"
+  },
+  {
+   "fieldname": "section_break_aisw",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval: doc.items != \"\"",
+   "fieldname": "tong_phu_cap",
+   "fieldtype": "Currency",
+   "hidden": 1,
+   "label": "T\u1ed5ng ph\u1ee5 c\u1ea5p",
+   "precision": "3"
+  },
+  {
+   "fieldname": "column_break_ejjw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.items != \"\"",
+   "fieldname": "tong_thue_tncn_phu_cap",
+   "fieldtype": "Currency",
+   "hidden": 1,
+   "label": "T\u1ed5ng thu\u1ebf TNCN ph\u1ee5 c\u1ea5p",
+   "precision": "3"
+  },
+  {
+   "fieldname": "column_break_kxam",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.items != \"\"",
+   "fieldname": "tong_thuc_linh_phu_cap",
+   "fieldtype": "Currency",
+   "hidden": 1,
+   "label": "T\u1ed5ng th\u1ef1c l\u0129nh ph\u1ee5 c\u1ea5p",
+   "precision": "3"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-18 13:58:54.958141",
+ "modified": "2025-11-19 09:43:51.970037",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Salary Slip",
