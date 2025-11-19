@@ -135,119 +135,197 @@ def _get_data(filters: dict):
 
 # Nếu file này chưa có 2 hàm dưới thì giữ lại, nếu có rồi thì khỏi thêm
 def _get_employee_of_user() -> str | None:
-    return frappe.db.get_value(
-        "Employee",
-        {"user_id": frappe.session.user, "status": "Active"},
-        "name",
-    )
+	return frappe.db.get_value(
+		"Employee",
+		{"user_id": frappe.session.user, "status": "Active"},
+		"name",
+	)
 
 
 def _get_year_month_defaults(year: int | None = None, month: int | None = None) -> dict:
-    """Trả về year, month, previous_month dùng chung cho KPI."""
-    dt = now_datetime()
-    year = cint(year or dt.year)
-    month = cint(month or dt.month)
+	"""Trả về year, month, previous_month dùng chung cho KPI."""
+	dt = now_datetime()
+	year = cint(year or dt.year)
+	month = cint(month or dt.month)
 
-    if not 1 <= month <= 12:
-        frappe.throw(_("Vui lòng chọn Tháng hợp lệ."))
+	if not 1 <= month <= 12:
+		frappe.throw(_("Vui lòng chọn Tháng hợp lệ."))
 
-    previous_month = month - 1 if month > 1 else None
+	previous_month = month - 1 if month > 1 else None
 
-    return {
-        "year": year,
-        "month": month,
-        "previous_month": previous_month,
-    }
+	return {
+		"year": year,
+		"month": month,
+		"previous_month": previous_month,
+	}
 
 
 @frappe.whitelist()
 def get_salary_kpi(year: int | None = None, month: int | None = None):
-    """
-    Trả về 4 KPI + thông tin context:
-    - year_to_date_net: Thực lĩnh từ đầu năm
-    - previous_month_salary: Lương tháng trước
-    - previous_month_allowance: Phụ cấp tháng trước
-    - current_month_salary: Lương tháng hiện tại
-    - kèm: employee, employee_name, year, month, previous_month
-    """
+	"""
+	Trả về 4 KPI + thông tin context:
+	- year_to_date_net: Thực lĩnh từ đầu năm
+	- previous_month_salary: Lương tháng trước
+	- previous_month_allowance: Phụ cấp tháng trước
+	- current_month_salary: Lương tháng hiện tại
+	- kèm: employee, employee_name, year, month, previous_month
+	"""
 
-    # 1. Xác định employee theo user đăng nhập
-    employee = _get_employee_of_user()
-    if not employee:
-        frappe.throw(_("Tài khoản của bạn chưa được liên kết với hồ sơ nhân sự nào."))
+	# 1. Xác định employee theo user đăng nhập
+	employee = _get_employee_of_user()
+	if not employee:
+		return
+		# frappe.throw(_("Tài khoản của bạn chưa được liên kết với hồ sơ nhân sự nào."))
 
-    # 2. Xác định năm / tháng / tháng trước
-    ym = _get_year_month_defaults(year, month)
+	# 2. Xác định năm / tháng / tháng trước
+	ym = _get_year_month_defaults(year, month)
 
-    params = {
-        "employee": employee,
-        "year": ym["year"],
-        "month": f"{ym['month']:02d}",
-    }
+	params = {
+		"employee": employee,
+		"year": ym["year"],
+		"month": f"{ym['month']:02d}",
+	}
 
-    # Lấy thêm thông tin nhân sự
-    emp_doc = frappe.db.get_value(
-        "Employee",
-        employee,
-        ["employee_name", "company", "department"],
-        as_dict=True,
-    ) or {}
+	# Lấy thêm thông tin nhân sự
+	emp_doc = frappe.db.get_value(
+		"Employee",
+		employee,
+		["employee_name", "company", "department"],
+		as_dict=True,
+	) or {}
 
-    # Subquery tính phụ cấp thực lĩnh theo từng bảng lương
-    item_subquery = """
-        SELECT
-            parent,
-            SUM(COALESCE(thuc_linh, 0)) AS total_allowance_net
-        FROM `tabVNT Salary Slip Item`
-        GROUP BY parent
-    """
+	# Subquery tính phụ cấp thực lĩnh theo từng bảng lương
+	item_subquery = """
+		SELECT
+			parent,
+			SUM(COALESCE(thuc_linh, 0)) AS total_allowance_net
+		FROM `tabVNT Salary Slip Item`
+		GROUP BY parent
+	"""
 
-    select_fields = [
-        # Thực lĩnh từ đầu năm
-        "SUM(COALESCE(slip.thuc_linh, 0)) AS year_to_date_net",
-        # Lương tháng hiện tại
-        "SUM(CASE WHEN slip.month = %(month)s THEN COALESCE(slip.thuc_linh, 0) ELSE 0 END) AS current_month_salary",
-    ]
+	select_fields = [
+		# Thực lĩnh từ đầu năm
+		"SUM(COALESCE(slip.thuc_linh, 0)) AS year_to_date_net",
+		# Lương tháng hiện tại
+		"SUM(CASE WHEN slip.month = %(month)s THEN COALESCE(slip.thuc_linh, 0) ELSE 0 END) AS current_month_salary",
+	]
 
-    prev_month = ym["previous_month"]
-    if prev_month:
-        params["prev_month"] = f"{prev_month:02d}"
-        select_fields.append(
-            "SUM(CASE WHEN slip.month = %(prev_month)s THEN COALESCE(slip.thuc_linh, 0) ELSE 0 END) AS previous_month_salary"
-        )
-        select_fields.append(
-            "SUM(CASE WHEN slip.month = %(prev_month)s THEN COALESCE(item.total_allowance_net, 0) ELSE 0 END) AS previous_month_allowance"
-        )
-    else:
-        # Tháng 1: không có tháng trước → 0
-        select_fields.append("0 AS previous_month_salary")
-        select_fields.append("0 AS previous_month_allowance")
+	prev_month = ym["previous_month"]
+	if prev_month:
+		params["prev_month"] = f"{prev_month:02d}"
+		select_fields.append(
+			"SUM(CASE WHEN slip.month = %(prev_month)s THEN COALESCE(slip.thuc_linh, 0) ELSE 0 END) AS previous_month_salary"
+		)
+		select_fields.append(
+			"SUM(CASE WHEN slip.month = %(prev_month)s THEN COALESCE(item.total_allowance_net, 0) ELSE 0 END) AS previous_month_allowance"
+		)
+	else:
+		# Tháng 1: không có tháng trước → 0
+		select_fields.append("0 AS previous_month_salary")
+		select_fields.append("0 AS previous_month_allowance")
 
-    sql = f"""
-        SELECT
-            {", ".join(select_fields)}
-        FROM `tabVNT Salary Slip` AS slip
-        LEFT JOIN ({item_subquery}) AS item ON item.parent = slip.name
-        WHERE slip.docstatus = 1
-          AND slip.year = %(year)s
-          AND slip.employee = %(employee)s
-    """
+	sql = f"""
+		SELECT
+			{", ".join(select_fields)}
+		FROM `tabVNT Salary Slip` AS slip
+		LEFT JOIN ({item_subquery}) AS item ON item.parent = slip.name
+		WHERE slip.docstatus = 1
+		  AND slip.year = %(year)s
+		  AND slip.employee = %(employee)s
+	"""
 
-    result = frappe.db.sql(sql, params, as_dict=True)
-    row = result[0] if result else {}
+	result = frappe.db.sql(sql, params, as_dict=True)
+	row = result[0] if result else {}
 
-    return {
-        # 4 KPI
-        "year_to_date_net": row.get("year_to_date_net") or 0,
-        "previous_month_salary": row.get("previous_month_salary") or 0,
-        "previous_month_allowance": row.get("previous_month_allowance") or 0,
-        "current_month_salary": row.get("current_month_salary") or 0,
-        # Thông tin context cho front-end
-        "employee": employee,
-        "employee_name": emp_doc.get("employee_name") or "",
-        "company": emp_doc.get("company") or "",
-        "department": emp_doc.get("department") or "",
-        "year": ym["year"],
-        "month": ym["month"],
-        "previous_month": ym["previous_month"],
-    }
+	return {
+		# 4 KPI
+		"year_to_date_net": row.get("year_to_date_net") or 0,
+		"previous_month_salary": row.get("previous_month_salary") or 0,
+		"previous_month_allowance": row.get("previous_month_allowance") or 0,
+		"current_month_salary": row.get("current_month_salary") or 0,
+		# Thông tin context cho front-end
+		"employee": employee,
+		"employee_name": emp_doc.get("employee_name") or "",
+		"company": emp_doc.get("company") or "",
+		"department": emp_doc.get("department") or "",
+		"year": ym["year"],
+		"month": ym["month"],
+		"previous_month": ym["previous_month"],
+	}
+
+@frappe.whitelist()
+def get_salary_table(year: int | None = None):
+	"""
+	Trả về list các dòng:
+	- month
+	- year
+	- total_salary       (Tổng lương)
+	- total_allowance    (Tổng phụ cấp)
+	- total_tax          (Tổng thuế)
+	- total_net          (Thực lĩnh)
+	cho nhân sự đang login, group theo Tháng/Năm.
+	"""
+
+	employee = _get_employee_of_user()
+	if not employee:
+		return
+		# frappe.throw(_("Tài khoản của bạn chưa được liên kết với hồ sơ nhân sự nào."))
+
+	conditions = ["slip.docstatus = 1", "slip.employee = %(employee)s"]
+	params = {"employee": employee}
+
+	if year:
+		params["year"] = cint(year)
+		conditions.append("slip.year = %(year)s")
+
+	where_clause = " AND ".join(conditions)
+
+	# Bảng con: VNT Salary Slip Item
+	item_subquery = """
+		SELECT
+			parent,
+			SUM(COALESCE(thue_tncn, 0))  AS item_tax,
+			SUM(COALESCE(thuc_linh, 0)) AS item_net
+		FROM `tabVNT Salary Slip Item`
+		GROUP BY parent
+	"""
+
+	# Công thức:
+	# - Tổng lương      = SUM(slip.tong_thu_nhap)
+	# - Tổng phụ cấp    = SUM(pc_dang2 + pc_kiem_nhiem2 + cong_tac_phi + tien_an_ca)
+	#                     + SUM(item.item_net)
+	# - Tổng thuế       = SUM(slip.thue_tncn + slip.thue_tncn_nam_truoc) + SUM(item.item_tax)
+	# - Thực lĩnh       = SUM(slip.thuc_linh)
+	sql = f"""
+		SELECT
+			slip.year,
+			slip.month,
+			SUM(COALESCE(slip.tong_thu_nhap, 0)) AS total_salary,
+			SUM(
+				COALESCE(slip.pc_dang2, 0)
+			  + COALESCE(slip.pc_kiem_nhiem2, 0)
+			  + COALESCE(slip.cong_tac_phi, 0)
+			  + COALESCE(slip.tien_an_ca, 0)
+			) + SUM(COALESCE(item.item_net, 0)) AS total_allowance,
+			SUM(
+				COALESCE(slip.thue_tncn, 0)
+			  + COALESCE(slip.thue_tncn_nam_truoc, 0)
+			) + SUM(COALESCE(item.item_tax, 0)) AS total_tax,
+			SUM(COALESCE(slip.thuc_linh, 0)) AS total_net
+		FROM `tabVNT Salary Slip` AS slip
+		LEFT JOIN ({item_subquery}) AS item ON item.parent = slip.name
+		WHERE {where_clause}
+		GROUP BY slip.year, slip.month
+		ORDER BY slip.year, slip.month
+	"""
+
+	rows = frappe.db.sql(sql, params, as_dict=True)
+
+	# Chuyển month dạng "01" / "1" về int cho dễ đọc
+	for row in rows:
+		try:
+			row["month"] = cint(row.get("month"))
+		except Exception:
+			pass
+
+	return rows
