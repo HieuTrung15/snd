@@ -170,12 +170,12 @@ def _notify_confirmation(doc: Document, user: str, dates: list[date] | None = No
 	end_label = _format_date_value(end_date)
 
 	if norm_dates and len(norm_dates) == 1:
-		message = _("XNCC của {0} ngày {1}.").format(
+		message = _("Có chấm công bất thường của {0} ngày {1}.").format(
 			frappe.format_value(doc.employee_name, {"fieldtype": "Data"}) if doc.employee_name else _("(chưa rõ)"),
 			start_label,
 		)
 	else:
-		message = _("XNCC của {0} từ {1} đến {2}.").format(
+		message = _("Có chấm công bất thường của {0} từ {1} đến {2}.").format(
 			frappe.format_value(doc.employee_name, {"fieldtype": "Data"}) if doc.employee_name else _("(chưa rõ)"),
 			start_label,
 			end_label,
@@ -184,6 +184,7 @@ def _notify_confirmation(doc: Document, user: str, dates: list[date] | None = No
 	mapped_employee = frappe.db.get_value("Employee", {"user_id": user}, "name")
 	if mapped_employee and mapped_employee != doc.employee:
 		return
+	_ensure_todo_for_confirmation(doc, user, norm_dates)
 	_send_notification(doc, user, subject, message)
  
 
