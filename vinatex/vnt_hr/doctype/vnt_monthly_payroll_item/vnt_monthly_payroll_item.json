@@ -468,20 +468,22 @@
    "fieldname": "muc_luong_theo_hqcv",
    "fieldtype": "Currency",
    "label": "M\u1ee9c l\u01b0\u01a1ng theo HQCV",
-   "precision": "3"
+   "precision": "3",
+   "read_only": 1
   },
   {
    "fieldname": "muc_luong_theo_hqcv_cu",
    "fieldtype": "Currency",
    "label": "M\u1ee9c l\u01b0\u01a1ng theo HQCV c\u0169",
-   "precision": "3"
+   "precision": "3",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-18 13:35:42.552341",
+ "modified": "2025-11-19 16:32:19.164644",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Monthly Payroll Item",
