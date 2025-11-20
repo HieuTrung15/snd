@@ -198,23 +198,23 @@ def get_salary_kpi(year: int | None = None, month: int | None = None):
 	item_subquery = """
 		SELECT
 			parent,
-			SUM(COALESCE(thuc_linh, 0)) AS total_allowance_net
+			SUM(COALESCE(amount, 0)) AS total_allowance_net
 		FROM `tabVNT Salary Slip Item`
 		GROUP BY parent
 	"""
 
 	select_fields = [
-		# Thực lĩnh từ đầu năm
-		"SUM(COALESCE(slip.thuc_linh, 0)) AS year_to_date_net",
+		#tong thu nhap tu dau nam
+		"SUM(COALESCE(slip.tong_thu_nhap, 0)) AS year_to_date_net",
 		# Lương tháng hiện tại
-		"SUM(CASE WHEN slip.month = %(month)s THEN COALESCE(slip.thuc_linh, 0) ELSE 0 END) AS current_month_salary",
+		"SUM(CASE WHEN slip.month = %(month)s THEN COALESCE(slip.tong_thu_nhap, 0) ELSE 0 END) AS current_month_salary",
 	]
 
 	prev_month = ym["previous_month"]
 	if prev_month:
 		params["prev_month"] = f"{prev_month:02d}"
 		select_fields.append(
-			"SUM(CASE WHEN slip.month = %(prev_month)s THEN COALESCE(slip.thuc_linh, 0) ELSE 0 END) AS previous_month_salary"
+			"SUM(CASE WHEN slip.month = %(prev_month)s THEN COALESCE(slip.tong_thu_nhap, 0) ELSE 0 END) AS previous_month_salary"
 		)
 		select_fields.append(
 			"SUM(CASE WHEN slip.month = %(prev_month)s THEN COALESCE(item.total_allowance_net, 0) ELSE 0 END) AS previous_month_allowance"
@@ -256,20 +256,17 @@ def get_salary_kpi(year: int | None = None, month: int | None = None):
 @frappe.whitelist()
 def get_salary_table(year: int | None = None):
 	"""
-	Trả về list các dòng:
+	Trả về list các dòng chi tiết (không gộp):
 	- month
 	- year
-	- total_salary       (Tổng lương)
-	- total_allowance    (Tổng phụ cấp)
-	- total_tax          (Tổng thuế)
-	- total_net          (Thực lĩnh)
-	cho nhân sự đang login, group theo Tháng/Năm.
+	- ... các cột của slip
+	- ... các cột của item (nếu có)
+	cho nhân sự đang login.
 	"""
 
 	employee = _get_employee_of_user()
 	if not employee:
 		return
-		# frappe.throw(_("Tài khoản của bạn chưa được liên kết với hồ sơ nhân sự nào."))
 
 	conditions = ["slip.docstatus = 1", "slip.employee = %(employee)s"]
 	params = {"employee": employee}
@@ -280,52 +277,52 @@ def get_salary_table(year: int | None = None):
 
 	where_clause = " AND ".join(conditions)
 
-	# Bảng con: VNT Salary Slip Item
-	item_subquery = """
-		SELECT
-			parent,
-			SUM(COALESCE(thue_tncn, 0))  AS item_tax,
-			SUM(COALESCE(thuc_linh, 0)) AS item_net
-		FROM `tabVNT Salary Slip Item`
-		GROUP BY parent
-	"""
-
-	# Công thức:
-	# - Tổng lương      = SUM(slip.tong_thu_nhap)
-	# - Tổng phụ cấp    = SUM(pc_dang2 + pc_kiem_nhiem2 + cong_tac_phi + tien_an_ca)
-	#                     + SUM(item.item_net)
-	# - Tổng thuế       = SUM(slip.thue_tncn + slip.thue_tncn_nam_truoc) + SUM(item.item_tax)
-	# - Thực lĩnh       = SUM(slip.thuc_linh)
+	# Không group by nữa, join trực tiếp để ra từng dòng item
+	# Nếu 1 slip có n item -> ra n dòng
+	# Nếu 1 slip không có item -> ra 1 dòng (do LEFT JOIN), các cột item là NULL -> xử lý COALESCE về 0 hoặc để trống
 	sql = f"""
 		SELECT
 			slip.year,
 			slip.month,
-			SUM(COALESCE(slip.tong_thu_nhap, 0)) AS total_salary,
-			SUM(
+			-- Thông tin từ Slip
+			slip.tong_thu_nhap AS slip_salary,
+			(
 				COALESCE(slip.pc_dang2, 0)
 			  + COALESCE(slip.pc_kiem_nhiem2, 0)
 			  + COALESCE(slip.cong_tac_phi, 0)
 			  + COALESCE(slip.tien_an_ca, 0)
-			) + SUM(COALESCE(item.item_net, 0)) AS total_allowance,
-			SUM(
+			) AS slip_allowance,
+			(
 				COALESCE(slip.thue_tncn, 0)
 			  + COALESCE(slip.thue_tncn_nam_truoc, 0)
-			) + SUM(COALESCE(item.item_tax, 0)) AS total_tax,
-			SUM(COALESCE(slip.thuc_linh, 0)) AS total_net
+			) AS slip_tax,
+			slip.thuc_linh AS slip_net,
+
+			-- Thông tin từ Item (bảng con)
+			item.allowance_type,
+			item.amount AS item_amount,
+			item.thue_tncn AS item_tax,
+			item.thuc_linh AS item_net
+
 		FROM `tabVNT Salary Slip` AS slip
-		LEFT JOIN ({item_subquery}) AS item ON item.parent = slip.name
+		LEFT JOIN `tabVNT Salary Slip Item` AS item ON item.parent = slip.name
 		WHERE {where_clause}
-		GROUP BY slip.year, slip.month
-		ORDER BY slip.year, slip.month
+		ORDER BY slip.year, slip.month, item.idx
 	"""
 
 	rows = frappe.db.sql(sql, params, as_dict=True)
 
 	# Chuyển month dạng "01" / "1" về int cho dễ đọc
 	for row in rows:
-		try:
-			row["month"] = cint(row.get("month"))
-		except Exception:
-			pass
+		# try:
+		# 	row["month"] = cint(row.get("month"))
+		# except Exception:
+		# 	pass
+		
+		# Xử lý các field item nếu null (do left join mà ko có item)
+		if row.get("item_amount") is None: row["item_amount"] = 0
+		if row.get("item_tax") is None: row["item_tax"] = 0
+		if row.get("item_net") is None: row["item_net"] = 0
+		if row.get("allowance_type") is None: row["allowance_type"] = ""
 
 	return rows
