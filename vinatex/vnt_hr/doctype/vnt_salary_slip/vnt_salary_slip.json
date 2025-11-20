@@ -74,9 +74,8 @@
   },
   {
    "fieldname": "month",
-   "fieldtype": "Select",
-   "label": "Th\u00e1ng l\u01b0\u01a1ng",
-   "options": "01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12"
+   "fieldtype": "Data",
+   "label": "Th\u00e1ng l\u01b0\u01a1ng"
   },
   {
    "fieldname": "year",
@@ -348,7 +347,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-19 09:43:51.970037",
+ "modified": "2025-11-20 11:05:35.860438",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Salary Slip",
