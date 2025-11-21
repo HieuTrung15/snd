@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import frappe
 from frappe import _
-from frappe.utils import cint, now_datetime
+from frappe.utils import cint, now_datetime,cstr
 
 
 def execute(filters=None):
@@ -326,3 +326,108 @@ def get_salary_table(year: int | None = None):
 		if row.get("allowance_type") is None: row["allowance_type"] = ""
 
 	return rows
+
+@frappe.whitelist()
+def get_salary_chart(year: int | None = None):
+	"""
+	Trả về dữ liệu cho Highcharts:
+	- categories: ["Tháng 1", ..., "Tháng 12"]
+	- salary: tổng lương từng tháng (từ slip.tong_thu_nhap)
+	- allowance: tổng phụ cấp từng tháng (từ item.amount)
+	- total_salary_year, total_allowance_year: tổng cả năm
+	"""
+
+	employee = _get_employee_of_user()
+	if not employee:
+		return
+
+	if not year:
+		year = now_datetime().year
+
+	params = {
+		"employee": employee,
+		"year": cint(year),
+	}
+
+	# --- 1) LƯƠNG THEO THÁNG (chỉ từ bảng chính, không join item) ---
+	sql_salary = """
+		SELECT
+			slip.month,
+			SUM(COALESCE(slip.tong_thu_nhap, 0)) AS salary
+		FROM `tabVNT Salary Slip` AS slip
+		WHERE slip.docstatus = 1
+		  AND slip.year = %(year)s
+		  AND slip.employee = %(employee)s
+		GROUP BY slip.month
+	"""
+
+	# --- 2) PHỤ CẤP THEO THÁNG (từ bảng con) ---
+	sql_allowance = """
+		SELECT
+			slip.month,
+			SUM(COALESCE(item.amount, 0)) AS allowance
+		FROM `tabVNT Salary Slip` AS slip
+		LEFT JOIN `tabVNT Salary Slip Item` AS item
+			ON item.parent = slip.name
+		WHERE slip.docstatus = 1
+		  AND slip.year = %(year)s
+		  AND slip.employee = %(employee)s
+		GROUP BY slip.month
+	"""
+
+	salary_rows = frappe.db.sql(sql_salary, params, as_dict=True)
+	allow_rows = frappe.db.sql(sql_allowance, params, as_dict=True)
+
+	monthly: dict[int, dict[str, float]] = {}
+
+	# Gộp lương theo tháng
+	for row in salary_rows:
+		month_str = cstr(row.get("month") or "").strip()
+		if not month_str:
+			continue
+		try:
+			m = cint(month_str)
+		except Exception:
+			continue
+		if not m:
+			continue
+
+		monthly.setdefault(m, {})
+		monthly[m]["salary"] = row.get("salary") or 0
+
+	# Gộp phụ cấp theo tháng
+	for row in allow_rows:
+		month_str = cstr(row.get("month") or "").strip()
+		if not month_str:
+			continue
+		try:
+			m = cint(month_str)
+		except Exception:
+			continue
+		if not m:
+			continue
+
+		monthly.setdefault(m, {})
+		monthly[m]["allowance"] = row.get("allowance") or 0
+
+	categories: list[str] = []
+	salary_values: list[float] = []
+	allowance_values: list[float] = []
+
+	for m in range(1, 13):
+		categories.append(_("Tháng {0}").format(m))
+		data = monthly.get(m, {})
+		salary_values.append(data.get("salary", 0) or 0)
+		allowance_values.append(data.get("allowance", 0) or 0)
+
+	total_salary = sum(salary_values)
+	total_allowance = sum(allowance_values)
+
+	return {
+		"year": cint(year),
+		"categories": categories,
+		"salary": salary_values,
+		"allowance": allowance_values,
+		"total_salary_year": total_salary,
+		"total_allowance_year": total_allowance,
+	}
