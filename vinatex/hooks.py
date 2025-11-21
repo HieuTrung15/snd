@@ -30,6 +30,7 @@ app_include_css = "/assets/vinatex/css/theme.css"
 app_include_js = [
 	"/assets/vinatex/js/title-wrap.js",
 	"/assets/vinatex/js/report_actions_override.js",
+	"/assets/vinatex/js/fullWidth.js",
 ]
 
 # include js, css files in header of web template
