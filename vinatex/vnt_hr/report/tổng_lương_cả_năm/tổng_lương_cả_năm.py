@@ -3,9 +3,15 @@
 
 from __future__ import annotations
 
+import math
+from calendar import monthrange
+from datetime import date
+
 import frappe
 from frappe import _
-from frappe.utils import cint, now_datetime,cstr
+from frappe.utils import cint, cstr, flt, now_datetime
+
+from vinatex.vnt_hr.doctype.vnt_monthly_payroll.vnt_monthly_payroll import compute_item as compute_monthly_payroll_item
 
 
 def execute(filters=None):
@@ -66,6 +72,296 @@ def _get_employee_of_user() -> str | None:
 		"name",
 	)
 
+
+def _get_monthly_payroll_net_income(employee: str, month: int | str, year: int | str, company: str | None = None) -> float | None:
+	"""
+	Tính lương tháng theo công thức VNT Monthly Payroll (compute_item + công thức JS applyPayrollPayload).
+	Dùng trực tiếp dữ liệu chấm công/contract/salary history → không phụ thuộc salary slip.
+	"""
+	if not (employee and month and year):
+		return None
+
+	try:
+		payload = compute_monthly_payroll_item(
+			employee=employee,
+			company=company,
+			month=cint(month),
+			year=cint(year),
+		)
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "Annual salary: compute_item failed")
+		return None
+
+	if not payload:
+		return None
+
+	employee_ctx = _get_employee_payroll_fields(employee)
+	if not employee_ctx:
+		return None
+
+	try:
+		return _calculate_net_from_payload(employee_ctx, payload, cint(year), cint(month))
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "Annual salary: net computation failed")
+		return None
+
+
+def _get_employee_payroll_fields(employee: str) -> dict:
+	if not employee:
+		return {}
+
+	row = frappe.db.get_value(
+		"Employee",
+		employee,
+		[
+			"custom_basic_salary_coefficient",
+			"custom_allowance_coefficient_1",
+			"custom_allowance_coefficient_2",
+			"custom_no_social_insurance",
+			"custom_party_member",
+			"custom_relation_number",
+			"employment_type",
+		],
+		as_dict=True,
+	)
+	if not row:
+		return {}
+
+	return {
+		"hs_luong_cb": flt(row.custom_basic_salary_coefficient),
+		"hs_pc_dang_1": flt(row.custom_allowance_coefficient_1),
+		"hs_pc_kiem_nhiem1": flt(row.custom_allowance_coefficient_2),
+		"bhxh": row.custom_no_social_insurance or "",
+		"dang_vien": row.custom_party_member or "",
+		"so_npt": cint(row.custom_relation_number or 0),
+		"employment_type": row.employment_type or "",
+	}
+
+
+def _js_round(value: float) -> int:
+	try:
+		val = float(value)
+	except Exception:
+		return 0
+	if val >= 0:
+		return int(math.floor(val + 0.5))
+	return int(math.ceil(val - 0.5))
+
+
+def _get_standard_working_days_py(year: int, month: int) -> int:
+	"""Số ngày công chuẩn (trừ T7-CN) giống hàm JS get_standard_working_days."""
+	if not (year and month):
+		return 0
+	working = 0
+	total_days = monthrange(year, month)[1]
+	for day in range(1, total_days + 1):
+		dow = date(year, month, day).weekday()  # Mon=0 ... Sun=6
+		if dow not in (5, 6):
+			working += 1
+	return working
+
+
+def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, month: int) -> float:
+	standard_days = _get_standard_working_days_py(year, month)
+	if not standard_days:
+		return 0.0
+
+	# Các hệ số/flag lấy từ hồ sơ nhân sự
+	hs_luong_cb = flt(employee_ctx.get("hs_luong_cb"))
+	hs_pc_dang_1 = flt(employee_ctx.get("hs_pc_dang_1"))
+	hs_pc_kiem_nhiem1 = flt(employee_ctx.get("hs_pc_kiem_nhiem1"))
+	bhxh_flag = employee_ctx.get("bhxh") or ""
+	dang_vien = (employee_ctx.get("dang_vien") or "").strip()
+	so_npt = cint(employee_ctx.get("so_npt") or 0)
+	emp_contract_type = (employee_ctx.get("employment_type") or "").strip()
+
+	reference_salary = flt(payload.get("reference_salary"))
+	regional_minimum_wage = flt(payload.get("regional_minimum_wage"))
+	corporate_minimum_wage = flt(payload.get("corporate_minimum_wage"))
+	meal_allowance = flt(payload.get("meal_allowance"))
+	travel_allowance = flt(payload.get("travel_allowance"))
+
+	so_phep = flt(payload.get("so_phep"))
+	so_ngay_nghi_vr = flt(payload.get("so_ngay_nghi_vr"))
+	nghi_kluong_bhxh = flt(payload.get("nghi_kluong_bhxh"))
+
+	current_working_days = flt(payload.get("current_working_days") or payload.get("ngaycong"))
+	previous_working_days = flt(payload.get("previous_working_days"))
+
+	current_contract_type = (payload.get("current_contract_type") or emp_contract_type or "").strip()
+	previous_contract_type = (payload.get("previous_contract_type") or "").strip()
+
+	latest_salary_coefficient = payload.get("latest_salary_coefficient")
+	current_salary_coefficient = payload.get("current_salary_coefficient")
+	previous_salary_coefficient = payload.get("previous_salary_coefficient")
+
+	latest_salary_amount = payload.get("latest_salary_amount")
+	current_salary_amount = payload.get("current_salary_amount")
+	previous_salary_amount = payload.get("previous_salary_amount")
+
+	# Hệ số & mức lương theo hợp đồng
+	if current_salary_coefficient is not None:
+		he_so_cbnv = flt(current_salary_coefficient)
+	elif latest_salary_coefficient is not None:
+		he_so_cbnv = flt(latest_salary_coefficient)
+	else:
+		he_so_cbnv = 0
+
+	if current_salary_amount is not None:
+		muc_luong_theo_hqcv = flt(current_salary_amount)
+	elif latest_salary_amount is not None:
+		muc_luong_theo_hqcv = flt(latest_salary_amount)
+	else:
+		muc_luong_theo_hqcv = 0
+
+	muc_luong_theo_hqcv_cu = 0.0
+	if previous_working_days > 0 and previous_salary_amount is not None:
+		muc_luong_theo_hqcv_cu = flt(previous_salary_amount)
+
+	# Lương cơ bản & phụ cấp 1
+	luong_cb = regional_minimum_wage * hs_luong_cb
+	pc_dang1 = regional_minimum_wage * hs_pc_dang_1
+	pc_kiem_nhiem1 = regional_minimum_wage * hs_pc_kiem_nhiem1
+
+	# Tổng lương tính BHXH (giới hạn 20 * reference_salary)
+	if bhxh_flag == "3. Không đóng BHXH & ĐPCĐ":
+		tong_luong_cb = 0
+	else:
+		gross_base = luong_cb + pc_dang1 + pc_kiem_nhiem1
+		max_base = reference_salary * 20 if reference_salary else gross_base
+		tong_luong_cb = min(gross_base, max_base)
+
+	excluded_contracts = {
+		"Hợp đồng thử việc",
+		"Hợp đồng tập nghề",
+		"Hợp đồng đào tạo nghề",
+		"Hợp đồng học nghề",
+	}
+
+	total_days_for_bhxh = (
+		current_working_days + previous_working_days + so_phep + so_ngay_nghi_vr
+	)
+	type_now_excluded = current_contract_type in excluded_contracts
+	type_old_excluded = previous_contract_type in excluded_contracts
+	allow_override_bhxh = False
+
+	if bhxh_flag == "3. Không đóng BHXH & ĐPCĐ":
+		tru_bhxh = 0
+	elif (not type_now_excluded and not type_old_excluded) and (total_days_for_bhxh >= 14 or allow_override_bhxh):
+		tru_bhxh = tong_luong_cb * 0.08
+	else:
+		tru_bhxh = 0
+
+	tru_bhyt = 0 if employee_ctx.get("bhyt") else tong_luong_cb * 0.015
+	tru_bhtn = 0 if employee_ctx.get("bhtn") else tong_luong_cb * 0.01
+	xh_yt_tn = tru_bhxh + tru_bhyt + tru_bhtn
+
+	doan_phi_cd = tong_luong_cb * 0.005
+
+	# Lương nghỉ phép & ngày VR
+	luong_nghiphep_vr = 0
+	if standard_days:
+		luong_nghiphep_vr = (luong_cb / standard_days) * (so_phep + so_ngay_nghi_vr)
+
+	# Lương HQCV hiện tại & cũ
+	tien_luong_hqcv = 0
+	tien_luong_hqcv_cu = 0
+	if standard_days:
+		tien_luong_hqcv = (muc_luong_theo_hqcv / standard_days) * current_working_days
+		if previous_working_days > 0 and previous_salary_coefficient is not None:
+			tien_luong_hqcv_cu = (muc_luong_theo_hqcv_cu / standard_days) * previous_working_days
+
+	# Tiền ăn ca
+	tien_an = 0
+	if standard_days:
+		tien_an = (meal_allowance / standard_days) * _js_round(current_working_days + previous_working_days)
+
+	# Phụ cấp loại 2
+	pc_dang2 = hs_pc_dang_1 * corporate_minimum_wage
+	pc_kiem_nhiem2 = hs_pc_kiem_nhiem1 * corporate_minimum_wage
+
+	# Công tác phí
+	tien_khoan_ct = 0 if bhxh_flag == "3. Không đóng BHXH & ĐPCĐ" else travel_allowance
+
+	tong_thu_nhap = (
+		pc_dang2
+		+ pc_kiem_nhiem2
+		+ luong_nghiphep_vr
+		+ tien_luong_hqcv
+		+ tien_an
+		+ tien_khoan_ct
+		+ flt(payload.get("truylinh"))
+		+ tien_luong_hqcv_cu
+	)
+
+	tong_tn_chiu_thue = tong_thu_nhap - tien_an - tien_khoan_ct
+
+	dang_phi = tong_tn_chiu_thue * 0.01 if dang_vien == "Chính thức" else 0
+
+	# Thu nhập tính thuế
+	formal_contracts = {
+		"Hợp đồng thử việc",
+		"Hợp đồng học nghề",
+		"Hợp đồng đào tạo nghề",
+		"Hợp đồng tập nghề",
+	}
+	long_term_contracts = {
+		"HĐLĐ xác định thời hạn",
+		"HĐLĐ không xác định thời hạn",
+		"Không giao kết HĐLĐ",
+	}
+
+	taxable_income = 0
+	if current_contract_type in formal_contracts:
+		if tong_tn_chiu_thue > 2_000_000:
+			taxable_income = tong_tn_chiu_thue
+		else:
+			taxable_income = 0
+	elif current_contract_type in long_term_contracts:
+		_base = (
+			tong_tn_chiu_thue
+			- tru_bhxh
+			- tru_bhyt
+			- tru_bhtn
+			- (flt(payload.get("giam_tru_npt")) * so_npt)
+			- flt(payload.get("giam_tru_gia_canh"))
+		)
+		taxable_income = max(0, _base)
+
+	# Thuế TNCN lũy tiến
+	brackets = []
+	for b in payload.get("tax_brackets") or []:
+		rate = flt(b.get("rate") or b.get("percent"))
+		from_ = flt(b.get("from") or b.get("from_cur"))
+		to_ = b.get("to") if b.get("to") not in (None, "") else b.get("to_cur")
+		to_val = float("inf") if to_ in (None, "", 0) else flt(to_)
+		if rate > 0 and to_val > from_:
+			brackets.append({"rate": rate, "from": from_, "to": to_val})
+	brackets = sorted(brackets, key=lambda b: b["from"])
+
+	total_tax = 0.0
+	for b in brackets:
+		if taxable_income <= b["from"]:
+			break
+		upper = min(taxable_income, b["to"])
+		chunk = max(0, upper - b["from"])
+		if chunk > 0:
+			total_tax += chunk * (b["rate"] / 100.0)
+	tncn_tam_thu = _js_round(total_tax)
+
+	thuc_linh = (
+		tong_thu_nhap
+		- xh_yt_tn
+		- doan_phi_cd
+		- dang_phi
+		- tncn_tam_thu
+		- flt(payload.get("khac"))
+		- flt(payload.get("truy_thu"))
+		+ flt(payload.get("duoc_hoan_lai"))
+	)
+	return flt(thuc_linh)
+
+
 @frappe.whitelist()
 def _get_data(filters: dict):
 	conditions = ["slip.docstatus = 1", "slip.year = %(year)s"]
@@ -74,9 +370,7 @@ def _get_data(filters: dict):
 		"month": f"{filters['month']:02d}",
 	}
 
-	current_month_case = """
-			SUM(CASE WHEN slip.month = %(month)s THEN COALESCE(slip.thuc_linh, 0) ELSE 0 END) AS current_month_net_income,
-	"""
+	current_month_case = "0 AS current_month_net_income,"
 
 	prev_month = filters.get("previous_month")
 	if prev_month:
@@ -131,6 +425,13 @@ def _get_data(filters: dict):
 		row["employee_name"] = row.get("employee_name") or row.get("employee")
 		row["company"] = row.get("company") or ""
 		row["department"] = row.get("department") or ""
+		current_month_net = _get_monthly_payroll_net_income(
+			row.get("employee"),
+			filters.get("month"),
+			filters.get("year"),
+			row.get("company"),
+		)
+		row["current_month_net_income"] = current_month_net if current_month_net is not None else 0
 	return results
 
 # Nếu file này chưa có 2 hàm dưới thì giữ lại, nếu có rồi thì khỏi thêm
