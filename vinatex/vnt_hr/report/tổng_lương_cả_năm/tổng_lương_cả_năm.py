@@ -351,13 +351,6 @@ def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, mo
 
 	thuc_linh = (
 		tong_thu_nhap
-		- xh_yt_tn
-		- doan_phi_cd
-		- dang_phi
-		- tncn_tam_thu
-		- flt(payload.get("khac"))
-		- flt(payload.get("truy_thu"))
-		+ flt(payload.get("duoc_hoan_lai"))
 	)
 	return flt(thuc_linh)
 
@@ -537,13 +530,21 @@ def get_salary_kpi(year: int | None = None, month: int | None = None):
 
 	result = frappe.db.sql(sql, params, as_dict=True)
 	row = result[0] if result else {}
-
+		# lương tháng hiện tại
+	now_dt = now_datetime()
+	emp_company = frappe.db.get_value("Employee", employee, "company")
+	salary_current_month = _get_monthly_payroll_net_income(
+		employee,
+		now_dt.month,
+		now_dt.year,
+		emp_company,
+	) or 0
 	return {
 		# 4 KPI
 		"year_to_date_net": row.get("year_to_date_net") or 0,
 		"previous_month_salary": row.get("previous_month_salary") or 0,
 		"previous_month_allowance": row.get("previous_month_allowance") or 0,
-		"current_month_salary": row.get("current_month_salary") or 0,
+		"salary_current_month": salary_current_month or 0,
 		# Thông tin context cho front-end
 		"employee": employee,
 		"employee_name": emp_doc.get("employee_name") or "",
