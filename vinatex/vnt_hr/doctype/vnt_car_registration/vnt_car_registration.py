@@ -56,6 +56,9 @@ def _handle_state_transition(doc: Document):
 		_notify_to_employee(doc, "duyệt")
 	if (prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Từ chối'):
 		_notify_to_employee(doc, "từ chối")
+
+	if prev_state == "Mới tạo" and curr_state == "Đã duyệt":
+		_notify_to_user_receive(doc)
 	
 	if curr_state == 'Từ chối':
 		_check_state_to_close_todo(doc, user=approver_user)

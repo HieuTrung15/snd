@@ -98,7 +98,7 @@ class VntLeaveApplication(LeaveApplication):
 		self.validate_attendance()
 		super().validate()
 		 # kiểm tra gửi đơn nghỉ phép năm, nghỉ không hưởng lương, lao động nam nghỉ do có vợ sinh con trước bao nhiêu ngày
-		days_notice = 0
+		# days_notice = 0
 		# if getattr(self, "leave_type", None) == 'Nghỉ phép năm' and getattr(self, "from_date", None) and getattr(self, "to_date", None):
 		# 	days_diff = date_diff(self.from_date, self.to_date)
 		# 	# "Nghỉ 02 ngày phải gửi đơn trước 01 ngày.
@@ -112,29 +112,29 @@ class VntLeaveApplication(LeaveApplication):
 		# 		days_notice = 14
 		# 	if date_diff(self.from_date, frappe.utils.nowdate()) < days_notice:
 		# 		frappe.throw(_("Đơn nghỉ phép năm từ {0} ngày trở lên phải gửi trước ít nhất {1} ngày. Vui lòng kiểm tra lại.").format(days_diff, days_notice))
-		if getattr(self, "leave_type", None) == 'Nghỉ không hưởng lương' and getattr(self, "from_date", None) and getattr(self, "to_date", None):
-			days_diff = date_diff(self.to_date, self.from_date) + 1
+		# if getattr(self, "leave_type", None) == 'Nghỉ không hưởng lương' and getattr(self, "from_date", None) and getattr(self, "to_date", None):
+		# 	days_diff = date_diff(self.to_date, self.from_date) + 1
 			# "Nghỉ dưới 7 ngày báo trước ít nhất 3 ngày.
 			# Nghỉ trên 7 ngày báo trước ít nhất 14 ngày."
-			if days_diff < 7:
-				days_notice = 3
-			else:
-				days_notice = 14
-			if date_diff(self.from_date, frappe.utils.nowdate()) < days_notice:
-				frappe.throw(_("Đơn nghỉ không hưởng lương từ {0} ngày trở lên phải gửi trước ít nhất {1} ngày. Vui lòng kiểm tra lại.").format(days_diff, days_notice))
-		if getattr(self, "leave_type", None) == 'Lao động nam nghỉ do có vợ sinh con' and getattr(self, "from_date", None) and getattr(self, "to_date", None):
+		# 	if days_diff < 7:
+		# 		days_notice = 3
+		# 	else:
+		# 		days_notice = 14
+		# 	if date_diff(self.from_date, frappe.utils.nowdate()) < days_notice:
+		# 		frappe.throw(_("Đơn nghỉ không hưởng lương từ {0} ngày trở lên phải gửi trước ít nhất {1} ngày. Vui lòng kiểm tra lại.").format(days_diff, days_notice))
+		# if getattr(self, "leave_type", None) == 'Lao động nam nghỉ do có vợ sinh con' and getattr(self, "from_date", None) and getattr(self, "to_date", None):
 			# "Nghỉ 02 ngày phải gửi đơn trước 01 ngày.
 			# Nghỉ từ 03 - 06 ngày, phải gửi đơn trước ít nhất 03 ngày.
 			# Nghỉ từ 07 ngày trở lên, phải gửi đơn trước ít nhất 14 ngày."
-			days_diff = date_diff(self.from_date, self.to_date) + 1
-			if days_diff == 2:
-				days_notice = 1
-			elif 3 <= days_diff <= 6:
-				days_notice = 3 
-			elif days_diff >= 7:
-				days_notice = 14
-			if date_diff(self.from_date, frappe.utils.nowdate()) < days_notice:
-				frappe.throw(_("Đơn nghỉ lao động nam do có vợ sinh con từ {0} ngày trở lên phải gửi trước ít nhất {1} ngày. Vui lòng kiểm tra lại.").format(days_diff, days_notice), indicator='orange')
+			# days_diff = date_diff(self.from_date, self.to_date) + 1
+			# if days_diff == 2:
+			# 	days_notice = 1
+			# elif 3 <= days_diff <= 6:
+			# 	days_notice = 3 
+			# elif days_diff >= 7:
+			# 	days_notice = 14
+			# if date_diff(self.from_date, frappe.utils.nowdate()) < days_notice:
+			# 	frappe.throw(_("Đơn nghỉ lao động nam do có vợ sinh con từ {0} ngày trở lên phải gửi trước ít nhất {1} ngày. Vui lòng kiểm tra lại.").format(days_diff, days_notice), indicator='orange')
 
 
 def _handle_state_transition(doc: Document):
