@@ -68,7 +68,7 @@ class VNTMonthlyPayroll(Document):
             slip_doc.flags.ignore_permissions = True
             if slip_doc.docstatus == 1:
                 slip_doc.cancel()
-            slip_doc.delete(ignore_permissions=True)
+            # slip_doc.delete(ignore_permissions=True)
 
     def _cancel_existing_salary_slips(self, employee):
         if not (self.month and self.year):
@@ -90,8 +90,8 @@ class VNTMonthlyPayroll(Document):
             slip_doc.flags.ignore_permissions = True
             if slip_doc.docstatus == 1:
                 slip_doc.cancel()
-            else:
-                slip_doc.delete(ignore_permissions=True)
+            # else:
+            #     slip_doc.delete(ignore_permissions=True)
 
     def _build_salary_slip_name(self, employee):
         month = (self.month or "").zfill(2)
