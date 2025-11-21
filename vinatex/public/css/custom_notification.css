@@ -1,0 +1,33 @@
+/* Container của chuông + badge */
+.notifications-icon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Tăng size icon chuông lên 24px */
+.vnt-bell {
+    width: 24px;       /* bigger icon */
+    height: 24px;
+    fill: #6c757d;
+}
+
+/* Badge số: nhỏ hơn icon và nằm góc trên-phải */
+.vnt-notification-badge {
+    position: absolute;
+    top: -4px;         /* đẩy lên một chút so với icon */
+    right: -4px;       /* lệch phải hơn để không đè lên chuông */
+    background: #dc3545;
+    color: #fff;
+    font-size: 9px;
+    min-width: 14px;
+    height: 14px;
+    line-height: 14px;
+    text-align: center;
+    border-radius: 999px;
+    font-weight: 600;
+    padding: 0 4px;
+    pointer-events: none;
+    z-index: 2;
+}

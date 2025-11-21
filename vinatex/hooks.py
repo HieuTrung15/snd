@@ -26,11 +26,15 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/vinatex/css/chart.css"
-app_include_css = "/assets/vinatex/css/theme.css"
+app_include_css = [
+    "/assets/vinatex/css/theme.css",
+    "/assets/vinatex/css/custom_notification.css"
+]
 app_include_js = [
 	"/assets/vinatex/js/title-wrap.js",
 	"/assets/vinatex/js/report_actions_override.js",
 	"/assets/vinatex/js/fullWidth.js",
+    "/assets/vinatex/js/custom_notification.js",
 ]
 
 # include js, css files in header of web template
