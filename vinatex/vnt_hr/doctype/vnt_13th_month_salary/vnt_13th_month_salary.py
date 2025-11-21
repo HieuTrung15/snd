@@ -6,12 +6,112 @@ from __future__ import annotations
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint, flt, getdate
+from frappe.utils import cint, flt, getdate, now_datetime
 
 MONTH_FIELD_MAP = {idx: f"t{idx}" for idx in range(1, 13)}
 
 
 class VNT13thMonthSalary(Document):
+    def on_submit(self):
+        self.create_salary_slips()
+
+    def on_cancel(self):
+        self.delete_salary_slips()
+
+    def create_salary_slips(self):
+        """Create salary slip per employee using key fields from 13th-month payroll."""
+        self._validate_salary_slip_context()
+
+        if not self.items:
+            return
+
+        processed_employees = set()
+        for item in self.items:
+            employee = (item.employee or "").strip()
+            if not employee or employee in processed_employees:
+                continue
+
+            processed_employees.add(employee)
+            self._cancel_existing_salary_slip(employee)
+
+            slip_doc = frappe.new_doc("VNT Salary Slip")
+            slip_doc.flags.ignore_permissions = True
+            slip_doc.employee = employee
+            slip_doc.month = self.luong_thang
+            slip_doc.year = self.year
+            slip_doc.tong_thu_nhap = flt(item.tien_luong_bo_sung)
+            slip_doc.thue_tncn = flt(item.thue_tam_thu)
+            slip_doc.thuc_linh = flt(item.thu_nhap_thuc_linh)
+
+            slip_doc.set_new_name(self._build_salary_slip_name(employee))
+            slip_doc.insert(ignore_permissions=True)
+            slip_doc.submit()
+
+    def delete_salary_slips(self):
+        """Cancel & delete salary slips created for the same context."""
+        if not (self.luong_thang and self.year):
+            return
+
+        employee_codes = [row.employee for row in (self.items or []) if row.employee]
+        if not employee_codes:
+            return
+
+        slips = frappe.get_all(
+            "VNT Salary Slip",
+            filters={
+                "month": self.luong_thang,
+                "year": self.year,
+                "employee": ("in", employee_codes),
+                "docstatus": ("!=", 2),
+            },
+            fields=["name", "docstatus"],
+        )
+
+        for slip in slips:
+            slip_doc = frappe.get_doc("VNT Salary Slip", slip.name)
+            slip_doc.flags.ignore_permissions = True
+            if slip_doc.docstatus == 1:
+                slip_doc.cancel()
+            #slip_doc.delete(ignore_permissions=True)
+
+    def _cancel_existing_salary_slip(self, employee: str):
+        """Cancel/delete existing slip for the employee in the same month/year."""
+        if not (self.luong_thang and self.year and employee):
+            return
+
+        existing_slips = frappe.get_all(
+            "VNT Salary Slip",
+            filters={
+                "employee": employee,
+                "month": self.luong_thang,
+                "year": self.year,
+                "docstatus": ("in", [0, 1]),
+            },
+            fields=["name", "docstatus"],
+        )
+
+        for slip in existing_slips:
+            slip_doc = frappe.get_doc("VNT Salary Slip", slip.name)
+            slip_doc.flags.ignore_permissions = True
+            if slip_doc.docstatus == 1:
+                slip_doc.cancel()
+            else:
+                slip_doc.delete(ignore_permissions=True)
+
+    def _build_salary_slip_name(self, employee: str):
+        """Build a unique slip name including employee, year, and payroll month."""
+        month_part = (self.luong_thang or "").strip()
+        year_part = str(self.year or "").strip()
+        suffix = now_datetime().strftime("%Y%m%d%H%M%S")
+        unique_part = frappe.generate_hash(length=4)
+        return f"{employee}-{year_part}{month_part}-{suffix}{unique_part}"
+
+    def _validate_salary_slip_context(self):
+        if not self.luong_thang:
+            frappe.throw(_("Vui lòng chọn Lương tháng trước khi submit phiếu."))
+        if not self.year:
+            frappe.throw(_("Vui lòng nhập Năm trước khi submit phiếu."))
+
     @frappe.whitelist()
     def get_emp_list(self):
         """Return employee rows enriched with monthly net salary."""
