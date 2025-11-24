@@ -41,11 +41,13 @@
   "xh_yt_tn",
   "cong_doan",
   "column_break_zajn",
-  "thue_tncn",
-  "thue_tncn_nam_truoc",
-  "thuc_linh",
-  "section_break_nyeq",
-  "items",
+ "thue_tncn",
+ "thue_tncn_nam_truoc",
+ "thuc_linh",
+ "tong_thu_nhap_encrypted",
+ "thuc_linh_encrypted",
+ "section_break_nyeq",
+ "items",
   "section_break_aisw",
   "tong_phu_cap",
   "column_break_ejjw",
@@ -243,7 +245,7 @@
   },
   {
    "fieldname": "tong_thu_nhap",
-   "fieldtype": "Currency",
+   "fieldtype": "Data",
    "label": "T\u1ed5ng thu nh\u1eadp",
    "precision": "3"
   },
@@ -282,9 +284,23 @@
   },
   {
    "fieldname": "thuc_linh",
-   "fieldtype": "Currency",
+   "fieldtype": "Data",
    "label": "Th\u1ef1c l\u0129nh",
    "precision": "3"
+  },
+  {
+   "fieldname": "tong_thu_nhap_encrypted",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "T\u1ed5ng thu nh\u1eadp (m\u00e3 h\u00f3a)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "thuc_linh_encrypted",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Th\u1ef1c l\u0129nh (m\u00e3 h\u00f3a)",
+   "read_only": 1
   },
   {
    "fieldname": "amended_from",
@@ -347,7 +363,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-20 11:05:35.860438",
+ "modified": "2025-11-24 15:41:01.788447",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Salary Slip",
