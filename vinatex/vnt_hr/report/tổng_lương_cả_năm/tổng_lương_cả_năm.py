@@ -741,3 +741,111 @@ def get_salary_chart(year: int | None = None):
 		"total_salary_year": total_salary,
 		"total_allowance_year": total_allowance,
 	}
+
+def _round0(value):
+    """Làm tròn về số nguyên, không lấy phần thập phân."""
+    return cint(flt(value or 0, 0))
+
+
+@frappe.whitelist()
+def get_company_salary_kpi(year: int | None = None,
+                           month: int | None = None,
+                           company: str | None = None):
+    """
+    Trả về 4 KPI tổng của cả công ty trong VNT Salary Slip (docstatus = 1):
+
+    - total_year_salary: Tổng lương cả năm
+    - total_prev_month_salary: Tổng lương tháng trước
+    - total_allowance: Tổng phụ cấp cả năm
+    - total_to_date_salary: Tổng lương từ đầu năm đến tháng hiện tại
+    """
+
+    now_dt = now_datetime()
+    if year is None:
+        year = now_dt.year
+    if month is None:
+        month = now_dt.month
+
+    prev_month = month - 1 if month > 1 else None
+
+    item_subquery = """
+        SELECT
+            parent,
+            SUM(COALESCE(amount, 0)) AS total_allowance_net
+        FROM `tabVNT Salary Slip Item`
+        GROUP BY parent
+    """
+
+    params = {
+        "year": year,
+        "month": f"{month:02d}",
+    }
+
+    conditions = [
+        "slip.docstatus = 1",
+        "slip.year = %(year)s",
+    ]
+
+    if company:
+        conditions.append("slip.company = %(company)s")
+        params["company"] = company
+
+    select_fields = [
+        # 1. Tổng lương cả năm
+        "SUM(COALESCE(slip.tong_thu_nhap, 0)) AS total_year_salary",
+
+        # 2. Tổng lương từ đầu năm đến tháng hiện tại
+        """
+        SUM(
+            CASE
+                WHEN CAST(slip.month AS UNSIGNED) <= CAST(%(month)s AS UNSIGNED)
+                THEN COALESCE(slip.tong_thu_nhap, 0)
+                ELSE 0
+            END
+        ) AS total_to_date_salary
+        """,
+
+        # 3. Tổng phụ cấp cả năm
+        "SUM(COALESCE(item.total_allowance_net, 0)) AS total_allowance",
+    ]
+
+    # 4. Tổng lương tháng trước
+    if prev_month:
+        params["prev_month"] = f"{prev_month:02d}"
+        select_fields.append(
+            """
+            SUM(
+                CASE
+                    WHEN slip.month = %(prev_month)s
+                    THEN COALESCE(slip.tong_thu_nhap, 0)
+                    ELSE 0
+                END
+            ) AS total_prev_month_salary
+            """
+        )
+    else:
+        select_fields.append("0 AS total_prev_month_salary")
+
+    sql = f"""
+        SELECT
+            {", ".join(select_fields)}
+        FROM `tabVNT Salary Slip` AS slip
+        LEFT JOIN ({item_subquery}) AS item ON item.parent = slip.name
+        WHERE {" AND ".join(conditions)}
+    """
+
+    res = frappe.db.sql(sql, params, as_dict=True)
+    row = res[0] if res else {}
+
+    return {
+        "year": year,
+        "month": month,
+        "previous_month": prev_month,
+        "company": company or "",
+
+        # LÀM TRÒN 0 DECIMAL Ở ĐÂY
+        "total_year_salary": _round0(row.get("total_year_salary")),
+        "total_prev_month_salary": _round0(row.get("total_prev_month_salary")),
+        "total_allowance": _round0(row.get("total_allowance")),
+        "total_to_date_salary": _round0(row.get("total_to_date_salary")),
+    }
