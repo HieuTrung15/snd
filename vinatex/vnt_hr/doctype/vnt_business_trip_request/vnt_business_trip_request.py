@@ -6,6 +6,7 @@ from frappe.desk.doctype.notification_log.notification_log import make_notificat
 import unicodedata
 from frappe.model.workflow import apply_workflow
 from vinatex.patches.utils.rocket_chat import send_rocket_message
+from hrms.hr.utils import get_holiday_dates_for_employee
 
 # ---------------- Utils ----------------
 def _norm(s: str) -> str:
@@ -480,11 +481,23 @@ def replace_attendance_for_business_trip(doc: Document):
 
 	company = doc.get("company")
 	destination = (doc.get("destination") or "").strip()
+	# lấy ra ngày holiday
+	holiday_cache: dict[str, set] = {}
+
+	def is_holiday(emp: str, day):
+		if emp not in holiday_cache:
+			holiday_cache[emp] = {
+				getdate(h)
+				for h in get_holiday_dates_for_employee(emp, start_date, end_date)
+			}
+		return day in holiday_cache[emp]
 
 	# tạo attendance
 	d = start_date
 	while d <= end_date:
 		for emp in employees:
+			if is_holiday(emp, d):
+				continue  # bỏ qua ngày nghỉ trong holiday list không tạo attendance
 			att = frappe.new_doc("Attendance")
 			att.employee = emp
 			att.attendance_date = d
