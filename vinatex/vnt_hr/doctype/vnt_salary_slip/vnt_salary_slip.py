@@ -7,7 +7,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt, get_site_path
+from frappe.utils import flt, get_bench_path
 
 
 class VNTSalarySlip(Document):
@@ -90,11 +90,15 @@ class VNTSalarySlip(Document):
 		# frappe.throw(base64.b64encode(ciphertext).decode())
 		return base64.b64encode(ciphertext).decode()
 
+	from frappe.utils import get_bench_path
+
 	@staticmethod
 	def _load_site_env() -> Dict[str, str]:
-		env_path = get_site_path(".env")
+		bench_path = get_bench_path()
+		env_path = os.path.join(bench_path, "sites", ".env")
+
 		if not os.path.exists(env_path):
-			frappe.throw(_("Missing sites/.env file with VNT_PUBLIC_KEY and VNT_PRIVATE_KEY."))
+			frappe.throw(_("Missing {0} file with VNT_PUBLIC_KEY and VNT_PRIVATE_KEY.").format(env_path))
 
 		env_values: Dict[str, str] = {}
 		with open(env_path, encoding="utf-8") as env_file:
@@ -104,9 +108,12 @@ class VNTSalarySlip(Document):
 					continue
 				key, value = strip_line.split("=", 1)
 				env_values[key.strip()] = value.strip()
+
 		if "VNT_PRIVATE_KEY" not in env_values:
-			frappe.throw(_("VNT_PRIVATE_KEY is missing in sites/.env"))
+			frappe.throw(_("VNT_PRIVATE_KEY is missing in {0}").format(env_path))
+
 		return env_values
+
 
 	def _get_public_key(self):
 		env_values = self._load_site_env()
