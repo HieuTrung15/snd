@@ -541,10 +541,10 @@ def get_salary_kpi(year: int | None = None, month: int | None = None):
 	) or 0
 	return {
 		# 4 KPI
-		"year_to_date_net": row.get("year_to_date_net") or 0,
-		"previous_month_salary": row.get("previous_month_salary") or 0,
-		"previous_month_allowance": row.get("previous_month_allowance") or 0,
-		"salary_current_month": salary_current_month or 0,
+		"year_to_date_net": _js_round(row.get("year_to_date_net") or 0),
+		"previous_month_salary": _js_round(row.get("previous_month_salary") or 0),
+		"previous_month_allowance": _js_round(row.get("previous_month_allowance") or 0),
+		"salary_current_month": _js_round(salary_current_month or 0),
 		# Thông tin context cho front-end
 		"employee": employee,
 		"employee_name": emp_doc.get("employee_name") or "",
@@ -626,6 +626,14 @@ def get_salary_table(year: int | None = None):
 		if row.get("item_tax") is None: row["item_tax"] = 0
 		if row.get("item_net") is None: row["item_net"] = 0
 		if row.get("allowance_type") is None: row["allowance_type"] = ""
+		# Làm tròn VNĐ (không lấy phần thập phân)
+		row["slip_salary"] = _js_round(row.get("slip_salary") or 0)
+		row["slip_allowance"] = _js_round(row.get("slip_allowance") or 0)
+		row["slip_tax"] = _js_round(row.get("slip_tax") or 0)
+		row["slip_net"] = _js_round(row.get("slip_net") or 0)
+		row["item_amount"] = _js_round(row.get("item_amount") or 0)
+		row["item_tax"] = _js_round(row.get("item_tax") or 0)
+		row["item_net"] = _js_round(row.get("item_net") or 0)
 
 	return rows
 
