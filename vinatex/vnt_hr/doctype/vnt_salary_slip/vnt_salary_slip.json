@@ -245,7 +245,7 @@
   },
   {
    "fieldname": "tong_thu_nhap",
-   "fieldtype": "Data",
+   "fieldtype": "Currency",
    "label": "T\u1ed5ng thu nh\u1eadp",
    "precision": "3"
   },
@@ -284,7 +284,7 @@
   },
   {
    "fieldname": "thuc_linh",
-   "fieldtype": "Data",
+   "fieldtype": "Currency",
    "label": "Th\u1ef1c l\u0129nh",
    "precision": "3"
   },
