@@ -1,14 +1,17 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:CVDEN.{####}.{YYYY}",
+ "autoname": "naming_series:",
  "creation": "2025-10-29 16:27:38.345490",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "th\u00f4ng_tin_chung_tab",
+  "th\u00f4ng_tin_chung_section",
   "employee",
-  "employee_name",
   "date",
+  "type",
+  "naming_series",
   "column_break_fdwp",
   "reference_number",
   "summary",
@@ -18,6 +21,7 @@
   "column_break_fyg6",
   "sender",
   "handler",
+  "handler_status",
   "section_break_ebdu",
   "legacy_id",
   "column_break_xduu",
@@ -25,7 +29,26 @@
   "section_break_mugf",
   "attach",
   "html",
-  "amended_from"
+  "th\u00f4ng_tin_ng\u01b0\u1eddi_x\u1eed_l\u00fd_section",
+  "y_kien_ld_td",
+  "items",
+  "qu\u00e1_tr\u00ecnh_x\u1eed_l\u00fd_tab",
+  "nguoi_chu_tri",
+  "deadline_chu_tri2",
+  "chairperson_status",
+  "column_break_iblk",
+  "\u00fd_ki\u1ebfn_ng\u01b0\u1eddi_ch\u1ee7_tr\u00ec",
+  "section_break_manr",
+  "cv_xu_ly",
+  "deadline_cv_xu_ly",
+  "trang_thai_chuyen_vien_xu_ly",
+  "column_break_mpyt",
+  "y_kien_chuyen_vien_xu_ly",
+  "th\u00f4ng_tin_ng\u01b0\u1eddi_ph\u1ed1i_h\u1ee3p_tab",
+  "section_break_mxli",
+  "items2",
+  "v\u1ebd_qu\u00e1_tr\u00ecnh_x\u1eed_l\u00fd_tab",
+  "html_editer"
  ],
  "fields": [
   {
@@ -36,12 +59,6 @@
    "label": "Ng\u01b0\u1eddi l\u1eadp",
    "options": "Employee",
    "reqd": 1
-  },
-  {
-   "fetch_from": "employee.employee_name",
-   "fieldname": "employee_name",
-   "fieldtype": "Data",
-   "label": "T\u00ean ng\u01b0\u1eddi l\u1eadp"
   },
   {
    "fieldname": "column_break_fdwp",
@@ -64,7 +81,8 @@
   },
   {
    "fieldname": "section_break_mugf",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Th\u00f4ng tin file \u0111\u00ednh k\u00e8m"
   },
   {
    "fieldname": "attach",
@@ -88,12 +106,12 @@
   },
   {
    "fieldname": "document_date",
-   "fieldtype": "Datetime",
+   "fieldtype": "Date",
    "label": "Ng\u00e0y v\u0103n b\u1ea3n"
   },
   {
    "fieldname": "received_date",
-   "fieldtype": "Datetime",
+   "fieldtype": "Date",
    "label": "Ng\u00e0y \u0111\u1ebfn"
   },
   {
@@ -103,8 +121,11 @@
   },
   {
    "fieldname": "handler",
-   "fieldtype": "Data",
-   "label": "Ng\u01b0\u1eddi x\u1eed l\u00fd"
+   "fieldtype": "Link",
+   "label": "L\u00e3nh \u0111\u1ea1o T\u1eadp \u0110o\u00e0n",
+   "link_filters": "[]",
+   "options": "Employee",
+   "reqd": 1
   },
   {
    "fieldname": "section_break_ebdu",
@@ -131,25 +152,143 @@
    "fieldtype": "HTML"
   },
   {
-   "fieldname": "amended_from",
+   "fieldname": "th\u00f4ng_tin_chung_tab",
+   "fieldtype": "Tab Break",
+   "label": "Th\u00f4ng tin v\u0103n b\u1ea3n"
+  },
+  {
+   "fieldname": "th\u00f4ng_tin_chung_section",
+   "fieldtype": "Section Break",
+   "label": "Th\u00f4ng tin chung"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Lo\u1ea1i v\u0103n b\u1ea3n",
+   "options": "\nC\u00f4ng v\u0103n \u0111\u1ebfn\nC\u00f4ng v\u0103n \u0111i\nC\u00f4ng vi\u1ec7c n\u1ed9i b\u1ed9",
+   "reqd": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Naming Series",
+   "options": "\nCV\u0110I.-.MM..YY.-.####\nCV\u0110EN.-.MM..YY.-.####\nVBNB.-.MM..YY.-.####"
+  },
+  {
+   "fieldname": "handler_status",
+   "fieldtype": "Select",
+   "label": "Tr\u1ea1ng th\u00e1i L\u00e3nh \u0111\u1ea1o T\u1eadp \u0110o\u00e0n",
+   "options": "\nChuy\u1ec3n v\u0103n b\u1ea3n"
+  },
+  {
+   "fieldname": "th\u00f4ng_tin_ng\u01b0\u1eddi_x\u1eed_l\u00fd_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "y_kien_ld_td",
+   "fieldtype": "Small Text",
+   "label": "\u00dd ki\u1ebfn L\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "options": "VNT Document Management Item2"
+  },
+  {
+   "fieldname": "qu\u00e1_tr\u00ecnh_x\u1eed_l\u00fd_tab",
+   "fieldtype": "Tab Break",
+   "label": "Th\u00f4ng tin ng\u01b0\u1eddi ch\u1ee7 tr\u00ec"
+  },
+  {
+   "fieldname": "nguoi_chu_tri",
    "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "VNT Document Management",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
+   "label": "Ng\u01b0\u1eddi ch\u1ee7 tr\u00ec",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "deadline_chu_tri2",
+   "fieldtype": "Date",
+   "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh ng\u01b0\u1eddi ch\u1ee7 tr\u00ec"
+  },
+  {
+   "fieldname": "chairperson_status",
+   "fieldtype": "Select",
+   "label": "Tr\u1ea1ng th\u00e1i Ng\u01b0\u1eddi ch\u1ee7 tr\u00ec",
+   "options": "\n\u0110ang x\u1eed l\u00fd\nHo\u00e0n th\u00e0nh\nTr\u1ea3 l\u1ea1i"
+  },
+  {
+   "fieldname": "column_break_iblk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "\u00fd_ki\u1ebfn_ng\u01b0\u1eddi_ch\u1ee7_tr\u00ec",
+   "fieldtype": "Small Text",
+   "label": "\u00dd ki\u1ebfn ng\u01b0\u1eddi ch\u1ee7 tr\u00ec"
+  },
+  {
+   "fieldname": "section_break_manr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "cv_xu_ly",
+   "fieldtype": "Link",
+   "label": "Chuy\u00ean vi\u00ean x\u1eed l\u00fd",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "deadline_cv_xu_ly",
+   "fieldtype": "Date",
+   "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh chuy\u00ean vi\u00ean x\u1eed l\u00fd"
+  },
+  {
+   "fieldname": "trang_thai_chuyen_vien_xu_ly",
+   "fieldtype": "Select",
+   "label": "Tr\u1ea1ng th\u00e1i chuy\u00ean vi\u00ean x\u1eed l\u00fd",
+   "options": "\n\u0110ang x\u1eed l\u00fd\nHo\u00e0n th\u00e0nh\nTr\u1ea3 l\u1ea1i"
+  },
+  {
+   "fieldname": "column_break_mpyt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "y_kien_chuyen_vien_xu_ly",
+   "fieldtype": "Small Text",
+   "label": "\u00dd ki\u1ebfn chuy\u00ean vi\u00ean x\u1eed l\u00fd"
+  },
+  {
+   "fieldname": "th\u00f4ng_tin_ng\u01b0\u1eddi_ph\u1ed1i_h\u1ee3p_tab",
+   "fieldtype": "Tab Break",
+   "label": "Th\u00f4ng tin ng\u01b0\u1eddi ph\u1ed1i h\u1ee3p"
+  },
+  {
+   "fieldname": "section_break_mxli",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "items2",
+   "fieldtype": "Table",
+   "options": "VNT Document Management Item"
+  },
+  {
+   "fieldname": "v\u1ebd_qu\u00e1_tr\u00ecnh_x\u1eed_l\u00fd_tab",
+   "fieldtype": "Tab Break",
+   "label": "Bi\u1ec3u \u0111\u1ed3 x\u1eed l\u00fd"
+  },
+  {
+   "fieldname": "html_editer",
+   "fieldtype": "HTML"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-13 18:41:46.293271",
+ "modified": "2025-11-24 17:41:44.550379",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
- "naming_rule": "Expression",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
