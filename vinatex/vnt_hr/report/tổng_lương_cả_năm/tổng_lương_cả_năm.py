@@ -889,7 +889,8 @@ def get_company_salary_kpi(year: int | None = None,
 
 	- total_year_salary: TỔNG LƯƠNG DỰ KIẾN THÁNG ĐẾN HIỆN TẠI (tính tạm bằng _get_monthly_payroll_net_income cho từng nhân sự)
 	- total_prev_month_salary: TỔNG LƯƠNG THÁNG TRƯỚC
-	- total_allowance: TỔNG PHỤ CẤP
+	- total_allowance: TỔNG PHỤ CẤP ĐÃ CHI CẢ NĂM
+	- total_paid_salary_from_year_start: TỔNG LƯƠNG ĐÃ CHI TỪ ĐẦU NĂM ĐẾN THÁNG HIỆN TẠI
 	- total_to_date_salary: QUỸ LƯƠNG CÒN LẠI = quỹ lương năm (custom_annual_salary_fund) - lương đã chi (slip submit) - lương dự kiến tháng hiện tại
 	"""
 
@@ -987,6 +988,7 @@ def get_company_salary_kpi(year: int | None = None,
 		"total_year_salary": _round0(projected_month_salary),
 		"total_prev_month_salary": _round0(row.get("total_prev_month_salary")),
 		"total_allowance": _round0(row.get("total_allowance")),
+		"total_paid_salary_from_year_start": _round0(total_paid_salary),
 		"total_to_date_salary": _round0(total_to_date_salary),
 	}
 
