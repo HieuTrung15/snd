@@ -6,12 +6,13 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_izlu",
-  "naming_series",
-  "employee",
-  "column_break_lh3s",
-  "month",
-  "year",
+ "section_break_izlu",
+ "naming_series",
+ "employee",
+ "company",
+ "column_break_lh3s",
+ "month",
+ "year",
   "section_break_attj",
   "so_ngay_cong",
   "so_ngay_nghi_tinh_phep",
@@ -69,6 +70,15 @@
    "fieldtype": "Link",
    "label": "M\u00e3 nh\u00e2n s\u1ef1",
    "options": "Employee"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "C\u00f4ng ty",
+   "options": "Company",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_lh3s",

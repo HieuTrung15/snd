@@ -90,8 +90,6 @@ class VNTSalarySlip(Document):
 		# frappe.throw(base64.b64encode(ciphertext).decode())
 		return base64.b64encode(ciphertext).decode()
 
-	from frappe.utils import get_bench_path
-
 	@staticmethod
 	def _load_site_env() -> Dict[str, str]:
 		bench_path = get_bench_path()
@@ -127,8 +125,9 @@ class VNTSalarySlip(Document):
 		except Exception as exc:
 			frappe.throw(_("Invalid VNT_PUBLIC_KEY in sites/.env: {0}").format(frappe.as_unicode(exc)))
 
-	def _get_private_key(self):
-		env_values = self._load_site_env()
+	@staticmethod
+	def _get_private_key():
+		env_values = VNTSalarySlip._load_site_env()
 		raw_private = env_values.get("VNT_PRIVATE_KEY")
 		if not raw_private:
 			frappe.throw(_("VNT_PRIVATE_KEY is missing in sites/.env"))
@@ -139,10 +138,11 @@ class VNTSalarySlip(Document):
 		except Exception as exc:
 			frappe.throw(_("Invalid VNT_PRIVATE_KEY in sites/.env: {0}").format(frappe.as_unicode(exc)))
 
-	def _decrypt_salary_value(self, ciphertext_b64: Optional[str]) -> Optional[float]:
+	@staticmethod
+	def _decrypt_salary_value(ciphertext_b64: Optional[str]) -> Optional[float]:
 		if not ciphertext_b64:
 			return None
-		private_key = self._get_private_key()
+		private_key = VNTSalarySlip._get_private_key()
 		try:
 			plaintext = private_key.decrypt(
 				base64.b64decode(ciphertext_b64),
@@ -161,16 +161,30 @@ class VNTSalarySlip(Document):
 		"""Populate plaintext fields for UI usage only; values are not persisted."""
 		tong_cipher = getattr(self, "tong_thu_nhap_encrypted", None)
 		if tong_cipher:
-			self.tong_thu_nhap = self._decrypt_salary_value(tong_cipher)
+			self.tong_thu_nhap = VNTSalarySlip._decrypt_salary_value(tong_cipher)
 
 		thuc_cipher = getattr(self, "thuc_linh_encrypted", None)
 		if thuc_cipher:
-			self.thuc_linh = self._decrypt_salary_value(thuc_cipher)
+			self.thuc_linh = VNTSalarySlip._decrypt_salary_value(thuc_cipher)
 
 	def _strip_plain_salary_fields(self):
 		"""Ensure plaintext amounts are not stored in DB."""
 		self.tong_thu_nhap = None
 		self.thuc_linh = None
+
+	@staticmethod
+	def decrypt_salary_values(
+		tong_thu_nhap_encrypted: Optional[str] = None, thuc_linh_encrypted: Optional[str] = None
+	) -> Dict[str, Optional[float]]:
+		"""Shared helper to decrypt salary ciphertexts (RSA-OAEP, base64)."""
+		return {
+			"tong_thu_nhap": VNTSalarySlip._decrypt_salary_value(tong_thu_nhap_encrypted)
+			if tong_thu_nhap_encrypted
+			else None,
+			"thuc_linh": VNTSalarySlip._decrypt_salary_value(thuc_linh_encrypted)
+			if thuc_linh_encrypted
+			else None,
+		}
 
 	@staticmethod
 	def _get_row_total(row) -> float:
