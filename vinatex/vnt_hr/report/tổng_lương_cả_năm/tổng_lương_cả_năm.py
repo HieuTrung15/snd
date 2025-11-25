@@ -12,6 +12,7 @@ from frappe import _
 from frappe.utils import cint, cstr, flt, now_datetime
 
 from vinatex.vnt_hr.doctype.vnt_monthly_payroll.vnt_monthly_payroll import compute_item as compute_monthly_payroll_item
+from vinatex.vnt_hr.doctype.vnt_salary_slip.vnt_salary_slip import VNTSalarySlip
 
 
 def execute(filters=None):
@@ -358,22 +359,8 @@ def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, mo
 @frappe.whitelist()
 def _get_data(filters: dict):
 	conditions = ["slip.docstatus = 1", "slip.year = %(year)s"]
-	params = {
-		"year": filters["year"],
-		"month": f"{filters['month']:02d}",
-	}
-
-	current_month_case = "0 AS current_month_net_income,"
-
+	params = {"year": filters["year"], "month": f"{filters['month']:02d}"}
 	prev_month = filters.get("previous_month")
-	if prev_month:
-		params["prev_month"] = f"{prev_month:02d}"
-		previous_month_case = """
-			SUM(CASE WHEN slip.month = %(prev_month)s THEN COALESCE(slip.thuc_linh, 0) ELSE 0 END) AS previous_month_net_income,
-		"""
-	else:
-		previous_month_case = "0 AS previous_month_net_income,"
-
 	if filters.get("employee"):
 		conditions.append("slip.employee = %(employee)s")
 		params["employee"] = filters["employee"]
@@ -391,41 +378,103 @@ def _get_data(filters: dict):
 
 	sql = f"""
 		SELECT
+			slip.name,
 			slip.employee,
 			COALESCE(emp.employee_name, slip.employee) AS employee_name,
 			emp.company,
 			emp.department,
 			slip.year,
-			{current_month_case}
-			{previous_month_case}
-			COUNT(DISTINCT slip.month) AS salary_month_count,
-			SUM(COALESCE(slip.tong_thu_nhap, 0)) AS total_gross_income,
-			SUM(COALESCE(item.total_allowance, 0)) AS total_allowance,
-			SUM(COALESCE(slip.thue_tncn, 0) + COALESCE(slip.thue_tncn_nam_truoc, 0)) AS total_income_tax,
-			SUM(COALESCE(item.total_allowance_tax, 0)) AS total_allowance_tax,
-			SUM(COALESCE(slip.thuc_linh, 0)) AS total_net_income,
-			SUM(COALESCE(item.total_allowance_net, 0)) AS total_allowance_net
+			slip.month,
+			slip.tong_thu_nhap,
+			slip.thuc_linh,
+			slip.tong_thu_nhap_encrypted,
+			slip.thuc_linh_encrypted,
+			COALESCE(slip.thue_tncn, 0) + COALESCE(slip.thue_tncn_nam_truoc, 0) AS income_tax,
+			COALESCE(item.total_allowance, 0) AS total_allowance,
+			COALESCE(item.total_allowance_tax, 0) AS total_allowance_tax,
+			COALESCE(item.total_allowance_net, 0) AS total_allowance_net
 		FROM `tabVNT Salary Slip` AS slip
 		LEFT JOIN `tabEmployee` AS emp ON emp.name = slip.employee
 		LEFT JOIN ({item_subquery}) AS item ON item.parent = slip.name
 		WHERE {where_clause}
-		GROUP BY slip.employee, slip.year, emp.employee_name, emp.company, emp.department
-		ORDER BY slip.employee, slip.year
+		ORDER BY slip.employee, slip.year, slip.month
 	"""
 
-	results = frappe.db.sql(sql, params, as_dict=True)
+	rows = frappe.db.sql(sql, params, as_dict=True)
+	grouped: dict[tuple[str, int], dict] = {}
+	for row in rows:
+		key = (row["employee"], cint(row["year"]))
+		target = grouped.setdefault(
+			key,
+			{
+				"employee": row["employee"],
+				"employee_name": row.get("employee_name") or row["employee"],
+				"company": row.get("company") or "",
+				"department": row.get("department") or "",
+				"year": cint(row["year"]),
+				"salary_month_count": set(),
+				"total_gross_income": 0.0,
+				"total_allowance": 0.0,
+				"total_income_tax": 0.0,
+				"total_allowance_tax": 0.0,
+				"total_net_income": 0.0,
+				"total_allowance_net": 0.0,
+				"current_month_net_income": 0.0,
+				"previous_month_net_income": 0.0,
+			},
+		)
+
+		gross, net = _get_salary_values_with_fallback(row)
+		month = cstr(row.get("month")).zfill(2)
+		target["salary_month_count"].add(month)
+		target["total_gross_income"] += gross
+		target["total_allowance"] += flt(row.get("total_allowance"))
+		target["total_income_tax"] += flt(row.get("income_tax"))
+		target["total_allowance_tax"] += flt(row.get("total_allowance_tax"))
+		target["total_net_income"] += net
+		target["total_allowance_net"] += flt(row.get("total_allowance_net"))
+
+		if month == params["month"]:
+			target["current_month_net_income"] += net
+		if prev_month and month == params.get("prev_month"):
+			target["previous_month_net_income"] += net
+
+	results = []
+	for group in grouped.values():
+		group["salary_month_count"] = len(group["salary_month_count"])
+		results.append(group)
+
+	results.sort(key=lambda r: (r["employee"], r["year"]))
+
 	for row in results:
-		row["employee_name"] = row.get("employee_name") or row.get("employee")
-		row["company"] = row.get("company") or ""
-		row["department"] = row.get("department") or ""
 		current_month_net = _get_monthly_payroll_net_income(
 			row.get("employee"),
 			filters.get("month"),
 			filters.get("year"),
 			row.get("company"),
 		)
-		row["current_month_net_income"] = current_month_net if current_month_net is not None else 0
+		row["current_month_net_income"] = current_month_net if current_month_net is not None else row["current_month_net_income"]
 	return results
+
+
+def _get_salary_values_with_fallback(row: dict) -> tuple[float, float]:
+	"""
+	Sử dụng giá trị thường nếu có; nếu thiếu thì giải mã từ ciphertext.
+	Trả về (gross, net) dạng float.
+	"""
+	gross = row.get("tong_thu_nhap")
+	net = row.get("thuc_linh")
+	if gross in (None, "") or net in (None, ""):
+		decrypted = VNTSalarySlip.decrypt_salary_values(
+			tong_thu_nhap_encrypted=row.get("tong_thu_nhap_encrypted"),
+			thuc_linh_encrypted=row.get("thuc_linh_encrypted"),
+		)
+		if gross in (None, ""):
+			gross = decrypted.get("tong_thu_nhap")
+		if net in (None, ""):
+			net = decrypted.get("thuc_linh")
+	frappe.log_error(f"Decrypted values: gross={gross}, net={net}", "Annual salary: decryption log")
+	return flt(gross), flt(net)
 
 # Nếu file này chưa có 2 hàm dưới thì giữ lại, nếu có rồi thì khỏi thêm
 def _get_employee_of_user() -> str | None:
@@ -492,7 +541,7 @@ def get_salary_kpi(year: int | None = None, month: int | None = None):
 	item_subquery = """
 		SELECT
 			parent,
-			SUM(COALESCE(amount, 0)) AS total_allowance_net
+			SUM(COALESCE(tong, 0)) AS total_allowance_net
 		FROM `tabVNT Salary Slip Item`
 		GROUP BY parent
 	"""
@@ -673,14 +722,14 @@ def get_salary_chart(year: int | None = None):
 
 	# --- 2) PHỤ CẤP THEO THÁNG (từ bảng con) ---
 	sql_allowance = """
-		SELECT
-			slip.month,
-			SUM(COALESCE(item.amount, 0)) AS allowance
-		FROM `tabVNT Salary Slip` AS slip
-		LEFT JOIN `tabVNT Salary Slip Item` AS item
-			ON item.parent = slip.name
-		WHERE slip.docstatus = 1
-		  AND slip.year = %(year)s
+	SELECT
+		slip.month,
+		SUM(COALESCE(item.tong, 0)) AS allowance
+	FROM `tabVNT Salary Slip` AS slip
+	LEFT JOIN `tabVNT Salary Slip Item` AS item
+		ON item.parent = slip.name
+	WHERE slip.docstatus = 1
+	  AND slip.year = %(year)s
 		  AND slip.employee = %(employee)s
 		GROUP BY slip.month
 	"""
@@ -743,109 +792,311 @@ def get_salary_chart(year: int | None = None):
 	}
 
 def _round0(value):
-    """Làm tròn về số nguyên, không lấy phần thập phân."""
-    return cint(flt(value or 0, 0))
+	"""Làm tròn về số nguyên, không lấy phần thập phân."""
+	return cint(flt(value or 0, 0))
+
+
+def _safe_month(raw) -> int | None:
+	month_str = cstr(raw or "").strip()
+	if not month_str:
+		return None
+	try:
+		m = cint(month_str)
+	except Exception:
+		return None
+	return m if 1 <= m <= 12 else None
+
+
+def _get_company_projected_month_salary(year: int, month: int, company: str | None) -> float:
+	"""Tổng lương dự kiến tháng (gross tong_thu_nhap) cho toàn bộ nhân sự."""
+	company = _resolve_company(company)
+	employees = _get_company_active_employees(company)
+	total = 0.0
+	for emp in employees:
+		gross = _get_gross_income_from_slip(emp["name"], month, year)
+		# Nếu chưa có slip tháng này thì thử tạm tính net rồi dùng luôn (không có gross từ engine)
+		if gross is None:
+			net = _get_monthly_payroll_net_income(emp["name"], month, year, emp.get("company"))
+			if net is not None:
+				gross = net
+		if gross is not None:
+			total += flt(gross)
+	return total
+
+
+def _get_company_active_employees(company: str | None) -> list[dict]:
+	filters = {"status": "Active"}
+	if company:
+		filters["company"] = company
+	return frappe.db.get_all("Employee", filters=filters, fields=["name", "company"])
+
+
+def _get_gross_income_from_slip(employee: str, month: int | str, year: int | str) -> float | None:
+	"""Lấy tong_thu_nhap từ salary slip (có giải mã nếu cần)."""
+	if not employee or not month or not year:
+		return None
+
+	month_str = f"{cint(month):02d}"
+	rows = frappe.db.get_all(
+		"VNT Salary Slip",
+		filters={
+			"docstatus": 1,
+		"employee": employee,
+		"year": cint(year),
+		"month": month_str,
+	},
+		fields=["tong_thu_nhap", "tong_thu_nhap_encrypted"],
+	)
+	total = 0.0
+	for row in rows:
+		gross = row.get("tong_thu_nhap")
+		if gross in (None, ""):
+			decrypted = VNTSalarySlip.decrypt_salary_values(
+				tong_thu_nhap_encrypted=row.get("tong_thu_nhap_encrypted")
+			)
+			gross = decrypted.get("tong_thu_nhap")
+		if gross is not None:
+			total += flt(gross)
+
+	return total if total else None
+
+
+def _get_company_annual_salary_fund(company: str | None) -> float:
+	"""Lấy quỹ lương năm từ custom_annual_salary_fund của Company."""
+	company = _resolve_company(company)
+	if not company:
+		return 0.0
+	val = frappe.db.get_value("Company", company, "custom_annual_salary_fund")
+	return flt(val)
+
+
+def _resolve_company(company: str | None) -> str | None:
+	"""Ưu tiên tham số, nếu không có thì suy ra từ nhân sự của user hiện tại."""
+	if company:
+		return company
+	employee = _get_employee_of_user()
+	if employee:
+		return frappe.db.get_value("Employee", employee, "company")
+	return None
 
 
 @frappe.whitelist()
 def get_company_salary_kpi(year: int | None = None,
-                           month: int | None = None,
-                           company: str | None = None):
-    """
-    Trả về 4 KPI tổng của cả công ty trong VNT Salary Slip (docstatus = 1):
+						month: int | None = None,
+						company: str | None = None):
+	"""
+	Trả về 4 KPI tổng của cả công ty trong VNT Salary Slip (docstatus = 1):
 
-    - total_year_salary: Tổng lương cả năm
-    - total_prev_month_salary: Tổng lương tháng trước
-    - total_allowance: Tổng phụ cấp cả năm
-    - total_to_date_salary: Tổng lương từ đầu năm đến tháng hiện tại
-    """
+	- total_year_salary: TỔNG LƯƠNG DỰ KIẾN THÁNG ĐẾN HIỆN TẠI (tính tạm bằng _get_monthly_payroll_net_income cho từng nhân sự)
+	- total_prev_month_salary: TỔNG LƯƠNG THÁNG TRƯỚC
+	- total_allowance: TỔNG PHỤ CẤP
+	- total_to_date_salary: QUỸ LƯƠNG CÒN LẠI = quỹ lương năm (custom_annual_salary_fund) - lương đã chi (slip submit) - lương dự kiến tháng hiện tại
+	"""
 
-    now_dt = now_datetime()
-    if year is None:
-        year = now_dt.year
-    if month is None:
-        month = now_dt.month
+	now_dt = now_datetime()
+	if year is None:
+		year = now_dt.year
+	if month is None:
+		month = now_dt.month
+	company = _resolve_company(company)
 
-    prev_month = month - 1 if month > 1 else None
+	prev_month = month - 1 if month > 1 else None
 
-    item_subquery = """
-        SELECT
-            parent,
-            SUM(COALESCE(amount, 0)) AS total_allowance_net
-        FROM `tabVNT Salary Slip Item`
-        GROUP BY parent
-    """
+	item_subquery = """
+		SELECT
+			parent,
+			SUM(COALESCE(amount, 0)) AS total_allowance_net
+		FROM `tabVNT Salary Slip Item`
+		GROUP BY parent
+	"""
 
-    params = {
-        "year": year,
-        "month": f"{month:02d}",
-    }
+	params = {
+		"year": year,
+		"month": f"{month:02d}",
+	}
 
-    conditions = [
-        "slip.docstatus = 1",
-        "slip.year = %(year)s",
-    ]
+	conditions = [
+		"slip.docstatus = 1",
+		"slip.year = %(year)s",
+		"emp.branch = 'Văn phòng 1'",
+	]
 
-    if company:
-        conditions.append("slip.company = %(company)s")
-        params["company"] = company
+	if company:
+		conditions.append("COALESCE(slip.company, emp.company) = %(company)s")
+		params["company"] = company
 
-    select_fields = [
-        # 1. Tổng lương cả năm
-        "SUM(COALESCE(slip.tong_thu_nhap, 0)) AS total_year_salary",
+	select_fields = [
+		# 2. Tổng lương từ đầu năm đến tháng hiện tại
+		"""
+		SUM(
+			CASE
+				WHEN CAST(slip.month AS UNSIGNED) <= CAST(%(month)s AS UNSIGNED)
+				THEN COALESCE(slip.tong_thu_nhap, 0)
+				ELSE 0
+			END
+		) AS total_paid_salary
+		""",
 
-        # 2. Tổng lương từ đầu năm đến tháng hiện tại
-        """
-        SUM(
-            CASE
-                WHEN CAST(slip.month AS UNSIGNED) <= CAST(%(month)s AS UNSIGNED)
-                THEN COALESCE(slip.tong_thu_nhap, 0)
-                ELSE 0
-            END
-        ) AS total_to_date_salary
-        """,
+		# 3. Tổng phụ cấp cả năm
+		"SUM(COALESCE(item.total_allowance_net, 0)) AS total_allowance",
+	]
 
-        # 3. Tổng phụ cấp cả năm
-        "SUM(COALESCE(item.total_allowance_net, 0)) AS total_allowance",
-    ]
+	# 4. Tổng lương tháng trước
+	if prev_month:
+		params["prev_month"] = f"{prev_month:02d}"
+		select_fields.append(
+			"""
+			SUM(
+				CASE
+					WHEN slip.month = %(prev_month)s
+					THEN COALESCE(slip.tong_thu_nhap, 0)
+					ELSE 0
+				END
+			) AS total_prev_month_salary
+			"""
+		)
+	else:
+		select_fields.append("0 AS total_prev_month_salary")
 
-    # 4. Tổng lương tháng trước
-    if prev_month:
-        params["prev_month"] = f"{prev_month:02d}"
-        select_fields.append(
-            """
-            SUM(
-                CASE
-                    WHEN slip.month = %(prev_month)s
-                    THEN COALESCE(slip.tong_thu_nhap, 0)
-                    ELSE 0
-                END
-            ) AS total_prev_month_salary
-            """
-        )
-    else:
-        select_fields.append("0 AS total_prev_month_salary")
+	sql = f"""
+		SELECT
+			{", ".join(select_fields)}
+		FROM `tabVNT Salary Slip` AS slip
+		LEFT JOIN `tabEmployee` AS emp ON emp.name = slip.employee
+		LEFT JOIN ({item_subquery}) AS item ON item.parent = slip.name
+		WHERE {" AND ".join(conditions)}
+	"""
 
-    sql = f"""
-        SELECT
-            {", ".join(select_fields)}
-        FROM `tabVNT Salary Slip` AS slip
-        LEFT JOIN ({item_subquery}) AS item ON item.parent = slip.name
-        WHERE {" AND ".join(conditions)}
-    """
+	res = frappe.db.sql(sql, params, as_dict=True)
+	row = res[0] if res else {}
 
-    res = frappe.db.sql(sql, params, as_dict=True)
-    row = res[0] if res else {}
+	# Tổng lương dự kiến (tháng hiện tại) tính trực tiếp từ payroll engine
+	projected_month_salary = _get_company_projected_month_salary(year, month, company)
+	total_paid_salary = flt(row.get("total_paid_salary"))
+	salary_fund = _get_company_annual_salary_fund(company)
+	# frappe.throw("a "+_round0(salary_fund))
 
-    return {
-        "year": year,
-        "month": month,
-        "previous_month": prev_month,
-        "company": company or "",
+	total_to_date_salary = salary_fund - total_paid_salary - projected_month_salary
+	return {
+		"year": year,
+		"month": month,
+		"previous_month": prev_month,
+		"company": company or "",
 
-        # LÀM TRÒN 0 DECIMAL Ở ĐÂY
-        "total_year_salary": _round0(row.get("total_year_salary")),
-        "total_prev_month_salary": _round0(row.get("total_prev_month_salary")),
-        "total_allowance": _round0(row.get("total_allowance")),
-        "total_to_date_salary": _round0(row.get("total_to_date_salary")),
-    }
+		# LÀM TRÒN 0 DECIMAL Ở ĐÂY
+		"total_year_salary": _round0(projected_month_salary),
+		"total_prev_month_salary": _round0(row.get("total_prev_month_salary")),
+		"total_allowance": _round0(row.get("total_allowance")),
+		"total_to_date_salary": _round0(total_to_date_salary),
+	}
+
+@frappe.whitelist()
+def get_company_salary_chart(year: int | None = None,
+							company: str | None = None):
+	"""
+	Chart tổng của CÔNG TY (giống get_salary_chart nhưng aggregate theo company):
+
+	- categories: ["Tháng 1", ..., "Tháng 12"]
+	- salary: tổng lương từng tháng (từ slip.tong_thu_nhap)
+	- allowance: tổng phụ cấp từng tháng (từ item.amount)
+	- total_salary_year, total_allowance_year: tổng cả năm của CÔNG TY
+	"""
+
+	# Lấy employee để suy ra company nếu không truyền
+	if not year:
+		year = now_datetime().year
+
+	year = cint(year)
+
+	company = _resolve_company(company)
+	if not company:
+		return
+
+	params = {
+		"year": year,
+		"company": company,
+	}
+
+	# --- 1) LƯƠNG THEO THÁNG CHO CẢ CÔNG TY ---
+	sql_salary = """
+		SELECT
+			slip.month,
+			slip.tong_thu_nhap,
+			slip.thuc_linh,
+			slip.tong_thu_nhap_encrypted,
+			slip.thuc_linh_encrypted
+		FROM `tabVNT Salary Slip` AS slip
+		LEFT JOIN `tabEmployee` AS emp ON emp.name = slip.employee
+		WHERE slip.docstatus = 1
+		  AND slip.year = %(year)s
+		  AND COALESCE(slip.company, emp.company) = %(company)s
+		  AND emp.branch = 'Văn phòng 1'
+	"""
+	salary_rows = frappe.db.sql(sql_salary, params, as_dict=True)
+	# --- 2) PHỤ CẤP THEO THÁNG CHO CẢ CÔNG TY ---
+	sql_allowance = """
+		SELECT
+			slip.month,
+			SUM(COALESCE(item.tong, 0)) AS allowance
+		FROM `tabVNT Salary Slip` AS slip
+		LEFT JOIN `tabVNT Salary Slip Item` AS item
+			ON item.parent = slip.name
+		LEFT JOIN `tabEmployee` AS emp ON emp.name = slip.employee
+		WHERE slip.docstatus = 1
+		  AND slip.year = %(year)s
+		  AND COALESCE(slip.company, emp.company) = %(company)s
+		  AND emp.branch = 'Văn phòng 1'
+		GROUP BY slip.month
+	"""
+
+	allow_rows = frappe.db.sql(sql_allowance, params, as_dict=True)
+
+	monthly: dict[int, dict[str, float]] = {}
+
+	# Gộp lương theo tháng
+	for row in salary_rows:
+		m = _safe_month(row.get("month"))
+		if not m:
+			continue
+		monthly.setdefault(m, {})
+		gross, _net = _get_salary_values_with_fallback(row)
+		monthly[m]["salary"] = monthly[m].get("salary", 0) + gross
+
+	# Gộp phụ cấp theo tháng
+	for row in allow_rows:
+		month_str = cstr(row.get("month") or "").strip()
+		if not month_str:
+			continue
+		try:
+			m = cint(month_str)
+		except Exception:
+			continue
+		if not m:
+			continue
+
+		monthly.setdefault(m, {})
+		monthly[m]["allowance"] = row.get("allowance") or 0
+
+	categories: list[str] = []
+	salary_values: list[float] = []
+	allowance_values: list[float] = []
+
+	for m in range(1, 13):
+		categories.append(_("Tháng {0}").format(m))
+		data = monthly.get(m, {})
+		# dùng _round0 để không lấy phần thập phân
+		salary_values.append(_round0(data.get("salary", 0)))
+		allowance_values.append(_round0(data.get("allowance", 0)))
+
+	total_salary = _round0(sum(salary_values))
+	total_allowance = _round0(sum(allowance_values))
+
+	return {
+		"year": year,
+		"company": company or "",
+		"categories": categories,
+		"salary": salary_values,
+		"allowance": allowance_values,
+		"total_salary_year": total_salary,
+		"total_allowance_year": total_allowance,
+	}
