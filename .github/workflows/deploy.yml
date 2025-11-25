@@ -21,5 +21,6 @@ jobs:
         run: |
           sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no frappe@14.225.164.136 << 'EOF'
             cd /home/frappe/frappe-bench
-            ./deploy_vinatex.sh
+            # chạy deploy_vinatex.sh bằng user frappe-run
+            sudo -u frappe-run -H bash -lc "./deploy_vinatex.sh"
           EOF
