@@ -23,16 +23,19 @@
   {
    "fieldname": "nguoi_phoi_hop",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "in_list_view": 1,
    "label": "Ng\u01b0\u1eddi ph\u1ed1i h\u1ee3p",
-   "options": "Employee"
+   "options": "Employee",
+   "read_only": 1
   },
   {
    "columns": 1,
    "fieldname": "deadline1",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "label": "Th\u1eddi h\u1ea1n ho\u1ea3n th\u00e0nh"
+   "label": "Th\u1eddi h\u1ea1n ho\u1ea3n th\u00e0nh",
+   "read_only": 1
   },
   {
    "columns": 1,
@@ -67,6 +70,7 @@
    "columns": 2,
    "fieldname": "cv_xu_ly",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "in_list_view": 1,
    "label": "Chuy\u00ean vi\u00ean x\u1eed l\u00fd",
    "options": "Employee"
@@ -102,7 +106,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-24 17:21:59.395475",
+ "modified": "2025-11-26 10:01:05.141399",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management Item",

@@ -7,6 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "th\u00f4ng_tin_chung_tab",
+  "bi\u1ec3u_\u0111\u1ed3_x\u1eed_l\u00fd_section",
+  "html_editer",
   "th\u00f4ng_tin_chung_section",
   "employee",
   "date",
@@ -18,19 +20,18 @@
   "section_break_oltr",
   "document_date",
   "received_date",
+  "deadline",
   "column_break_fyg6",
   "sender",
   "handler",
-  "handler_status",
-  "section_break_ebdu",
-  "legacy_id",
-  "column_break_xduu",
-  "source_url",
   "section_break_mugf",
   "attach",
   "html",
   "th\u00f4ng_tin_ng\u01b0\u1eddi_x\u1eed_l\u00fd_section",
   "y_kien_ld_td",
+  "column_break_cjki",
+  "handler_status",
+  "section_break_o8ue",
   "items",
   "qu\u00e1_tr\u00ecnh_x\u1eed_l\u00fd_tab",
   "nguoi_chu_tri",
@@ -47,8 +48,7 @@
   "th\u00f4ng_tin_ng\u01b0\u1eddi_ph\u1ed1i_h\u1ee3p_tab",
   "section_break_mxli",
   "items2",
-  "v\u1ebd_qu\u00e1_tr\u00ecnh_x\u1eed_l\u00fd_tab",
-  "html_editer"
+  "amended_from"
  ],
  "fields": [
   {
@@ -102,50 +102,35 @@
    "fieldtype": "Small Text",
    "in_list_view": 1,
    "label": "Tr\u00edch y\u1ebfu",
+   "max_height": "100px",
    "reqd": 1
   },
   {
    "fieldname": "document_date",
    "fieldtype": "Date",
-   "label": "Ng\u00e0y v\u0103n b\u1ea3n"
+   "label": "Ng\u00e0y v\u0103n b\u1ea3n",
+   "reqd": 1
   },
   {
    "fieldname": "received_date",
    "fieldtype": "Date",
-   "label": "Ng\u00e0y \u0111\u1ebfn"
+   "label": "Ng\u00e0y \u0111\u1ebfn",
+   "reqd": 1
   },
   {
    "fieldname": "sender",
    "fieldtype": "Data",
-   "label": "N\u01a1i g\u1eedi"
+   "label": "N\u01a1i g\u1eedi",
+   "reqd": 1
   },
   {
    "fieldname": "handler",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "L\u00e3nh \u0111\u1ea1o T\u1eadp \u0110o\u00e0n",
    "link_filters": "[]",
    "options": "Employee",
    "reqd": 1
-  },
-  {
-   "fieldname": "section_break_ebdu",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "legacy_id",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "ID item Share Point"
-  },
-  {
-   "fieldname": "column_break_xduu",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "source_url",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Link SharePoint"
   },
   {
    "fieldname": "html",
@@ -179,7 +164,7 @@
    "fieldname": "handler_status",
    "fieldtype": "Select",
    "label": "Tr\u1ea1ng th\u00e1i L\u00e3nh \u0111\u1ea1o T\u1eadp \u0110o\u00e0n",
-   "options": "\nChuy\u1ec3n v\u0103n b\u1ea3n"
+   "options": "\nChuy\u1ec3n v\u0103n b\u1ea3n\nTr\u1ea3 l\u1ea1i"
   },
   {
    "fieldname": "th\u00f4ng_tin_ng\u01b0\u1eddi_x\u1eed_l\u00fd_section",
@@ -188,7 +173,8 @@
   {
    "fieldname": "y_kien_ld_td",
    "fieldtype": "Small Text",
-   "label": "\u00dd ki\u1ebfn L\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n"
+   "label": "\u00dd ki\u1ebfn L\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n",
+   "max_height": "50px"
   },
   {
    "fieldname": "items",
@@ -203,19 +189,25 @@
   {
    "fieldname": "nguoi_chu_tri",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi ch\u1ee7 tr\u00ec",
-   "options": "Employee"
+   "options": "Employee",
+   "permlevel": 1,
+   "read_only": 1
   },
   {
    "fieldname": "deadline_chu_tri2",
    "fieldtype": "Date",
-   "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh ng\u01b0\u1eddi ch\u1ee7 tr\u00ec"
+   "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh ng\u01b0\u1eddi ch\u1ee7 tr\u00ec",
+   "permlevel": 1,
+   "read_only": 1
   },
   {
    "fieldname": "chairperson_status",
    "fieldtype": "Select",
    "label": "Tr\u1ea1ng th\u00e1i Ng\u01b0\u1eddi ch\u1ee7 tr\u00ec",
-   "options": "\n\u0110ang x\u1eed l\u00fd\nHo\u00e0n th\u00e0nh\nTr\u1ea3 l\u1ea1i"
+   "options": "\n\u0110ang x\u1eed l\u00fd\nHo\u00e0n th\u00e0nh\nTr\u1ea3 l\u1ea1i",
+   "permlevel": 1
   },
   {
    "fieldname": "column_break_iblk",
@@ -224,7 +216,8 @@
   {
    "fieldname": "\u00fd_ki\u1ebfn_ng\u01b0\u1eddi_ch\u1ee7_tr\u00ec",
    "fieldtype": "Small Text",
-   "label": "\u00dd ki\u1ebfn ng\u01b0\u1eddi ch\u1ee7 tr\u00ec"
+   "label": "\u00dd ki\u1ebfn ng\u01b0\u1eddi ch\u1ee7 tr\u00ec",
+   "permlevel": 1
   },
   {
    "fieldname": "section_break_manr",
@@ -233,19 +226,23 @@
   {
    "fieldname": "cv_xu_ly",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Chuy\u00ean vi\u00ean x\u1eed l\u00fd",
-   "options": "Employee"
+   "options": "Employee",
+   "permlevel": 1
   },
   {
    "fieldname": "deadline_cv_xu_ly",
    "fieldtype": "Date",
-   "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh chuy\u00ean vi\u00ean x\u1eed l\u00fd"
+   "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh chuy\u00ean vi\u00ean x\u1eed l\u00fd",
+   "permlevel": 1
   },
   {
    "fieldname": "trang_thai_chuyen_vien_xu_ly",
    "fieldtype": "Select",
    "label": "Tr\u1ea1ng th\u00e1i chuy\u00ean vi\u00ean x\u1eed l\u00fd",
-   "options": "\n\u0110ang x\u1eed l\u00fd\nHo\u00e0n th\u00e0nh\nTr\u1ea3 l\u1ea1i"
+   "options": "\n\u0110ang x\u1eed l\u00fd\nHo\u00e0n th\u00e0nh\nTr\u1ea3 l\u1ea1i",
+   "permlevel": 1
   },
   {
    "fieldname": "column_break_mpyt",
@@ -254,7 +251,8 @@
   {
    "fieldname": "y_kien_chuyen_vien_xu_ly",
    "fieldtype": "Small Text",
-   "label": "\u00dd ki\u1ebfn chuy\u00ean vi\u00ean x\u1eed l\u00fd"
+   "label": "\u00dd ki\u1ebfn chuy\u00ean vi\u00ean x\u1eed l\u00fd",
+   "permlevel": 1
   },
   {
    "fieldname": "th\u00f4ng_tin_ng\u01b0\u1eddi_ph\u1ed1i_h\u1ee3p_tab",
@@ -268,23 +266,49 @@
   {
    "fieldname": "items2",
    "fieldtype": "Table",
-   "options": "VNT Document Management Item"
-  },
-  {
-   "fieldname": "v\u1ebd_qu\u00e1_tr\u00ecnh_x\u1eed_l\u00fd_tab",
-   "fieldtype": "Tab Break",
-   "label": "Bi\u1ec3u \u0111\u1ed3 x\u1eed l\u00fd"
+   "options": "VNT Document Management Item",
+   "permlevel": 1
   },
   {
    "fieldname": "html_editer",
    "fieldtype": "HTML"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "bi\u1ec3u_\u0111\u1ed3_x\u1eed_l\u00fd_section",
+   "fieldtype": "Section Break",
+   "label": "Bi\u1ec3u \u0111\u1ed3 x\u1eed l\u00fd"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VNT Document Management",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_cjki",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_o8ue",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "deadline",
+   "fieldtype": "Date",
+   "label": "Th\u1eddi h\u1ea1n",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-24 17:41:44.550379",
+ "modified": "2025-11-26 11:02:12.127654",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
