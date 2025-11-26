@@ -28,24 +28,30 @@ frappe.ui.form.on("VNT Attendance Confirm", {
 		// 	grid.wrapper.find('.grid-static-col .icon-sm').hide();
 		// });
 	},
+	after_save(frm) {
+		// reset confirm selector after saving to avoid accidental re-apply
+		frm.set_value("confirm", "");
+	},
 	confirm (frm) {
 		$.each(frm.doc.items || [], function (i, row) {
-			frappe.model.set_value(row.doctype, row.name, "confirm", frm.doc.confirm);
+			if (!row.confirm) {
+				frappe.model.set_value(row.doctype, row.name, "confirm", frm.doc.confirm);
+			}
 		});
 		refresh_field("items");
 	}
 });
 
 frappe.ui.form.on("VNT Attendance Confirm", "validate", function(frm) {
-	(frm.doc.items || []).forEach(function(row) {
-		if (!row.type) {
-			frappe.throw(__('Vui lòng điền giải trình cho ngày {0}.', [frappe.format(row.date, {fieldtype: 'Date'}) || row.idx]));
-		}
-	});
+	// (frm.doc.items || []).forEach(function(row) {
+	// 	if (!row.type) {
+	// 		frappe.throw(__('Vui lòng điền giải trình cho ngày {0}.', [frappe.format(row.date, {fieldtype: 'Date'}) || row.idx]));
+	// 	}
+	// });
 
-	(frm.doc.items || []).forEach(function(row) {
-		if (!row.type && !row.confirm) {
-			frappe.throw(__('Vui lòng chọn Đồng ý/ Từ chối cho ngày {0}.', [frappe.format(row.date, {fieldtype: 'Date'}) || row.idx]));
-		}
-	});
+	// (frm.doc.items || []).forEach(function(row) {
+	// 	if (!row.type && !row.confirm) {
+	// 		frappe.throw(__('Vui lòng chọn Đồng ý/ Từ chối cho ngày {0}.', [frappe.format(row.date, {fieldtype: 'Date'}) || row.idx]));
+	// 	}
+	// });
 });

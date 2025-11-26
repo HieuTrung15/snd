@@ -27,16 +27,6 @@ class VNTAttendanceConfirm(Document):
 
 		type_confirm = [row.get("type") for row in (self.get("items") or []) if row.get("confirm")]
 		if type_confirm:
-			# for row in self.get("items") or []:
-			# 	if not row.get("type"):
-			# 		frappe.throw(_("Vui lòng điền giải trình cho ngày {0}.").format(
-			# 			frappe.format_value(row.get("date"), {"fieldtype": "Date"})
-			# 		))
-
-			# 	if not row.get("confirm"):
-			# 		frappe.throw(_("Vui lòng chọn đồng ý hoặc từ chối cho ngày {0}.").format(
-			# 			frappe.format_value(row.get("date"), {"fieldtype": "Date"})
-			# 		))
 			_make_attendance_from_confirmation(self)
 			_reject_attendance_from_confirmation(self)
 			_close_approver_todos(self)
