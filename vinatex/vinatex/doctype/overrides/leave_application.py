@@ -97,50 +97,48 @@ class VntLeaveApplication(LeaveApplication):
 	def validate(self):
 		self.validate_attendance()
 		super().validate()
-		 # kiểm tra gửi đơn nghỉ phép năm, nghỉ không hưởng lương, lao động nam nghỉ do có vợ sinh con trước bao nhiêu ngày
-		# days_notice = 0
-		# if getattr(self, "leave_type", None) == 'Nghỉ phép năm' and getattr(self, "from_date", None) and getattr(self, "to_date", None):
-		# 	days_diff = date_diff(self.from_date, self.to_date)
-		# 	# "Nghỉ 02 ngày phải gửi đơn trước 01 ngày.
-		# 	#  Nghỉ từ 03 - 06 ngày, phải gửi đơn trước ít nhất 03 ngày.
-		# 	#  Nghỉ từ 07 ngày trở lên, phải gửi đơn trước ít nhất 14 ngày."
-		# 	if days_diff == 2:
-		# 		days_notice = 1
-		# 	elif 3 <= days_diff <= 6:
-		# 		days_notice = 3
-		# 	elif days_diff >= 7:
-		# 		days_notice = 14
-		# 	if date_diff(self.from_date, frappe.utils.nowdate()) < days_notice:
-		# 		frappe.throw(_("Đơn nghỉ phép năm từ {0} ngày trở lên phải gửi trước ít nhất {1} ngày. Vui lòng kiểm tra lại.").format(days_diff, days_notice))
-		# if getattr(self, "leave_type", None) == 'Nghỉ không hưởng lương' and getattr(self, "from_date", None) and getattr(self, "to_date", None):
-		# 	days_diff = date_diff(self.to_date, self.from_date) + 1
+		# kiểm tra gửi đơn nghỉ phép năm, nghỉ không hưởng lương, lao động nam nghỉ do có vợ sinh con trước bao nhiêu ngày
+		days_notice = 0
+		if getattr(self, "leave_type", None) == 'Nghỉ phép năm' and getattr(self, "from_date", None) and getattr(self, "to_date", None):
+			days_diff = date_diff(self.from_date, self.to_date)
+			# "Nghỉ 02 ngày phải gửi đơn trước 01 ngày.
+			#  Nghỉ từ 03 - 06 ngày, phải gửi đơn trước ít nhất 03 ngày.
+			#  Nghỉ từ 07 ngày trở lên, phải gửi đơn trước ít nhất 14 ngày."
+			if days_diff == 2:
+				days_notice = 1
+			elif 3 <= days_diff <= 6:
+				days_notice = 3
+			elif days_diff >= 7:
+				days_notice = 14
+			if date_diff(self.from_date, frappe.utils.nowdate()) < days_notice:
+				frappe.msgprint(_("Đơn nghỉ phép năm từ {0} ngày trở lên phải gửi trước ít nhất {1} ngày. Vui lòng kiểm tra lại.").format(days_diff, days_notice))
+		if getattr(self, "leave_type", None) == 'Nghỉ không hưởng lương' and getattr(self, "from_date", None) and getattr(self, "to_date", None):
+			days_diff = date_diff(self.to_date, self.from_date) + 1
 			# "Nghỉ dưới 7 ngày báo trước ít nhất 3 ngày.
 			# Nghỉ trên 7 ngày báo trước ít nhất 14 ngày."
-		# 	if days_diff < 7:
-		# 		days_notice = 3
-		# 	else:
-		# 		days_notice = 14
-		# 	if date_diff(self.from_date, frappe.utils.nowdate()) < days_notice:
-		# 		frappe.throw(_("Đơn nghỉ không hưởng lương từ {0} ngày trở lên phải gửi trước ít nhất {1} ngày. Vui lòng kiểm tra lại.").format(days_diff, days_notice))
-		# if getattr(self, "leave_type", None) == 'Lao động nam nghỉ do có vợ sinh con' and getattr(self, "from_date", None) and getattr(self, "to_date", None):
+			if days_diff < 7:
+				days_notice = 3
+			else:
+				days_notice = 14
+			if date_diff(self.from_date, frappe.utils.nowdate()) < days_notice:
+				frappe.msgprint(_("Đơn nghỉ không hưởng lương từ {0} ngày trở lên phải gửi trước ít nhất {1} ngày. Vui lòng kiểm tra lại.").format(days_diff, days_notice))
+		if getattr(self, "leave_type", None) == 'Lao động nam nghỉ do có vợ sinh con' and getattr(self, "from_date", None) and getattr(self, "to_date", None):
 			# "Nghỉ 02 ngày phải gửi đơn trước 01 ngày.
 			# Nghỉ từ 03 - 06 ngày, phải gửi đơn trước ít nhất 03 ngày.
 			# Nghỉ từ 07 ngày trở lên, phải gửi đơn trước ít nhất 14 ngày."
-			# days_diff = date_diff(self.from_date, self.to_date) + 1
-			# if days_diff == 2:
-			# 	days_notice = 1
-			# elif 3 <= days_diff <= 6:
-			# 	days_notice = 3 
-			# elif days_diff >= 7:
-			# 	days_notice = 14
-			# if date_diff(self.from_date, frappe.utils.nowdate()) < days_notice:
-			# 	frappe.throw(_("Đơn nghỉ lao động nam do có vợ sinh con từ {0} ngày trở lên phải gửi trước ít nhất {1} ngày. Vui lòng kiểm tra lại.").format(days_diff, days_notice), indicator='orange')
+			days_diff = date_diff(self.from_date, self.to_date) + 1
+			if days_diff == 2:
+				days_notice = 1
+			elif 3 <= days_diff <= 6:
+				days_notice = 3 
+			elif days_diff >= 7:
+				days_notice = 14
+			if date_diff(self.from_date, frappe.utils.nowdate()) < days_notice:
+				frappe.msgprint(_("Đơn nghỉ lao động nam do có vợ sinh con từ {0} ngày trở lên phải gửi trước ít nhất {1} ngày. Vui lòng kiểm tra lại.").format(days_diff, days_notice), indicator='orange')
 
 
 def _handle_state_transition(doc: Document):
 	prev_state, curr_state = _get_prev_and_curr_workflow_state(doc)
-	# pending_state = "Chờ lãnh đạo duyệt"
-	# approved_state = "Đã duyệt"
 	leave_type = doc.get("leave_type")
 	employee_user = doc.get("employee")
 	approver_user = get_employee_user_id(employee_user)
@@ -152,13 +150,10 @@ def _handle_state_transition(doc: Document):
 
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Chờ lãnh đạo tập đoàn duyệt' or \
 		prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Đã duyệt':
-		_check_state_to_close_todo(doc, doc.get("leave_approver"))
-
-	if prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Đã duyệt':
-		_check_state_to_close_todo(doc, doc.get("custom_second_approver"))
+		_check_state_to_close_todo(doc, doc.get("custom_approver"))
 	
 	if curr_state == 'Từ chối':
-		_check_state_to_close_todo(doc, doc.get("leave_approver"))
+		_check_state_to_close_todo(doc, doc.get("custom_approver"))
 		_check_state_to_close_todo(doc, doc.get("custom_second_approver"))
 
 	if curr_state == "Chờ lãnh đạo tập đoàn duyệt" and prev_state == "Mới tạo":
@@ -194,6 +189,9 @@ def _handle_state_transition(doc: Document):
 		)
 
 	if prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Đã duyệt':
+		_check_state_to_close_todo(doc, doc.get("custom_second_approver"))
+		# chỉ gửi thông báo đến lđ cấp 2
+		_send_to_noti_2(doc)
 		make_notification_logs({
 			"type": "Alert",
 			"subject": _("Phiếu đăng ký {0} của {1} đã được lãnh đạo tập đoàn duyệt").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
@@ -206,8 +204,10 @@ def _handle_state_transition(doc: Document):
 			message=_("Phiếu đăng ký {0} của {1} đã được lãnh đạo tập đoàn duyệt").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
 			link=get_url_to_form(doc.doctype, doc.name)
 		)
-		if doc.employee == doc.custom_approver:
-			_notify_to_general_manager(doc)
+
+	# gửi thông báo cho giám đốc nếu lãnh đạo cấp trung nghỉ phép
+	if doc.custom_designation_group == "Lãnh đạo cấp trung" and curr_state == 'Đã duyệt':
+		_notify_to_general_manager(doc)
 
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Từ chối':
 		make_notification_logs({
@@ -236,6 +236,52 @@ def _handle_state_transition(doc: Document):
 			message=_("Phiếu đăng ký {0} của {1} đã bị lãnh đạo tập đoàn từ chối.").format(leave_type or _("(không rõ)"), doc.employee_name or _("(không rõ)")),
 			link=get_url_to_form(doc.doctype, doc.name)
 		)
+
+
+def _send_to_noti_2(doc: Document):
+	receivers = _receiver_noti_2_list(doc.department)
+	if not receivers:
+		return
+
+	employee_name = doc.employee_name or _("(không rõ)")
+	leave_type = doc.leave_type or _("(không rõ)")
+	from_date = formatdate(doc.from_date, "dd-MM-yyyy") if doc.from_date else _("(không rõ)")
+	to_date = formatdate(doc.to_date, "dd-MM-yyyy") if doc.to_date else _("(không rõ)")
+	subject = _("{0} đã được duyệt {1} {2} {3}").format(employee_name, leave_type, from_date, to_date)
+
+	make_notification_logs({
+		"type": "Alert",
+		"subject": subject,
+		"document_type": doc.doctype,
+		"document_name": doc.name,
+	}, receivers)
+	send_rocket_message(
+		to_users=receivers,
+		title=":bell: Thông báo",
+		message=subject,
+		# link=get_url_to_form(doc.doctype, doc.name)
+	)
+
+
+# lấy ra danh sách người nhận thông báo cấp 2, ở trạng thái đã duyệt
+def _receiver_noti_2_list(department: str | None = None) -> list[str]:
+	"""Lấy danh sách approver (user) được check custom_receiver_noti_2 trong Department Approver."""
+	if not department:
+		return []
+
+	receivers = frappe.get_all(
+		"Department Approver",
+		filters={
+			"parent": department,
+			"parentfield": "leave_approvers",
+			"parenttype": "Department",
+			"custom_receiver_noti_2": 1,
+		},
+		pluck="approver",
+		order_by="idx asc",
+	)
+
+	return [user for user in dict.fromkeys(receivers or []) if user]
 
 
 def _notify_to_general_manager(doc: Document):
@@ -317,7 +363,7 @@ def _check_emp_checkin_after_cancel(doc: Document):
 def _notify_to_approver(doc: Document):
 	"""Gửi thông báo đến người duyệt khi đơn được chuyển sang trạng thái 'Chờ lãnh đạo duyệt'."""
 	leave_type = doc.get("leave_type")
-	approver_emp = doc.get("leave_approver")
+	approver_emp = doc.get("custom_approver")
 	approver = get_employee_user_id(approver_emp)
 	make_notification_logs({
 		"type": "Alert",
@@ -451,9 +497,7 @@ def get_leave_approver_level_2(employee: str):
 	emp = frappe.db.get_value("Employee", employee, ["leave_approver", "department"], as_dict=True)
 	if not emp:
 		return None
-
-	# nếu chưa có và có department → tìm trong Department Approver
-		# ƯU TIÊN custom flag custom_level_2 = 1
+	# lấy ra người duyệt cấp 2 của emp theo department
 	if emp:
 		approver = frappe.db.get_value(
 			"Department Approver",
@@ -469,8 +513,7 @@ def get_leave_approver_level_2(employee: str):
 			return {"employee": employee, "employee_name": employee_name.employee_name}
 		emp_id = frappe.db.get_value("Employee", {"user_id": approver}, ["name", "employee_name"], as_dict=True)
 		return emp_id
-
-	return approver
+	return
 
 @frappe.whitelist()
 def get_leave_type(
@@ -626,55 +669,3 @@ def get_leave_type(
 
 	return vals
 
-
-# def system_notification(message, doctype, docname, emails=''):
-# 	subject = {
-# 		"type": "Alert",
-# 				"subject": message,
-# 				'document_type': doctype,
-# 				'document_name': docname
-# 	}
-# 	make_notification_logs(subject, emails)
-	
-	
-# def notify(self, actor, receiver):
-# 	# url = get_url_to_form(self.doctype, self.name)
-# 	message = _(f"Phiếu đăng ký nghỉ phép") + " của " + actor
-# 	system_notification(message, self.doctype, self.name, receiver)
-
-
-
-# def _handle_state_transition(doc: Document):
-#     workflow = get_workflow_name(doc.doctype)
-#     frappe.throw(F"{workflow}")
-#     prev_state, curr_state = _get_prev_and_curr_workflow_state(doc)
-#     pending_state = "Chờ lãnh đạo duyệt"
-#     approved_state = "Đã duyệt"
-
-#     if curr_state == pending_state and prev_state != pending_state:
-#         _notify_to_approver(doc)
-
-#     total_leave_days = flt(doc.get("total_leave_days") or 0)
-#     requires_second_level = total_leave_days > 3 and bool(doc.get("custom_second_approver"))
-
-#     if not requires_second_level:
-#         return
-
-#     if prev_state == pending_state and curr_state == approved_state:
-#         current_user = getattr(getattr(frappe, "session", None), "user", None)
-#         second_approver = doc.get("custom_second_approver")
-#         if current_user and second_approver and frappe.utils.cstr(current_user) == frappe.utils.cstr(second_approver):
-#             return
-#         _reroute_to_second_approver(doc, pending_state)
-
-
-# def _reroute_to_second_approver(doc: Document, target_state: str):
-#     """Đưa phiếu trở lại trạng thái chờ duyệt và thông báo cho cấp duyệt thứ hai."""
-#     if not doc.name:
-#         return
-#     try:
-#         frappe.db.set_value(doc.doctype, doc.name, "workflow_state", target_state, update_modified=False)
-#     except Exception:
-#         pass
-#     doc.workflow_state = target_state
-#     _notify_to_approver_2(doc)

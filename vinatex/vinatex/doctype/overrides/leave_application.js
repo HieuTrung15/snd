@@ -54,7 +54,7 @@ frappe.ui.form.on("Leave Application", {
 			},
 			callback (r) {
 				if (r.message) {
-					frm.set_value("custom_second_approver", r.message.employee);
+					frm.set_value("custom_second_approver", r.message.name);
 					frm.set_value("custom_second_approver_name", r.message.employee_name);
 				}}
 			});

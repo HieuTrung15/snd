@@ -24,3 +24,20 @@ def salary_slip_has_permission(doc, user):
 
     employee = frappe.db.get_value("Employee", {"user_id": user}, "name")
     return bool(employee and doc.employee == employee)
+
+
+def get_permission_query_conditions(user):
+    if not user:
+        user = frappe.session.user
+
+    # Cho Administrator hoặc System Manager thấy hết
+    if user == "Administrator" or "System Manager" in frappe.get_roles(user):
+        return ""
+
+    # Nhân viên chỉ thấy ToDo:
+    # - do chính họ tạo (owner)
+    # - hoặc giao cho họ (allocated_to)
+    return f"""
+        (`tabToDo`.owner = '{user}'
+         OR `tabToDo`.allocated_to = '{user}')
+    """
