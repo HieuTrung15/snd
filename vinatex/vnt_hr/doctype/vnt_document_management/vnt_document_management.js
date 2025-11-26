@@ -285,9 +285,9 @@ frappe.ui.form.on("VNT Document Management", {
       return frappe.utils.escape_html(nameCache[id] || id);
     };
 
-    const SCALE = 1.0;
+    const SCALE = 0.85;
     const stackSpacing = 120;
-    const baseSize = { width: 1300, height: 500 };
+    const baseSize = { width: 1300, height: 700 };
 
     const noPlaceholderKeys = new Set(["employee_status", "handler_status"]);
     const statusLabel = (key) => {
@@ -438,13 +438,10 @@ frappe.ui.form.on("VNT Document Management", {
     );
 
     const lastStackEnd = infoStart + Math.max(infoCount, 1) * stackSpacing;
-    baseSize.height = Math.max(500, lastStackEnd + 140);
-    const scaledSize = {
-      width: Math.round(baseSize.width * SCALE),
-      height: Math.round(baseSize.height * SCALE)
-    };
+    // Giảm khoảng trống đáy để không dư quá nhiều
+    baseSize.height = Math.max(420, lastStackEnd + 60);
 
-    const nodeSize = { width: 200, height: 104 };
+    const nodeSize = { width: 180, height: 80 };
 
     const nodes = [
       {
@@ -509,6 +506,14 @@ frappe.ui.form.on("VNT Document Management", {
 
     nodes.push(...roleNodes);
 
+    // Tính chiều rộng bám sát nút xa nhất để tránh vùng trống dư
+    const maxNodeRight = nodes.reduce((max, n) => Math.max(max, n.x + nodeSize.width), 0);
+    baseSize.width = Math.max(maxNodeRight + 80, 480);
+    const scaledSize = {
+      width: Math.round(baseSize.width * SCALE),
+      height: Math.round(baseSize.height * SCALE)
+    };
+
     const nodeByKey = Object.fromEntries(nodes.map((n) => [n.key, n]));
     const anchorRight = (node) => ({
       x: node.x + nodeSize.width,
@@ -525,11 +530,12 @@ frappe.ui.form.on("VNT Document Management", {
 
     roleNodes.forEach((node) => {
       const isInfo = node.key.startsWith("info_recipient");
+      const isCollab = node.key.startsWith("collaborator");
       connections.push({
         from: "handler",
         to: node.key,
         color: colorForNode(node),
-        dashed: isInfo
+        dashed: isInfo || isCollab
       });
 
       if (node.key.startsWith("chairperson")) {
@@ -633,7 +639,7 @@ frappe.ui.form.on("VNT Document Management", {
     $wrap.html(`
       <div class="vnt-flow-container">
         <style>
-          .vnt-flow-container { border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; background: #f8fafc; }
+          .vnt-flow-container { width: 100%; max-width: 100%; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; background: #f8fafc; overflow-x: auto; }
           .vnt-flow-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; font-size: 12px; color: #475569; }
           .vnt-flow-legend .vnt-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 999px; background: #fff; }
           .vnt-flow-legend .vnt-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
