@@ -504,6 +504,35 @@ def _get_year_month_defaults(year: int | None = None, month: int | None = None) 
 
 
 @frappe.whitelist()
+def get_salary_years() -> list[int]:
+	"""
+	Trả về danh sách năm có bảng lương (VNT Salary Slip) của nhân sự đang đăng nhập.
+	"""
+	employee = _get_employee_of_user()
+	if not employee:
+		return []
+
+	rows = frappe.db.sql(
+		"""
+		SELECT DISTINCT CAST(year AS UNSIGNED) AS year
+		FROM `tabVNT Salary Slip`
+		WHERE docstatus = 1 AND employee = %(employee)s
+		ORDER BY CAST(year AS UNSIGNED) DESC
+		""",
+		{"employee": employee},
+		as_dict=True,
+	)
+
+	years: list[int] = []
+	for row in rows:
+		year_val = cint(row.get("year"))
+		if year_val:
+			years.append(year_val)
+
+	return years
+
+
+@frappe.whitelist()
 def get_salary_kpi(year: int | None = None, month: int | None = None):
 	"""
 	Trả về 4 KPI + thông tin context:
