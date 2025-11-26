@@ -385,7 +385,8 @@ def compute_item(employee, company=None, month=None, year=None):
         limit_page_length=1,
     )
     if not salary_param:
-        frappe.throw("Không tìm thấy bản ghi Tham số lương hiệu lực cho kỳ tính lương này!")
+        return
+        # frappe.throw("Không tìm thấy bản ghi Tham số lương hiệu lực cho kỳ tính lương này!")
     param = salary_param[0]
 
     # 3) Tổng hợp Attendance trong kỳ
