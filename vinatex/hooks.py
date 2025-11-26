@@ -210,7 +210,11 @@ scheduler_events = {
 		#Chạy tính lại tuổi hàng năm
 		"00 01 1 1 *": [
             "vinatex.vinatex.doctype.overrides.retire_update.recalc_retirement_dates",
-        ]
+        ],
+        # Tự động đánh dấu đã chuyển lương lúc 05:00 sáng ngày 06 hằng tháng
+        "0 5 6 * *": [
+            "vinatex.vnt_hr.doctype.vnt_monthly_payroll.vnt_monthly_payroll.auto_mark_salary_transferred",
+        ],
     }
 
 	# "all": [

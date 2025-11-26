@@ -701,6 +701,51 @@ def compute_item(employee, company=None, month=None, year=None):
     }
 
 
+def _get_previous_month_and_year(base_date):
+    month = base_date.month - 1
+    year = base_date.year
+    if month == 0:
+        month = 12
+        year -= 1
+    return month, year
+
+
+def auto_mark_salary_transferred():
+    """Đánh dấu tự động 'Đã chuyển lương' cho bảng lương của tháng liền trước.
+
+    Chạy theo lịch: 05:00 sáng ngày 06 hàng tháng.
+    """
+    today = getdate()
+    target_month, target_year = _get_previous_month_and_year(today)
+    month_str = str(int(target_month)).zfill(2)
+    year_val = cint(target_year)
+
+    payrolls = frappe.get_all(
+        "VNT Monthly Payroll",
+        filters={
+            "month": month_str,
+            "year": year_val,
+            "docstatus": 1,
+            "da_chuyen_luong": 0,
+        },
+        pluck="name",
+    )
+
+    if not payrolls:
+        return
+
+    logger = frappe.logger("vnt_monthly_payroll", allow_site=True)
+    logger.info("Auto mark payroll transferred for %s/%s: %s", month_str, year_val, payrolls)
+
+    for name in payrolls:
+        try:
+            doc = frappe.get_doc("VNT Monthly Payroll", name)
+            doc.flags.ignore_permissions = True
+            doc.db_set("da_chuyen_luong", 1, update_modified=True, commit=False)
+        except Exception:
+            frappe.log_error(frappe.get_traceback(), f"Auto mark salary transferred failed for {name}")
+
+
 @frappe.whitelist()
 def download_payroll_excel(docname=None, type_doc=None):
     """Export bảng lương theo mẫu được chọn."""
