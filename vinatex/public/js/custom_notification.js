@@ -347,6 +347,13 @@ $(document).on('shown.bs.dropdown', '.dropdown-notifications', function () {
     });
 })();
 
+// Tắt popup "Version Updated" khi bench migrate
+$(document).ready(function () {
+    if (frappe.realtime && frappe.realtime.off) {
+        frappe.realtime.off("version-update");
+    }
+});
+
 frappe.assets.check = function() {
   // Không làm gì cả, tắt kiểm tra cập nhật
 };
