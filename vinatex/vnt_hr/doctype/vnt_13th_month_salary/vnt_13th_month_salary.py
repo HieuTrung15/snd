@@ -12,6 +12,9 @@ MONTH_FIELD_MAP = {idx: f"t{idx}" for idx in range(1, 13)}
 
 
 class VNT13thMonthSalary(Document):
+    def validate(self):
+        self._ensure_no_submitted_duplicate()
+
     def on_submit(self):
         self.create_salary_slips()
 
@@ -121,6 +124,36 @@ class VNT13thMonthSalary(Document):
             year=self.year,
         )
 
+    def _ensure_no_submitted_duplicate(self):
+        """Prevent creating another submitted T13/AL payroll for the same period."""
+        if not (self.luong_thang and self.year):
+            return
+
+        filters = {
+            "luong_thang": self.luong_thang,
+            "year": cint(self.year),
+            "docstatus": 1,
+        }
+        if self.company:
+            filters["company"] = self.company
+        if self.branch:
+            filters["branch"] = self.branch
+        if self.name:
+            filters["name"] = ("!=", self.name)
+
+        existing = frappe.get_all(
+            "VNT 13th Month Salary",
+            filters=filters,
+            pluck="name",
+            limit_page_length=1,
+        )
+        if existing:
+            frappe.throw(
+                _("Đã tồn tại bảng lương {0} năm {1} (đã xác nhận): {2}").format(
+                    self.luong_thang, self.year, existing[0]
+                )
+            )
+
 
 @frappe.whitelist()
 def get_salary_parameter_for_year(year: int | str | None):
@@ -223,6 +256,31 @@ def get_employee_monthly_net_pay(company: str | None, branch: str | None, year: 
     sourced_months = sorted(payroll_docs.keys())
 
     return {"items": items, "sourced_months": sourced_months}
+
+
+@frappe.whitelist()
+def has_submitted_13th_salary(luong_thang=None, year=None, company=None, branch=None):
+    """Check if there is an already-submitted 13th/AL payroll for the same period."""
+    if not (luong_thang and year):
+        return False
+
+    filters = {
+        "luong_thang": luong_thang,
+        "year": cint(year),
+        "docstatus": 1,
+    }
+    if company:
+        filters["company"] = company
+    if branch:
+        filters["branch"] = branch
+
+    existing = frappe.get_all(
+        "VNT 13th Month Salary",
+        filters=filters,
+        pluck="name",
+        limit_page_length=1,
+    )
+    return bool(existing)
 
 
 def _pick_payroll_docs(company: str, branch: str, year: int):
