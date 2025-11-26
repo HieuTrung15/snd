@@ -21,6 +21,12 @@ frappe.ui.form.on("VNT Monthly Payroll", {
             get_standard_working_days(frm, month, year);
         }
         add_download_button(frm);
+
+
+		if (frm.is_new()) {
+			check_submitted_payroll_exists(frm);
+		}
+
     },
     month (frm) {
         if (frm.doc.month && frm.doc.year) {
@@ -28,6 +34,9 @@ frappe.ui.form.on("VNT Monthly Payroll", {
             const year = parseInt(frm.doc.year, 10);
             get_standard_working_days(frm, month, year);
         }
+		if (frm.is_new()) {
+			check_submitted_payroll_exists(frm);
+		}
     },
     year (frm) {
         if (frm.doc.month && frm.doc.year) {
@@ -35,6 +44,9 @@ frappe.ui.form.on("VNT Monthly Payroll", {
             const year = parseInt(frm.doc.year, 10);
             get_standard_working_days(frm, month, year);
         }
+		if (frm.is_new()) {
+			check_submitted_payroll_exists(frm);
+		}
     },
 	get_salary(frm) {
 		if (!frm.doc.company) {
@@ -204,6 +216,25 @@ frappe.ui.form.on("VNT Monthly Payroll Item", {
 		frm.events.compute_row(frm, row, { freeze: false });
 	},
 });
+
+function check_submitted_payroll_exists(frm) {
+	if (!frm.doc.month || !frm.doc.year) {
+		return;
+	}
+
+	frappe.call({
+		method: "vinatex.vnt_hr.doctype.vnt_monthly_payroll.vnt_monthly_payroll.has_submitted_payroll",
+		args: {
+			month: frm.doc.month,
+			year: frm.doc.year,
+		},
+		callback: (r) => {
+			if (r?.message) {
+				frappe.msgprint(__("Đã tồn tại phiếu lương cho tháng và năm đã chọn với trạng thái 'Đã xác nhận'. Vui lòng kiểm tra lại."));
+			}
+		},
+	});
+}
 
 function add_download_button(frm) {
 	if (frm.is_new() || !frm.doc.name) {

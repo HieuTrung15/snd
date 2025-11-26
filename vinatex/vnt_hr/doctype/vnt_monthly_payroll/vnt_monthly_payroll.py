@@ -4,10 +4,13 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import escape_html, flt, get_first_day, get_last_day, getdate, now_datetime
+from frappe.utils import cint, escape_html, flt, get_first_day, get_last_day, getdate, now_datetime
 
 
 class VNTMonthlyPayroll(Document):
+    def validate(self):
+        self._ensure_no_submitted_duplicate()
+
     def on_submit(self):
         self.create_salary_slips()
 
@@ -137,6 +140,34 @@ class VNTMonthlyPayroll(Document):
             "thue_tncn_nam_truoc": flt(item.truy_thu) - flt(item.duoc_hoan_lai),
             "thuc_linh": flt(item.thuc_linh),
         }
+
+    def _ensure_no_submitted_duplicate(self):
+        """Ngăn tạo trùng bảng lương đã xác nhận cùng kỳ."""
+        if not (self.month and self.year):
+            return
+
+        month = str(self.month).zfill(2)
+        year_val = cint(self.year)
+        filters = {
+            "month": month,
+            "year": year_val,
+            "docstatus": 1,
+        }
+        if self.name:
+            filters["name"] = ("!=", self.name)
+
+        existing = frappe.get_all(
+            "VNT Monthly Payroll",
+            filters=filters,
+            pluck="name",
+            limit_page_length=1,
+        )
+        if existing:
+            frappe.throw(
+                _("Đã tồn tại bảng lương đã xác nhận cho {0}/{1}").format(
+                    month, year_val
+                )
+            )
 
     def _render_salary_slip_html(self, item):
         standard_days = flt(self.standard_working_days) or 0
@@ -300,6 +331,27 @@ def get_active_employees(company=None, branch=None):
         ],
         order_by="employee_name asc",
     )
+
+
+@frappe.whitelist()
+def has_submitted_payroll(month=None, year=None):
+    """Kiểm tra đã có bảng lương trạng thái Đã xác nhận cho kỳ chỉ định hay chưa."""
+    if not (month and year):
+        return False
+
+    month_str = str(month).zfill(2)
+    year_val = cint(year)
+    exists = frappe.get_all(
+        "VNT Monthly Payroll",
+        filters={
+            "month": month_str,
+            "year": year_val,
+            "docstatus": 1,
+        },
+        pluck="name",
+        limit_page_length=1,
+    )
+    return bool(exists)
 
 
 def get_employee_contracts(employee, period_start, period_end):
