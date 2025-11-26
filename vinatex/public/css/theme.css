@@ -60,6 +60,24 @@ h6.uppercase {
 	color: black;
 }
 
+/* Ẩn text mặc định cạnh logo để tránh chồng lên tiêu đề tùy chỉnh */
+.navbar .navbar-brand .app-name,
+.navbar .navbar-brand .navbar-brand-text,
+.navbar .navbar-brand .brand-text,
+.navbar .navbar-brand span,
+.navbar .navbar-brand strong,
+.navbar .navbar-brand small {
+	display: none !important;
+}
+
+/* Ẩn breadcrumb để không chèn vào header tùy chỉnh */
+.navbar #navbar-breadcrumbs,
+.navbar .navbar-breadcrumbs,
+.navbar .navbar-breadcrumbs-container,
+.navbar .breadcrumb-container {
+	display: none !important;
+}
+
 /* ===== Vinatex brand text centered in navbar ===== */
 .navbar {
 	position: relative;
