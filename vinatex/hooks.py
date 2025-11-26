@@ -36,6 +36,7 @@ app_include_js = [
 	"/assets/vinatex/js/report_actions_override.js",
 	"/assets/vinatex/js/fullWidth.js",
     "/assets/vinatex/js/custom_notification.js",
+    "/assets/vinatex/js/hide_id_column.js"
 ]
 
 # include js, css files in header of web template
