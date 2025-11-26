@@ -629,6 +629,7 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 	}
 
 	const taxableIncome = Math.max(0, +row.thu_nhap_tinh_thue || 0);
+	const extraWithheldTax = toNumber(payload.thue_tncn_trich_them);
 	const bracketsRaw = Array.isArray(payload.tax_brackets) ? payload.tax_brackets : [];
 	const brackets = bracketsRaw
 		.map((b) => ({
@@ -648,8 +649,9 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		totalTax += chunk * (b.rate / 100);
 	}
 
-	const tncn = Math.round(totalTax);
+	const tncn = Math.round(totalTax) + extraWithheldTax;
 	frappe.model.set_value(row.doctype, row.name, "tncn_tam_thu", tncn);
+	row.tncn_tam_thu = tncn;
 
 	const thucLinh =
 		tongThuNhap -

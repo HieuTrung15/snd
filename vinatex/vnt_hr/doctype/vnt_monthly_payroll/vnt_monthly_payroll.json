@@ -11,13 +11,14 @@
   "date",
   "standard_working_days",
   "type_doc",
+  "get_salary",
   "column_break_jaen",
   "month",
   "year",
   "company",
   "branch",
   "amended_from",
-  "get_salary",
+  "da_chuyen_luong",
   "section_break_fgrx",
   "items"
  ],
@@ -99,17 +100,26 @@
    "label": "T\u00ednh l\u01b0\u01a1ng"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "type_doc",
    "fieldtype": "Select",
    "label": "Lo\u1ea1i bi\u1ec3u m\u1eabu",
-   "options": "Bi\u1ec3u m\u1eabu B\u1ea3ng t\u1ed5ng\nBi\u1ec3u m\u1eabu 2\nBi\u1ec3u m\u1eabu 3"
+   "options": "Bi\u1ec3u m\u1eabu B\u1ea3ng t\u1ed5ng\nBi\u1ec3u m\u1eabu DS chi\nBi\u1ec3u m\u1eabu BL th\u00e1ng"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "depends_on": "eval: doc.docstatus == 1",
+   "fieldname": "da_chuyen_luong",
+   "fieldtype": "Check",
+   "label": "\u0110\u00e3 chuy\u1ec3n l\u01b0\u01a1ng"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-26 16:46:00.341950",
+ "modified": "2025-11-26 17:15:27.404779",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Monthly Payroll",

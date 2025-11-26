@@ -11,6 +11,7 @@
   "ngach",
   "muc_luong_cs_tap_doan",
   "column_break_sxuv",
+  "thue_tncn_trich_them",
   "muc_luong",
   "from_date",
   "to_date"
@@ -41,20 +42,20 @@
   {
    "columns": 2,
    "fieldname": "muc_luong",
-   "fieldtype": "Currency",
+   "fieldtype": "Float",
    "in_list_view": 1,
    "label": "M\u1ee9c l\u01b0\u01a1ng",
    "precision": "0"
   },
   {
-   "columns": 2,
+   "columns": 1,
    "fieldname": "from_date",
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Th\u1eddi gian h\u01b0\u1edfng t\u1eeb ng\u00e0y"
   },
   {
-   "columns": 2,
+   "columns": 1,
    "fieldname": "to_date",
    "fieldtype": "Date",
    "in_list_view": 1,
@@ -65,20 +66,28 @@
    "fieldtype": "Column Break"
   },
   {
-   "columns": 2,
+   "columns": 1,
    "default": "4730000",
    "fieldname": "muc_luong_cs_tap_doan",
-   "fieldtype": "Currency",
+   "fieldtype": "Float",
    "in_list_view": 1,
    "label": "M\u1ee9c l\u01b0\u01a1ng CS T\u0110",
-   "precision": "3"
+   "precision": "0"
+  },
+  {
+   "columns": 2,
+   "fieldname": "thue_tncn_trich_them",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Thu\u1ebf TNCN tr\u00edch th\u00eam",
+   "precision": "0"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-19 09:38:11.028856",
+ "modified": "2025-11-26 16:59:33.559296",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Employee Salary History",
