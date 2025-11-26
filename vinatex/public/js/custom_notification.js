@@ -346,3 +346,7 @@ $(document).on('shown.bs.dropdown', '.dropdown-notifications', function () {
         setup_custom_notifications();
     });
 })();
+
+frappe.assets.check = function() {
+  // Không làm gì cả, tắt kiểm tra cập nhật
+};
