@@ -16,6 +16,11 @@ from openpyxl.utils import get_column_letter
 class VNTMonthlyPayroll(Document):
     def validate(self):
         self._ensure_no_submitted_duplicate()
+        self._enforce_da_chuyen_luong_lock()
+
+    def before_cancel(self):
+        if cint(self.da_chuyen_luong):
+            frappe.throw(_("Không thể hủy bảng lương sau khi đã chuyển"))
 
     def on_submit(self):
         self.create_salary_slips()
@@ -108,6 +113,20 @@ class VNTMonthlyPayroll(Document):
         suffix = now_datetime().strftime("%Y%m%d%H%M%S")
         unique_part = frappe.generate_hash(length=4)
         return f"{employee}-{year}{month}-{suffix}{unique_part}"
+
+    def _enforce_da_chuyen_luong_lock(self):
+        """Chỉ Administrator mới được bỏ tick Đã chuyển lương."""
+        if self.is_new():
+            return
+
+        previous_flag = frappe.db.get_value(self.doctype, self.name, "da_chuyen_luong")
+        if cint(previous_flag) and not cint(self.da_chuyen_luong) and frappe.session.user != "Administrator":
+            # Giữ lại trạng thái đã chuyển, không cho phép bỏ tick
+            self.da_chuyen_luong = previous_flag
+            frappe.throw(_("Không thể bỏ tick khi \"Đã chuyển lương\". Vui lòng liên hệ Ban CNTT & CĐS."))
+
+    def before_update_after_submit(self):
+        self._enforce_da_chuyen_luong_lock()
 
     def _build_salary_slip_fields(self, item):
         standard_days = flt(self.standard_working_days) or 0
@@ -405,7 +424,7 @@ def get_employee_salary_history(employee):
             "parenttype": "Employee",
             "parentfield": "custom_emp_salary_history",
         },
-        fields=["name", "he_so", "from_date", "to_date", "muc_luong"],
+        fields=["name", "he_so", "from_date", "to_date", "muc_luong", "thue_tncn_trich_them"],
         order_by="from_date asc, creation asc",
     )
 
@@ -570,6 +589,12 @@ def compute_item(employee, company=None, month=None, year=None):
         value = find_salary_value(target_date, "muc_luong")
         return value if value is not None else None
 
+    def find_additional_tax_withholding(target_date):
+        entry = find_salary_entry(target_date)
+        if not entry:
+            return None
+        return flt(entry.get("thue_tncn_trich_them"))
+
     def annotate_contract(contract):
         if not contract:
             return None, None
@@ -603,6 +628,16 @@ def compute_item(employee, company=None, month=None, year=None):
     previous_salary_coefficient = find_salary_coefficient(previous_overlap_start)
     current_salary_amount = find_salary_amount(current_overlap_start)
     previous_salary_amount = find_salary_amount(previous_overlap_start)
+    additional_tax_withholding = None
+
+    for candidate_date in (current_overlap_start, period_end, period_start):
+        candidate_value = find_additional_tax_withholding(candidate_date)
+        if candidate_value is not None:
+            additional_tax_withholding = candidate_value
+            break
+
+    if additional_tax_withholding is None:
+        additional_tax_withholding = 0.0
 
     total_working_days = float(ngay_cong or 0)
     previous_working_days = 0.0
@@ -662,6 +697,7 @@ def compute_item(employee, company=None, month=None, year=None):
         "current_salary_amount": current_salary_amount,
         "previous_salary_amount": previous_salary_amount,
         "latest_salary_amount": find_salary_amount(period_end) or find_salary_amount(period_start),
+        "thue_tncn_trich_them": flt(additional_tax_withholding),
     }
 
 
