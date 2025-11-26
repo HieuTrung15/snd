@@ -43,13 +43,32 @@ frappe.ui.form.on("VNT 13th Month Salary", {
 			frm.set_value("year", frappe.datetime.get_today().substr(0, 4));
 		}
 		updateTotalSalaryLabel(frm);
+		if (frm.is_new()) {
+			checkSubmitted13thSalary(frm);
+		}
 	},
 	year(frm) {
 		clearSalaryParamCache(frm);
 		updateTotalSalaryLabel(frm);
+		if (frm.is_new()) {
+			checkSubmitted13thSalary(frm);
+		}
 	},
 	luong_thang(frm) {
 		updateTotalSalaryLabel(frm);
+		if (frm.is_new()) {
+			checkSubmitted13thSalary(frm);
+		}
+	},
+	company(frm) {
+		if (frm.is_new()) {
+			checkSubmitted13thSalary(frm);
+		}
+	},
+	branch(frm) {
+		if (frm.is_new()) {
+			checkSubmitted13thSalary(frm);
+		}
 	},
 
 	get_emp_list(frm) {
@@ -319,4 +338,46 @@ function calculateProgressiveTax(amount, brackets = []) {
 	}
 
 	return tax;
+}
+
+function checkSubmitted13thSalary(frm) {
+	const args = {
+		luong_thang: frm.doc.luong_thang,
+		year: frm.doc.year,
+		company: frm.doc.company,
+		branch: frm.doc.branch,
+	};
+
+	if (!args.luong_thang || !args.year) {
+		return;
+	}
+
+	const key = `${args.luong_thang}-${args.year}-${args.company || ""}-${args.branch || ""}`;
+	if (frm._vnt_dup_warned && frm._vnt_dup_key === key) {
+		return;
+	}
+	if (frm._vnt_dup_pending === key) {
+		return;
+	}
+	frm._vnt_dup_pending = key;
+
+	frappe.call({
+		method: "vinatex.vnt_hr.doctype.vnt_13th_month_salary.vnt_13th_month_salary.has_submitted_13th_salary",
+		args,
+		callback: (r) => {
+			if (r?.message) {
+				if (!frm._vnt_dup_warned || frm._vnt_dup_key !== key) {
+					frm._vnt_dup_warned = true;
+					frm._vnt_dup_key = key;
+					frappe.msgprint(__("Đã tồn tại bảng lương {0} năm {1} đã xác nhận cho đơn vị này. Vui lòng kiểm tra lại.", [args.luong_thang, args.year]));
+				}
+			}
+			frm._vnt_dup_pending = null;
+		},
+		always: () => {
+			if (frm._vnt_dup_pending === key) {
+				frm._vnt_dup_pending = null;
+			}
+		}
+	});
 }
