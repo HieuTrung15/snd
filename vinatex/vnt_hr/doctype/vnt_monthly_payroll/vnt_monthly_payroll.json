@@ -8,9 +8,9 @@
  "field_order": [
   "naming_series",
   "employee",
-  "employee_name",
   "date",
   "standard_working_days",
+  "type_doc",
   "column_break_jaen",
   "month",
   "year",
@@ -27,12 +27,6 @@
    "fieldtype": "Link",
    "label": "Ng\u01b0\u1eddi t\u1ea1o",
    "options": "Employee"
-  },
-  {
-   "fetch_from": "employee.employee_name",
-   "fieldname": "employee_name",
-   "fieldtype": "Data",
-   "label": "T\u00ean ng\u01b0\u1eddi t\u1ea1o"
   },
   {
    "fieldname": "date",
@@ -91,6 +85,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "hidden": 1,
+   "label": "Naming Series",
    "options": "BL-.MM..YY.-.##"
   },
   {
@@ -102,13 +97,19 @@
    "fieldname": "get_salary",
    "fieldtype": "Button",
    "label": "T\u00ednh l\u01b0\u01a1ng"
+  },
+  {
+   "fieldname": "type_doc",
+   "fieldtype": "Select",
+   "label": "Lo\u1ea1i bi\u1ec3u m\u1eabu",
+   "options": "Bi\u1ec3u m\u1eabu B\u1ea3ng t\u1ed5ng\nBi\u1ec3u m\u1eabu 2\nBi\u1ec3u m\u1eabu 3"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-03 18:31:07.803726",
+ "modified": "2025-11-26 16:46:00.341950",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Monthly Payroll",
