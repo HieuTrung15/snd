@@ -137,16 +137,16 @@ def _ensure_todo_for_confirmation(doc: Document, user: str, dates: list[date] | 
 
 	if norm_dates:
 		if len(norm_dates) == 1:
-			description = _("Xác nhận chấm công ngày {0}").format(start_label)
+			description = _("Xác nhận chấm công ngày {0} của {1}").format(start_label,doc.employee_name or doc.employee or _("Nhân viên"))
 		else:
-			description = _("Xác nhận chấm công các ngày từ {0} đến {1} ({2} ngày)").format(
-				start_label, end_label, len(norm_dates)
+			description = _("Xác nhận chấm công các ngày từ {0} đến {1} ({2} ngày) của {3}").format(
+				start_label, end_label, len(norm_dates), doc.employee_name or doc.employee or _("Nhân viên")
 			)
 	else:
 		if start_label == end_label:
-			description = _("Xác nhận chấm công ngày {0}").format(start_label)
+			description = _("Xác nhận chấm công ngày {0} của {1}").format(start_label, doc.employee_name or doc.employee or _("Nhân viên"))
 		else:
-			description = _("Xác nhận chấm công từ {0} đến {1}").format(start_label, end_label)
+			description = _("Xác nhận chấm công từ {0} đến {1} của {2}").format(start_label, end_label, doc.employee_name or doc.employee or _("Nhân viên"))
 
 	new_todo = frappe.new_doc("ToDo")
 	new_todo.description = description
@@ -162,13 +162,12 @@ def _ensure_todo_for_confirmation(doc: Document, user: str, dates: list[date] | 
 def _notify_confirmation(doc: Document, user: str, dates: list[date] | None = None):
 	if not user:
 		return
-	subject = _("Xác nhận chấm công {0}").format(doc.employee_name or doc.employee or _("Nhân viên"))
 	norm_dates = _normalize_confirmation_dates(dates)
 	start_date = norm_dates[0] if norm_dates else (getdate(doc.from_date) if doc.from_date else None)
 	end_date = norm_dates[-1] if norm_dates else (getdate(doc.to_date) if doc.to_date else start_date)
 	start_label = _format_date_value(start_date)
 	end_label = _format_date_value(end_date)
-
+	subject = _("Xác nhận chấm công ngày {0} của {1}").format(end_date, doc.employee_name or doc.employee or _("Nhân viên"))
 	if norm_dates and len(norm_dates) == 1:
 		message = _("Có chấm công bất thường của {0} ngày {1}.").format(
 			frappe.format_value(doc.employee_name, {"fieldtype": "Data"}) if doc.employee_name else _("(chưa rõ)"),
