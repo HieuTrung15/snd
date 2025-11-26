@@ -128,7 +128,6 @@ def _ensure_todo_for_confirmation(doc: Document, user: str, dates: list[date] | 
 	mapped_employee = frappe.db.get_value("Employee", {"user_id": user}, "name")
 	if mapped_employee and mapped_employee != doc.employee:
 		return
-
 	norm_dates = _normalize_confirmation_dates(dates)
 	start_date = norm_dates[0] if norm_dates else (getdate(doc.from_date) if doc.from_date else None)
 	end_date = norm_dates[-1] if norm_dates else (getdate(doc.to_date) if doc.to_date else start_date)
@@ -155,7 +154,7 @@ def _ensure_todo_for_confirmation(doc: Document, user: str, dates: list[date] | 
 	new_todo.reference_name = doc.name
 	new_todo.priority = "Medium"
 	new_todo.status = "Open"
-	new_todo.insert(ignore_permissions=True)
+	new_todo.insert()
 	frappe.db.commit()
 
 
@@ -237,7 +236,7 @@ def _make_attendance_from_confirmation(doc: Document):
 			"shift": "Hành chính",
 			"docstatus": 1,
 		})
-		att.insert(ignore_permissions=True)
+		att.insert()
 	if check_all:
 		_notify_employee_result(doc)
 
@@ -308,7 +307,7 @@ def _ensure_todo_for_approver(doc: Document, user: str):
 	new_todo.reference_name = doc.name
 	new_todo.priority = "Medium"
 	new_todo.status = "Open"
-	new_todo.insert(ignore_permissions=True)
+	new_todo.insert()
 	frappe.db.commit()
 
 
@@ -530,7 +529,7 @@ def make_attendance_confirm():
 
 		user = _resolve_employee_user(att)
 		if is_new:
-			att.insert(ignore_permissions=True)
+			att.insert()
 			if added_dates:
 				_ensure_todo_for_confirmation(att, user, added_dates)
 				_notify_confirmation(att, user, added_dates)
