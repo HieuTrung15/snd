@@ -1,10 +1,16 @@
 # Copyright (c) 2025, vinatex and contributors
 # For license information, please see license.txt
 
+import io
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, escape_html, flt, get_first_day, get_last_day, getdate, now_datetime
+from openpyxl.cell.cell import MergedCell
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
 
 
 class VNTMonthlyPayroll(Document):
@@ -657,3 +663,226 @@ def compute_item(employee, company=None, month=None, year=None):
         "previous_salary_amount": previous_salary_amount,
         "latest_salary_amount": find_salary_amount(period_end) or find_salary_amount(period_start),
     }
+
+
+@frappe.whitelist()
+def download_payroll_excel(docname=None, type_doc=None):
+    """Export bảng lương theo mẫu được chọn."""
+    if not docname:
+        frappe.throw(_("Thiếu tham chiếu chứng từ để tải xuống."))
+
+    doc = frappe.get_doc("VNT Monthly Payroll", docname)
+    selected = (type_doc or doc.type_doc or "").strip()
+    if not selected:
+        frappe.throw(_("Vui lòng chọn \"Loại biểu mẫu\" trước khi tải xuống."))
+
+    if selected == "Biểu mẫu Bảng tổng":
+        filecontent, filename = _build_bang_tong_workbook(doc)
+    else:
+        frappe.throw(_("Loại biểu mẫu {0} chưa được hỗ trợ tải xuống.").format(selected))
+
+    frappe.response["filename"] = filename
+    frappe.response["filecontent"] = filecontent
+    frappe.response["type"] = "binary"
+
+
+def _build_bang_tong_workbook(doc):
+    """Xuất Excel theo bố cục Biểu mẫu 1 (hình mẫu cung cấp)."""
+    workbook = Workbook()
+    ws = workbook.active
+    ws.title = "Biểu mẫu Bảng tổng"
+
+    columns = [
+        {"title": "TT", "field": None, "width": 5, "sum": False, "format": "int"},
+        {"title": "Họ và tên", "field": "employee_name", "width": 26, "sum": False, "format": "text"},
+        {"title": "Lương cơ bản", "field": "luong_cb", "group": "Lương cơ bản", "width": 14, "sum": True, "format": "currency"},
+        {"title": "PC Đảng", "field": "pc_dang1", "group": "Lương cơ bản", "width": 12, "sum": True, "format": "currency"},
+        {"title": "PC kiêm nhiệm", "field": "pc_kiem_nhiem1", "group": "Lương cơ bản", "width": 14, "sum": True, "format": "currency"},
+        {"title": "Lương tính đóng BHXH", "field": "tong_luong_cb", "group": "Lương cơ bản", "width": 18, "sum": True, "format": "currency"},
+        {"title": "Lương tính đóng CĐP", "field": "tong_luong_cb", "group": "Lương cơ bản", "width": 16, "sum": True, "format": "currency"},
+        {
+            "title": "Số phép",
+            "field": "sophep",
+            "compute": "sophep_with_vr",
+            "group": "Lương phép",
+            "width": 10,
+            "sum": True,
+            "format": "int",
+        },
+        {"title": "Tiền", "field": "luong_nghiphep_vr", "group": "Lương phép", "width": 12, "sum": True, "format": "currency"},
+        {"title": "Nghỉ hưởng BHXH/TS Nam", "field": "nghi_kluong_bhxh", "width": 18, "sum": True, "format": "int"},
+        {"title": "Ngày công", "field": "ngay_cong", "width": 12, "sum": True, "format": "decimal1"},
+        {"title": "Hệ số CBCV", "field": "he_so_cbnv", "group": "Lương CBCV", "width": 12, "sum": False, "format": "decimal2"},
+        {"title": "PC Đảng", "field": "pc_dang2", "group": "Lương CBCV", "width": 12, "sum": True, "format": "currency"},
+        {"title": "PC kiêm nhiệm", "field": "pc_kiem_nhiem2", "group": "Lương CBCV", "width": 14, "sum": True, "format": "currency"},
+        {"title": "Tiền lương CQĐI, KTT", "field": "tien_luong_hqcv", "group": "Lương CBCV", "width": 16, "sum": True, "format": "currency"},
+        {"title": "Tiền khoán công tác phí", "field": "tien_khoan_ct", "width": 16, "sum": True, "format": "currency"},
+        {"title": "Truy lĩnh", "field": "truylinh", "width": 12, "sum": True, "format": "currency"},
+        {"title": "Tổng thu nhập", "field": "tong_thu_nhap", "width": 16, "sum": True, "format": "currency"},
+        {"title": "Bảo hiểm (XH, YT, TN)", "field": "xh_yt_tn", "group": "Các khoản khấu trừ lương", "width": 18, "sum": True, "format": "currency"},
+        {"title": "CĐP 0.5%", "field": "doan_phi_cd", "group": "Các khoản khấu trừ lương", "width": 14, "sum": True, "format": "currency"},
+        {"title": "Đảng phí 1%", "field": "dang_phi", "group": "Các khoản khấu trừ lương", "width": 14, "sum": True, "format": "currency"},
+        {"title": "Thuế TNCN tạm tính", "field": "tncn_tam_thu", "group": "Các khoản khấu trừ lương", "width": 16, "sum": True, "format": "currency"},
+        {"title": "Truy thu thuế TNCN 2024", "field": "truy_thu", "group": "Các khoản khấu trừ lương", "width": 18, "sum": True, "format": "currency"},
+        {"title": "Thu nhập thực lĩnh", "field": "thuc_linh", "width": 18, "sum": True, "format": "currency"},
+        {"title": "Ghi chú", "field": "note", "width": 18, "sum": False, "format": "text"},
+    ]
+
+    group_spans = {
+        "Lương cơ bản": (3, 7),
+        "Lương phép": (8, 9),
+        "Lương CBCV": (12, 15),
+        "Các khoản khấu trừ lương": (19, 23),
+    }
+
+    header_fill = PatternFill("solid", fgColor="D9EAD3")
+    total_fill = PatternFill("solid", fgColor="E2EFDA")
+    thin_side = Side(style="thin", color="000000")
+    thin_border = Border(left=thin_side, right=thin_side, top=thin_side, bottom=thin_side)
+    center_wrap = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+    for idx, col in enumerate(columns, start=1):
+        ws.column_dimensions[get_column_letter(idx)].width = col.get("width", 12)
+
+    month_label = str(doc.month or "").zfill(2)
+    year_label = str(doc.year or "")
+
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=4)
+    ws["A1"] = doc.company or "TẬP ĐOÀN DỆT MAY VIỆT NAM"
+    ws["A1"].font = Font(bold=True, size=11)
+
+    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=4)
+    branch_text = f"{doc.branch}" if doc.branch else _("Chi nhánh")
+    ws["A2"] = branch_text
+    ws["A2"].font = Font(size=11)
+
+    ws.merge_cells(start_row=3, start_column=1, end_row=3, end_column=len(columns))
+    ws.cell(row=3, column=1).value = _("BẢNG THANH TOÁN LƯƠNG, THÙ LAO THÁNG {0}/{1}").format(
+        month_label, year_label
+    )
+    ws.cell(row=3, column=1).alignment = Alignment(horizontal="center", vertical="center")
+    ws.cell(row=3, column=1).font = Font(bold=True, size=14)
+
+    ws.merge_cells(
+        start_row=4,
+        start_column=max(len(columns) - 2, 1),
+        end_row=4,
+        end_column=len(columns),
+    )
+    ws.cell(row=4, column=max(len(columns) - 2, 1)).value = _("Đơn vị tính: đồng")
+    ws.cell(row=4, column=max(len(columns) - 2, 1)).alignment = Alignment(horizontal="right", vertical="center")
+
+    group_row = 6
+    header_row = 7
+
+    for label, span in group_spans.items():
+        start_col, end_col = span
+        ws.merge_cells(start_row=group_row, start_column=start_col, end_row=group_row, end_column=end_col)
+        ws.cell(row=group_row, column=start_col).value = label
+
+    for idx, col in enumerate(columns, start=1):
+        if not col.get("group"):
+            ws.merge_cells(start_row=group_row, start_column=idx, end_row=header_row, end_column=idx)
+            ws.cell(row=group_row, column=idx).value = col["title"]
+
+    for idx, col in enumerate(columns, start=1):
+        cell = ws.cell(row=header_row, column=idx)
+        if isinstance(cell, MergedCell):
+            continue
+        cell.value = col["title"]
+
+    for row_idx in (group_row, header_row):
+        for col_idx in range(1, len(columns) + 1):
+            cell = ws.cell(row=row_idx, column=col_idx)
+            cell.font = Font(bold=True, size=11)
+            cell.alignment = center_wrap
+            cell.fill = header_fill
+            cell.border = thin_border
+
+    ws.row_dimensions[group_row].height = 36
+    ws.row_dimensions[header_row].height = 38
+
+    data_start_row = header_row + 1
+    current_row = data_start_row
+    items = list(doc.get("items") or [])
+
+    def resolve_cell_value(row_data, col_idx, col, idx):
+        fmt = col.get("format")
+        if col_idx == 1:
+            return idx
+        if col.get("compute") == "sophep_with_vr":
+            return cint(flt(row_data.get("sophep") or 0) + flt(row_data.get("so_ngay_nghi_vr") or 0))
+        if col.get("field"):
+            raw_value = row_data.get(col["field"])
+            if fmt in {"currency", "decimal1", "decimal2"}:
+                return flt(raw_value or 0)
+            if fmt == "int":
+                return cint(raw_value or 0)
+            return raw_value
+        return None
+
+    for idx, item in enumerate(items, start=1):
+        row_data = item.as_dict()
+        for col_idx, col in enumerate(columns, start=1):
+            value = resolve_cell_value(row_data, col_idx, col, idx)
+            fmt = col.get("format")
+
+            cell = ws.cell(row=current_row, column=col_idx, value=value)
+            cell.border = thin_border
+
+            alignment = Alignment(horizontal="right", vertical="center")
+            if fmt == "text":
+                alignment = Alignment(horizontal="left", vertical="center")
+            if col_idx == 1:
+                alignment = Alignment(horizontal="center", vertical="center")
+            cell.alignment = alignment
+
+            if fmt == "currency":
+                cell.number_format = "#,##0"
+            elif fmt == "decimal1":
+                cell.number_format = "0.0"
+            elif fmt == "decimal2":
+                cell.number_format = "0.00"
+            elif fmt == "int":
+                cell.number_format = "0"
+
+        current_row += 1
+
+    last_data_row = current_row - 1 if items else header_row
+    total_row = last_data_row + 1
+
+    ws.cell(row=total_row, column=2).value = _("Tổng cộng")
+    ws.cell(row=total_row, column=2).font = Font(bold=True)
+
+    for col_idx, col in enumerate(columns, start=1):
+        cell = ws.cell(row=total_row, column=col_idx)
+        if col.get("sum") and items:
+            col_letter = get_column_letter(col_idx)
+            cell.value = f"=SUM({col_letter}{data_start_row}:{col_letter}{last_data_row})"
+            fmt = col.get("format")
+            if fmt == "currency":
+                cell.number_format = "#,##0"
+            elif fmt == "decimal1":
+                cell.number_format = "0.0"
+            elif fmt == "decimal2":
+                cell.number_format = "0.00"
+            elif fmt == "int":
+                cell.number_format = "0"
+            cell.alignment = Alignment(horizontal="right", vertical="center")
+        elif col_idx == 2:
+            cell.alignment = Alignment(horizontal="left", vertical="center")
+        else:
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+
+        cell.border = thin_border
+        cell.fill = total_fill
+        cell.font = Font(bold=True)
+
+    ws.freeze_panes = f"A{data_start_row}"
+
+    output = io.BytesIO()
+    workbook.save(output)
+    output.seek(0)
+
+    filename = f"bang-luong-bang-tong-{month_label}-{year_label or 'nam'}.xlsx"
+    return output.getvalue(), filename
