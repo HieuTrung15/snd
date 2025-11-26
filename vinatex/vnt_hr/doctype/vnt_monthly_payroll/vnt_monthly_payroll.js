@@ -242,9 +242,21 @@ function add_download_button(frm) {
 	}
 
 	frm.add_custom_button(__("Tải xuống Excel"), () => {
+		if (!frm.doc.type_doc) {
+			frappe.msgprint(__("Vui lòng chọn \"Loại biểu mẫu\" trước khi tải xuống."));
+			return;
+		}
+		if (frm.doc.type_doc !== "Biểu mẫu Bảng tổng") {
+			frappe.msgprint(__("Loại biểu mẫu này hiện chưa hỗ trợ tải xuống."));
+			return;
+		}
+
 		const method =
 			"vinatex.vnt_hr.doctype.vnt_monthly_payroll.vnt_monthly_payroll.download_payroll_excel";
-		const params = new URLSearchParams({ docname: frm.doc.name });
+		const params = new URLSearchParams({
+			docname: frm.doc.name,
+			type_doc: frm.doc.type_doc,
+		});
 		const url = `/api/method/${method}?${params.toString()}`;
 		const fullUrl = frappe.urllib.get_full_url(url);
 		window.open(fullUrl);
