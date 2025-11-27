@@ -73,8 +73,11 @@ doctype_js = {
     "Leave Application": "vinatex/doctype/overrides/leave_application.js",
     "Employee": "vinatex/doctype/overrides/employee.js",
 	"ToDo": "vinatex/doctype/overrides/todo.js",
+    "User": "vinatex/doctype/overrides/user.js",
 }
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_list_js = {
+    "VNT Salary Slip": "vinatex/vnt_hr/doctype/vnt_salary_slip/vnt_salary_slip_list.js",
+}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 doctype_calendar_js = {"VNT Car Registration" : "vinatex/doctype/overrides/vnt_car_registration_calendar.js"}
 jinja = {

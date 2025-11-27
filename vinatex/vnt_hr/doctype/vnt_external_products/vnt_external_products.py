@@ -7,10 +7,11 @@ import frappe
 from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.model.document import Document
+from frappe.model.workflow import apply_workflow
 from frappe.utils import cint, cstr, flt, get_url_to_form
 from vinatex.patches.utils.rocket_chat import send_rocket_message
 
-_FOLLOWER_EMPLOYEE = "VGT00164"
+_FOLLOWER_EMPLOYEE = "VGT00083"
 
 
 class VNTExternalProducts(Document):
@@ -47,12 +48,14 @@ def _handle_state_transition(doc: Document):
 	has_second_level = bool(approver_lv2)
 
 	if curr_state == "Chờ lãnh đạo duyệt" and prev_state == "Mới tạo":
+		if _try_skip_first_level(doc, approver_user):
+			return
 		_notify_to_approver(doc, approver_user)
 
 	if curr_state == "Chờ lãnh đạo tập đoàn duyệt" and prev_state == "Chờ lãnh đạo duyệt":
 		_check_state_to_close_todo(doc, approver_user)
 		_notify_to_approver_lv2(doc, approver_lv2_user)
-		_notify_requester(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đang chờ lãnh đạo tập đoàn duyệt."))
+		_notify_requester(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đang chờ Lãnh đạo Tập đoàn duyệt."))
 
 	if curr_state == "Đã duyệt" and prev_state == "Chờ lãnh đạo duyệt":
 		_check_state_to_close_todo(doc, approver_user)
@@ -61,9 +64,9 @@ def _handle_state_transition(doc: Document):
 			_notify_follower(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã được lãnh đạo duyệt."))
 		_record_inventory_movements(doc)
 
-	if curr_state == "Đã duyệt" and prev_state == "Chờ lãnh đạo tập đoàn duyệt":
+	if curr_state == "Đã duyệt" and prev_state == "Chờ Lãnh đạo Tập đoàn duyệt":
 		_check_state_to_close_todo(doc, approver_lv2_user)
-		_notify_requester(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã được lãnh đạo tập đoàn duyệt."))
+		_notify_requester(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã được Lãnh đạo Tập đoàn duyệt."))
 		_notify_follower_prepare_gift(doc)
 		_record_inventory_movements(doc)
 
@@ -72,10 +75,10 @@ def _handle_state_transition(doc: Document):
 		_notify_requester(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã bị lãnh đạo từ chối."))
 		_notify_follower(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã bị lãnh đạo từ chối."))
 
-	if prev_state == "Chờ lãnh đạo tập đoàn duyệt" and curr_state == "Từ chối":
+	if prev_state == "Chờ Lãnh đạo Tập đoàn duyệt" and curr_state == "Từ chối":
 		_check_state_to_close_todo(doc, approver_lv2_user)
-		_notify_requester(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã bị lãnh đạo tập đoàn từ chối."))
-		_notify_follower(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã bị lãnh đạo tập đoàn từ chối."))
+		_notify_requester(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã bị Lãnh đạo Tập đoàn từ chối."))
+		_notify_follower(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã bị Lãnh đạo Tập đoàn từ chối."))
 
 	if curr_state == "Từ chối":
 		_check_state_to_close_todo(doc, approver_user)
@@ -329,13 +332,13 @@ def _sync_inventory_export_flags(doc: Document):
 			continue
 		if not frappe.db.exists("VNT External Products Items List", child_identifier):
 			continue
-		frappe.db.set_value(
-			"VNT External Products Items List",
-			child_identifier,
-			"is_export",
-			cint(row.get("is_export")),
-			update_modified=False,
-		)
+	frappe.db.set_value(
+		"VNT External Products Items List",
+		child_identifier,
+		"is_export",
+		cint(row.get("is_export")),
+		update_modified=False,
+	)
 
 
 def _build_inventory_child_name(doc_name: str | None, child_name: str | None) -> str | None:
@@ -349,6 +352,41 @@ def get_employee_user_id(employee_name: str | None) -> str | None:
 	if not employee_name:
 		return None
 	return frappe.db.get_value("Employee", employee_name, "user_id")
+
+
+def _should_skip_first_level(doc: Document) -> bool:
+	"""Kiểm tra nếu người đề xuất cũng là người duyệt cấp 1."""
+	employee = (doc.get("employee") or "").strip()
+	approver = (doc.get("approver") or "").strip()
+	if employee and approver and employee == approver:
+		return True
+
+	employee_name = (doc.get("employee_name") or "").strip().lower()
+	approver_name = (doc.get("approver_name") or "").strip().lower()
+	return bool(employee_name and approver_name and employee_name == approver_name)
+
+
+def _try_skip_first_level(doc: Document, approver_user: str | None) -> bool:
+	"""Tự động bỏ qua bước duyệt cấp 1 nếu người tạo trùng người duyệt (với các trường hợp người tạo là trưởng ban)
+	  - Ai trưởng ban lại tạo cái này cơ chứ =="""
+	if not _should_skip_first_level(doc):
+		return False
+	if not approver_user:
+		return False
+
+	current_user = frappe.session.user
+	try:
+		frappe.set_user(approver_user)
+		apply_workflow(doc, "Duyệt")
+		return True
+	except Exception:
+		frappe.log_error(
+			title="VNT External Products: skip cấp 1 thất bại",
+			message=frappe.get_traceback(),
+		)
+		return False
+	finally:
+		frappe.set_user(current_user)
 
 
 @frappe.whitelist()
