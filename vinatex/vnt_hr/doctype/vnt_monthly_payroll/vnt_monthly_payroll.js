@@ -544,8 +544,8 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 	row.tien_luong_hqcv = tienLuongHQCV;
 
 	const tienLuongHQCVCu =
-		previousWorkingDays > 0 && hasPreviousCoefficient
-			? ((muc_luong_theo_hqcv_cu) / standardWorkingDays) * previousWorkingDays
+		previousWorkingDays > 0 && hasPreviousSalaryAmount
+			? (toNumber(row.muc_luong_theo_hqcv_cu) / standardWorkingDays) * previousWorkingDays
 			: 0;
 	frappe.model.set_value(row.doctype, row.name, "tien_luong_hqcv_cu", tienLuongHQCVCu);
 	row.tien_luong_hqcv_cu = tienLuongHQCVCu;
