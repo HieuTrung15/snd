@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+from functools import lru_cache
 from typing import Dict, Optional
 
 import frappe
@@ -115,6 +116,9 @@ class VNTSalarySlip(Document):
 
 
 	def _get_public_key(self):
+		if getattr(VNTSalarySlip, "_public_key_cache", None):
+			return VNTSalarySlip._public_key_cache
+
 		env_values = self._load_site_env()
 		raw_public = env_values.get("VNT_PUBLIC_KEY")
 		if not raw_public:
@@ -122,12 +126,16 @@ class VNTSalarySlip(Document):
 
 		try:
 			public_pem = base64.b64decode(raw_public)
-			return serialization.load_pem_public_key(public_pem)
+			VNTSalarySlip._public_key_cache = serialization.load_pem_public_key(public_pem)
+			return VNTSalarySlip._public_key_cache
 		except Exception as exc:
 			frappe.throw(_("Invalid VNT_PUBLIC_KEY in sites/.env: {0}").format(frappe.as_unicode(exc)))
 
 	@staticmethod
 	def _get_private_key():
+		if getattr(VNTSalarySlip, "_private_key_cache", None):
+			return VNTSalarySlip._private_key_cache
+
 		env_values = VNTSalarySlip._load_site_env()
 		raw_private = env_values.get("VNT_PRIVATE_KEY")
 		if not raw_private:
@@ -135,7 +143,8 @@ class VNTSalarySlip(Document):
 
 		try:
 			private_pem = base64.b64decode(raw_private)
-			return serialization.load_pem_private_key(private_pem, password=None)
+			VNTSalarySlip._private_key_cache = serialization.load_pem_private_key(private_pem, password=None)
+			return VNTSalarySlip._private_key_cache
 		except Exception as exc:
 			frappe.throw(_("Invalid VNT_PRIVATE_KEY in sites/.env: {0}").format(frappe.as_unicode(exc)))
 
@@ -158,6 +167,11 @@ class VNTSalarySlip(Document):
 			frappe.log_error(frappe.get_traceback(), _("Failed to decrypt salary fields"))
 			frappe.throw(_("Không giải mã được dữ liệu lương. Vui lòng liên hệ quản trị viên. {0}").format(frappe.as_unicode(exc)))
 
+	@staticmethod
+	@lru_cache(maxsize=512)
+	def _cached_decrypt(ciphertext_b64: Optional[str]) -> Optional[float]:
+		return VNTSalarySlip._decrypt_salary_value(ciphertext_b64)
+
 	def _inject_decrypted_salary_fields(self):
 		"""Populate plaintext fields for UI usage only; values are not persisted."""
 		tong_cipher = getattr(self, "tong_thu_nhap_encrypted", None)
@@ -179,10 +193,10 @@ class VNTSalarySlip(Document):
 	) -> Dict[str, Optional[float]]:
 		"""Shared helper to decrypt salary ciphertexts (RSA-OAEP, base64)."""
 		return {
-			"tong_thu_nhap": VNTSalarySlip._decrypt_salary_value(tong_thu_nhap_encrypted)
+			"tong_thu_nhap": VNTSalarySlip._cached_decrypt(tong_thu_nhap_encrypted)
 			if tong_thu_nhap_encrypted
 			else None,
-			"thuc_linh": VNTSalarySlip._decrypt_salary_value(thuc_linh_encrypted)
+			"thuc_linh": VNTSalarySlip._cached_decrypt(thuc_linh_encrypted)
 			if thuc_linh_encrypted
 			else None,
 		}

@@ -446,14 +446,27 @@ def _get_data(filters: dict):
 
 	results.sort(key=lambda r: (r["employee"], r["year"]))
 
+	# Tính lương tháng hiện tại (fallback payroll engine) theo employee, cache để tránh gọi lặp lại
+	payroll_cache: dict[str, float | None] = {}
 	for row in results:
+		if row.get("current_month_net_income"):
+			continue
+
+		emp_code = row.get("employee")
+		if emp_code in payroll_cache:
+			if payroll_cache[emp_code] is not None:
+				row["current_month_net_income"] = payroll_cache[emp_code]
+			continue
+
 		current_month_net = _get_monthly_payroll_net_income(
-			row.get("employee"),
+			emp_code,
 			filters.get("month"),
 			filters.get("year"),
 			row.get("company"),
 		)
-		row["current_month_net_income"] = current_month_net if current_month_net is not None else row["current_month_net_income"]
+		payroll_cache[emp_code] = current_month_net
+		if current_month_net is not None:
+			row["current_month_net_income"] = current_month_net
 	return results
 
 
