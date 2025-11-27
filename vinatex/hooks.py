@@ -4,7 +4,8 @@ app_publisher = "vinatex"
 app_description = "vinatex"
 app_email = "sonph@vinatex.com.vn"
 app_license = "mit"
-
+from frappe import conf
+version = conf.get("asset_version") or 1
 # Apps
 # ------------------
 
@@ -27,16 +28,16 @@ app_license = "mit"
 # include js, css files in header of desk.html
 # app_include_css = "/assets/vinatex/css/chart.css"
 app_include_css = [
-    "/assets/vinatex/css/theme.css",
-    "/assets/vinatex/css/custom_notification.css"
+    f"/assets/vinatex/css/theme.css?v={version}",
+    f"/assets/vinatex/css/custom_notification.css?v={version}"
 ]
 app_include_js = [
-    "/assets/vinatex/js/global_header.js",
-	"/assets/vinatex/js/title-wrap.js",
-	"/assets/vinatex/js/report_actions_override.js",
-	"/assets/vinatex/js/fullWidth.js",
-    "/assets/vinatex/js/custom_notification.js",
-    "/assets/vinatex/js/hide_id_column.js"
+    f"/assets/vinatex/js/global_header.js?v={version}",
+	f"/assets/vinatex/js/title-wrap.js?v={version}",
+	f"/assets/vinatex/js/report_actions_override.js?v={version}",
+	f"/assets/vinatex/js/fullWidth.js?v={version}",
+    f"/assets/vinatex/js/custom_notification.js?v={version}",
+    f"/assets/vinatex/js/hide_id_column.js?v={version}"
 ]
 
 # include js, css files in header of web template
