@@ -1,6 +1,10 @@
 (() => {
 	const TITLE = "TẬP ĐOÀN DỆT MAY VIỆT NAM";
 	const SUB_TITLE = "";
+	const HOME_SIDE_LINES = [
+		"",
+		"",
+	];
 
 	const removeOldBrandText = () => {
 		document.querySelectorAll(".vnt-brand-text").forEach((el) => el.remove());
@@ -54,15 +58,70 @@
 		}
 	};
 
+	const removeHomeSideLines = () => {
+		document
+			.querySelectorAll(".vnt-home-inline-text")
+			.forEach((el) => el.remove());
+		document
+			.querySelectorAll(".page-head.vnt-home-inline-text-active")
+			.forEach((el) => el.classList.remove("vnt-home-inline-text-active"));
+	};
+
+	const ensureHomeSideLines = () => {
+		const route = (window.frappe?.get_route && window.frappe.get_route()) || [];
+		const primary = (route[0] || "").toLowerCase();
+		const secondary = (route[1] || "").toLowerCase();
+		const isWorkspaceHome =
+			primary === "workspaces" &&
+			(secondary === "" || secondary === "home");
+		const isHomeRoute = primary === "home" || primary === "";
+		const isHome = isWorkspaceHome || isHomeRoute;
+
+		const pageHead = document.querySelector(".page-head");
+		const container =
+			pageHead?.querySelector(".page-head-content") || pageHead;
+
+		if (!pageHead || !container || !isHome) {
+			removeHomeSideLines();
+			return;
+		}
+
+		let wrapper = container.querySelector(".vnt-home-inline-text");
+		if (!wrapper) {
+			wrapper = document.createElement("div");
+			wrapper.className = "vnt-home-inline-text";
+			container.appendChild(wrapper);
+		}
+
+		wrapper.innerHTML = "";
+		HOME_SIDE_LINES.filter(Boolean).forEach((line, idx) => {
+			const lineEl = document.createElement("div");
+			lineEl.className = `vnt-home-inline-text-line ${
+				idx === 0 ? "primary" : "secondary"
+			}`;
+			lineEl.textContent = line;
+			wrapper.appendChild(lineEl);
+		});
+
+		if (!wrapper.childElementCount) {
+			wrapper.remove();
+			return;
+		}
+
+		pageHead.classList.add("vnt-home-inline-text-active");
+	};
+
 	const init = () => {
 		stripDefaultBrandText();
 		removeOldBrandText();
 		hideBreadcrumbs();
+		ensureHomeSideLines();
 		setTimeout(() => {
 			stripDefaultBrandText();
 			removeOldBrandText();
 			hideBreadcrumbs();
 			ensureSearchTitle();
+			ensureHomeSideLines();
 		}, 0);
 	};
 
