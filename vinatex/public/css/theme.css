@@ -111,6 +111,59 @@ h6.uppercase {
 	color: #4a3f2a;
 }
 
+/* Two-line text beside Home (pinned right) */
+.page-head.vnt-home-inline-text-active {
+	position: relative;
+}
+
+.page-head.vnt-home-inline-text-active .page-title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding-right: 0;
+}
+
+.page-head.vnt-home-inline-text-active .page-head-content {
+	align-items: center;
+}
+
+.vnt-home-inline-text {
+	margin-left: auto;
+	display: flex;
+	flex-direction: column;
+	line-height: 1.2;
+	align-items: flex-end;
+	text-align: right;
+	font-style: italic;
+	pointer-events: none;
+	position: static;
+	transform: none;
+	right: auto;
+	top: auto;
+}
+
+.vnt-home-inline-text .primary {
+	font-size: 14px;
+	font-weight: 700;
+	color: #2f3d8a;
+}
+
+.vnt-home-inline-text .secondary {
+	font-size: 12px;
+	font-weight: 600;
+	color: #4a5568;
+}
+
+@media (max-width: 768px) {
+	.page-head.vnt-home-inline-text-active .page-title {
+		padding-right: 0;
+	}
+	.vnt-home-inline-text {
+		display: none;
+	}
+}
+
 @media (max-width: 768px) {
 	.navbar #vnt-search-title .vnt-search-title-line {
 		font-size: 14px;
