@@ -5,26 +5,16 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "employee",
   "external_id",
+  "facility_rental_revenue_ph",
   "column_break_namk",
-  "date",
-  "note"
+  "recorded_at",
+  "is_invoiced"
  ],
  "fields": [
   {
-   "fieldname": "employee",
-   "fieldtype": "Data",
-   "label": "Ng\u01b0\u1eddi l\u1eadp"
-  },
-  {
    "fieldname": "column_break_namk",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "date",
-   "fieldtype": "Date",
-   "label": "Ng\u00e0y l\u1eadp"
   },
   {
    "fieldname": "external_id",
@@ -32,15 +22,26 @@
    "label": "ID bravo"
   },
   {
-   "fieldname": "note",
-   "fieldtype": "Small Text",
-   "label": "Ghi ch\u00fa"
+   "default": "0",
+   "fieldname": "is_invoiced",
+   "fieldtype": "Check",
+   "label": "\u0110\u00e3 c\u00f3 h\u00f3a \u0111\u01a1n"
+  },
+  {
+   "fieldname": "recorded_at",
+   "fieldtype": "Datetime",
+   "label": "Th\u1eddi gian ghi nh\u1eadn tr\u00ean Bravo"
+  },
+  {
+   "fieldname": "facility_rental_revenue_ph",
+   "fieldtype": "Float",
+   "label": "Doanh thu cho thu\u00ea MMTB, nh\u00e0 x\u01b0\u1edfng, \u0111\u1ea5t KCN Ph\u00fa H\u01b0ng"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-27 13:25:00.058646",
+ "modified": "2025-11-27 14:46:55.935645",
  "modified_by": "Administrator",
  "module": "VNT BCTC",
  "name": "VNT Group Financial Metrics",
