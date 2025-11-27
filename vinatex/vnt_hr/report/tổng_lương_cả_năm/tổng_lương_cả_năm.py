@@ -792,6 +792,8 @@ def get_salary_chart(year: int | None = None):
 
 	monthly: dict[int, dict[str, float]] = {}
 
+	translate = frappe._  # avoid cases where global `_` bị ghi đè
+
 	# Gộp lương theo tháng
 	for row in salary_rows:
 		month_str = cstr(row.get("month") or "").strip()
@@ -825,13 +827,13 @@ def get_salary_chart(year: int | None = None):
 	allowance_values: list[float] = []
 
 	for m in range(1, 13):
-		categories.append(_("Tháng {0}").format(m))
+		categories.append(translate("Tháng {0}").format(m))
 		data = monthly.get(m, {})
-		salary_values.append(data.get("salary", 0) or 0)
-		allowance_values.append(data.get("allowance", 0) or 0)
+		salary_values.append(_round0(data.get("salary", 0)))
+		allowance_values.append(_round0(data.get("allowance", 0)))
 
-	total_salary = sum(salary_values)
-	total_allowance = sum(allowance_values)
+	total_salary = _round0(sum(salary_values))
+	total_allowance = _round0(sum(allowance_values))
 
 	return {
 		"year": cint(year),
@@ -1106,6 +1108,8 @@ def get_company_salary_chart(year: int | None = None,
 
 	monthly: dict[int, dict[str, float]] = {}
 
+	translate = frappe._  # avoid cases where global `_` bị ghi đè
+
 	# Gộp lương theo tháng
 	for row in salary_rows:
 		m = _safe_month(row.get("month"))
@@ -1135,7 +1139,7 @@ def get_company_salary_chart(year: int | None = None,
 	allowance_values: list[float] = []
 
 	for m in range(1, 13):
-		categories.append(_("Tháng {0}").format(m))
+		categories.append(translate("Tháng {0}").format(m))
 		data = monthly.get(m, {})
 		# dùng _round0 để không lấy phần thập phân
 		salary_values.append(_round0(data.get("salary", 0)))
