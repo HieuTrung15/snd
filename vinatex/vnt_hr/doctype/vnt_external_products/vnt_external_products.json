@@ -1,11 +1,12 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:\u0110KSP\u0110N-{employee_name}-{#####}",
+ "autoname": "naming_series:",
  "creation": "2025-11-03 17:05:50.704838",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "naming_series",
   "amended_from",
   "employee",
   "employee_name",
@@ -216,17 +217,24 @@
    "ignore_user_permissions": 1,
    "label": "Nh\u00e2n s\u1ef1 nh\u1eadn b\u00e0n giao s\u1ea3n ph\u1ea9m",
    "options": "Employee"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "naming series",
+   "options": "SPDN.-.MM..YY.-.####"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-17 08:44:46.454628",
+ "modified": "2025-11-26 15:32:14.629145",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT External Products",
- "naming_rule": "Expression",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {

@@ -95,7 +95,7 @@ def _handle_state_transition(doc):
 	employee = doc.get("employee")
 	employee_user = get_employee_user_id(employee)
 	if prev_state == 'Chờ duyệt' and curr_state == 'Đã duyệt':
-		subject = _("Phiếu đăng ký phòng họp của {0} đã được lãnh đạo duyệt").format(doc.employee_name or _("(không rõ)"))
+		subject = _("Phiếu đăng ký phòng họp của {0} đã được duyệt").format(doc.employee_name or _("(không rõ)"))
 		message = _("Phiếu ngày {0} từ {1} đến {2} đã được duyệt.").format(
 			doc.date or _("(không rõ ngày đăng ký)"),
 			doc.start_time or _("(không rõ thời gian bắt đầu)"),

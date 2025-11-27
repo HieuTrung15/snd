@@ -1,4 +1,5 @@
 import base64
+import json
 import os
 from typing import Dict, Optional
 
@@ -208,3 +209,65 @@ def get_encrypted_salary_fields(name: str) -> Dict[str, Optional[str]]:
 	"""API helper to fetch encrypted salary fields for a given salary slip."""
 	slip: VNTSalarySlip = frappe.get_doc("VNT Salary Slip", name)
 	return slip.get_encrypted_salary_fields()
+
+
+def _needs_decryption(value, ciphertext) -> bool:
+	"""Return True if ciphertext exists and the plaintext field is empty or zero."""
+	if not ciphertext:
+		return False
+	if value in (None, ""):
+		return True
+	try:
+		return flt(value) == 0
+	except Exception:
+		return False
+
+
+@frappe.whitelist()
+def get_decrypted_salary_for_list(names) -> Dict[str, Dict[str, float]]:
+	"""
+	Trả về map {name: {tong_thu_nhap, thuc_linh}} đã giải mã cho List View.
+	`names` có thể là list hoặc chuỗi JSON.
+	"""
+	if not names:
+		return {}
+
+	if isinstance(names, str):
+		try:
+			names = json.loads(names)
+		except Exception:
+			names = [names]
+
+	if not isinstance(names, (list, tuple, set)):
+		names = [names]
+
+	names = [n for n in names if n]
+	if not names:
+		return {}
+
+	rows = frappe.db.get_all(
+		"VNT Salary Slip",
+		filters={"name": ["in", names]},
+		fields=["name", "tong_thu_nhap", "thuc_linh", "tong_thu_nhap_encrypted", "thuc_linh_encrypted"],
+	)
+
+	result: Dict[str, Dict[str, float]] = {}
+	for row in rows:
+		gross = row.get("tong_thu_nhap")
+		net = row.get("thuc_linh")
+		if _needs_decryption(gross, row.get("tong_thu_nhap_encrypted")) or _needs_decryption(net, row.get("thuc_linh_encrypted")):
+			decrypted = VNTSalarySlip.decrypt_salary_values(
+				tong_thu_nhap_encrypted=row.get("tong_thu_nhap_encrypted"),
+				thuc_linh_encrypted=row.get("thuc_linh_encrypted"),
+			)
+			if _needs_decryption(gross, row.get("tong_thu_nhap_encrypted")):
+				gross = decrypted.get("tong_thu_nhap")
+			if _needs_decryption(net, row.get("thuc_linh_encrypted")):
+				net = decrypted.get("thuc_linh")
+
+		result[row["name"]] = {
+			"tong_thu_nhap": flt(gross),
+			"thuc_linh": flt(net),
+		}
+
+	return result

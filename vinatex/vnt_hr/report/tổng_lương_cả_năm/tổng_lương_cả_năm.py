@@ -12,7 +12,7 @@ from frappe import _
 from frappe.utils import cint, cstr, flt, now_datetime
 
 from vinatex.vnt_hr.doctype.vnt_monthly_payroll.vnt_monthly_payroll import compute_item as compute_monthly_payroll_item
-from vinatex.vnt_hr.doctype.vnt_salary_slip.vnt_salary_slip import VNTSalarySlip
+from vinatex.vnt_hr.doctype.vnt_salary_slip.vnt_salary_slip import VNTSalarySlip, _needs_decryption
 
 
 def execute(filters=None):
@@ -464,16 +464,19 @@ def _get_salary_values_with_fallback(row: dict) -> tuple[float, float]:
 	"""
 	gross = row.get("tong_thu_nhap")
 	net = row.get("thuc_linh")
-	if gross in (None, "") or net in (None, ""):
+	cipher_gross = row.get("tong_thu_nhap_encrypted")
+	cipher_net = row.get("thuc_linh_encrypted")
+
+	if _needs_decryption(gross, cipher_gross) or _needs_decryption(net, cipher_net):
 		decrypted = VNTSalarySlip.decrypt_salary_values(
-			tong_thu_nhap_encrypted=row.get("tong_thu_nhap_encrypted"),
-			thuc_linh_encrypted=row.get("thuc_linh_encrypted"),
+			tong_thu_nhap_encrypted=cipher_gross,
+			thuc_linh_encrypted=cipher_net,
 		)
-		if gross in (None, ""):
+		if _needs_decryption(gross, cipher_gross):
 			gross = decrypted.get("tong_thu_nhap")
-		if net in (None, ""):
+		if _needs_decryption(net, cipher_net):
 			net = decrypted.get("thuc_linh")
-	frappe.log_error(f"Decrypted values: gross={gross}, net={net}", "Annual salary: decryption log")
+
 	return flt(gross), flt(net)
 
 # Nếu file này chưa có 2 hàm dưới thì giữ lại, nếu có rồi thì khỏi thêm
@@ -576,25 +579,17 @@ def get_salary_kpi(year: int | None = None, month: int | None = None):
 	"""
 
 	select_fields = [
-		#tong thu nhap tu dau nam
-		"SUM(COALESCE(slip.tong_thu_nhap, 0)) AS year_to_date_net",
-		# Lương tháng hiện tại
-		"SUM(CASE WHEN slip.month = %(month)s THEN COALESCE(slip.tong_thu_nhap, 0) ELSE 0 END) AS current_month_salary",
+		"slip.month",
+		"slip.tong_thu_nhap",
+		"slip.thuc_linh",
+		"slip.tong_thu_nhap_encrypted",
+		"slip.thuc_linh_encrypted",
 	]
 
 	prev_month = ym["previous_month"]
 	if prev_month:
 		params["prev_month"] = f"{prev_month:02d}"
-		select_fields.append(
-			"SUM(CASE WHEN slip.month = %(prev_month)s THEN COALESCE(slip.tong_thu_nhap, 0) ELSE 0 END) AS previous_month_salary"
-		)
-		select_fields.append(
-			"SUM(CASE WHEN slip.month = %(prev_month)s THEN COALESCE(item.total_allowance_net, 0) ELSE 0 END) AS previous_month_allowance"
-		)
-	else:
-		# Tháng 1: không có tháng trước → 0
-		select_fields.append("0 AS previous_month_salary")
-		select_fields.append("0 AS previous_month_allowance")
+		select_fields.append("item.total_allowance_net")
 
 	sql = f"""
 		SELECT
@@ -606,9 +601,24 @@ def get_salary_kpi(year: int | None = None, month: int | None = None):
 		  AND slip.employee = %(employee)s
 	"""
 
-	result = frappe.db.sql(sql, params, as_dict=True)
-	row = result[0] if result else {}
-		# lương tháng hiện tại
+	rows = frappe.db.sql(sql, params, as_dict=True)
+
+	year_to_date_net = 0.0
+	previous_month_salary = 0.0
+	previous_month_allowance = 0.0
+	current_month_salary = 0.0
+
+	for row in rows:
+		gross, _net = _get_salary_values_with_fallback(row)
+		year_to_date_net += gross
+
+		month_val = cstr(row.get("month")).zfill(2)
+		if month_val == params["month"]:
+			current_month_salary += gross
+		if prev_month and month_val == params.get("prev_month"):
+			previous_month_salary += gross
+			previous_month_allowance += flt(row.get("total_allowance_net"))
+
 	now_dt = now_datetime()
 	emp_company = frappe.db.get_value("Employee", employee, "company")
 	salary_current_month = _get_monthly_payroll_net_income(
@@ -619,10 +629,10 @@ def get_salary_kpi(year: int | None = None, month: int | None = None):
 	) or 0
 	return {
 		# 4 KPI
-		"year_to_date_net": _js_round(row.get("year_to_date_net") or 0),
-		"previous_month_salary": _js_round(row.get("previous_month_salary") or 0),
-		"previous_month_allowance": _js_round(row.get("previous_month_allowance") or 0),
-		"salary_current_month": _js_round(salary_current_month or 0),
+		"year_to_date_net": _js_round(year_to_date_net),
+		"previous_month_salary": _js_round(previous_month_salary),
+		"previous_month_allowance": _js_round(previous_month_allowance),
+		"salary_current_month": _js_round(salary_current_month or current_month_salary or 0),
 		# Thông tin context cho front-end
 		"employee": employee,
 		"employee_name": emp_doc.get("employee_name") or "",
@@ -666,6 +676,9 @@ def get_salary_table(year: int | None = None):
 			slip.month,
 			-- Thông tin từ Slip
 			slip.tong_thu_nhap AS slip_salary,
+			slip.tong_thu_nhap_encrypted,
+			slip.thuc_linh,
+			slip.thuc_linh_encrypted,
 			(
 				COALESCE(slip.pc_dang2, 0)
 			  + COALESCE(slip.pc_kiem_nhiem2, 0)
@@ -704,11 +717,19 @@ def get_salary_table(year: int | None = None):
 		if row.get("item_tax") is None: row["item_tax"] = 0
 		if row.get("item_net") is None: row["item_net"] = 0
 		if row.get("allowance_type") is None: row["allowance_type"] = ""
-		# Làm tròn VNĐ (không lấy phần thập phân)
-		row["slip_salary"] = _js_round(row.get("slip_salary") or 0)
+		# Giải mã nếu cần
+		gross, net = _get_salary_values_with_fallback(
+			{
+				"tong_thu_nhap": row.get("slip_salary"),
+				"thuc_linh": row.get("thuc_linh"),
+				"tong_thu_nhap_encrypted": row.get("tong_thu_nhap_encrypted"),
+				"thuc_linh_encrypted": row.get("thuc_linh_encrypted"),
+			}
+		)
+		row["slip_salary"] = _js_round(gross or 0)
 		row["slip_allowance"] = _js_round(row.get("slip_allowance") or 0)
 		row["slip_tax"] = _js_round(row.get("slip_tax") or 0)
-		row["slip_net"] = _js_round(row.get("slip_net") or 0)
+		row["slip_net"] = _js_round(net or row.get("slip_net") or 0)
 		row["item_amount"] = _js_round(row.get("item_amount") or 0)
 		row["item_tax"] = _js_round(row.get("item_tax") or 0)
 		row["item_net"] = _js_round(row.get("item_net") or 0)
@@ -740,13 +761,16 @@ def get_salary_chart(year: int | None = None):
 	# --- 1) LƯƠNG THEO THÁNG (chỉ từ bảng chính, không join item) ---
 	sql_salary = """
 		SELECT
+			slip.name,
 			slip.month,
-			SUM(COALESCE(slip.tong_thu_nhap, 0)) AS salary
+			slip.tong_thu_nhap,
+			slip.thuc_linh,
+			slip.tong_thu_nhap_encrypted,
+			slip.thuc_linh_encrypted
 		FROM `tabVNT Salary Slip` AS slip
 		WHERE slip.docstatus = 1
 		  AND slip.year = %(year)s
 		  AND slip.employee = %(employee)s
-		GROUP BY slip.month
 	"""
 
 	# --- 2) PHỤ CẤP THEO THÁNG (từ bảng con) ---
@@ -773,15 +797,13 @@ def get_salary_chart(year: int | None = None):
 		month_str = cstr(row.get("month") or "").strip()
 		if not month_str:
 			continue
-		try:
-			m = cint(month_str)
-		except Exception:
-			continue
+		m = _safe_month(month_str)
 		if not m:
 			continue
 
 		monthly.setdefault(m, {})
-		monthly[m]["salary"] = row.get("salary") or 0
+		gross, _ = _get_salary_values_with_fallback(row)
+		monthly[m]["salary"] = monthly[m].get("salary", 0) + gross
 
 	# Gộp phụ cấp theo tháng
 	for row in allow_rows:
@@ -879,7 +901,7 @@ def _get_gross_income_from_slip(employee: str, month: int | str, year: int | str
 	total = 0.0
 	for row in rows:
 		gross = row.get("tong_thu_nhap")
-		if gross in (None, ""):
+		if _needs_decryption(gross, row.get("tong_thu_nhap_encrypted")):
 			decrypted = VNTSalarySlip.decrypt_salary_values(
 				tong_thu_nhap_encrypted=row.get("tong_thu_nhap_encrypted")
 			)
