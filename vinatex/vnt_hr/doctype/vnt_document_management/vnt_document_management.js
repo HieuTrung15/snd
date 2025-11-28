@@ -1,7 +1,19 @@
 // Copyright (c) 2025, vinatex and contributors
 // For license information, please see license.txt
 
+// Tìm phòng/ban của người chủ trì từ bảng người xử lý chính
+const get_chair_department = (frm) => {
+  const rows = Array.isArray(frm.doc.items) ? frm.doc.items : [];
+  const chairRow = rows.find((r) => r.chu_tri);
+  return chairRow?.department || null;
+};
+
 frappe.ui.form.on("VNT Document Management", {
+  setup(frm) {
+    frm.trigger("setup_cv_xu_ly_query");
+    frm.trigger("setup_cv_xu_ly_query_items2");
+  },
+
   chairperson(frm) {
     if (frm.doc.chairperson) {
       frm.set_value("nguoi_chu_tri", frm.doc.chairperson);
@@ -16,6 +28,9 @@ frappe.ui.form.on("VNT Document Management", {
     frm.trigger("sync_chair_from_items");
     frm.trigger("sync_collab_from_items");
     frm.trigger("render_process_flow");
+    frm.trigger("setup_cv_xu_ly_query");
+    frm.trigger("setup_cv_xu_ly_query_items2");
+    frm.trigger("lock_items2_grid");
 
     // Chỉ set mặc định khi là phiếu mới
     if (frm.is_new()) {
@@ -94,6 +109,48 @@ frappe.ui.form.on("VNT Document Management", {
 
   info_recipient_status(frm) {
     frm.trigger("render_process_flow");
+  },
+
+  setup_cv_xu_ly_query(frm) {
+    frm.set_query("cv_xu_ly", () => {
+      const department = get_chair_department(frm);
+      if (!department) {
+        if (!frm._cvXuLyMissingDeptWarned) {
+          frappe.msgprint("Vui lòng chọn Người chủ trì (có phòng/ban) trước khi chọn Chuyên viên xử lý.");
+          frm._cvXuLyMissingDeptWarned = true;
+        }
+        // Trả về filter vô hiệu để tránh chọn sai khi chưa có phòng/ban
+        return { filters: { name: "__no_chair_department__" } };
+      }
+      frm._cvXuLyMissingDeptWarned = false;
+      return { filters: { department } };
+    });
+  },
+
+  setup_cv_xu_ly_query_items2(frm) {
+    frm.set_query("cv_xu_ly", "items2", (_frm, cdt, cdn) => {
+      const row = (locals[cdt] && locals[cdt][cdn]) || {};
+      if (!row.nguoi_phoi_hop) {
+        if (!frm._cvXuLyMissingCollabWarned) {
+          frappe.msgprint("Vui lòng chọn Người phối hợp trước khi chọn Chuyên viên xử lý.");
+          frm._cvXuLyMissingCollabWarned = true;
+        }
+        return { filters: { name: "__no_collaborator__" } };
+      }
+      frm._cvXuLyMissingCollabWarned = false;
+      return {
+        query: "vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.filter_cv_xu_ly_by_collab",
+        filters: { nguoi_phoi_hop: row.nguoi_phoi_hop }
+      };
+    });
+  },
+
+  lock_items2_grid(frm) {
+    const grid = frm.fields_dict.items2?.grid;
+    if (!grid) return;
+    grid.cannot_add_rows = true;
+    grid.cannot_delete_rows = true;
+    grid.wrapper.find(".grid-add-row, .grid-remove-rows, .grid-remove-all-rows").hide();
   },
 
   sync_chair_from_items(frm) {

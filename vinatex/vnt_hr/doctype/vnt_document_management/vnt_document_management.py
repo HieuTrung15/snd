@@ -60,3 +60,36 @@ def get_level1_approvers():
 			}
 		)
 	return result
+
+
+@frappe.whitelist()
+def filter_cv_xu_ly_by_collab(doctype, txt, searchfield, start, page_len, filters):
+	"""
+	Trả về nhân viên cùng phòng/ban với người phối hợp (nguoi_phoi_hop) trong bảng items2.
+	"""
+	collab = (filters or {}).get("nguoi_phoi_hop")
+	if not collab:
+		return []
+
+	department = frappe.db.get_value("Employee", collab, "department")
+	if not department:
+		return []
+
+	like_txt = f"%{txt or ''}%"
+	rows = frappe.db.sql(
+		"""
+		SELECT name, employee_name
+		FROM `tabEmployee`
+		WHERE department = %(department)s
+			AND (name LIKE %(txt)s OR employee_name LIKE %(txt)s)
+		ORDER BY employee_name ASC
+		LIMIT %(page_len)s OFFSET %(start)s
+		""",
+		{
+			"department": department,
+			"txt": like_txt,
+			"page_len": page_len,
+			"start": start,
+		},
+	)
+	return rows
