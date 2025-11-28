@@ -4,6 +4,14 @@
 frappe.ui.form.on("VNT Monthly Payroll", {
 	
     refresh(frm) {
+		if (!canManagePayroll()) {
+			if (frm.is_new()) {
+				frappe.msgprint(__("Bạn không được phép tạo bảng lương. Vui lòng liên hệ HR."));
+				frappe.set_route("List", "VNT Monthly Payroll");
+				return;
+			}
+		}
+
         if (!frm.doc.month || !frm.doc.year) {
             frm.set_value("month", frappe.datetime.get_today().substr(5, 2));
             frm.set_value("year", frappe.datetime.get_today().substr(0, 4));
@@ -49,6 +57,11 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 		}
     },
 	get_salary(frm) {
+		if (!canManagePayroll()) {
+			frappe.msgprint(__("Bạn không được phép tính lương. Vui lòng liên hệ HR."));
+			return;
+		}
+
 		if (!frm.doc.company) {
 			frappe.msgprint(__("Vui lòng chọn Công ty trước khi lấy danh sách nhân sự."));
 			return;
@@ -130,6 +143,13 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 	},
 
 	compute_row(frm, row, opts = {}) {
+		if (!canManagePayroll()) {
+			if (!frm._vnt_payroll_permission_warned) {
+				frappe.msgprint(__("Bạn không được phép tính lương. Vui lòng liên hệ HR."));
+				frm._vnt_payroll_permission_warned = true;
+			}
+			return Promise.resolve();
+		}
 		if (!row || !row.employee) return Promise.resolve();
 
 		const args = {
@@ -707,4 +727,18 @@ function compute_all_items(frm, rows = []) {
 function toNumber(value) {
 	const num = Number(value);
 	return Number.isFinite(num) ? num : 0;
+}
+
+// ==== Quyền tính lương ====
+const HR_SALARY_USERS = new Set([
+	"tult@vinatex.com.vn",
+	"hoaltm@vinatex.com.vn",
+	"thaottt@vinatex.com.vn",
+]);
+
+function canManagePayroll() {
+	const user = frappe.session?.user;
+	if (!user) return false;
+	if (user === "Administrator") return true;
+	return HR_SALARY_USERS.has(user);
 }
