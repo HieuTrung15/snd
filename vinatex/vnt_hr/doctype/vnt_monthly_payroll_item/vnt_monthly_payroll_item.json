@@ -104,9 +104,8 @@
   {
    "fetch_from": "employee.custom_no_social_insurance",
    "fieldname": "bhxh",
-   "fieldtype": "Select",
-   "label": "Kh\u00f4ng \u0111\u00f3ng BHXH (5)",
-   "options": "1. \u0110\u00f3ng BHXH, \u0111\u00f3ng \u0110PC\u0110\n2. \u0110\u00f3ng BHXH, kh\u00f4ng \u0111\u00f3ng \u0110PC\u0110\n3. Kh\u00f4ng \u0111\u00f3ng BHXH & \u0110PC\u0110"
+   "fieldtype": "Data",
+   "label": "Kh\u00f4ng \u0111\u00f3ng BHXH (5)"
   },
   {
    "fetch_from": "employee.custom_basic_salary_coefficient",
@@ -521,7 +520,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-28 17:00:07.747368",
+ "modified": "2025-11-28 17:33:49.400499",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Monthly Payroll Item",
