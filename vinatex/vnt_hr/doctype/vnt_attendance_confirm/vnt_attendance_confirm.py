@@ -108,13 +108,13 @@ def _format_date_value(value: date | None) -> str:
 def _ensure_todo_for_confirmation(doc: Document, user: str, dates: list[date] | None = None):
 	if not user:
 		return
-	if frappe.db.exists("ToDo", {
-		"reference_type": doc.doctype,
-		"reference_name": doc.name,
-		"allocated_to": user,
-		"status": ["not in", ["Closed", "Cancelled"]],
-	}):
-		return
+	# if frappe.db.exists("ToDo", {
+	# 	"reference_type": doc.doctype,
+	# 	"reference_name": doc.name,
+	# 	"allocated_to": user,
+	# 	"status": ["not in", ["Closed", "Cancelled"]],
+	# }):
+	# 	return
 	mapped_employee = frappe.db.get_value("Employee", {"user_id": user}, "name")
 	if mapped_employee and mapped_employee != doc.employee:
 		return
