@@ -108,6 +108,7 @@ def _format_date_value(value: date | None) -> str:
 def _ensure_todo_for_confirmation(doc: Document, user: str, dates: list[date] | None = None):
 	if not user:
 		return
+	# Chỉ tạo một ToDo mở cho mỗi (doc, user); tránh trùng assignment
 	# if frappe.db.exists("ToDo", {
 	# 	"reference_type": doc.doctype,
 	# 	"reference_name": doc.name,
@@ -119,23 +120,21 @@ def _ensure_todo_for_confirmation(doc: Document, user: str, dates: list[date] | 
 	if mapped_employee and mapped_employee != doc.employee:
 		return
 	norm_dates = _normalize_confirmation_dates(dates)
-	start_date = norm_dates[0] if norm_dates else (getdate(doc.from_date) if doc.from_date else None)
+	first_item_date = None
+	if doc.get("items"):
+		first_item_date = getdate(doc.items[0].get("date")) if doc.items[0].get("date") else None
+
+	start_date = first_item_date or (norm_dates[0] if norm_dates else (getdate(doc.from_date) if doc.from_date else None))
 	end_date = norm_dates[-1] if norm_dates else (getdate(doc.to_date) if doc.to_date else start_date)
 	start_label = _format_date_value(start_date)
 	end_label = _format_date_value(end_date)
+	pending_count = len([row for row in (doc.get("items") or []) if not row.get("type")])
+	days_count = pending_count or (len(norm_dates) if norm_dates else 0)
+	days_count = days_count or 1  # tối thiểu 1 ngày để tránh hiển thị (0 ngày)
 
-	if norm_dates:
-		if len(norm_dates) == 1:
-			description = _("Xác nhận chấm công ngày {0} của {1}").format(start_label,doc.employee_name or doc.employee or _("Nhân viên"))
-		else:
-			description = _("Xác nhận chấm công các ngày từ {0} đến {1} ({2} ngày) của {3}").format(
-				start_label, end_label, len(norm_dates), doc.employee_name or doc.employee or _("Nhân viên")
-			)
-	else:
-		if start_label == end_label:
-			description = _("Xác nhận chấm công ngày {0} của {1}").format(start_label, doc.employee_name or doc.employee or _("Nhân viên"))
-		else:
-			description = _("Xác nhận chấm công từ {0} đến {1} của {2}").format(start_label, end_label, doc.employee_name or doc.employee or _("Nhân viên"))
+	description = _("Xác nhận chấm công từ {0} đến {1} ({2} ngày) của {3}").format(
+		start_label, end_label, days_count, doc.employee_name or doc.employee or _("Nhân viên")
+	)
 
 	new_todo = frappe.new_doc("ToDo")
 	new_todo.description = description
