@@ -580,6 +580,10 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		frappe.model.set_value(row.doctype, row.name, "tien_khoan_ct", 0);
 	}
 
+	const tienGuiXe = toNumber(payload.tien_gui_xe);
+	frappe.model.set_value(row.doctype, row.name, "tien_gui_xe", tienGuiXe);
+	row.tien_gui_xe = tienGuiXe;
+
 	const tongThuNhap =
 		toNumber(row.pc_dang2) +
 		toNumber(row.pc_kiem_nhiem2) +
@@ -588,10 +592,11 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		toNumber(row.tien_an) +
 		toNumber(row.tien_khoan_ct) +
 		toNumber(row.truylinh) +
-		toNumber(row.tien_luong_hqcv_cu);
+		toNumber(row.tien_luong_hqcv_cu) +
+		toNumber(row.tien_gui_xe);
 	frappe.model.set_value(row.doctype, row.name, "tong_thu_nhap", tongThuNhap);
 
-	const tongThuNhapChiuThue = tongThuNhap - toNumber(row.tien_an) - toNumber(row.tien_khoan_ct);
+	const tongThuNhapChiuThue = tongThuNhap - toNumber(row.tien_an) - toNumber(row.tien_khoan_ct) - toNumber(row.tien_gui_xe);
 	frappe.model.set_value(row.doctype, row.name, "tong_tn_chiu_thue", tongThuNhapChiuThue);
 
 	if (row.dang_vien === "Chính thức") {
@@ -633,28 +638,36 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		);
 	}
 
-	const taxableIncome = Math.max(0, +row.thu_nhap_tinh_thue || 0);
-	const extraWithheldTax = toNumber(payload.thue_tncn_trich_them);
-	const bracketsRaw = Array.isArray(payload.tax_brackets) ? payload.tax_brackets : [];
-	const brackets = bracketsRaw
-		.map((b) => ({
-			rate: +((b.rate ?? b.percent) || 0),
-			from: +((b.from ?? b.from_cur) || 0),
-			to: +((b.to ?? b.to_cur) || 0) || Infinity,
-		}))
-		.filter((b) => b.rate > 0 && b.to > b.from)
-		.sort((a, b) => a.from - b.from);
+	const applyFlatTax10 = payload.thue_tam_trich === true || payload.thue_tam_trich === 1 || String(payload.thue_tam_trich) === "1";
+	let tncn;
 
-	let totalTax = 0;
-	for (const b of brackets) {
-		if (taxableIncome <= b.from) break;
-		const upper = Math.min(taxableIncome, b.to);
-		const chunk = Math.max(0, upper - b.from);
-		if (chunk <= 0) continue;
-		totalTax += chunk * (b.rate / 100);
+	if (applyFlatTax10) {
+		const baseForFlatTax = toNumber(row.tong_tn_chiu_thue) || toNumber(tongThuNhap);
+		tncn = Math.round(baseForFlatTax * 0.1);
+	} else {
+		const taxableIncome = Math.max(0, +row.thu_nhap_tinh_thue || 0);
+		const extraWithheldTax = toNumber(payload.thue_tncn_trich_them);
+		const bracketsRaw = Array.isArray(payload.tax_brackets) ? payload.tax_brackets : [];
+		const brackets = bracketsRaw
+			.map((b) => ({
+				rate: +((b.rate ?? b.percent) || 0),
+				from: +((b.from ?? b.from_cur) || 0),
+				to: +((b.to ?? b.to_cur) || 0) || Infinity,
+			}))
+			.filter((b) => b.rate > 0 && b.to > b.from)
+			.sort((a, b) => a.from - b.from);
+
+		let totalTax = 0;
+		for (const b of brackets) {
+			if (taxableIncome <= b.from) break;
+			const upper = Math.min(taxableIncome, b.to);
+			const chunk = Math.max(0, upper - b.from);
+			if (chunk <= 0) continue;
+			totalTax += chunk * (b.rate / 100);
+		}
+
+		tncn = Math.round(totalTax) + extraWithheldTax;
 	}
-
-	const tncn = Math.round(totalTax) + extraWithheldTax;
 	frappe.model.set_value(row.doctype, row.name, "tncn_tam_thu", tncn);
 	row.tncn_tam_thu = tncn;
 

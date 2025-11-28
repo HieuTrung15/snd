@@ -425,7 +425,18 @@ def get_employee_salary_history(employee):
             "parenttype": "Employee",
             "parentfield": "custom_emp_salary_history",
         },
-        fields=["name", "he_so", "from_date", "to_date", "muc_luong", "thue_tncn_trich_them"],
+        fields=[
+            "name",
+            "he_so",
+            "from_date",
+            "to_date",
+            "muc_luong",
+            "thue_tncn_trich_them",
+            "tien_gui_xe",
+            "khong_an_ca",
+            "khong_ctp",
+            "thue_tam_trich",
+        ],
         order_by="from_date asc, creation asc",
     )
 
@@ -458,6 +469,7 @@ def compute_item(employee, company=None, month=None, year=None):
             "travel_allowance",
             "giam_tru_npt",
             "giam_tru_gia_canh",
+            "tien_gui_xe"
         ],
         order_by="from_date desc",
         limit_page_length=1,
@@ -596,6 +608,15 @@ def compute_item(employee, company=None, month=None, year=None):
             return None
         return flt(entry.get("thue_tncn_trich_them"))
 
+    def find_salary_flag(target_date, fieldname):
+        entry = find_salary_entry(target_date)
+        if not entry:
+            return None
+        value = entry.get(fieldname)
+        if value in (None, ""):
+            return None
+        return bool(cint(value))
+
     def annotate_contract(contract):
         if not contract:
             return None, None
@@ -640,6 +661,24 @@ def compute_item(employee, company=None, month=None, year=None):
     if additional_tax_withholding is None:
         additional_tax_withholding = 0.0
 
+    def resolve_salary_flag(fieldname, fallback=False):
+        for candidate_date in (current_overlap_start, period_end, period_start):
+            if not candidate_date:
+                continue
+            flag = find_salary_flag(candidate_date, fieldname)
+            if flag is not None:
+                return flag
+        return fallback
+
+    skip_meal_allowance = resolve_salary_flag("khong_an_ca", False)
+    skip_travel_allowance = resolve_salary_flag("khong_ctp", False)
+    flat_tax_10_percent = resolve_salary_flag("thue_tam_trich", False)
+    parking_fee_checked = resolve_salary_flag("tien_gui_xe", False)
+    parking_fee_amount = flt(param.tien_gui_xe or 0)
+    applied_parking_fee = parking_fee_amount if parking_fee_checked else 0.0
+    effective_meal_allowance = 0.0 if skip_meal_allowance else flt(param.meal_allowance or 0)
+    effective_travel_allowance = 0.0 if skip_travel_allowance else flt(param.travel_allowance or 0)
+
     total_working_days = float(ngay_cong or 0)
     previous_working_days = 0.0
     current_working_days = total_working_days
@@ -677,8 +716,13 @@ def compute_item(employee, company=None, month=None, year=None):
         "reference_salary": param.reference_salary,
         "regional_minimum_wage": param.regional_minimum_wage,
         "corporate_minimum_wage": param.corporate_minimum_wage,
-        "meal_allowance": param.meal_allowance,
-        "travel_allowance": param.travel_allowance,
+        "meal_allowance": effective_meal_allowance,
+        "travel_allowance": effective_travel_allowance,
+        "tien_gui_xe": applied_parking_fee,
+        "tien_gui_xe_checked": parking_fee_checked,
+        "khong_an_ca": skip_meal_allowance,
+        "khong_ctp": skip_travel_allowance,
+        "thue_tam_trich": flat_tax_10_percent,
         "so_phep": so_phep,
         "cong_tac": cong_tac,
         "so_ngay_nghi_vr": so_ngay_nghi_vr,

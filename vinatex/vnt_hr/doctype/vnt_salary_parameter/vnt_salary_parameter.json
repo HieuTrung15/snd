@@ -10,10 +10,10 @@
   "employee",
   "employee_name",
   "date",
+  "giam_tru_gia_canh",
   "column_break_fcef",
   "from_date",
   "to_date",
-  "giam_tru_gia_canh",
   "giam_tru_npt",
   "section_break_ykdk",
   "reference_salary",
@@ -22,6 +22,7 @@
   "column_break_bene",
   "meal_allowance",
   "travel_allowance",
+  "tien_gui_xe",
   "amended_from",
   "section_break_wtos",
   "items"
@@ -38,6 +39,7 @@
    "fetch_if_empty": 1,
    "fieldname": "employee_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "T\u00ean ng\u01b0\u1eddi l\u1eadp"
   },
   {
@@ -126,13 +128,19 @@
    "fieldname": "giam_tru_npt",
    "fieldtype": "Currency",
    "label": "M\u1ee9c gi\u1ea3m tr\u1eeb NPT"
+  },
+  {
+   "fieldname": "tien_gui_xe",
+   "fieldtype": "Currency",
+   "label": "Ti\u1ec1n g\u1eedi xe",
+   "precision": "0"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-03 17:03:43.906004",
+ "modified": "2025-11-28 16:09:22.596701",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Salary Parameter",
