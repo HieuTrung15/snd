@@ -157,11 +157,13 @@ jinja = {
 
 permission_query_conditions = {
     "VNT Salary Slip": "vinatex.vnt_hr.permissions.salary_slip_permission_query_conditions",
-    "ToDo": "vinatex.vnt_hr.permissions.get_permission_query_conditions"
+    "ToDo": "vinatex.vnt_hr.permissions.get_permission_query_conditions",
+    "VNT Monthly Payroll": "vinatex.vnt_hr.permissions.vnt_monthly_payroll_per",
 }
 
 has_permission = {
     "VNT Salary Slip": "vinatex.vnt_hr.permissions.salary_slip_has_permission",
+    "VNT Monthly Payroll": "vinatex.vnt_hr.permissions.vnt_monthly_payroll_has_permission",
 }
 
 # DocType Class
