@@ -246,8 +246,13 @@ function add_download_button(frm) {
 			frappe.msgprint(__("Vui lòng chọn \"Loại biểu mẫu\" trước khi tải xuống."));
 			return;
 		}
-		if (frm.doc.type_doc !== "Biểu mẫu Bảng tổng") {
-			frappe.msgprint(__("Loại biểu mẫu này hiện chưa hỗ trợ tải xuống."));
+		const supportedTypes = ["Biểu mẫu Bảng tổng", "Biểu mẫu DS chi", "Biểu mẫu BL tháng"];
+		if (!supportedTypes.includes(frm.doc.type_doc)) {
+			frappe.msgprint(
+				__("Loại biểu mẫu này hiện chưa hỗ trợ tải xuống. Vui lòng chọn một trong: {0}", [
+					supportedTypes.join(", "),
+				])
+			);
 			return;
 		}
 
