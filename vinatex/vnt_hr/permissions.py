@@ -43,29 +43,43 @@ def get_permission_query_conditions(user):
     """
 
 def vnt_monthly_payroll_per(user):
+    # Không có user hoặc Guest -> không thấy gì
     if not user or user == "Guest":
         return "1=0"
 
+    # Admin -> thấy hết
     if user == "Administrator":
         return ""
 
-    hr_salary_users = {"tult@vinatex.com.vn", "hoaltm@vinatex.com.vn", "thaottt@vinatex.com.vn"}
+    # Nhóm HR -> thấy hết
+    hr_salary_users = {
+        "tult@vinatex.com.vn",
+        "hoaltm@vinatex.com.vn",
+        "thaottt@vinatex.com.vn",
+    }
     if user in hr_salary_users:
         return ""
 
-    return f"`tabVNT Monthly Payroll`.`employee` = '{employee}'"
-
+    # Các user khác -> không được thấy gì
+    return "1=0"
 
 def vnt_monthly_payroll_has_permission(doc, user):
-
+    # Guest/out -> chặn
     if not user or user == "Guest":
         return False
 
+    # Admin -> cho
     if user == "Administrator":
         return True
 
-    hr_salary_users = {"tult@vinatex.com.vn", "hoaltm@vinatex.com.vn", "thaottt@vinatex.com.vn"}
+    # Nhóm HR -> cho
+    hr_salary_users = {
+        "tult@vinatex.com.vn",
+        "hoaltm@vinatex.com.vn",
+        "thaottt@vinatex.com.vn",
+    }
     if user in hr_salary_users:
         return True
 
-    return doc.employee == employee
+    # Còn lại -> cấm hết, kể cả phiếu của chính mình
+    return False
