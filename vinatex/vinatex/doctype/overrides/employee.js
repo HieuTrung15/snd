@@ -1,4 +1,7 @@
 frappe.ui.form.on("Employee", {
+  refresh(frm) {
+    toggle_salary_tables_visibility(frm);
+  },
   department(frm) {
     if (frm.doc.department) {
       frappe.call({
@@ -39,6 +42,29 @@ frappe.ui.form.on("Employee", {
     bind_contract_grid_events_once(frm);
   }
 });
+
+const HR_SALARY_USERS = new Set([
+  "tult@vinatex.com.vn",
+  "hoaltm@vinatex.com.vn",
+  "thaottt@vinatex.com.vn"
+]);
+
+function toggle_salary_tables_visibility(frm) {
+  const can_view = can_view_salary_data(frm);
+  ["custom_section_break_bywfl", "custom_emp_salary_history", "custom_section_break_0co8w", "custom_phu_cap", "custom_section_break_8zxr5"].forEach((fieldname) => {
+    if (frm.fields_dict[fieldname]) {
+      frm.toggle_display(fieldname, can_view);
+    }
+  });
+}
+
+function can_view_salary_data(frm) {
+  const user = frappe.session?.user;
+  if (!user || user === "Guest") return false;
+  if (user === "Administrator") return true;
+  if (HR_SALARY_USERS.has(user)) return true;
+  return frm.doc?.user_id && frm.doc.user_id === user;
+}
 
 function bind_contract_grid_events_once(frm) {
   const grid = frm.fields_dict?.custom_vnt_contract?.grid;
