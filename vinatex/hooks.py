@@ -56,7 +56,7 @@ app_include_js = [
 override_whitelisted_methods = {
     # method gốc của HRMS → method của bạn
     "hrms.hr.doctype.leave_application.leave_application.get_leave_approver":
-        "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver"
+    "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver"
 }
 
 override_doctype_class = {
@@ -74,6 +74,7 @@ doctype_js = {
     "Employee": "vinatex/doctype/overrides/employee.js",
 	"ToDo": "vinatex/doctype/overrides/todo.js",
     "User": "vinatex/doctype/overrides/user.js",
+    "Job Requisition": "vinatex/doctype/overrides/job_requisition.js",
 }
 doctype_list_js = {
     "VNT Salary Slip": "vinatex/vnt_hr/doctype/vnt_salary_slip/vnt_salary_slip_list.js",

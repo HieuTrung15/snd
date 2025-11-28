@@ -15,5 +15,10 @@ frappe.ui.form.on("VNT Recruitment Plan", {
         if (!frm.doc.date) {
             frm.set_value('date', frappe.datetime.get_today());
         }
+
+        if (frm.is_new() && !frm.doc.year) {
+            const nextYear = new Date().getFullYear() + 1;
+            frm.set_value('year', nextYear);
+        }
 	}
 });
