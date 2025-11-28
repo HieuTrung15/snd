@@ -13,8 +13,17 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
+HR_SALARY_USERS = {
+    "tult@vinatex.com.vn",
+    "hoaltm@vinatex.com.vn",
+    "thaottt@vinatex.com.vn",
+}
+
 
 class VNTMonthlyPayroll(Document):
+    def before_insert(self):
+        self._enforce_creator_whitelist()
+
     def validate(self):
         self._ensure_no_submitted_duplicate()
         self._enforce_da_chuyen_luong_lock()
@@ -125,6 +134,18 @@ class VNTMonthlyPayroll(Document):
             # Giữ lại trạng thái đã chuyển, không cho phép bỏ tick
             self.da_chuyen_luong = previous_flag
             frappe.throw(_("Không thể bỏ tick khi \"Đã chuyển lương\". Vui lòng liên hệ Ban CNTT & CĐS."))
+
+    def _enforce_creator_whitelist(self):
+        """Chỉ cho phép HR lương/Administrator tạo mới bảng lương."""
+        if not self.is_new():
+            return
+
+        current_user = frappe.session.user
+        if current_user == "Administrator":
+            return
+
+        if current_user not in HR_SALARY_USERS:
+            frappe.throw(_("Bạn không được phép tạo bảng lương tháng. Vui lòng liên hệ HR."))
 
     def before_update_after_submit(self):
         self._enforce_da_chuyen_luong_lock()
