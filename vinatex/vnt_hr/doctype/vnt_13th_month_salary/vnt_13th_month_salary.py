@@ -8,10 +8,15 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, flt, getdate, now_datetime
 
+from vinatex.vnt_hr.permissions import is_hr_salary_user
+
 MONTH_FIELD_MAP = {idx: f"t{idx}" for idx in range(1, 13)}
 
 
 class VNT13thMonthSalary(Document):
+    def before_insert(self):
+        self._ensure_creation_allowed()
+
     def validate(self):
         self._ensure_no_submitted_duplicate()
 
@@ -153,6 +158,12 @@ class VNT13thMonthSalary(Document):
                     self.luong_thang, self.year, existing[0]
                 )
             )
+
+    def _ensure_creation_allowed(self):
+        """Chặn tạo mới nếu không thuộc nhóm HR lương hoặc Administrator."""
+        user = frappe.session.user
+        if not is_hr_salary_user(user):
+            frappe.throw(_("Bạn không có quyền tạo mới VNT 13th Month Salary."))
 
 
 @frappe.whitelist()

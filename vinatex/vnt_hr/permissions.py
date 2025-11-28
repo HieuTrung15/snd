@@ -1,5 +1,20 @@
 import frappe
 
+HR_SALARY_USERS = {
+    "tult@vinatex.com.vn",
+    "hoaltm@vinatex.com.vn",
+    "thaottt@vinatex.com.vn",
+}
+
+
+def is_hr_salary_user(user: str | None) -> bool:
+    """Return True if user is in HR salary list or Administrator."""
+    if not user or user == "Guest":
+        return False
+    if user == "Administrator":
+        return True
+    return user in HR_SALARY_USERS
+
 
 def salary_slip_permission_query_conditions(user):
     """Restrict VNT Salary Slip list to the employee linked to the user."""
@@ -48,16 +63,7 @@ def vnt_monthly_payroll_per(user):
         return "1=0"
 
     # Admin -> thấy hết
-    if user == "Administrator":
-        return ""
-
-    # Nhóm HR -> thấy hết
-    hr_salary_users = {
-        "tult@vinatex.com.vn",
-        "hoaltm@vinatex.com.vn",
-        "thaottt@vinatex.com.vn",
-    }
-    if user in hr_salary_users:
+    if is_hr_salary_user(user):
         return ""
 
     # Các user khác -> không được thấy gì
@@ -69,17 +75,20 @@ def vnt_monthly_payroll_has_permission(doc, user):
         return False
 
     # Admin -> cho
-    if user == "Administrator":
-        return True
-
-    # Nhóm HR -> cho
-    hr_salary_users = {
-        "tult@vinatex.com.vn",
-        "hoaltm@vinatex.com.vn",
-        "thaottt@vinatex.com.vn",
-    }
-    if user in hr_salary_users:
+    if is_hr_salary_user(user):
         return True
 
     # Còn lại -> cấm hết, kể cả phiếu của chính mình
+    return False
+
+
+def vnt_13th_month_salary_has_permission(doc=None, user=None, ptype=None):
+    """
+    Chỉ cho phép HR lương hoặc Administrator truy cập (mọi perm).
+    """
+    user = user or frappe.session.user
+    if not user or user == "Guest":
+        return False
+    if is_hr_salary_user(user):
+        return True
     return False

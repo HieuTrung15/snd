@@ -78,6 +78,7 @@ doctype_js = {
 }
 doctype_list_js = {
     "VNT Salary Slip": "vinatex/vnt_hr/doctype/vnt_salary_slip/vnt_salary_slip_list.js",
+    "VNT 13th Month Salary": "vinatex/vnt_hr/doctype/vnt_13th_month_salary/vnt_13th_month_salary_list.js",
 }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 doctype_calendar_js = {"VNT Car Registration" : "vinatex/doctype/overrides/vnt_car_registration_calendar.js"}
@@ -159,11 +160,13 @@ permission_query_conditions = {
     "VNT Salary Slip": "vinatex.vnt_hr.permissions.salary_slip_permission_query_conditions",
     "ToDo": "vinatex.vnt_hr.permissions.get_permission_query_conditions",
     "VNT Monthly Payroll": "vinatex.vnt_hr.permissions.vnt_monthly_payroll_per",
+    "VNT 13th Month Salary": "vinatex.vnt_hr.permissions.vnt_monthly_payroll_per",
 }
 
 has_permission = {
     "VNT Salary Slip": "vinatex.vnt_hr.permissions.salary_slip_has_permission",
     "VNT Monthly Payroll": "vinatex.vnt_hr.permissions.vnt_monthly_payroll_has_permission",
+    "VNT 13th Month Salary": "vinatex.vnt_hr.permissions.vnt_13th_month_salary_has_permission",
 }
 
 # DocType Class
