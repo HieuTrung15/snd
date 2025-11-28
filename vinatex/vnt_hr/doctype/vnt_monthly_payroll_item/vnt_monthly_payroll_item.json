@@ -8,9 +8,13 @@
  "field_order": [
   "employee",
   "employee_name",
+  "department",
+  "bank_name",
   "column_break_pyhx",
+  "gender",
   "designation",
   "bhxh",
+  "bank_ac_no",
   "section_break_e5sa",
   "hs_luong_cb",
   "luong_cb",
@@ -477,13 +481,39 @@
    "label": "M\u1ee9c l\u01b0\u01a1ng theo HQCV c\u0169",
    "precision": "3",
    "read_only": 1
+  },
+  {
+   "fetch_from": "employee.bank_name",
+   "fieldname": "bank_name",
+   "fieldtype": "Data",
+   "label": "Ng\u00e2n h\u00e0ng"
+  },
+  {
+   "fetch_from": "employee.bank_ac_no",
+   "fieldname": "bank_ac_no",
+   "fieldtype": "Data",
+   "label": "S\u1ed1 t\u00e0i kho\u1ea3n"
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Ph\u00f2ng/ban",
+   "options": "Department"
+  },
+  {
+   "fetch_from": "employee.gender",
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gi\u1edbi t\u00ednh",
+   "options": "Gender"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-19 16:32:19.164644",
+ "modified": "2025-11-28 08:28:10.346570",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Monthly Payroll Item",
