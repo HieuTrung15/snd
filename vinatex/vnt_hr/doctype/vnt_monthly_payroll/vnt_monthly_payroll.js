@@ -455,17 +455,14 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 	const pcKiemNhiem1 = toNumber(row.pc_kiem_nhiem1);
 	const referenceSalary = toNumber(payload.reference_salary);
 
-	if (row.bhxh == "3. Không đóng BHXH & ĐPCĐ") {
-		frappe.model.set_value(row.doctype, row.name, "tong_luong_cb", 0);
-	} 
-	else 
-		if (luongCb + pcDang1 + pcKiemNhiem1 > 20 * referenceSalary) 
-			{
-				frappe.model.set_value(row.doctype, row.name, "tong_luong_cb", 20 * referenceSalary);
-			} 
-		else {
-			frappe.model.set_value(row.doctype, row.name, "tong_luong_cb", luongCb + pcDang1 + pcKiemNhiem1);
-		}
+
+	if (luongCb + pcDang1 + pcKiemNhiem1 > 20 * referenceSalary) 
+		{
+			frappe.model.set_value(row.doctype, row.name, "tong_luong_cb", 20 * referenceSalary);
+		} 
+	else {
+		frappe.model.set_value(row.doctype, row.name, "tong_luong_cb", luongCb + pcDang1 + pcKiemNhiem1);
+	}
 	row.tong_luong_cb = toNumber(row.tong_luong_cb);
 
 	const EXCLUDED_CONTRACTS = [
@@ -479,7 +476,7 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 	const num = x => +x || 0;
 
 	// 1) Nếu KHÔNG đóng BHXH & ĐPCĐ => luôn 0
-	if (row.bhxh === "3. Không đóng BHXH & ĐPCĐ") {
+	if (row.bhxh !== "1. Đóng BHXH, đóng ĐPCĐ") {
 		frappe.model.set_value(row.doctype, row.name, "tru_bhxh", 0);
 	} 
 	else {
@@ -521,9 +518,14 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		"xh_yt_tn",
 		toNumber(row.tru_bhxh) + toNumber(row.tru_bhyt) + toNumber(row.tru_bhtn)
 	);
+	if (
+	["1. Đóng BHXH, đóng ĐPCĐ", "3. Không đóng BHXH, đóng ĐPCĐ"].includes(row.bhxh)
+) {
+	const luong = flt(row.tong_luong_cb || 0);
+	const dpcd = luong * 0.005;
 
-	frappe.model.set_value(row.doctype, row.name, "doan_phi_cd", row.tong_luong_cb * 0.005);
-
+	frappe.model.set_value(row.doctype, row.name, "doan_phi_cd", dpcd);
+}
 	frappe.model.set_value(row.doctype, row.name, "sophep", payload.so_phep);
 	frappe.model.set_value(row.doctype, row.name, "so_ngay_nghi_vr", payload.so_ngay_nghi_vr);
 
