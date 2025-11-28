@@ -14,7 +14,12 @@
   "thue_tncn_trich_them",
   "muc_luong",
   "from_date",
-  "to_date"
+  "to_date",
+  "column_break_ifog",
+  "khong_an_ca",
+  "khong_ctp",
+  "tien_gui_xe",
+  "thue_tam_trich"
  ],
  "fields": [
   {
@@ -81,13 +86,41 @@
    "in_list_view": 1,
    "label": "Thu\u1ebf TNCN tr\u00edch th\u00eam",
    "precision": "0"
+  },
+  {
+   "fieldname": "column_break_ifog",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "khong_an_ca",
+   "fieldtype": "Check",
+   "label": "Kh\u00f4ng \u0103n ca"
+  },
+  {
+   "default": "0",
+   "fieldname": "khong_ctp",
+   "fieldtype": "Check",
+   "label": "Kh\u00f4ng CTP"
+  },
+  {
+   "default": "0",
+   "fieldname": "tien_gui_xe",
+   "fieldtype": "Check",
+   "label": "Ti\u1ec1n g\u1eedi xe"
+  },
+  {
+   "default": "0",
+   "fieldname": "thue_tam_trich",
+   "fieldtype": "Check",
+   "label": "Thu\u1ebf t\u1ea1m tr\u00edch (10%)"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-26 16:59:33.559296",
+ "modified": "2025-11-28 15:49:47.069008",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Employee Salary History",
