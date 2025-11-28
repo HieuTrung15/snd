@@ -48,6 +48,7 @@
   "column_break_awyc",
   "tien_an",
   "tien_khoan_ct",
+  "tien_gui_xe",
   "tong_thu_nhap",
   "section_break_qrat",
   "tong_tn_chiu_thue",
@@ -507,13 +508,20 @@
    "fieldtype": "Link",
    "label": "Gi\u1edbi t\u00ednh",
    "options": "Gender"
+  },
+  {
+   "fieldname": "tien_gui_xe",
+   "fieldtype": "Currency",
+   "label": "Ti\u1ec1n g\u1eedi xe (23-1)",
+   "precision": "0",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-28 08:28:10.346570",
+ "modified": "2025-11-28 17:00:07.747368",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Monthly Payroll Item",
