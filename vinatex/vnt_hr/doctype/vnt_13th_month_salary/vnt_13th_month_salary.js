@@ -28,8 +28,19 @@ const VNT_T13_INT = (value) => {
 
 const VNT_T13_TOTAL_LABEL = __("Tổng lương đi làm năm");
 
+const HR_SALARY_USERS = new Set([
+	"tult@vinatex.com.vn",
+	"hoaltm@vinatex.com.vn",
+	"thaottt@vinatex.com.vn",
+]);
+
 frappe.ui.form.on("VNT 13th Month Salary", {
 	refresh(frm) {
+		enforceCreateRestriction(frm);
+		if (frm.is_new() && !canManage13thMonthSalary()) {
+			return;
+		}
+
 		// Lấy employee hiện tại nếu chưa có
 		if (!frm.doc.employee) {
 			frappe.db
@@ -203,6 +214,25 @@ frappe.ui.form.on("VNT 13th Month Salary Item", {
 		updateTaxableIncome(frm, cdt, cdn);
 	},
 });
+
+function enforceCreateRestriction(frm) {
+	if (!frm.is_new()) return;
+
+	if (canManage13thMonthSalary()) return;
+
+	frm.disable_save();
+	frm.set_intro(__("Bạn không có quyền tạo mới chứng từ này. Liên hệ HR lương."), "red");
+	if (frm.page && frm.page.set_primary_action) {
+		frm.page.clear_primary_action && frm.page.clear_primary_action();
+	}
+}
+
+function canManage13thMonthSalary() {
+	const user = frappe.session?.user;
+	if (!user || user === "Guest") return false;
+	if (user === "Administrator") return true;
+	return HR_SALARY_USERS.has(user);
+}
 
 function updateSupplementSalary(cdt, cdn) {
 	const row = locals[cdt][cdn];
