@@ -352,7 +352,7 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 
 	row._current_payroll_payload = payload;
 
-	const currentContractType = payload.current_contract_type || "";
+	const currentContractType = payload.current_contract_type || payload.employment_type || "";
 	const previousContractType = payload.previous_contract_type || "";
 	const previousWorkingDays = toNumber(payload.previous_working_days || 0);
 	const currentWorkingDays = toNumber(
@@ -496,40 +496,31 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 	const num = x => +x || 0;
 
 	// 1) Nếu KHÔNG đóng BHXH & ĐPCĐ => luôn 0
-	if (row.bhxh !== "1. Đóng BHXH, đóng ĐPCĐ") {
+	if (["Không đóng BHXH & ĐPCĐ", "Không đóng BHXH, đóng ĐPCĐ"].includes(row.bhxh)) {
 		frappe.model.set_value(row.doctype, row.name, "tru_bhxh", 0);
+		frappe.model.set_value(row.doctype, row.name, "tru_bhyt", 0);
+		frappe.model.set_value(row.doctype, row.name, "tru_bhtn", 0);
 	} 
-	else {
+	if (row.bhxh == "Đóng BHXH, đóng ĐPCĐ") {
 		// 2) Chỉ xét đóng khi CẢ hai loại HĐ (hiện tại & cũ) không thuộc danh sách loại trừ
 		const typeNowExcluded = EXCLUDED_CONTRACTS.includes(row.employement_type);
-		const typeOldExcluded = EXCLUDED_CONTRACTS.includes(row.employement_type_cur);
-
 		const totalDays = num(row.ngay_cong) + num(row.ngay_cong_cu) + num(row.sophep) + num(row.so_ngay_nghi_vr);
 		const allowOverride = String(row.cho_phep_dong_bhxh) === "1" || row.cho_phep_dong_bhxh === 1 || row.cho_phep_dong_bhxh === true;
 
 		let amount = 0;
 
-		if (!typeNowExcluded && !typeOldExcluded && (totalDays >= 14 || allowOverride)) {
+		if (!typeNowExcluded && (totalDays >= 14 || allowOverride)) {
 			amount = (num(row.tong_luong_cb) * 0.08); // 8% lương cơ bản
+			bhyt = (num(row.tong_luong_cb) * 0.015)
+			bhtn = (num(row.tong_luong_cb) * 0.01)
 		} 
 		else {
 			amount = 0;
 		}
 
 		frappe.model.set_value(row.doctype, row.name, "tru_bhxh", amount);
-	}
-
-
-	if (!row.bhyt) {
-		frappe.model.set_value(row.doctype, row.name, "tru_bhyt", row.tong_luong_cb * 0.015);
-	} else {
-		frappe.model.set_value(row.doctype, row.name, "tru_bhyt", 0);
-	}
-
-	if (!row.bhtn) {
-		frappe.model.set_value(row.doctype, row.name, "tru_bhtn", row.tong_luong_cb * 0.01);
-	} else {
-		frappe.model.set_value(row.doctype, row.name, "tru_bhtn", 0);
+		frappe.model.set_value(row.doctype, row.name, "tru_bhyt", bhyt);
+		frappe.model.set_value(row.doctype, row.name, "tru_bhtn", bhtn);
 	}
 
 	frappe.model.set_value(
@@ -538,14 +529,16 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		"xh_yt_tn",
 		toNumber(row.tru_bhxh) + toNumber(row.tru_bhyt) + toNumber(row.tru_bhtn)
 	);
-	if (
-	["1. Đóng BHXH, đóng ĐPCĐ", "3. Không đóng BHXH, đóng ĐPCĐ"].includes(row.bhxh)
-) {
-	const luong = flt(row.tong_luong_cb || 0);
-	const dpcd = luong * 0.005;
+	if (["Đóng BHXH, đóng ĐPCĐ", "Không đóng BHXH, đóng ĐPCĐ"].includes(row.bhxh)) {
+		const luong = flt(row.tong_luong_cb || 0);
+		const dpcd = luong * 0.005;
+		frappe.model.set_value(row.doctype, row.name, "doan_phi_cd", dpcd);
+	}
+	if (["Không đóng BHXH & ĐPCĐ"].includes(row.bhxh)) {
+		frappe.model.set_value(row.doctype, row.name, "doan_phi_cd", 0);
+	}
 
-	frappe.model.set_value(row.doctype, row.name, "doan_phi_cd", dpcd);
-}
+
 	frappe.model.set_value(row.doctype, row.name, "sophep", payload.so_phep);
 	frappe.model.set_value(row.doctype, row.name, "so_ngay_nghi_vr", payload.so_ngay_nghi_vr);
 
@@ -596,10 +589,12 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		toNumber(row.hs_pc_kiem_nhiem1) * corporateMinWage
 	);
 
-	if (row.bhxh !== "3. Không đóng BHXH & ĐPCĐ") {
-		frappe.model.set_value(row.doctype, row.name, "tien_khoan_ct", toNumber(payload.travel_allowance));
-	} else {
+	if (row.bhxh !== "Không đóng BHXH & ĐPCĐ") {
 		frappe.model.set_value(row.doctype, row.name, "tien_khoan_ct", 0);
+	} 
+	
+	if((["Đóng BHXH, đóng ĐPCĐ", "Không đóng BHXH, đóng ĐPCĐ"].includes(row.bhxh))){
+		frappe.model.set_value(row.doctype, row.name, "tien_khoan_ct", toNumber(payload.travel_allowance));
 	}
 
 	const tienGuiXe = toNumber(payload.tien_gui_xe);
@@ -633,18 +628,22 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		row.employement_type === "Hợp đồng đào tạo nghề" ||
 		row.employement_type === "Hợp đồng tập nghề";
 
-	if (tongThuNhapChiuThue > 2000000 && isFormalContract) 
-	{
-		frappe.model.set_value(row.doctype, row.name, "thu_nhap_tinh_thue", tongThuNhapChiuThue);
-	} 
-	else if (tongThuNhapChiuThue <= 2000000 && isFormalContract)
- 	{
-		frappe.model.set_value(row.doctype, row.name, "thu_nhap_tinh_thue", 0);
-	} else if (
+	if (isFormalContract) 
+		{
+		if (tongThuNhapChiuThue > 2000000) {
+			frappe.model.set_value(row.doctype, row.name, "thu_nhap_tinh_thue", tongThuNhapChiuThue);
+		}
+		else {
+			frappe.model.set_value(row.doctype, row.name, "thu_nhap_tinh_thue", 0);
+		}
+		} 
+ 	if (
 		row.employement_type === "HĐLĐ xác định thời hạn" ||
 		row.employement_type === "HĐLĐ không xác định thời hạn" ||
 		row.employement_type === "Không giao kết HĐLĐ"
-	) {
+	) 
+		
+	{
 		const taxableBase =
 			tongThuNhapChiuThue -
 			toNumber(row.tru_bhxh) -

@@ -468,6 +468,13 @@ def compute_item(employee, company=None, month=None, year=None):
     if not month or not year:
         return {}
 
+    employee_info = frappe.db.get_value(
+        "Employee",
+        employee,
+        ["employment_type"],
+        as_dict=True,
+    ) or {}
+
     # 1) Xác định kỳ
     month_str = str(int(month)).zfill(2)
     period_start = getdate(f"{year}-{month_str}-01")
@@ -764,6 +771,7 @@ def compute_item(employee, company=None, month=None, year=None):
         "previous_salary_amount": previous_salary_amount,
         "latest_salary_amount": find_salary_amount(period_end) or find_salary_amount(period_start),
         "thue_tncn_trich_them": flt(additional_tax_withholding),
+        "employment_type": employee_info.get("employment_type"),
     }
 
 
