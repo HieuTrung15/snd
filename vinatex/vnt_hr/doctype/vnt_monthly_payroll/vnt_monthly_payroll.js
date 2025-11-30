@@ -247,6 +247,7 @@ function check_submitted_payroll_exists(frm) {
 		args: {
 			month: frm.doc.month,
 			year: frm.doc.year,
+			branch: frm.doc.branch
 		},
 		callback: (r) => {
 			if (r?.message) {

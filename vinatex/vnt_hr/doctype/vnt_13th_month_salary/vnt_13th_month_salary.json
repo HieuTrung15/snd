@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:BL{luong_thang}-{year}",
+ "autoname": "format:BL{luong_thang}-{year}-{branch}",
  "creation": "2025-11-13 16:29:39.225857",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -99,7 +99,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-13 16:53:43.421789",
+ "modified": "2025-11-30 16:00:22.888844",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT 13th Month Salary",
@@ -121,7 +121,6 @@
   }
  ],
  "row_format": "Dynamic",
- "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

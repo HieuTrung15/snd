@@ -381,19 +381,21 @@ def get_active_employees(company=None, branch=None):
 
 
 @frappe.whitelist()
-def has_submitted_payroll(month=None, year=None):
+def has_submitted_payroll(month=None, year=None, branch = None):
     """Kiểm tra đã có bảng lương trạng thái Đã xác nhận cho kỳ chỉ định hay chưa."""
     if not (month and year):
         return False
 
     month_str = str(month).zfill(2)
     year_val = cint(year)
+    branch = branch
     exists = frappe.get_all(
         "VNT Monthly Payroll",
         filters={
             "month": month_str,
             "year": year_val,
             "docstatus": 1,
+            "branch": branch
         },
         pluck="name",
         limit_page_length=1,
