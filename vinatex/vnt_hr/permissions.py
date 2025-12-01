@@ -92,3 +92,134 @@ def vnt_13th_month_salary_has_permission(doc=None, user=None, ptype=None):
     if is_hr_salary_user(user):
         return True
     return False
+
+
+# === VNT Document Management ===
+def _user_employee(user: str | None) -> str | None:
+    if not user or user == "Guest":
+        return None
+    # Ưu tiên khớp đúng, nếu không thử khớp không phân biệt hoa/thường
+    emp = frappe.db.get_value("Employee", {"user_id": user}, "name")
+    if emp:
+        return emp
+    try:
+        emp = frappe.db.sql(
+            "select name from `tabEmployee` where lower(user_id)=lower(%s) limit 1",
+            user,
+        )
+        return emp[0][0] if emp else None
+    except Exception:
+        return None
+
+
+def vnt_document_management_permission_query_conditions(user=None):
+    user = user or frappe.session.user
+    if not user or user == "Guest":
+        return "1=0"
+
+    # Cho Administrator/System Manager view all
+    if user == "Administrator" or "System Manager" in frappe.get_roles(user):
+        return ""
+
+    emp = _user_employee(user)
+    # Nếu chưa gắn Employee, vẫn cho xem phiếu do mình tạo
+    emp_cond = ""
+    if emp:
+        esc = frappe.db.escape(emp)
+        emp_cond = f"""
+            OR `tabVNT Document Management`.employee = {esc}
+            OR `tabVNT Document Management`.handler = {esc}
+            OR `tabVNT Document Management`.nguoi_chu_tri = {esc}
+            OR `tabVNT Document Management`.cv_xu_ly = {esc}
+            OR EXISTS (
+                SELECT 1 FROM `tabVNT Document Management Item2` child
+                WHERE child.parent = `tabVNT Document Management`.name
+                  AND child.employee = {esc}
+                  AND (child.chu_tri = 1 OR child.phoi_hop = 1 OR child.nhan_de_biet = 1)
+            )
+            OR EXISTS (
+                SELECT 1 FROM `tabVNT Document Management Item` it
+                WHERE it.parent = `tabVNT Document Management`.name
+                  AND (
+                    it.nguoi_phoi_hop = {esc}
+                    OR it.cv_xu_ly = {esc}
+                  )
+            )
+        """
+
+    return f"""
+        (
+            `tabVNT Document Management`.owner = {frappe.db.escape(user)}
+            {emp_cond}
+        )
+    """
+
+
+def vnt_document_management_has_permission(doc=None, user=None, ptype=None):
+    user = user or frappe.session.user
+    if not user or user == "Guest":
+        return False
+    if user == "Administrator" or "System Manager" in frappe.get_roles(user):
+        return True
+
+    # Khi doc=None (check cấp doctype), cho phép để còn áp dụng query_conditions
+    if not doc:
+        return True
+
+    emp = _user_employee(user)
+
+    # 1) Owner luôn thấy
+    if doc.owner == user:
+        return True
+
+    # 2) Kiểm tra document đã load
+    if emp:
+        direct = {
+            doc.employee,
+            getattr(doc, "handler", None),
+            getattr(doc, "nguoi_chu_tri", None),
+            getattr(doc, "cv_xu_ly", None),
+        }
+        if emp in direct:
+            return True
+
+        # 3) Kiểm tra child đã load
+        # items: VNT Document Management Item2 (có field employee)
+        for row in getattr(doc, "items", []) or []:
+            row_emp = getattr(row, "employee", None)
+            if row_emp == emp:
+                return True
+
+        # items2: VNT Document Management Item (nguoi_phoi_hop, cv_xu_ly)
+        for row in getattr(doc, "items2", []) or []:
+            if getattr(row, "nguoi_phoi_hop", None) == emp:
+                return True
+            if getattr(row, "cv_xu_ly", None) == emp:
+                return True
+
+    # 4) Fallback truy vấn khi doc chưa load child
+    if not emp:
+        return False
+
+    if frappe.db.exists(
+        "VNT Document Management Item2",
+        {"parent": doc.name, "employee": emp},
+    ):
+        return True
+    if frappe.db.exists(
+        "VNT Document Management Item",
+        {
+            "parent": doc.name,
+            "nguoi_phoi_hop": emp,
+        },
+    ):
+        return True
+    return bool(
+        frappe.db.exists(
+            "VNT Document Management Item",
+            {
+                "parent": doc.name,
+                "cv_xu_ly": emp,
+            },
+        )
+    )
