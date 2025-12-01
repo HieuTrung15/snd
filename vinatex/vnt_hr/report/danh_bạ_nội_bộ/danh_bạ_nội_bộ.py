@@ -78,7 +78,8 @@ def get_filter_options():
 		"""
 		SELECT DISTINCT dept.department_name AS department
 		FROM `tabDepartment` dept
-		WHERE dept.disabled = 0 AND IFNULL(dept.department_name,'')!=''
+		WHERE dept.disabled = 0 AND IFNULL(dept.department_name,'')!='' 
+		AND dept.department_name NOT IN ('All Departments', 'Tất cả bộ phận')
 		ORDER BY case
 			WHEN dept.department_name LIKE %(hdqt)s   THEN 1
 			WHEN dept.department_name LIKE %(bks)s    THEN 2
