@@ -51,7 +51,6 @@ def execute(filters):
 	out = []
 	for emp in emps:
 		emp_code = emp["name"]
-		manual_flag = cint(emp.get("custom_need_check"))
 		doj = getdate(emp.get("date_of_joining")) if emp.get("date_of_joining") else date.min
 
 		row = {
@@ -60,15 +59,15 @@ def execute(filters):
 			"department": emp.get("department"),
 			"designation": emp.get("designation"),
 			# totals
-			"tot_present": 0,
-			"tot_leave": 0,
-			"tot_holiday": 0,
-			"tot_weekend": 0,
+			"tot_present": 0.0,
+			"tot_leave": 0.0,
+			"tot_holiday": 0.0,
+			"tot_weekend": 0.0,
 			"tot_business_trip": 0.0,
-			"tot_absent": 0,
-			"tot_late": 0,
-			"tot_miss": 0,
-			"tot_not_joined": 0,
+			"tot_absent": 0.0,
+			"tot_late": 0.0,
+			"tot_miss": 0.0,
+			"tot_not_joined": 0.0,
 		}
 
 		for d in days:
@@ -108,14 +107,24 @@ def execute(filters):
 					row[key] = STATUS_CODE["CÔNG TÁC"]
 					row["tot_business_trip"] += units
 				elif st in ("On Leave",):
-					if _is_attendance_business_trip(leave_type):
+					category = _categorize_leave(leave_type, leave_group)
+					if category == "business_trip":
 						row[key] = STATUS_CODE["CÔNG TÁC"]
 						row["tot_business_trip"] += units
+					elif category == "unpaid":
+						row[key] = STATUS_CODE["VẮNG MẶT"]
+						row["tot_absent"] += units
 					else:
 						row[key] = STATUS_CODE["NGHỈ PHÉP"]
-						row["tot_leave"] += 1
+						row["tot_leave"] += units
 				elif st in ("Half Day",):
 					row[key] = STATUS_CODE["NGHỈ NỬA NGÀY"]
+					category = _categorize_leave(leave_type, leave_group) if leave_type else None
+					row["tot_present"] += 0.5
+					if category == "unpaid":
+						row["tot_absent"] += 0.5
+					else:
+						row["tot_leave"] += 0.5
 				elif st in ("Absent",):
 					row[key] = STATUS_CODE["VẮNG MẶT"]
 					row["tot_absent"] += 1
@@ -130,23 +139,29 @@ def execute(filters):
 				leave_type = lv.get("leave_type")
 				leave_group = lv.get("leave_group") or leave_type_groups.get(leave_type)
 				category = _categorize_leave(leave_type, leave_group)
+				units = 0.5 if lv.get("half_day") else 1.0
 				if category == "business_trip":
 					row[key] = STATUS_CODE["CÔNG TÁC"]
-					row["tot_business_trip"] += 0.5 if lv.get("half_day") else 1.0
+					row["tot_business_trip"] += units
 				elif lv.get("half_day"):
 					row[key] = STATUS_CODE["NGHỈ NỬA NGÀY"]
+					row["tot_present"] += 0.5
+					if category == "unpaid":
+						row["tot_absent"] += 0.5
+					else:
+						row["tot_leave"] += 0.5
 				else:
-					row[key] = STATUS_CODE["NGHỈ PHÉP"]
-					row["tot_leave"] += 1
+					if category == "unpaid":
+						row[key] = STATUS_CODE["VẮNG MẶT"]
+						row["tot_absent"] += units
+					else:
+						row[key] = STATUS_CODE["NGHỈ PHÉP"]
+						row["tot_leave"] += units
 				continue
 
 			# 6) Không có attendance/leave -> coi là quên chấm công
 			row[key] = STATUS_CODE["CHẤM CÔNG BẤT THƯỜNG"]
 			row["tot_miss"] += 1
-
-		if manual_flag:
-			for fld in ("tot_present", "tot_leave", "tot_holiday", "tot_weekend", "tot_business_trip", "tot_absent", "tot_late", "tot_miss", "tot_not_joined"):
-				row[fld] = None
 
 		out.append(row)
 
@@ -169,13 +184,13 @@ def _columns_pivot(days):
 			"width": 44
 		})
 	base += [
-		{"fieldname": "tot_present", "label": "Đi làm",  "fieldtype": "Int", "width": 100},
-		{"fieldname": "tot_leave",   "label": "Nghỉ phép",  "fieldtype": "Int", "width": 100},
-		{"fieldname": "tot_holiday", "label": "Nghỉ Lễ",  "fieldtype": "Int", "width": 100},
-		{"fieldname": "tot_weekend", "label": "Cuối tuần", "fieldtype": "Int", "width": 100},
-		{"fieldname": "tot_business_trip", "label": "Công tác", "fieldtype": "Int", "width": 100, "precision": 2},
-		{"fieldname": "tot_absent",  "label": "Vắng",  "fieldtype": "Int", "width": 100},
-		{"fieldname": "tot_miss",    "label": "Chấm công bất thường","fieldtype": "Int", "width": 100},
+		{"fieldname": "tot_present", "label": "Đi làm",  "fieldtype": "Float", "width": 100, "precision": 2},
+		{"fieldname": "tot_leave",   "label": "Nghỉ phép",  "fieldtype": "Float", "width": 100, "precision": 2},
+		{"fieldname": "tot_holiday", "label": "Nghỉ Lễ",  "fieldtype": "Float", "width": 100, "precision": 2},
+		{"fieldname": "tot_weekend", "label": "Cuối tuần", "fieldtype": "Float", "width": 100, "precision": 2},
+		{"fieldname": "tot_business_trip", "label": "Công tác", "fieldtype": "Float", "width": 100, "precision": 2},
+		{"fieldname": "tot_absent",  "label": "Vắng",  "fieldtype": "Float", "width": 100, "precision": 2},
+		{"fieldname": "tot_miss",    "label": "Chấm công bất thường","fieldtype": "Float", "width": 100, "precision": 2},
 	]
 	return base
 
@@ -405,7 +420,6 @@ def _add_category_units(metrics: dict, category: str, units: float):
 def _compute_employee_metrics(emp, days, holi_map, att_map, leave_map, leave_type_groups):
 	emp_code = emp["name"]
 	doj = getdate(emp.get("date_of_joining")) if emp.get("date_of_joining") else date.min
-	skip_manual = cint(emp.get("custom_need_check"))
 	metrics = {
 		"paid": 0.0,
 		"actual": 0.0,
@@ -418,9 +432,6 @@ def _compute_employee_metrics(emp, days, holi_map, att_map, leave_map, leave_typ
 		"forget": 0.0,
 	}
 	forget_dates = []
-
-	if skip_manual:
-		return metrics, True, forget_dates
 
 	for d in days:
 		if d < doj:
@@ -462,11 +473,13 @@ def _compute_employee_metrics(emp, days, holi_map, att_map, leave_map, leave_typ
 				metrics["paid"] += units
 				continue
 			if status == "On Leave":
-				if _is_attendance_business_trip(leave_type):
+				category = _categorize_leave(leave_type, leave_group)
+				if category == "business_trip":
 					_add_category_units(metrics, "business_trip", units)
+				elif category == "unpaid":
+					_add_category_units(metrics, "unpaid", units)
 				else:
-					# Match grid behaviour: attendance marked On Leave counts as paid leave (P)
-					_add_category_units(metrics, "paid_leave", units)
+					_add_category_units(metrics, category or "paid_leave", units)
 				continue
 			if status == "Absent":
 				continue
