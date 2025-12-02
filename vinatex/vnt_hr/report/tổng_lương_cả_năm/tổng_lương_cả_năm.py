@@ -947,116 +947,121 @@ def _resolve_company(company: str | None) -> str | None:
 
 
 @frappe.whitelist()
-def get_company_salary_kpi(year: int | None = None,
-						month: int | None = None,
-						company: str | None = None):
-	"""
-	Trả về 4 KPI tổng của cả công ty trong VNT Salary Slip (docstatus = 1):
+def get_company_salary_kpi(
+    year: int | None = None,
+    month: int | None = None,
+    company: str | None = None,
+):
+    """
+    Trả về 4 KPI tổng của cả công ty trong VNT Salary Slip (docstatus = 1):
 
-	- total_year_salary: TỔNG LƯƠNG DỰ KIẾN THÁNG ĐẾN HIỆN TẠI (tính tạm bằng _get_monthly_payroll_net_income cho từng nhân sự)
-	- total_prev_month_salary: TỔNG LƯƠNG THÁNG TRƯỚC
-	- total_allowance: TỔNG PHỤ CẤP ĐÃ CHI CẢ NĂM
-	- total_paid_salary_from_year_start: TỔNG LƯƠNG ĐÃ CHI TỪ ĐẦU NĂM ĐẾN THÁNG HIỆN TẠI
-	- total_to_date_salary: QUỸ LƯƠNG CÒN LẠI = quỹ lương năm (custom_annual_salary_fund) - lương đã chi (slip submit) - lương dự kiến tháng hiện tại
-	"""
+    - total_year_salary: TỔNG LƯƠNG DỰ KIẾN THÁNG HIỆN TẠI
+    - total_prev_month_salary: TỔNG LƯƠNG THÁNG TRƯỚC
+    - total_allowance: TỔNG PHỤ CẤP ĐÃ CHI CẢ NĂM
+    - total_paid_salary_from_year_start: TỔNG LƯƠNG ĐÃ CHI TỪ ĐẦU NĂM ĐẾN THÁNG HIỆN TẠI
+    - total_to_date_salary: QUỸ LƯƠNG CÒN LẠI = quỹ lương năm - lương đã chi - lương dự kiến tháng hiện tại
+    """
 
-	now_dt = now_datetime()
-	if year is None:
-		year = now_dt.year
-	if month is None:
-		month = now_dt.month
-	company = _resolve_company(company)
+    now_dt = now_datetime()
+    if year is None:
+        year = now_dt.year
+    if month is None:
+        month = now_dt.month
 
-	prev_month = month - 1 if month > 1 else None
+    year = cint(year)
+    month = cint(month)
 
-	item_subquery = """
-		SELECT
-			parent,
-			SUM(COALESCE(amount, 0)) AS total_allowance_net
-		FROM `tabVNT Salary Slip Item`
-		GROUP BY parent
-	"""
+    company = _resolve_company(company)
+    prev_month = month - 1 if month > 1 else None
 
-	params = {
-		"year": year,
-		"month": f"{month:02d}",
-	}
+    # Subquery phụ cấp theo bảng lương
+    item_subquery = """
+        SELECT
+            parent,
+            -- Nếu muốn giống chart (dùng gross 'tong') thì sửa thành:
+            -- SUM(COALESCE(tong, 0)) AS total_allowance_net
+            SUM(COALESCE(amount, 0)) AS total_allowance_net
+        FROM `tabVNT Salary Slip Item`
+        GROUP BY parent
+    """
 
-	conditions = [
-		"slip.docstatus = 1",
-		"slip.year = %(year)s",
-		"emp.branch = 'Văn phòng 1'",
-	]
+    params = {
+        "year": year,
+    }
 
-	if company:
-		conditions.append("COALESCE(slip.company, emp.company) = %(company)s")
-		params["company"] = company
+    conditions = [
+        "slip.docstatus = 1",
+        "slip.year = %(year)s",
+        "emp.branch = 'Văn phòng 1'",
+    ]
 
-	select_fields = [
-		# 2. Tổng lương từ đầu năm đến tháng hiện tại
-		"""
-		SUM(
-			CASE
-				WHEN CAST(slip.month AS UNSIGNED) <= CAST(%(month)s AS UNSIGNED)
-				THEN COALESCE(slip.tong_thu_nhap, 0)
-				ELSE 0
-			END
-		) AS total_paid_salary
-		""",
+    if company:
+        conditions.append("COALESCE(slip.company, emp.company) = %(company)s")
+        params["company"] = company
 
-		# 3. Tổng phụ cấp cả năm
-		"SUM(COALESCE(item.total_allowance_net, 0)) AS total_allowance",
-	]
+    # Lấy từng slip + allowance, KHÔNG SUM trong SQL để có thể dùng _get_salary_values_with_fallback
+    sql = f"""
+        SELECT
+            slip.month,
+            slip.tong_thu_nhap,
+            slip.thuc_linh,
+            slip.tong_thu_nhap_encrypted,
+            slip.thuc_linh_encrypted,
+            COALESCE(item.total_allowance_net, 0) AS total_allowance_net
+        FROM `tabVNT Salary Slip` AS slip
+        LEFT JOIN `tabEmployee` AS emp ON emp.name = slip.employee
+        LEFT JOIN ({item_subquery}) AS item ON item.parent = slip.name
+        WHERE {" AND ".join(conditions)}
+    """
 
-	# 4. Tổng lương tháng trước
-	if prev_month:
-		params["prev_month"] = f"{prev_month:02d}"
-		select_fields.append(
-			"""
-			SUM(
-				CASE
-					WHEN slip.month = %(prev_month)s
-					THEN COALESCE(slip.tong_thu_nhap, 0)
-					ELSE 0
-				END
-			) AS total_prev_month_salary
-			"""
-		)
-	else:
-		select_fields.append("0 AS total_prev_month_salary")
+    rows = frappe.db.sql(sql, params, as_dict=True)
 
-	sql = f"""
-		SELECT
-			{", ".join(select_fields)}
-		FROM `tabVNT Salary Slip` AS slip
-		LEFT JOIN `tabEmployee` AS emp ON emp.name = slip.employee
-		LEFT JOIN ({item_subquery}) AS item ON item.parent = slip.name
-		WHERE {" AND ".join(conditions)}
-	"""
+    total_paid_salary = 0.0              # từ đầu năm đến THÁNG HIỆN TẠI (≤ month)
+    total_prev_month_salary = 0.0        # riêng tháng trước
+    total_allowance = 0.0                # phụ cấp cả năm
 
-	res = frappe.db.sql(sql, params, as_dict=True)
-	row = res[0] if res else {}
+    for row in rows:
+        m = _safe_month(row.get("month"))
+        if not m:
+            continue
 
-	# Tổng lương dự kiến (tháng hiện tại) tính trực tiếp từ payroll engine
-	projected_month_salary = _get_company_projected_month_salary(year, month, company)
-	total_paid_salary = flt(row.get("total_paid_salary"))
-	salary_fund = _get_company_annual_salary_fund(company)
-	# frappe.throw("a "+_round0(salary_fund))
+        # DÙNG CÙNG CƠ CHẾ VỚI CHART → LẤY ĐÚNG CẢ TRƯỜNG ENCRYPTED
+        gross, _net = _get_salary_values_with_fallback(row)
 
-	total_to_date_salary = salary_fund - total_paid_salary - projected_month_salary
-	return {
-		"year": year,
-		"month": month,
-		"previous_month": prev_month,
-		"company": company or "",
+        # Tổng lương đã chi từ đầu năm đến tháng hiện tại
+        if m <= month:
+            total_paid_salary += flt(gross)
 
-		# LÀM TRÒN 0 DECIMAL Ở ĐÂY
-		"total_year_salary": _round0(projected_month_salary),
-		"total_prev_month_salary": _round0(row.get("total_prev_month_salary")),
-		"total_allowance": _round0(row.get("total_allowance")),
-		"total_paid_salary_from_year_start": _round0(total_paid_salary),
-		"total_to_date_salary": _round0(total_to_date_salary),
-	}
+        # Tổng lương tháng trước
+        if prev_month and m == prev_month:
+            total_prev_month_salary += flt(gross)
+
+        # Tổng phụ cấp cả năm (không cần check tháng, vì yêu cầu là cả năm)
+        total_allowance += flt(row.get("total_allowance_net"))
+
+    # Tổng lương dự kiến tháng hiện tại (đã xử lý encrypted/net đúng bên trong)
+    projected_month_salary = _get_company_projected_month_salary(year, month, company)
+
+    # Quỹ lương năm
+    salary_fund = _get_company_annual_salary_fund(company)
+
+    # Quỹ lương còn lại đến cuối năm
+    total_to_date_salary = salary_fund - total_paid_salary - projected_month_salary
+
+    return {
+        "year": year,
+        "month": month,
+        "previous_month": prev_month,
+        "company": company or "",
+
+        # LÀM TRÒN VỀ 0 DECIMAL CHO TẤT CẢ KPI
+        "total_year_salary": _round0(projected_month_salary),
+        "total_prev_month_salary": _round0(total_prev_month_salary),
+        "total_allowance": _round0(total_allowance),
+        "total_paid_salary_from_year_start": _round0(total_paid_salary),
+        "total_to_date_salary": _round0(total_to_date_salary),
+    }
+
 
 @frappe.whitelist()
 def get_company_salary_chart(year: int | None = None,
