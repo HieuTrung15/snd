@@ -220,6 +220,8 @@ def _get_employees(filters, start_date, end_date):
 		conds.append("department=%s"); vals.append(filters["department"])
 	if filters.get("employee"):
 		conds.append("name=%s"); vals.append(filters["employee"])
+	if filters.get("branch"):
+		conds.append("branch=%s"); vals.append(filters["branch"])
 	conds.append("""
 		(
 			custom_need_check = 1

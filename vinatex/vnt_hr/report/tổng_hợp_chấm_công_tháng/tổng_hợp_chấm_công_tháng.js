@@ -147,6 +147,12 @@ frappe.query_reports["Tổng hợp chấm công tháng"] = {
       "options": "Department"
     },
     {
+      "fieldname": "branch",
+      "label": "Văn phòng",
+      "fieldtype": "Link",
+      "options": "Branch"
+    },
+    {
       "fieldname": "employee",
       "label": "Nhân viên",
       "fieldtype": "Link",
