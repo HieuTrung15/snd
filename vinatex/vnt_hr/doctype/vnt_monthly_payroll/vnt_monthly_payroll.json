@@ -26,13 +26,17 @@
   {
    "fieldname": "employee",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Ng\u01b0\u1eddi t\u1ea1o",
-   "options": "Employee"
+   "options": "Employee",
+   "reqd": 1
   },
   {
    "fieldname": "date",
    "fieldtype": "Date",
-   "label": "Ng\u00e0y t\u1ea1o"
+   "in_list_view": 1,
+   "label": "Ng\u00e0y t\u1ea1o",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_jaen",
@@ -41,27 +45,31 @@
   {
    "fieldname": "month",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "B\u1ea3ng l\u01b0\u01a1ng th\u00e1ng",
-   "options": "01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12"
+   "options": "01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12",
+   "reqd": 1
   },
   {
    "fieldname": "year",
    "fieldtype": "Int",
-   "label": "N\u0103m"
+   "label": "N\u0103m",
+   "non_negative": 1,
+   "reqd": 1
   },
   {
    "fieldname": "company",
    "fieldtype": "Link",
    "label": "C\u00f4ng ty",
-   "options": "Company"
+   "options": "Company",
+   "reqd": 1
   },
   {
-   "fetch_from": "employee.branch",
-   "fetch_if_empty": 1,
    "fieldname": "branch",
    "fieldtype": "Link",
    "label": "Chi nh\u00e1nh",
-   "options": "Branch"
+   "options": "Branch",
+   "reqd": 1
   },
   {
    "fieldname": "amended_from",
@@ -92,7 +100,10 @@
   {
    "fieldname": "standard_working_days",
    "fieldtype": "Int",
-   "label": "S\u1ed1 ng\u00e0y c\u00f4ng chu\u1ea9n th\u00e1ng"
+   "in_list_view": 1,
+   "label": "S\u1ed1 ng\u00e0y c\u00f4ng chu\u1ea9n th\u00e1ng",
+   "non_negative": 1,
+   "reqd": 1
   },
   {
    "fieldname": "get_salary",
@@ -119,7 +130,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-26 17:15:27.404779",
+ "modified": "2025-12-02 08:22:39.886150",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Monthly Payroll",

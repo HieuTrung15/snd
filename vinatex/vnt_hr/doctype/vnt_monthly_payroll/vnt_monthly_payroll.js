@@ -46,7 +46,7 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 			check_submitted_payroll_exists(frm);
 		}
     },
-    year (frm) {
+	year (frm) {
         if (frm.doc.month && frm.doc.year) {
             const month = parseInt(frm.doc.month, 10);
             const year = parseInt(frm.doc.year, 10);
@@ -56,7 +56,7 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 			check_submitted_payroll_exists(frm);
 		}
     },
-	get_salary(frm) {
+	async get_salary(frm) {
 		if (!canManagePayroll()) {
 			frappe.msgprint(__("Bạn không được phép tính lương. Vui lòng liên hệ HR."));
 			return;
@@ -67,79 +67,119 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 			return;
 		}
 
-		const args = { company: frm.doc.company };
-		if (frm.doc.branch) {
-			args.branch = frm.doc.branch;
+		if (!frm.doc.branch) {
+			frappe.msgprint(__("Vui lòng chọn Chi nhánh trước khi tính lương."));
+			return;
 		}
 
-		frappe
-			.call({
+		if (!frm.doc.month || !frm.doc.year) {
+			frappe.msgprint(__("Vui lòng chọn Tháng và Năm trước khi tính lương."));
+			return;
+		}
+
+		const args = { company: frm.doc.company, branch: frm.doc.branch };
+
+		try {
+			const existingCheck = await frappe.call({
+				method:
+					"vinatex.vnt_hr.doctype.vnt_monthly_payroll.vnt_monthly_payroll.check_existing_payroll",
+				args: {
+					month: frm.doc.month,
+					year: frm.doc.year,
+					branch: frm.doc.branch,
+				},
+				freeze: true,
+				freeze_message: __("Đang kiểm tra chứng từ hiện có..."),
+			});
+
+			const submittedPayroll = existingCheck?.message?.submitted_payroll;
+			const hasSalarySlip = existingCheck?.message?.salary_slip;
+			if (submittedPayroll || hasSalarySlip) {
+				const msg = submittedPayroll
+					? __("Đã tồn tại bảng lương đã xác nhận cho tháng {0}/{1} chi nhánh {2}. Không thể tính lương.", [
+							frm.doc.month,
+							frm.doc.year,
+							frm.doc.branch,
+						])
+					: __("Đã tồn tại phiếu lương cho chi nhánh {0} trong tháng {1}/{2}. Không thể tính lương.", [
+							frm.doc.branch,
+							frm.doc.month,
+							frm.doc.year,
+						]);
+				frappe.msgprint(msg);
+				return;
+			}
+
+			const r = await frappe.call({
 				method:
 					"vinatex.vnt_hr.doctype.vnt_monthly_payroll.vnt_monthly_payroll.get_active_employees",
 				args,
 				freeze: true,
 				freeze_message: __("Đang lấy danh sách nhân sự..."),
-			})
-			.then((r) => {
-				const employees = Array.isArray(r?.message) ? r.message : [];
-				if (!employees.length) {
-					frappe.msgprint(__("Không tìm thấy nhân sự phù hợp điều kiện đã chọn."));
-					return save_then_compute(frm, { notify_no_new: false });
-				}
-
-				const existing = new Set(
-					(frm.doc.items || [])
-						.map((row) => row.employee)
-						.filter((employee) => !!employee)
-				);
-
-				let added = 0;
-				frm._vnt_skip_employee_compute = true;
-				try {
-					for (const emp of employees) {
-						if (existing.has(emp.name)) continue;
-
-						const row = frm.add_child("items");
-						frappe.model.set_value(row.doctype, row.name, "employee", emp.name);
-
-						if (emp.employment_type) {
-							frappe.model.set_value(
-								row.doctype,
-								row.name,
-								"employement_type",
-								emp.employment_type
-							);
-						}
-						if (emp.custom_party_member) {
-							frappe.model.set_value(
-								row.doctype,
-								row.name,
-								"dang_vien",
-								emp.custom_party_member
-							);
-						}
-						if (typeof emp.custom_relation_number !== "undefined") {
-							frappe.model.set_value(
-								row.doctype,
-								row.name,
-								"so_npt",
-								emp.custom_relation_number
-							);
-						}
-
-						added++;
-						existing.add(emp.name);
-					}
-				} finally {
-					frm._vnt_skip_employee_compute = false;
-				}
-
-				frm.refresh_field("items");
-				return save_then_compute(frm, {
-					added_count: added,
-					notify_no_new: true,
-				});
 			});
+
+			const employees = Array.isArray(r?.message) ? r.message : [];
+			if (!employees.length) {
+				frappe.msgprint(__("Không tìm thấy nhân sự phù hợp điều kiện đã chọn."));
+				return save_then_compute(frm, { notify_no_new: false });
+			}
+
+			const existing = new Set(
+				(frm.doc.items || [])
+					.map((row) => row.employee)
+					.filter((employee) => !!employee)
+			);
+
+			let added = 0;
+			frm._vnt_skip_employee_compute = true;
+			try {
+				for (const emp of employees) {
+					if (existing.has(emp.name)) continue;
+
+					const row = frm.add_child("items");
+					frappe.model.set_value(row.doctype, row.name, "employee", emp.name);
+
+					if (emp.employment_type) {
+						frappe.model.set_value(
+							row.doctype,
+							row.name,
+							"employement_type",
+							emp.employment_type
+						);
+					}
+					if (emp.custom_party_member) {
+						frappe.model.set_value(
+							row.doctype,
+							row.name,
+							"dang_vien",
+							emp.custom_party_member
+						);
+					}
+					if (typeof emp.custom_relation_number !== "undefined") {
+						frappe.model.set_value(
+							row.doctype,
+							row.name,
+							"so_npt",
+							emp.custom_relation_number
+						);
+					}
+
+					added++;
+					existing.add(emp.name);
+				}
+			} finally {
+				frm._vnt_skip_employee_compute = false;
+			}
+
+			frm.refresh_field("items");
+			return save_then_compute(frm, {
+				added_count: added,
+				notify_no_new: true,
+			});
+		} catch (err) {
+			console.error(err);
+			frappe.msgprint(__("Không thể kiểm tra/tính lương. Vui lòng thử lại hoặc xem nhật ký."));
+		}
 	},
 
 	compute_row(frm, row, opts = {}) {

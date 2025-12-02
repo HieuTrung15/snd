@@ -190,14 +190,16 @@ class VNTMonthlyPayroll(Document):
 
     def _ensure_no_submitted_duplicate(self):
         """Ngăn tạo trùng bảng lương đã xác nhận cùng kỳ."""
-        if not (self.month and self.year):
+        if not (self.month and self.year and self.branch):
             return
 
         month = str(self.month).zfill(2)
         year_val = cint(self.year)
+        branch = self.branch
         filters = {
             "month": month,
             "year": year_val,
+            "branch": branch,
             "docstatus": 1,
         }
         if self.name:
@@ -211,8 +213,8 @@ class VNTMonthlyPayroll(Document):
         )
         if existing:
             frappe.throw(
-                _("Đã tồn tại bảng lương đã xác nhận cho {0}/{1}").format(
-                    month, year_val
+                _("Đã tồn tại bảng lương đã xác nhận cho tháng {0}/{1} chi nhánh {2}. Không thể lưu mới!").format(
+                    month, year_val, branch
                 )
             )
 
@@ -401,6 +403,42 @@ def has_submitted_payroll(month=None, year=None, branch = None):
         limit_page_length=1,
     )
     return bool(exists)
+
+
+@frappe.whitelist()
+def salary_slip_exists(month=None, year=None, branch=None):
+    """Kiểm tra đã có phiếu lương (chưa cancel) cho chi nhánh trong kỳ hay chưa."""
+    if not (month and year and branch):
+        return False
+
+    month_str = str(month).zfill(2)
+    year_val = cint(year)
+    branch_val = (branch or "").strip()
+    if not branch_val:
+        return False
+
+    sql = """
+        SELECT 1
+        FROM `tabVNT Salary Slip` AS slip
+        INNER JOIN `tabEmployee` AS emp ON emp.name = slip.employee
+        WHERE slip.month = %(month)s
+          AND slip.year = %(year)s
+          AND slip.docstatus != 2
+          AND emp.branch = %(branch)s
+        LIMIT 1
+    """
+    return bool(frappe.db.sql(sql, {"month": month_str, "year": year_val, "branch": branch_val}))
+
+
+@frappe.whitelist()
+def check_existing_payroll(month=None, year=None, branch=None):
+    """Trả về trạng thái có bảng lương đã xác nhận hoặc phiếu lương đã tạo cho kỳ và chi nhánh."""
+    submitted_payroll = has_submitted_payroll(month=month, year=year, branch=branch)
+    existing_salary_slip = salary_slip_exists(month=month, year=year, branch=branch)
+    return {
+        "submitted_payroll": bool(submitted_payroll),
+        "salary_slip": bool(existing_salary_slip),
+    }
 
 
 def get_employee_contracts(employee, period_start, period_end):
