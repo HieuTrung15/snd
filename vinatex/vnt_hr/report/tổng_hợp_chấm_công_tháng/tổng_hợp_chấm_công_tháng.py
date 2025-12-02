@@ -220,6 +220,20 @@ def _get_employees(filters, start_date, end_date):
 		conds.append("department=%s"); vals.append(filters["department"])
 	if filters.get("employee"):
 		conds.append("name=%s"); vals.append(filters["employee"])
+	conds.append("""
+		(
+			custom_need_check = 1
+			OR COALESCE(attendance_device_id, '') != ''
+			OR EXISTS(
+				SELECT 1
+				FROM `tabAttendance` att
+				WHERE att.docstatus != 2
+				  AND att.employee = `tabEmployee`.name
+				  AND att.attendance_date BETWEEN %s AND %s
+			)
+		)
+	""")
+	vals += [start_date, end_date]
 	sql = f"""
 		SELECT
 			name,
@@ -233,11 +247,6 @@ def _get_employees(filters, start_date, end_date):
 			holiday_list
 		FROM `tabEmployee`
 		WHERE {" AND ".join(conds)}
-		AND (
-			custom_need_check = 1
-			OR COALESCE(attendance_device_id, '') != ''
-		)
-		AND branch = 'Văn phòng 1'
 		ORDER BY
 			CASE
 				WHEN designation = 'Tổng Giám đốc Tập đoàn' THEN -2
