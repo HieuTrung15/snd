@@ -18,6 +18,8 @@ class VNTDocumentManagement(Document):
 
 	def before_save(self):
 		self._maybe_notify_child_assignees_on_transfer()
+		self._maybe_notify_primary_specialist_assignment()
+		self._maybe_notify_chair_on_specialist_done()
 
 	def after_insert(self):
 		if (self.type or "").strip() != "Công văn đến":
@@ -72,6 +74,100 @@ class VNTDocumentManagement(Document):
 		for row in self.get("items2") or []:
 			if row.deadline2 and row.deadline1 and getdate(row.deadline2) > getdate(row.deadline1):
 				frappe.throw("Thời hạn Chuyên viên xử lý không được muộn hơn thời hạn Người phối hợp.")
+
+	def _maybe_notify_primary_specialist_assignment(self):
+		"""Khi Người chủ trì gán Chuyên viên xử lý và deadline, gửi noti/ToDo/Rocket.Chat cho chuyên viên."""
+		if (self.type or "").strip() != "Công văn đến":
+			return
+		if not (self.cv_xu_ly and self.deadline_cv_xu_ly):
+			return
+		if not self.name:
+			return
+
+		prev_cv = self.get_db_value("cv_xu_ly") if self.name else None
+		prev_deadline = self.get_db_value("deadline_cv_xu_ly") if self.name else None
+		# Chỉ gửi duy nhất lần đầu khi cả chuyên viên và deadline được gán
+		if prev_cv and prev_deadline:
+			return
+
+		user_id = frappe.db.get_value("Employee", self.cv_xu_ly, "user_id")
+		if not user_id:
+			return
+
+		message = f"Bạn được giao xử lý CV đến số {self.name}"
+
+		frappe.get_doc(
+			{
+				"doctype": "Notification Log",
+				"for_user": user_id,
+				"subject": message,
+				"type": "Alert",
+				"document_type": self.doctype,
+				"document_name": self.name,
+			}
+		).insert(ignore_permissions=True)
+
+		
+		frappe.get_doc(
+			{
+				"doctype": "ToDo",
+				"status": "Open",
+				"allocated_to": user_id,
+				"reference_type": self.doctype,
+				"reference_name": self.name,
+				"description": message,
+				"priority": "Medium",
+			}
+		).insert(ignore_permissions=True)
+
+		send_rocket_message(
+			to_users=user_id,
+			title=":bell: Công văn đến",
+			message=message,
+			link=get_url_to_form(self.doctype, self.name),
+		)
+
+	def _maybe_notify_chair_on_specialist_done(self):
+		"""Khi chuyên viên xử lý hoàn thành, thông báo cho Người chủ trì."""
+		if (self.type or "").strip() != "Công văn đến":
+			return
+		if not self.name:
+			return
+
+		prev_status = self.get_db_value("trang_thai_chuyen_vien_xu_ly") if self.name else None
+		current_status = (self.trang_thai_chuyen_vien_xu_ly or "").strip()
+
+		if current_status != "Hoàn thành":
+			return
+		if (prev_status or "").strip() == "Hoàn thành":
+			return
+
+		if not self.nguoi_chu_tri:
+			return
+
+		user_id = frappe.db.get_value("Employee", self.nguoi_chu_tri, "user_id")
+		if not user_id:
+			return
+
+		message = f"{self.cv_xu_ly} đã hoàn thành xử lý CV đến số {self.name}, hãy kiểm tra công việc."
+
+		frappe.get_doc(
+			{
+				"doctype": "Notification Log",
+				"for_user": user_id,
+				"subject": message,
+				"type": "Alert",
+				"document_type": self.doctype,
+				"document_name": self.name,
+			}
+		).insert(ignore_permissions=True)
+
+		send_rocket_message(
+			to_users=user_id,
+			title=":bell: Công văn đến",
+			message=message,
+			link=get_url_to_form(self.doctype, self.name),
+		)
 
 	def _notify_child_assignees(self):
 		"""Gửi noti/ToDo/Rocket.Chat cho các nhân sự ở bảng người xử lý chính."""
@@ -186,26 +282,18 @@ class VNTDocumentManagement(Document):
 		).insert(ignore_permissions=True)
 
 		# ToDo (tránh nhân đôi nếu đã có)
-		if not frappe.db.exists(
-			"ToDo",
+		
+		frappe.get_doc(
 			{
+				"doctype": "ToDo",
+				"status": "Open",
+				"allocated_to": user_id,
 				"reference_type": self.doctype,
 				"reference_name": self.name,
-				"allocated_to": user_id,
-				"status": ("!=", "Cancelled"),
-			},
-		):
-			frappe.get_doc(
-				{
-					"doctype": "ToDo",
-					"status": "Open",
-					"allocated_to": user_id,
-					"reference_type": self.doctype,
-					"reference_name": self.name,
-					"description": content,
-					"priority": "Medium",
-				}
-			).insert(ignore_permissions=True)
+				"description": content,
+				"priority": "Medium",
+			}
+		).insert(ignore_permissions=True)
 
 		# Rocket.Chat
 		send_rocket_message(
@@ -245,26 +333,18 @@ class VNTDocumentManagement(Document):
 			).insert(ignore_permissions=True)
 
 			# ToDo (mỗi user một ToDo, tránh trùng)
-			if not frappe.db.exists(
-				"ToDo",
+			
+			frappe.get_doc(
 				{
+					"doctype": "ToDo",
+					"status": "Open",
+					"allocated_to": user,
 					"reference_type": self.doctype,
 					"reference_name": self.name,
-					"allocated_to": user,
-					"status": ("!=", "Cancelled"),
-				},
-			):
-				frappe.get_doc(
-					{
-						"doctype": "ToDo",
-						"status": "Open",
-						"allocated_to": user,
-						"reference_type": self.doctype,
-						"reference_name": self.name,
-						"description": message,
-						"priority": "Medium",
-					}
-				).insert(ignore_permissions=True)
+					"description": message,
+					"priority": "Medium",
+				}
+			).insert(ignore_permissions=True)
 
 		# Rocket.Chat
 		send_rocket_message(
