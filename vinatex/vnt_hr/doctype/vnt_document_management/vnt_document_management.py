@@ -11,6 +11,8 @@ from vinatex.patches.utils.rocket_chat import send_rocket_message
 class VNTDocumentManagement(Document):
 	def validate(self):
 		self._validate_handler_status_roles()
+		self._validate_collab_vs_specialist_status()
+		self._validate_chair_vs_specialist_status()
 
 	def before_save(self):
 		self._maybe_notify_child_assignees_on_transfer()
@@ -36,6 +38,26 @@ class VNTDocumentManagement(Document):
 			for row in picked:
 				if not row.deadline:
 					frappe.throw("Dòng đã chọn vai trò chưa có Thời hạn hoàn thành. Vui lòng nhập trước khi cập nhật Trạng thái Lãnh đạo Tập Đoàn.")
+
+	def _validate_collab_vs_specialist_status(self):
+		"""Người phối hợp không được Hoàn thành khi chuyên viên xử lý chưa Hoàn thành."""
+		items2 = self.get("items2") or []
+		for row in items2:
+			if (row.trang_thai_nguoi_phoi_hop or "").strip() == "Hoàn thành" and (row.trang_thai_cv_xu_ly or "").strip() != "Hoàn thành":
+				frappe.throw("Người phối hợp chỉ được chọn Hoàn thành sau khi Chuyên viên xử lý đã Hoàn thành.")
+
+	def _validate_chair_vs_specialist_status(self):
+		"""Người chủ trì chỉ được Hoàn thành khi chuyên viên xử lý và các dòng phối hợp đã Hoàn thành."""
+		if (self.chairperson_status or "").strip() != "Hoàn thành":
+			return
+
+		if (self.trang_thai_chuyen_vien_xu_ly or "").strip() != "Hoàn thành":
+			frappe.throw("Người chủ trì chỉ được chọn Hoàn thành sau khi Chuyên viên xử lý đã Hoàn thành.")
+
+		items2 = self.get("items2") or []
+		for row in items2:
+			if (row.trang_thai_cv_xu_ly or "").strip() != "Hoàn thành" or (row.trang_thai_nguoi_phoi_hop or "").strip() != "Hoàn thành":
+				frappe.throw("Người chủ trì chỉ được chọn Hoàn thành sau khi tất cả dòng phối hợp đã Hoàn thành.")
 
 	def _notify_child_assignees(self):
 		"""Gửi noti/ToDo/Rocket.Chat cho các nhân sự ở bảng người xử lý chính."""

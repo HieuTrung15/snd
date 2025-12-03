@@ -29,6 +29,18 @@ const set_handler_status_prev = (frm, val) => {
 };
 
 const is_checked = (val) => val === 1 || val === true || val === "1";
+const is_done = (val) => (val || "").trim() === "Hoàn thành";
+
+const get_chair_status_prev = (frm) => {
+  if (frm._chairStatusLastSaved === undefined) {
+    frm._chairStatusLastSaved = frm.doc.chairperson_status || null;
+  }
+  return frm._chairStatusLastSaved;
+};
+
+const set_chair_status_prev = (frm, val) => {
+  frm._chairStatusLastSaved = val || null;
+};
 
 const row_has_role = (row) =>
   is_checked(row.chu_tri) || is_checked(row.phoi_hop) || is_checked(row.nhan_de_biet);
@@ -36,6 +48,12 @@ const row_has_role = (row) =>
 const has_any_role_row = (frm) => {
   const rows = Array.isArray(frm.doc.items) ? frm.doc.items : [];
   return rows.some((r) => row_has_role(r));
+};
+
+const all_specialists_done = (frm) => {
+  if (!is_done(frm.doc.trang_thai_chuyen_vien_xu_ly)) return false;
+  const rows = Array.isArray(frm.doc.items2) ? frm.doc.items2 : [];
+  return rows.every((r) => is_done(r.trang_thai_cv_xu_ly) && is_done(r.trang_thai_nguoi_phoi_hop));
 };
 
 const validate_handler_status_preconditions = (frm) => {
@@ -52,6 +70,16 @@ const validate_handler_status_preconditions = (frm) => {
   }
 
   return { ok: true };
+};
+
+const ensure_collab_not_done_before_specialist = (cdt, cdn) => {
+  const row = (locals[cdt] && locals[cdt][cdn]) || null;
+  if (!row) return;
+  if ((row.trang_thai_nguoi_phoi_hop || "").trim() !== "Hoàn thành") return;
+  if ((row.trang_thai_cv_xu_ly || "").trim() === "Hoàn thành") return;
+
+  frappe.msgprint("Người phối hợp chỉ được chọn Hoàn thành sau khi Chuyên viên xử lý đã Hoàn thành.");
+  frappe.model.set_value(cdt, cdn, "trang_thai_nguoi_phoi_hop", "Đang xử lý");
 };
 
 const ensure_handler_status_require_roles = (frm) => {
@@ -148,6 +176,9 @@ frappe.ui.form.on("VNT Document Management", {
   refresh(frm) {
     if (frm._handlerStatusLastSaved === undefined) {
       set_handler_status_prev(frm, frm.doc.handler_status || null);
+    }
+    if (frm._chairStatusLastSaved === undefined) {
+      set_chair_status_prev(frm, frm.doc.chairperson_status || null);
     }
     // Luôn reset viewer mỗi lần refresh
     frm.trigger("render_attach");
@@ -252,6 +283,19 @@ frappe.ui.form.on("VNT Document Management", {
   },
 
   chairperson_status(frm) {
+    if (frm._chairStatusSaving) return;
+    if (frm._chairStatusResetting) return;
+
+    const prev = get_chair_status_prev(frm);
+    if (is_done(frm.doc.chairperson_status) && !all_specialists_done(frm)) {
+      frappe.msgprint("Người chủ trì chỉ được chọn Hoàn thành sau khi Chuyên viên và tất cả Người phối hợp đã Hoàn thành.");
+      frm._chairStatusResetting = true;
+      frm.set_value("chairperson_status", prev);
+      frm._chairStatusResetting = false;
+      return;
+    }
+
+    set_chair_status_prev(frm, frm.doc.chairperson_status || null);
     frm.trigger("render_process_flow");
   },
 
@@ -912,5 +956,12 @@ frappe.ui.form.on("VNT Document Management Item2", {
   nhan_de_biet(frm, cdt, cdn) {
     enforce_single_role(cdt, cdn, "nhan_de_biet");
     frm.trigger("sync_collab_from_items");
+  }
+});
+
+// Child table hooks: VNT Document Management Item (items2)
+frappe.ui.form.on("VNT Document Management Item", {
+  trang_thai_nguoi_phoi_hop(frm, cdt, cdn) {
+    ensure_collab_not_done_before_specialist(cdt, cdn);
   }
 });
