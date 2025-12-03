@@ -70,6 +70,21 @@ function bind_contract_grid_events_once(frm) {
   const grid = frm.fields_dict?.custom_vnt_contract?.grid;
   if (!grid || grid.__bound_contract_validity) return;
 
+  const sync_parent_employment_type = (row) => {
+    const new_type = row?.type || null;
+    if ((frm.doc.employment_type || null) !== new_type) {
+      frm.doc.employment_type = new_type;
+      frm.refresh_field("employment_type");
+    }
+  };
+
+  const clear_parent_employment_type = () => {
+    if (frm.doc.employment_type) {
+      frm.doc.employment_type = null;
+      frm.refresh_field("employment_type");
+    }
+  };
+
   // 1) Tick / Untick validity trong child
   frappe.ui.form.on(grid.doctype, "validity", (frm, cdt, cdn) => {
     const row = locals[cdt][cdn];
@@ -87,6 +102,8 @@ function bind_contract_grid_events_once(frm) {
         frm.refresh_field("contract_end_date"); // chỉ refresh field đơn lẻ
       }
 
+      sync_parent_employment_type(row);
+
       // Không refresh cả grid nếu không cần
       // frm.refresh_field("custom_vnt_contract"); // tránh dùng
     } else {
@@ -95,6 +112,10 @@ function bind_contract_grid_events_once(frm) {
       if (!still_any && frm.doc.contract_end_date) {
         frm.doc.contract_end_date = null;
         frm.refresh_field("contract_end_date");
+      }
+
+      if (!still_any) {
+        clear_parent_employment_type();
       }
     }
   });
@@ -108,6 +129,14 @@ function bind_contract_grid_events_once(frm) {
         frm.doc.contract_end_date = new_end;
         frm.refresh_field("contract_end_date");
       }
+    }
+  });
+
+  // 3) Đổi loại HĐ trên dòng đang tick -> đồng bộ Employment Type ở parent
+  frappe.ui.form.on(grid.doctype, "type", (frm, cdt, cdn) => {
+    const row = locals[cdt][cdn];
+    if (row.validity) {
+      sync_parent_employment_type(row);
     }
   });
 
