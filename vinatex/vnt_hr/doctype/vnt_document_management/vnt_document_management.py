@@ -20,6 +20,8 @@ class VNTDocumentManagement(Document):
 		self._maybe_notify_child_assignees_on_transfer()
 		self._maybe_notify_primary_specialist_assignment()
 		self._maybe_notify_chair_on_specialist_done()
+		self._maybe_notify_collab_specialists_assignment()
+		self._maybe_notify_collab_on_spec_done()
 
 	def after_insert(self):
 		if (self.type or "").strip() != "Công văn đến":
@@ -168,6 +170,127 @@ class VNTDocumentManagement(Document):
 			message=message,
 			link=get_url_to_form(self.doctype, self.name),
 		)
+
+	def _maybe_notify_collab_specialists_assignment(self):
+		"""Lần đầu gắn chuyên viên xử lý và deadline trong bảng phối hợp -> gửi thông báo cho chuyên viên phối hợp."""
+		if (self.type or "").strip() != "Công văn đến":
+			return
+		if not self.name:
+			return
+
+		chair_dept = frappe.db.get_value("Department", self.get("items")[0].department, "department_name") if self.get("items") else None
+		chair_dept = chair_dept or "(Ban chủ trì chưa rõ)"
+
+		current_items = self.get("items2") or []
+		if not current_items:
+			return
+
+		# Map existing assignments in DB to detect first-time assignment
+		prev_rows = {
+			row.name: row for row in frappe.get_all(
+				"VNT Document Management Item",
+				filters={"parent": self.name},
+				fields=["name", "cv_xu_ly", "deadline2"]
+			)
+		}
+
+		for row in current_items:
+			if not (row.name and row.cv_xu_ly and row.deadline2):
+				continue
+
+			previous = prev_rows.get(row.name)
+			# only send first time both cv_xu_ly and deadline2 exist
+			if previous and previous.cv_xu_ly and previous.deadline2:
+				continue
+
+			user_id = frappe.db.get_value("Employee", row.cv_xu_ly, "user_id")
+			if not user_id:
+				continue
+
+			message = f"Bạn được giao phối hợp với {chair_dept} xử lý CV đến số {self.name}"
+
+			frappe.get_doc(
+				{
+					"doctype": "Notification Log",
+					"for_user": user_id,
+					"subject": message,
+					"type": "Alert",
+					"document_type": self.doctype,
+					"document_name": self.name,
+				}
+			).insert(ignore_permissions=True)
+
+			
+			frappe.get_doc(
+				{
+					"doctype": "ToDo",
+					"status": "Open",
+					"allocated_to": user_id,
+					"reference_type": self.doctype,
+					"reference_name": self.name,
+					"description": message,
+					"priority": "Medium",
+				}
+			).insert(ignore_permissions=True)
+
+			send_rocket_message(
+				to_users=user_id,
+				title=":bell: Công văn đến",
+				message=message,
+				link=get_url_to_form(self.doctype, self.name),
+			)
+
+	def _maybe_notify_collab_on_spec_done(self):
+		"""Khi chuyên viên phối hợp (cv_xu_ly) hoàn thành, thông báo cho người phối hợp tương ứng."""
+		if (self.type or "").strip() != "Công văn đến":
+			return
+		if not self.name:
+			return
+
+		prev_rows = {
+			row.name: row for row in frappe.get_all(
+				"VNT Document Management Item",
+				filters={"parent": self.name},
+				fields=["name", "trang_thai_cv_xu_ly"]
+			)
+		}
+
+		for row in self.get("items2") or []:
+			if (row.trang_thai_cv_xu_ly or "").strip() != "Hoàn thành":
+				continue
+
+			prev_status = (prev_rows.get(row.name).trang_thai_cv_xu_ly or "").strip() if prev_rows.get(row.name) else ""
+			if prev_status == "Hoàn thành":
+				continue
+
+			if not row.nguoi_phoi_hop:
+				continue
+
+			user_id = frappe.db.get_value("Employee", row.nguoi_phoi_hop, "user_id")
+			if not user_id:
+				continue
+
+			spec_name = row.cv_xu_ly or "(Chuyên viên phối hợp)"
+			message = f"{spec_name} đã hoàn thành phối hợp xử lý CV đến số {self.name}, hãy kiểm tra công việc."
+
+			frappe.get_doc(
+				{
+					"doctype": "Notification Log",
+					"for_user": user_id,
+					"subject": message,
+					"type": "Alert",
+					"document_type": self.doctype,
+					"document_name": self.name,
+				}
+			).insert(ignore_permissions=True)
+
+
+			send_rocket_message(
+				to_users=user_id,
+				title=":bell: Công văn đến",
+				message=message,
+				link=get_url_to_form(self.doctype, self.name),
+			)
 
 	def _notify_child_assignees(self):
 		"""Gửi noti/ToDo/Rocket.Chat cho các nhân sự ở bảng người xử lý chính."""
