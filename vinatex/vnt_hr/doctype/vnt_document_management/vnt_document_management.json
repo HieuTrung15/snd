@@ -132,6 +132,7 @@
    "ignore_user_permissions": 1,
    "label": "L\u00e3nh \u0111\u1ea1o T\u1eadp \u0110o\u00e0n",
    "link_filters": "[]",
+   "no_copy": 1,
    "options": "Employee",
    "reqd": 1
   },
@@ -153,6 +154,7 @@
    "fieldname": "type",
    "fieldtype": "Select",
    "label": "Lo\u1ea1i v\u0103n b\u1ea3n",
+   "no_copy": 1,
    "options": "\nC\u00f4ng v\u0103n \u0111\u1ebfn\nC\u00f4ng v\u0103n \u0111i\nC\u00f4ng vi\u1ec7c n\u1ed9i b\u1ed9",
    "reqd": 1
   },
@@ -167,6 +169,7 @@
    "fieldname": "handler_status",
    "fieldtype": "Select",
    "label": "Tr\u1ea1ng th\u00e1i L\u00e3nh \u0111\u1ea1o T\u1eadp \u0110o\u00e0n",
+   "no_copy": 1,
    "options": "\nChuy\u1ec3n v\u0103n b\u1ea3n\nTr\u1ea3 l\u1ea1i"
   },
   {
@@ -182,6 +185,7 @@
   {
    "fieldname": "items",
    "fieldtype": "Table",
+   "no_copy": 1,
    "options": "VNT Document Management Item2"
   },
   {
@@ -209,6 +213,7 @@
    "fieldname": "chairperson_status",
    "fieldtype": "Select",
    "label": "Tr\u1ea1ng th\u00e1i Ng\u01b0\u1eddi ch\u1ee7 tr\u00ec",
+   "no_copy": 1,
    "options": "\n\u0110ang x\u1eed l\u00fd\nHo\u00e0n th\u00e0nh\nTr\u1ea3 l\u1ea1i",
    "permlevel": 1
   },
@@ -235,15 +240,19 @@
    "permlevel": 1
   },
   {
+   "depends_on": "eval: doc.cv_xu_ly != \"\"",
    "fieldname": "deadline_cv_xu_ly",
    "fieldtype": "Date",
    "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh chuy\u00ean vi\u00ean x\u1eed l\u00fd",
+   "mandatory_depends_on": "eval: doc.cv_xu_ly != \"\"",
    "permlevel": 1
   },
   {
+   "depends_on": "eval: doc.cv_xu_ly != \"\"",
    "fieldname": "trang_thai_chuyen_vien_xu_ly",
    "fieldtype": "Select",
    "label": "Tr\u1ea1ng th\u00e1i chuy\u00ean vi\u00ean x\u1eed l\u00fd",
+   "no_copy": 1,
    "options": "\n\u0110ang x\u1eed l\u00fd\nHo\u00e0n th\u00e0nh",
    "permlevel": 1
   },
@@ -269,6 +278,7 @@
   {
    "fieldname": "items2",
    "fieldtype": "Table",
+   "no_copy": 1,
    "options": "VNT Document Management Item",
    "permlevel": 1
   },
@@ -304,6 +314,7 @@
    "fieldname": "items3",
    "fieldtype": "Table",
    "label": "Danh s\u00e1ch file \u0111\u00ednh k\u00e8m Ban ch\u1ee7 tr\u00ec",
+   "no_copy": 1,
    "options": "VNT Document Management Item3",
    "permlevel": 1
   },
@@ -311,6 +322,7 @@
    "fieldname": "item4",
    "fieldtype": "Table",
    "label": "Danh s\u00e1ch \u0111\u00ednh k\u00e8m Ban ph\u1ed1i h\u1ee3p",
+   "no_copy": 1,
    "options": "VNT Document Management Item3",
    "permlevel": 1
   },
@@ -329,7 +341,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-03 16:03:17.876901",
+ "modified": "2025-12-03 16:13:18.899694",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
