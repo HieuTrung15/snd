@@ -3,12 +3,132 @@
 
 # import frappe
 import frappe
-from frappe.utils import getdate, nowdate
+from frappe.utils import getdate, nowdate, get_url_to_form
 from frappe.model.document import Document
+from vinatex.patches.utils.rocket_chat import send_rocket_message
 
 
 class VNTDocumentManagement(Document):
-	pass
+	def after_insert(self):
+		if (self.type or "").strip() != "Công văn đến":
+			return
+
+		self._notify_incoming_to_handler()
+		self._notify_office_group()
+
+	def _notify_incoming_to_handler(self):
+		"""Gửi notification + tạo ToDo cho Lãnh đạo Tập đoàn khi nhận công văn đến lần đầu."""
+		if not self.handler:
+			return
+
+		user_id = frappe.db.get_value("Employee", self.handler, "user_id")
+		if not user_id:
+			return
+
+		content = f"{self.sender or ''} v/v {self.summary or ''}".strip(" /")
+		if not content:
+			content = "Văn bản mới"
+
+		# Notification Log
+		frappe.get_doc(
+			{
+				"doctype": "Notification Log",
+				"for_user": user_id,
+				"subject": content,
+				"type": "Alert",
+				"document_type": self.doctype,
+				"document_name": self.name,
+			}
+		).insert(ignore_permissions=True)
+
+		# ToDo (tránh nhân đôi nếu đã có)
+		if not frappe.db.exists(
+			"ToDo",
+			{
+				"reference_type": self.doctype,
+				"reference_name": self.name,
+				"allocated_to": user_id,
+				"status": ("!=", "Cancelled"),
+			},
+		):
+			frappe.get_doc(
+				{
+					"doctype": "ToDo",
+					"status": "Open",
+					"allocated_to": user_id,
+					"reference_type": self.doctype,
+					"reference_name": self.name,
+					"description": content,
+					"priority": "Medium",
+				}
+			).insert(ignore_permissions=True)
+
+		# Rocket.Chat
+		send_rocket_message(
+			to_users=user_id,
+			title=":bell: Thông báo Công văn đến",
+			message=content,
+			link=get_url_to_form(self.doctype, self.name),
+		)
+
+	def _notify_office_group(self):
+		"""Gửi thông báo tới User Group 'Chánh VP nhận thông báo CV đến'."""
+		group_name = "Chánh VP nhận thông báo CV đến"
+		user_list = frappe.get_all(
+			"User Group Member",
+			filters={"parent": group_name},
+			pluck="user",
+		)
+		if not user_list:
+			return
+
+		ref = self.reference_number or self.name
+		handler_name = frappe.db.get_value("Employee", self.handler, "employee_name") if self.handler else None
+		sender = self.sender or "(Không rõ nơi gửi)"
+		message = f"CV đến số {ref} từ {sender} đã được chuyển cho {handler_name or '(Chưa rõ lãnh đạo xử lý)'}"
+
+		for user in user_list:
+			# Notification Log
+			frappe.get_doc(
+				{
+					"doctype": "Notification Log",
+					"for_user": user,
+					"subject": message,
+					"type": "Alert",
+					"document_type": self.doctype,
+					"document_name": self.name,
+				}
+			).insert(ignore_permissions=True)
+
+			# ToDo (mỗi user một ToDo, tránh trùng)
+			if not frappe.db.exists(
+				"ToDo",
+				{
+					"reference_type": self.doctype,
+					"reference_name": self.name,
+					"allocated_to": user,
+					"status": ("!=", "Cancelled"),
+				},
+			):
+				frappe.get_doc(
+					{
+						"doctype": "ToDo",
+						"status": "Open",
+						"allocated_to": user,
+						"reference_type": self.doctype,
+						"reference_name": self.name,
+						"description": message,
+						"priority": "Medium",
+					}
+				).insert(ignore_permissions=True)
+
+		# Rocket.Chat
+		send_rocket_message(
+			to_users=user_list,
+			title=":bell: Thông báo Công văn đến",
+			message=message,
+			link=get_url_to_form(self.doctype, self.name),
+		)
 
 
 @frappe.whitelist()
