@@ -9,12 +9,120 @@ from vinatex.patches.utils.rocket_chat import send_rocket_message
 
 
 class VNTDocumentManagement(Document):
+	def validate(self):
+		self._validate_handler_status_roles()
+
+	def before_save(self):
+		self._maybe_notify_child_assignees_on_transfer()
+
 	def after_insert(self):
 		if (self.type or "").strip() != "Công văn đến":
 			return
 
 		self._notify_incoming_to_handler()
 		self._notify_office_group()
+
+	def _validate_handler_status_roles(self):
+		"""Yêu cầu phải có ít nhất 1 dòng Chủ trì/Phối hợp/Nhận để biết khi đặt trạng thái lãnh đạo."""
+		if not self.handler_status:
+			return
+
+		rows = self.get("items") or []
+		picked = [row for row in rows if (row.chu_tri or row.phoi_hop or row.nhan_de_biet)]
+		if not picked:
+			frappe.throw("Vui lòng chọn ít nhất 1 dòng Chủ trì/Phối hợp/Nhận để biết trước khi cập nhật Trạng thái Lãnh đạo Tập Đoàn.")
+
+		if (self.handler_status or "").strip() == "Chuyển văn bản":
+			for row in picked:
+				if not row.deadline:
+					frappe.throw("Dòng đã chọn vai trò chưa có Thời hạn hoàn thành. Vui lòng nhập trước khi cập nhật Trạng thái Lãnh đạo Tập Đoàn.")
+
+	def _notify_child_assignees(self):
+		"""Gửi noti/ToDo/Rocket.Chat cho các nhân sự ở bảng người xử lý chính."""
+		items = self.get("items") or []
+		if not items:
+			return
+
+		ref = self.name
+		sender = self.sender or "(Nơi gửi chưa rõ)"
+		summary = self.summary or "(Chưa có trích yếu)"
+
+		def _notify_for_role(rows, role_label):
+			user_ids = set()
+			for row in rows:
+				if not row.employee:
+					continue
+				user_id = frappe.db.get_value("Employee", row.employee, "user_id")
+				if user_id:
+					user_ids.add(user_id)
+
+			if not user_ids:
+				return
+
+			message = f"Bạn được giao {role_label} xử lý CV đến số {ref} {sender} {summary}"
+			for user in user_ids:
+				frappe.get_doc(
+					{
+						"doctype": "Notification Log",
+						"for_user": user,
+						"subject": message,
+						"type": "Alert",
+						"document_type": self.doctype,
+						"document_name": self.name,
+					}
+				).insert(ignore_permissions=True)
+
+				if not frappe.db.exists(
+					"ToDo",
+					{
+						"reference_type": self.doctype,
+						"reference_name": self.name,
+						"allocated_to": user,
+						"status": ("!=", "Cancelled"),
+					},
+				):
+					frappe.get_doc(
+						{
+							"doctype": "ToDo",
+							"status": "Open",
+							"allocated_to": user,
+							"reference_type": self.doctype,
+							"reference_name": self.name,
+							"description": message,
+							"priority": "Medium",
+						}
+					).insert(ignore_permissions=True)
+
+			send_rocket_message(
+				to_users=list(user_ids),
+				title=":bell: Công văn đến",
+				message=message,
+				link=get_url_to_form(self.doctype, self.name),
+			)
+
+		chairs = [row for row in items if row.chu_tri]
+		collabs = [row for row in items if row.phoi_hop]
+		infos = [row for row in items if row.nhan_de_biet]
+
+		_notify_for_role(chairs, "chủ trì xử lý")
+		_notify_for_role(collabs, "phối hợp xử lý")
+		_notify_for_role(infos, "nhận để biết")
+
+	def _maybe_notify_child_assignees_on_transfer(self):
+		"""Chỉ gửi thông báo cho bảng người xử lý khi trạng thái lãnh đạo chuyển sang 'Chuyển văn bản'."""
+		# Chỉ áp dụng cho công văn đến
+		if (self.type or "").strip() != "Công văn đến":
+			return
+
+		current = (self.handler_status or "").strip()
+		if current != "Chuyển văn bản":
+			return
+
+		prev = self.get_db_value("handler_status") if self.name else None
+		if (prev or "").strip() == "Chuyển văn bản":
+			return
+
+		self._notify_child_assignees()
 
 	def _notify_incoming_to_handler(self):
 		"""Gửi notification + tạo ToDo cho Lãnh đạo Tập đoàn khi nhận công văn đến lần đầu."""

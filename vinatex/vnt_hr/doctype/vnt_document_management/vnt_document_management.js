@@ -11,10 +11,55 @@ const get_chair_department = (frm) => {
 // Không cho phép thời hạn dòng vượt quá thời hạn chung của văn bản
 const item_role_label = (row) => {
   if (!row) return "nhân sự";
-  if (row.chu_tri) return "Người chủ trì";
-  if (row.phoi_hop) return "Người phối hợp";
-  if (row.nhan_de_biet) return "Nhận để biết";
+  if (is_checked(row.chu_tri)) return "Người chủ trì";
+  if (is_checked(row.phoi_hop)) return "Người phối hợp";
+  if (is_checked(row.nhan_de_biet)) return "Nhận để biết";
   return "nhân sự";
+};
+
+const get_handler_status_prev = (frm) => {
+  if (frm._handlerStatusLastSaved === undefined) {
+    frm._handlerStatusLastSaved = frm.doc.handler_status || null;
+  }
+  return frm._handlerStatusLastSaved;
+};
+
+const set_handler_status_prev = (frm, val) => {
+  frm._handlerStatusLastSaved = val || null;
+};
+
+const is_checked = (val) => val === 1 || val === true || val === "1";
+
+const row_has_role = (row) =>
+  is_checked(row.chu_tri) || is_checked(row.phoi_hop) || is_checked(row.nhan_de_biet);
+
+const has_any_role_row = (frm) => {
+  const rows = Array.isArray(frm.doc.items) ? frm.doc.items : [];
+  return rows.some((r) => row_has_role(r));
+};
+
+const validate_handler_status_preconditions = (frm) => {
+  const rows = Array.isArray(frm.doc.items) ? frm.doc.items : [];
+  const picked = rows.filter((r) => row_has_role(r));
+
+  if (!picked.length) {
+    return { ok: false, message: "Vui lòng chọn ít nhất 1 dòng Chủ trì/Phối hợp/Nhận để biết trước khi cập nhật Trạng thái Lãnh đạo Tập Đoàn." };
+  }
+
+  const missingDeadlineIdx = picked.findIndex((r) => !r.deadline);
+  if (missingDeadlineIdx !== -1) {
+    return { ok: false, message: "Dòng đã chọn vai trò chưa có Thời hạn hoàn thành. Vui lòng nhập trước khi cập nhật Trạng thái Lãnh đạo Tập Đoàn." };
+  }
+
+  return { ok: true };
+};
+
+const ensure_handler_status_require_roles = (frm) => {
+  if (!frm.doc.handler_status) return true;
+  if (has_any_role_row(frm)) return true;
+  frappe.msgprint("Vui lòng chọn ít nhất 1 dòng Chủ trì/Phối hợp/Nhận để biết trước khi cập nhật Trạng thái Lãnh đạo Tập Đoàn.");
+  frm.set_value("handler_status", null);
+  return false;
 };
 
 // Đảm bảo chỉ có duy nhất một dòng được chọn Chủ trì
@@ -86,6 +131,10 @@ frappe.ui.form.on("VNT Document Management", {
     if (multiChair) {
       frappe.throw("Chỉ được phép chọn duy nhất 1 Người chủ trì trong bảng Người xử lý chính.");
     }
+
+    if (frm.doc.handler_status && !has_any_role_row(frm)) {
+      frappe.throw("Vui lòng chọn ít nhất 1 dòng Chủ trì/Phối hợp/Nhận để biết trước khi cập nhật Trạng thái Lãnh đạo Tập Đoàn.");
+    }
   },
 
   chairperson(frm) {
@@ -97,6 +146,9 @@ frappe.ui.form.on("VNT Document Management", {
 
 
   refresh(frm) {
+    if (frm._handlerStatusLastSaved === undefined) {
+      set_handler_status_prev(frm, frm.doc.handler_status || null);
+    }
     // Luôn reset viewer mỗi lần refresh
     frm.trigger("render_attach");
     frm.trigger("sync_chair_from_items");
@@ -149,8 +201,50 @@ frappe.ui.form.on("VNT Document Management", {
     frm.trigger("render_process_flow");
   },
 
-  handler_status(frm) {
+  async handler_status(frm) {
+    if (frm._handlerStatusSaving) return;
+    if (frm._handlerStatusResetting) return;
+
+    const prev = get_handler_status_prev(frm);
+    const newStatus = frm.doc.handler_status;
+
+    if (newStatus === "Chuyển văn bản") {
+      const check = validate_handler_status_preconditions(frm);
+      if (!check.ok) {
+        frappe.msgprint(check.message);
+        frm._handlerStatusResetting = true;
+        await frm.set_value("handler_status", null);
+        frm.doc.__unsaved = false;
+        frm._handlerStatusResetting = false;
+        return;
+      }
+    }
+
     frm.trigger("render_process_flow");
+
+    if (!frm.is_dirty()) {
+      set_handler_status_prev(frm, frm.doc.handler_status || null);
+      return;
+    }
+
+    frm._handlerStatusSaving = true;
+    try {
+      await frm.save();
+      set_handler_status_prev(frm, frm.doc.handler_status || null);
+    } catch (err) {
+      frappe.msgprint("Lưu không thành công, Trạng thái Lãnh đạo Tập Đoàn sẽ được đặt trống.");
+      try {
+        frm._handlerStatusResetting = true;
+        await frm.set_value("handler_status", prev);
+        frm.doc.__unsaved = false;
+        frm.refresh_field("handler_status");
+      } finally {
+        frm._handlerStatusResetting = false;
+        frm._handlerStatusSaving = false;
+      }
+      return;
+    }
+    frm._handlerStatusSaving = false;
   },
 
   chairperson(frm) {
