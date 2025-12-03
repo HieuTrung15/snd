@@ -460,11 +460,10 @@ def get_employee_contracts(employee, period_start, period_end):
         WHERE parent = %(employee)s
           AND parenttype = 'Employee'
           AND parentfield = 'custom_vnt_contract'
-          AND (from_date IS NULL OR from_date <= %(period_end)s)
+          AND from_date IS NOT NULL
+          AND from_date <= %(period_end)s
           AND (to_date IS NULL OR to_date >= %(period_start)s)
-        ORDER BY
-            COALESCE(from_date, DATE('1900-01-01')),
-            name
+        ORDER BY from_date, name
     """
     params = {
         "employee": employee,
@@ -639,7 +638,7 @@ def compute_item(employee, company=None, month=None, year=None):
         })
 
     contracts = get_employee_contracts(employee, period_start, period_end)
-    baseline_date = getdate("1900-01-01")
+    baseline_date = period_start
     far_future = getdate("9999-12-31")
     salary_history = get_employee_salary_history(employee)
 
@@ -650,7 +649,10 @@ def compute_item(employee, company=None, month=None, year=None):
         if not target_date or not salary_history:
             return None
         for entry in reversed(salary_history):
-            start = ensure_date(entry.get("from_date"), baseline_date)
+            start_raw = entry.get("from_date")
+            if not start_raw:
+                continue  # Bỏ qua bản ghi không có từ ngày
+            start = ensure_date(start_raw, baseline_date)
             end = ensure_date(entry.get("to_date"), far_future)
             if start <= target_date <= end:
                 return entry

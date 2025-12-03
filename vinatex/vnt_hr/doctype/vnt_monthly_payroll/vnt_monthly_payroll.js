@@ -549,6 +549,8 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		const allowOverride = String(row.cho_phep_dong_bhxh) === "1" || row.cho_phep_dong_bhxh === 1 || row.cho_phep_dong_bhxh === true;
 
 		let amount = 0;
+		let bhyt = 0;
+		let bhtn = 0;
 
 		if (!typeNowExcluded && (totalDays >= 14 || allowOverride)) {
 			amount = (num(row.tong_luong_cb) * 0.08); // 8% lương cơ bản

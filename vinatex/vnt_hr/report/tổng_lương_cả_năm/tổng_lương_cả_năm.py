@@ -167,11 +167,18 @@ def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, mo
 	if not standard_days:
 		return 0.0
 
+	def _flag(value) -> bool:
+		if isinstance(value, bool):
+			return value
+		if isinstance(value, (int, float)):
+			return value == 1
+		return cstr(value).strip().lower() in {"1", "true", "yes", "y", "on"}
+
 	# Các hệ số/flag lấy từ hồ sơ nhân sự
 	hs_luong_cb = flt(employee_ctx.get("hs_luong_cb"))
 	hs_pc_dang_1 = flt(employee_ctx.get("hs_pc_dang_1"))
 	hs_pc_kiem_nhiem1 = flt(employee_ctx.get("hs_pc_kiem_nhiem1"))
-	bhxh_flag = employee_ctx.get("bhxh") or ""
+	bhxh_flag = (employee_ctx.get("bhxh") or "").strip()
 	dang_vien = (employee_ctx.get("dang_vien") or "").strip()
 	so_npt = cint(employee_ctx.get("so_npt") or 0)
 	emp_contract_type = (employee_ctx.get("employment_type") or "").strip()
@@ -181,6 +188,9 @@ def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, mo
 	corporate_minimum_wage = flt(payload.get("corporate_minimum_wage"))
 	meal_allowance = flt(payload.get("meal_allowance"))
 	travel_allowance = flt(payload.get("travel_allowance"))
+	tien_gui_xe = flt(payload.get("tien_gui_xe"))
+	thue_tam_trich = _flag(payload.get("thue_tam_trich"))
+	thue_tncn_trich_them = flt(payload.get("thue_tncn_trich_them"))
 
 	so_phep = flt(payload.get("so_phep"))
 	so_ngay_nghi_vr = flt(payload.get("so_ngay_nghi_vr"))
@@ -199,6 +209,11 @@ def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, mo
 	latest_salary_amount = payload.get("latest_salary_amount")
 	current_salary_amount = payload.get("current_salary_amount")
 	previous_salary_amount = payload.get("previous_salary_amount")
+	truylinh = flt(payload.get("truylinh"))
+	khac = flt(payload.get("khac"))
+	truy_thu = flt(payload.get("truy_thu"))
+	duoc_hoan_lai = flt(payload.get("duoc_hoan_lai"))
+	allow_override_bhxh = _flag(payload.get("cho_phep_dong_bhxh"))
 
 	# Hệ số & mức lương theo hợp đồng
 	if current_salary_coefficient is not None:
@@ -225,12 +240,8 @@ def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, mo
 	pc_kiem_nhiem1 = regional_minimum_wage * hs_pc_kiem_nhiem1
 
 	# Tổng lương tính BHXH (giới hạn 20 * reference_salary)
-	if bhxh_flag == "3. Không đóng BHXH & ĐPCĐ":
-		tong_luong_cb = 0
-	else:
-		gross_base = luong_cb + pc_dang1 + pc_kiem_nhiem1
-		max_base = reference_salary * 20 if reference_salary else gross_base
-		tong_luong_cb = min(gross_base, max_base)
+	gross_base = luong_cb + pc_dang1 + pc_kiem_nhiem1
+	tong_luong_cb = min(gross_base, reference_salary * 20) if (reference_salary or gross_base) else 0
 
 	excluded_contracts = {
 		"Hợp đồng thử việc",
@@ -243,21 +254,17 @@ def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, mo
 		current_working_days + previous_working_days + so_phep + so_ngay_nghi_vr
 	)
 	type_now_excluded = current_contract_type in excluded_contracts
-	type_old_excluded = previous_contract_type in excluded_contracts
-	allow_override_bhxh = False
-
-	if bhxh_flag == "3. Không đóng BHXH & ĐPCĐ":
-		tru_bhxh = 0
-	elif (not type_now_excluded and not type_old_excluded) and (total_days_for_bhxh >= 14 or allow_override_bhxh):
+	if bhxh_flag in {"Không đóng BHXH & ĐPCĐ", "Không đóng BHXH, đóng ĐPCĐ"}:
+		tru_bhxh = tru_bhyt = tru_bhtn = 0.0
+	elif (bhxh_flag == "Đóng BHXH, đóng ĐPCĐ") and (not type_now_excluded) and (total_days_for_bhxh >= 14 or allow_override_bhxh):
 		tru_bhxh = tong_luong_cb * 0.08
+		tru_bhyt = tong_luong_cb * 0.015
+		tru_bhtn = tong_luong_cb * 0.01
 	else:
-		tru_bhxh = 0
-
-	tru_bhyt = 0 if employee_ctx.get("bhyt") else tong_luong_cb * 0.015
-	tru_bhtn = 0 if employee_ctx.get("bhtn") else tong_luong_cb * 0.01
+		tru_bhxh = tru_bhyt = tru_bhtn = 0.0
 	xh_yt_tn = tru_bhxh + tru_bhyt + tru_bhtn
 
-	doan_phi_cd = tong_luong_cb * 0.005
+	doan_phi_cd = tong_luong_cb * 0.005 if bhxh_flag in {"Đóng BHXH, đóng ĐPCĐ", "Không đóng BHXH, đóng ĐPCĐ"} else 0.0
 
 	# Lương nghỉ phép & ngày VR
 	luong_nghiphep_vr = 0
@@ -282,7 +289,7 @@ def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, mo
 	pc_kiem_nhiem2 = hs_pc_kiem_nhiem1 * corporate_minimum_wage
 
 	# Công tác phí
-	tien_khoan_ct = 0 if bhxh_flag == "3. Không đóng BHXH & ĐPCĐ" else travel_allowance
+	tien_khoan_ct = travel_allowance if bhxh_flag in {"Đóng BHXH, đóng ĐPCĐ", "Không đóng BHXH, đóng ĐPCĐ"} else 0.0
 
 	tong_thu_nhap = (
 		pc_dang2
@@ -291,11 +298,12 @@ def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, mo
 		+ tien_luong_hqcv
 		+ tien_an
 		+ tien_khoan_ct
-		+ flt(payload.get("truylinh"))
+		+ truylinh
 		+ tien_luong_hqcv_cu
+		+ tien_gui_xe
 	)
 
-	tong_tn_chiu_thue = tong_thu_nhap - tien_an - tien_khoan_ct
+	tong_tn_chiu_thue = tong_thu_nhap - tien_an - tien_khoan_ct - tien_gui_xe
 
 	dang_phi = tong_tn_chiu_thue * 0.01 if dang_vien == "Chính thức" else 0
 
@@ -312,7 +320,7 @@ def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, mo
 		"Không giao kết HĐLĐ",
 	}
 
-	taxable_income = 0
+	taxable_income = 0.0
 	if current_contract_type in formal_contracts:
 		if tong_tn_chiu_thue > 2_000_000:
 			taxable_income = tong_tn_chiu_thue
@@ -340,18 +348,30 @@ def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, mo
 			brackets.append({"rate": rate, "from": from_, "to": to_val})
 	brackets = sorted(brackets, key=lambda b: b["from"])
 
-	total_tax = 0.0
-	for b in brackets:
-		if taxable_income <= b["from"]:
-			break
-		upper = min(taxable_income, b["to"])
-		chunk = max(0, upper - b["from"])
-		if chunk > 0:
-			total_tax += chunk * (b["rate"] / 100.0)
-	tncn_tam_thu = _js_round(total_tax)
+	tncn_tam_thu = 0.0
+	if thue_tam_trich:
+		base_for_flat_tax = tong_tn_chiu_thue or tong_thu_nhap
+		tncn_tam_thu = _js_round(base_for_flat_tax * 0.1)
+	else:
+		total_tax = 0.0
+		for b in brackets:
+			if taxable_income <= b["from"]:
+				break
+			upper = min(taxable_income, b["to"])
+			chunk = max(0, upper - b["from"])
+			if chunk > 0:
+				total_tax += chunk * (b["rate"] / 100.0)
+		tncn_tam_thu = _js_round(total_tax) + thue_tncn_trich_them
 
 	thuc_linh = (
 		tong_thu_nhap
+		- xh_yt_tn
+		- doan_phi_cd
+		- dang_phi
+		- tncn_tam_thu
+		- khac
+		- truy_thu
+		+ duoc_hoan_lai
 	)
 	return flt(thuc_linh)
 
