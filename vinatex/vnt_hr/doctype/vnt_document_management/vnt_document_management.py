@@ -13,6 +13,8 @@ class VNTDocumentManagement(Document):
 		self._validate_handler_status_roles()
 		self._validate_collab_vs_specialist_status()
 		self._validate_chair_vs_specialist_status()
+		self._validate_specialist_deadline()
+		self._validate_items2_deadlines()
 
 	def before_save(self):
 		self._maybe_notify_child_assignees_on_transfer()
@@ -58,6 +60,18 @@ class VNTDocumentManagement(Document):
 		for row in items2:
 			if (row.trang_thai_cv_xu_ly or "").strip() != "Hoàn thành" or (row.trang_thai_nguoi_phoi_hop or "").strip() != "Hoàn thành":
 				frappe.throw("Người chủ trì chỉ được chọn Hoàn thành sau khi tất cả dòng phối hợp đã Hoàn thành.")
+
+	def _validate_specialist_deadline(self):
+		"""Deadline chuyên viên xử lý không được muộn hơn deadline người chủ trì."""
+		if self.deadline_cv_xu_ly and self.deadline_chu_tri2:
+			if getdate(self.deadline_cv_xu_ly) > getdate(self.deadline_chu_tri2):
+				frappe.throw("Thời hạn Chuyên viên xử lý không được muộn hơn thời hạn Người chủ trì.")
+
+	def _validate_items2_deadlines(self):
+		"""Deadline chuyên viên xử lý (deadline2) trong bảng phối hợp không được muộn hơn deadline người phối hợp (deadline1)."""
+		for row in self.get("items2") or []:
+			if row.deadline2 and row.deadline1 and getdate(row.deadline2) > getdate(row.deadline1):
+				frappe.throw("Thời hạn Chuyên viên xử lý không được muộn hơn thời hạn Người phối hợp.")
 
 	def _notify_child_assignees(self):
 		"""Gửi noti/ToDo/Rocket.Chat cho các nhân sự ở bảng người xử lý chính."""

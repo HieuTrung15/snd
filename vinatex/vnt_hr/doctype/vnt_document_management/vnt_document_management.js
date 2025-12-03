@@ -82,6 +82,15 @@ const ensure_collab_not_done_before_specialist = (cdt, cdn) => {
   frappe.model.set_value(cdt, cdn, "trang_thai_nguoi_phoi_hop", "Đang xử lý");
 };
 
+const ensure_spec_deadline_within_collab = (cdt, cdn) => {
+  const row = (locals[cdt] && locals[cdt][cdn]) || null;
+  if (!row || !row.deadline2 || !row.deadline1) return;
+  if (frappe.datetime.get_diff(row.deadline2, row.deadline1) > 0) {
+    frappe.msgprint("Thời hạn Chuyên viên xử lý không được muộn hơn thời hạn Người phối hợp.");
+    frappe.model.set_value(cdt, cdn, "deadline2", null);
+  }
+};
+
 const ensure_handler_status_require_roles = (frm) => {
   if (!frm.doc.handler_status) return true;
   if (has_any_role_row(frm)) return true;
@@ -128,6 +137,16 @@ const ensure_item_deadline_within_parent = (frm, cdt, cdn) => {
   }
 };
 
+const ensure_spec_deadline_not_after_chair = (frm) => {
+  if (!frm.doc.deadline_cv_xu_ly || !frm.doc.deadline_chu_tri2) return true;
+  if (frappe.datetime.get_diff(frm.doc.deadline_cv_xu_ly, frm.doc.deadline_chu_tri2) > 0) {
+    frappe.msgprint("Thời hạn Chuyên viên xử lý không được muộn hơn thời hạn Người chủ trì.");
+    frm.set_value("deadline_cv_xu_ly", null);
+    return false;
+  }
+  return true;
+};
+
 const find_late_item_deadline = (frm) => {
   if (!frm.doc.deadline) return null;
   const rows = Array.isArray(frm.doc.items) ? frm.doc.items : [];
@@ -163,6 +182,8 @@ frappe.ui.form.on("VNT Document Management", {
     if (frm.doc.handler_status && !has_any_role_row(frm)) {
       frappe.throw("Vui lòng chọn ít nhất 1 dòng Chủ trì/Phối hợp/Nhận để biết trước khi cập nhật Trạng thái Lãnh đạo Tập Đoàn.");
     }
+
+    ensure_spec_deadline_not_after_chair(frm);
   },
 
   chairperson(frm) {
@@ -280,6 +301,10 @@ frappe.ui.form.on("VNT Document Management", {
 
   chairperson(frm) {
     frm.trigger("render_process_flow");
+  },
+
+  deadline_cv_xu_ly(frm) {
+    ensure_spec_deadline_not_after_chair(frm);
   },
 
   chairperson_status(frm) {
@@ -963,5 +988,8 @@ frappe.ui.form.on("VNT Document Management Item2", {
 frappe.ui.form.on("VNT Document Management Item", {
   trang_thai_nguoi_phoi_hop(frm, cdt, cdn) {
     ensure_collab_not_done_before_specialist(cdt, cdn);
+  },
+  deadline2(frm, cdt, cdn) {
+    ensure_spec_deadline_within_collab(cdt, cdn);
   }
 });
