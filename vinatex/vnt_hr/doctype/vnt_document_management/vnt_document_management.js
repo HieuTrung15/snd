@@ -8,10 +8,84 @@ const get_chair_department = (frm) => {
   return chairRow?.department || null;
 };
 
+// Không cho phép thời hạn dòng vượt quá thời hạn chung của văn bản
+const item_role_label = (row) => {
+  if (!row) return "nhân sự";
+  if (row.chu_tri) return "Người chủ trì";
+  if (row.phoi_hop) return "Người phối hợp";
+  if (row.nhan_de_biet) return "Nhận để biết";
+  return "nhân sự";
+};
+
+// Đảm bảo chỉ có duy nhất một dòng được chọn Chủ trì
+const ensure_single_chair_row = (frm, cdt, cdn) => {
+  const row = (locals[cdt] && locals[cdt][cdn]) || null;
+  if (!row || !row.chu_tri) return;
+
+  const rows = Array.isArray(frm.doc.items) ? frm.doc.items : [];
+  rows.forEach((r) => {
+    if (r.name !== row.name && r.chu_tri) {
+      frappe.model.set_value(r.doctype || cdt, r.name, "chu_tri", 0);
+    }
+  });
+};
+
+// Mỗi dòng chỉ được chọn một vai trò
+const enforce_single_role = (cdt, cdn, pickedField) => {
+  if (!cdt || !cdn || !pickedField) return;
+  const row = (locals[cdt] && locals[cdt][cdn]) || null;
+  if (!row || !row[pickedField]) return;
+
+  ["chu_tri", "phoi_hop", "nhan_de_biet"].forEach((field) => {
+    if (field !== pickedField && row[field]) {
+      frappe.model.set_value(cdt, cdn, field, 0);
+    }
+  });
+};
+
+const ensure_item_deadline_within_parent = (frm, cdt, cdn) => {
+  if (!frm.doc.deadline || !cdt || !cdn) return;
+  const row = (locals[cdt] && locals[cdt][cdn]) || null;
+  if (!row || !row.deadline) return;
+
+  if (frappe.datetime.get_diff(row.deadline, frm.doc.deadline) > 0) {
+    const typeLabel = item_role_label(row);
+    frappe.msgprint(`Thời hạn hoàn thành của ${typeLabel} không được muộn hơn thời hạn xử lý văn bản ${frm.doc.deadline}`);
+    frappe.model.set_value(cdt, cdn, "deadline", null);
+  }
+};
+
+const find_late_item_deadline = (frm) => {
+  if (!frm.doc.deadline) return null;
+  const rows = Array.isArray(frm.doc.items) ? frm.doc.items : [];
+  const idx = rows.findIndex((row) => row.deadline && frappe.datetime.get_diff(row.deadline, frm.doc.deadline) > 0);
+  if (idx === -1) return null;
+  return { row: rows[idx], idx: idx + 1, typeLabel: item_role_label(rows[idx]) };
+};
+
+const find_multiple_chair = (frm) => {
+  const rows = Array.isArray(frm.doc.items) ? frm.doc.items : [];
+  const picked = rows.filter((r) => r.chu_tri);
+  if (picked.length <= 1) return null;
+  return picked;
+};
+
 frappe.ui.form.on("VNT Document Management", {
   setup(frm) {
     frm.trigger("setup_cv_xu_ly_query");
     frm.trigger("setup_cv_xu_ly_query_items2");
+  },
+
+  validate(frm) {
+    const late = find_late_item_deadline(frm);
+    if (late) {
+      frappe.throw(`Dòng ${late.idx}: Thời hạn hoàn thành ${late.typeLabel} không được muộn hơn thời hạn xử lý văn bản ${frm.doc.deadline}.`);
+    }
+
+    const multiChair = find_multiple_chair(frm);
+    if (multiChair) {
+      frappe.throw("Chỉ được phép chọn duy nhất 1 Người chủ trì trong bảng Người xử lý chính.");
+    }
   },
 
   chairperson(frm) {
@@ -722,7 +796,9 @@ frappe.ui.form.on("VNT Document Management", {
 
 // Child table hooks: VNT Document Management Item2 (items)
 frappe.ui.form.on("VNT Document Management Item2", {
-  chu_tri(frm) {
+  chu_tri(frm, cdt, cdn) {
+    enforce_single_role(cdt, cdn, "chu_tri");
+    ensure_single_chair_row(frm, cdt, cdn);
     frm.trigger("sync_chair_from_items");
     frm.trigger("sync_collab_from_items");
   },
@@ -730,14 +806,17 @@ frappe.ui.form.on("VNT Document Management Item2", {
     frm.trigger("sync_chair_from_items");
     frm.trigger("sync_collab_from_items");
   },
-  deadline(frm) {
+  deadline(frm, cdt, cdn) {
+    ensure_item_deadline_within_parent(frm, cdt, cdn);
     frm.trigger("sync_chair_from_items");
     frm.trigger("sync_collab_from_items");
   },
-  phoi_hop(frm) {
+  phoi_hop(frm, cdt, cdn) {
+    enforce_single_role(cdt, cdn, "phoi_hop");
     frm.trigger("sync_collab_from_items");
   },
-  nhan_de_biet(frm) {
+  nhan_de_biet(frm, cdt, cdn) {
+    enforce_single_role(cdt, cdn, "nhan_de_biet");
     frm.trigger("sync_collab_from_items");
   }
 });

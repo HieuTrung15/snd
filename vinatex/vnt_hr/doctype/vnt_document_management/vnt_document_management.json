@@ -50,7 +50,8 @@
   "th\u00f4ng_tin_ng\u01b0\u1eddi_ph\u1ed1i_h\u1ee3p_tab",
   "section_break_mxli",
   "items2",
-  "item4"
+  "item4",
+  "amended_from"
  ],
  "fields": [
   {
@@ -303,20 +304,32 @@
    "fieldname": "items3",
    "fieldtype": "Table",
    "label": "Danh s\u00e1ch file \u0111\u00ednh k\u00e8m Ban ch\u1ee7 tr\u00ec",
-   "options": "VNT Document Management Item3"
+   "options": "VNT Document Management Item3",
+   "permlevel": 1
   },
   {
    "fieldname": "item4",
    "fieldtype": "Table",
    "label": "Danh s\u00e1ch \u0111\u00ednh k\u00e8m Ban ph\u1ed1i h\u1ee3p",
-   "options": "VNT Document Management Item3"
+   "options": "VNT Document Management Item3",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VNT Document Management",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-28 09:25:21.098895",
+ "modified": "2025-12-03 10:55:33.275491",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
