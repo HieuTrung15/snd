@@ -244,7 +244,7 @@
    "fieldname": "trang_thai_chuyen_vien_xu_ly",
    "fieldtype": "Select",
    "label": "Tr\u1ea1ng th\u00e1i chuy\u00ean vi\u00ean x\u1eed l\u00fd",
-   "options": "\n\u0110ang x\u1eed l\u00fd\nHo\u00e0n th\u00e0nh\nTr\u1ea3 l\u1ea1i",
+   "options": "\n\u0110ang x\u1eed l\u00fd\nHo\u00e0n th\u00e0nh",
    "permlevel": 1
   },
   {
@@ -329,7 +329,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-03 10:55:33.275491",
+ "modified": "2025-12-03 16:03:17.876901",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",

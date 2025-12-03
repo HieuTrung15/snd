@@ -88,7 +88,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Tr\u1ea1ng th\u00e1i chuy\u00ean vi\u00ean x\u1eed l\u00fd",
-   "options": "\n\u0110ang x\u1eed l\u00fd\nHo\u00e0n th\u00e0nh\nTr\u1ea3 l\u1ea1i"
+   "options": "\n\u0110ang x\u1eed l\u00fd\nHo\u00e0n th\u00e0nh"
   },
   {
    "columns": 1,
@@ -106,7 +106,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-26 10:01:05.141399",
+ "modified": "2025-12-03 16:03:37.183164",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management Item",
