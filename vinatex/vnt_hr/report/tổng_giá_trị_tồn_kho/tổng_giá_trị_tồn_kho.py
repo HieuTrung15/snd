@@ -34,8 +34,7 @@ def get_columns():
         {
             "label": "Giá trị tồn kho",
             "fieldname": "stock_value",
-            "fieldtype": "Currency",
-            "options": "company:company:default_currency",
+            "fieldtype": "Float",
             "width": 180,
         }
     ]
