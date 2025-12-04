@@ -42,11 +42,22 @@
   .doc-card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; box-shadow:0 8px 24px rgba(15,23,42,0.06); }
   .doc-card h3 { margin:0 0 6px; font-size:16px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px; }
   .doc-card small { color:#94a3b8; }
-  .doc-kpi-line { display:flex; align-items:center; gap:10px; margin:10px 0 6px; }
+  .doc-kpi-line { display:flex; align-items:center; gap:10px; margin:10px 0 25px; }
   .doc-kpi-value { font-size:36px; font-weight:800; color:#111827; line-height:1; }
   .doc-kpi-sub { color:#6b7280; font-size:13px; }
   .doc-kpi-grid { display:grid; grid-template-columns:repeat(2, minmax(180px,1fr)); gap:10px; }
   .doc-kpi-grid .doc-card { min-height: 146px; }
+  .summary-wrap { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:10px; margin-top:10px; }
+  .summary-card { position:relative; background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:10px 12px; box-shadow:0 6px 16px rgba(15,23,42,0.04); display:flex; align-items:center; justify-content:space-between; min-height:64px; overflow:hidden; }
+  .summary-card:before { content:""; position:absolute; inset:0; opacity:0.25; pointer-events:none; }
+  .summary-card .label { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:#475569; font-weight:700; }
+  .summary-card .value { font-size:22px; font-weight:800; color:#0f172a; }
+  .summary-card .dot { width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:6px; }
+  .summary-card.info { border-color:#bfdbfe; background:linear-gradient(135deg,#eef2ff 0%,#f8fbff 100%); }
+  .summary-card.info .dot { background:#2563eb; }
+  .summary-card.warn { border-color:#fde68a; background:linear-gradient(135deg,#fffbeb 0%,#fff7e6 100%); }
+  .summary-card.warn .dot { background:#d97706; }
+  .summary-card.neutral { background:#f8fafc; }
   .doc-mini-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:8px; margin-top:8px; }
   .doc-mini-card { padding:10px 12px; border-radius:10px; background:#f8fafc; border:1px solid #e2e8f0; display:flex; flex-direction:column; gap:4px; }
   .doc-mini-title { font-size:12px; font-weight:700; color:#475569; display:flex; align-items:center; gap:6px; }
@@ -120,6 +131,7 @@
     .hr-stat { padding: 10px 12px; }
     .hr-stat-value { font-size: 24px; }
     .doc-mini-grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+    .summary-wrap { grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); }
   }
   </style>
   <script src="https://code.highcharts.com/highcharts.js"></script>
@@ -135,94 +147,24 @@
     </div>
   </div>
 
-  <div id="cards" class="spa-grid"></div>
-
-  <div class="doc-top-grid" style="margin:12px 0;">
-    <div class="doc-kpi-grid">
-      <div class="doc-card" id="doc-kpi-completed">
-        <h3>Công việc đã hoàn thành</h3>
-        <div class="doc-kpi-line">
-          <span class="icon-blink icon-green">✔</span>
-          <div class="doc-kpi-value" data-doc-kpi="completed">0</div>
-        </div>
-        <div class="doc-kpi-sub">Nhiệm vụ đã hoàn thành</div>
-      </div>
-      <div class="doc-card" id="doc-kpi-processing">
-        <h3>Đang xử lý</h3>
-        <div class="doc-kpi-line">
-          <span class="icon-blink icon-amber">↻</span>
-          <div class="doc-kpi-value" data-doc-kpi="processing">0</div>
-        </div>
-        <div class="doc-kpi-sub">Đã giao đang xử lý</div>
-      </div>
-      <div class="doc-card" id="doc-kpi-unassigned">
-        <h3>Chưa có chủ trì</h3>
-        <div class="doc-kpi-line">
-          <span class="icon-blink icon-gray">⚑</span>
-          <div class="doc-kpi-value" data-doc-kpi="unassigned">0</div>
-        </div>
-        <div class="doc-kpi-sub">Chưa giao chủ trì</div>
-      </div>
-      <div class="doc-card" id="doc-kpi-returned">
-        <h3>Trả lại</h3>
-        <div class="doc-kpi-line">
-          <span class="icon-blink icon-red">↩</span>
-          <div class="doc-kpi-value" data-doc-kpi="returned">0</div>
-        </div>
-        <div class="doc-kpi-sub">Nhiệm vụ bị trả</div>
-      </div>
-    </div>
-    <div class="doc-card">
+  <!-- Sections go here -->
+  <div class="charts" style="margin-top:12px;">
+    <div class="spa-section">
       <h3>Đi công tác / Nghỉ hôm nay</h3>
-      <small>Thống kê nhanh</small>
-      <table id="summary-table"></table>
+      <!-- <small>Thống kê nhanh</small> -->
+      <div id="summary-cards" class="summary-wrap"></div>
       <div class="list-scroll" data-region="movements" style="margin-top:10px; border-top:1px solid var(--slate-100); padding-top:8px;"></div>
     </div>
-  </div>
-  <div class="doc-bottom-grid" style="margin-bottom:12px;">
-    <div class="doc-card">
-      <h3>Tỷ trọng trạng thái</h3>
-      <div class="chart-holder" id="doc-status-pie" style="min-height:240px;"></div>
-    </div>
-    <div class="doc-card">
-      <h3>Danh sách văn bản</h3>
-      <div class="doc-table-scroll">
-        <table id="doc-table" style="width:100%; border-collapse:separate; border-spacing:0;"></table>
-      </div>
-    </div>
-  </div>
-
-  <div id="salary-cards" class="spa-grid" style="margin-top:4px;"></div>
-
-  <div class="charts">
     <div class="spa-section">
-      <h3>Diễn biến lương</h3>
-      <small>Theo tháng</small>
-      <div class="chart-holder" id="chart-salary"></div>
-    </div>
-    <div class="spa-section">
-      <h3>Tuyển dụng & nghỉ việc</h3>
-      <div class="chart-holder" id="chart-turnover"></div>
-    </div>
-  </div>
-
-  <div class="charts">
-    <div class="spa-section">
-      <h3>Diễn biến nhân sự</h3>
-      <small>Tổng số & bình quân</small>
-      <div class="chart-holder" id="chart-headcount"></div>
-    </div>
-    <div class="spa-section">
-      <h3>Trình độ học vấn</h3>
-      <small>Phân bổ nhân sự</small>
-      <div class="chart-holder" id="chart-education"></div>
+      <h3>Lãnh đạo ở công ty</h3>
+      <!-- <small>Chỉ hiển thị Lãnh đạo cấp trung / Người quản lý</small> -->
+      <div class="list-scroll" data-region="present-list" style="margin-top:10px; border-top:1px solid var(--slate-100); padding-top:8px;"></div>
     </div>
   </div>
 
   <div class="charts">
     <div class="spa-section hr-board">
       <h3>Báo cáo nhân sự</h3>
-      <!-- <small>Nhắc việc sắp tới</small> -->
       <div class="hr-stats">
         <div class="hr-stat">
           <div class="hr-stat-label">Tuổi bình quân</div>
@@ -257,6 +199,83 @@
           </div>
           <div class="hr-count" data-hr-count="retirements">0</div>
           <div class="hr-list" data-hr-list="retirements"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="salary-cards" class="spa-grid" style="margin-top:4px;"></div>
+
+  <div class="charts">
+    <div class="spa-section">
+      <h3>Diễn biến lương</h3>
+      <small>Theo tháng</small>
+      <div class="chart-holder" id="chart-salary"></div>
+    </div>
+    <div class="spa-section">
+      <h3>Tuyển dụng & nghỉ việc</h3>
+      <div class="chart-holder" id="chart-turnover"></div>
+    </div>
+  </div>
+
+  <div class="charts">
+    <div class="spa-section">
+      <h3>Diễn biến nhân sự</h3>
+      <small>Tổng số & bình quân</small>
+      <div class="chart-holder" id="chart-headcount"></div>
+    </div>
+    <div class="spa-section">
+      <h3>Trình độ học vấn</h3>
+      <small>Phân bổ nhân sự</small>
+      <div class="chart-holder" id="chart-education"></div>
+    </div>
+  </div>
+
+  <div class="spa-section doc-board" style="margin-top:12px;">
+    <h3>Quản lý công việc</h3>
+    <div class="doc-kpi-grid" style="margin:8px 0 10px 0;">
+      <div class="doc-card" id="doc-kpi-completed">
+        <h3>Công việc đã hoàn thành</h3>
+        <div class="doc-kpi-line">
+          <span class="icon-blink icon-green">✔</span>
+          <div class="doc-kpi-value" data-doc-kpi="completed">0</div>
+        </div>
+        <div class="doc-kpi-sub">Nhiệm vụ đã hoàn thành</div>
+      </div>
+      <div class="doc-card" id="doc-kpi-processing">
+        <h3>Đang xử lý</h3>
+        <div class="doc-kpi-line">
+          <span class="icon-blink icon-amber">↻</span>
+          <div class="doc-kpi-value" data-doc-kpi="processing">0</div>
+        </div>
+        <div class="doc-kpi-sub">Đã giao đang xử lý</div>
+      </div>
+      <div class="doc-card" id="doc-kpi-unassigned">
+        <h3>Chưa có chủ trì</h3>
+        <div class="doc-kpi-line">
+          <span class="icon-blink icon-gray">⚑</span>
+          <div class="doc-kpi-value" data-doc-kpi="unassigned">0</div>
+        </div>
+        <div class="doc-kpi-sub">Chưa giao chủ trì</div>
+      </div>
+      <div class="doc-card" id="doc-kpi-returned">
+        <h3>Trả lại</h3>
+        <div class="doc-kpi-line">
+          <span class="icon-blink icon-red">↩</span>
+          <div class="doc-kpi-value" data-doc-kpi="returned">0</div>
+        </div>
+        <div class="doc-kpi-sub">Nhiệm vụ bị trả</div>
+      </div>
+    </div>
+    <div class="doc-bottom-grid" style="margin-bottom:0;">
+      <div class="doc-card">
+        <h3>Tỷ trọng trạng thái</h3>
+        <div class="chart-holder" id="doc-status-pie" style="min-height:240px;"></div>
+      </div>
+      <div class="doc-card">
+        <h3>Danh sách văn bản</h3>
+        <div class="doc-table-scroll">
+          <table id="doc-table" style="width:100%; border-collapse:separate; border-spacing:0;"></table>
         </div>
       </div>
     </div>
@@ -335,9 +354,8 @@
 
   function renderData(data) {
       const salaryCards = data.tables?.salary_cards || [];
-      renderCards(data.cards || [], "cards");
       renderCards(salaryCards, "salary-cards");
-      renderTable("summary-table", data.tables?.activity_summary || [], ["kpi","value"], ["Chỉ số","Số người"]);
+      renderSummaryCards(data.tables?.activity_summary || []);
       renderHrReports(data.tables?.hr_reports || {});
       renderChart("chart-salary", data.charts?.salary);
       renderChart("chart-headcount", data.charts?.headcount);
@@ -347,6 +365,7 @@
       renderMovements(movements);
       renderPeopleList(movements);
       renderEarlyLate(data.tables?.early_late || {});
+      renderPresentList(data.tables?.present_managers || []);
       fetchDocDashboard();
   }
 
@@ -425,11 +444,21 @@
           return;
       }
       rows.forEach(r => {
+          const isTrip = r.status === "Công tác";
+          const badgeBg = isTrip ? "#e0f2fe" : "#fef3c7";
+          const badgeColor = isTrip ? "#0369a1" : "#b45309";
           container.insertAdjacentHTML("beforeend", `
-            <div style="padding:10px 0; border-bottom:1px solid var(--slate-100);">
-              <div style="font-weight:700;">${escapeHtml(r.employee_name || r.employee || "-")}</div>
-              <div style="color:#64748b; font-size:12px;">${escapeHtml(r.group || "")} • ${escapeHtml(r.designation || "")}</div>
-              <div style="margin-top:4px;"><span class="chip ${r.status === "Công tác" ? "info" : "warn"}">${escapeHtml(r.status || "")}</span> ${escapeHtml(r.note || "")}</div>
+            <div style="padding:10px 0; border-bottom:1px solid var(--slate-100); display:flex; align-items:flex-start; gap:10px;">
+              <div style="flex:1;">
+                <div style="font-weight:700;">${escapeHtml(r.employee_name || r.employee || "-")}</div>
+                <div style="color:#64748b; font-size:12px;">${r.designation ? escapeHtml(r.designation) : ""}</div>
+              </div>
+              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                <span class="hr-badge" style="background:${badgeBg}; color:${badgeColor}; border:none; padding:4px 10px; font-size:11px; font-weight:700;">
+                  ${escapeHtml(r.status || "")}
+                </span>
+                <span style="color:#0f172a; font-size:12px;">${escapeHtml(r.note || "")}</span>
+              </div>
             </div>
           `);
       });
@@ -454,6 +483,24 @@
       });
   }
 
+  function renderPresentList(rows) {
+      const container = document.querySelector('[data-region="present-list"]');
+      if (!container) return;
+      container.innerHTML = "";
+      if (!rows.length) {
+          container.innerHTML = '<div class="empty">Không có dữ liệu</div>';
+          return;
+      }
+      rows.forEach(r => {
+          container.insertAdjacentHTML("beforeend", `
+            <div style="padding:10px 0; border-bottom:1px solid var(--slate-100);">
+              <div style="font-weight:700;">${escapeHtml(r.employee_name || r.employee || "-")}</div>
+              <div style="color:#64748b; font-size:12px;">${escapeHtml(r.department || "")}</div>
+            </div>
+          `);
+      });
+  }
+
   function renderEarlyLate(groups) {
       const earlyWrap = document.querySelector('[data-region="early-list"]');
       const lateWrap = document.querySelector('[data-region="late-list"]');
@@ -473,6 +520,30 @@
               <div style="font-weight:700;">${escapeHtml(r.employee_name || r.employee || "-")}</div>
               <div style="color:#64748b; font-size:12px;">${escapeHtml(r.department || "")}</div>
               <div style="margin-top:4px;"><span class="chip ${mode === "first" ? "success" : "info"}">${escapeHtml(r.label || "")}</span> ${escapeHtml(r.time || "")}</div>
+            </div>
+          `);
+      });
+  }
+
+  function renderSummaryCards(rows) {
+      const wrap = document.getElementById("summary-cards");
+      if (!wrap) return;
+      wrap.innerHTML = "";
+      if (!rows.length) {
+          wrap.innerHTML = '<div class="empty">Không có dữ liệu</div>';
+          return;
+      }
+      const clsMap = {
+        "đang công tác": "info",
+        "đang nghỉ": "warn",
+      };
+      rows.forEach(r => {
+          const kpiText = String(r.kpi || "");
+          const cls = clsMap[kpiText.trim().toLowerCase()] || "neutral";
+          wrap.insertAdjacentHTML("beforeend", `
+            <div class="summary-card ${cls}">
+              <div class="label"><span class="dot"></span>${escapeHtml(r.kpi || "")}</div>
+              <div class="value">${escapeHtml(r.value ?? "-")}</div>
             </div>
           `);
       });
@@ -702,4 +773,3 @@
   }
 </script>
 {% endblock %}
-

@@ -52,6 +52,7 @@ def get_dashboard_data(company: str | None = None, department: str | None = None
 			"hr_reports": build_hr_reports_from_reminders(),
 			"salary_cards": build_salary_cards(filters),
 			"early_late": build_early_late_lists(filters),
+			"present_managers": build_present_managers(filters),
 		},
 		"meta": {"filters": filters},
 	}
@@ -177,10 +178,10 @@ def build_salary_chart(filters: dict[str, str]) -> dict:
 				"type": "line",
 				"labels": data.get("categories") or [],
 				"datasets": [
-					{"name": _("Tổng lương"), "values": data.get("salary") or []},
 					{"name": _("Phụ cấp"), "values": data.get("allowance") or []},
+					{"name": _("Tổng lương"), "values": data.get("salary") or []},
 				],
-				"colors": ["#2563eb", "#22c55e"],
+				"colors": ["#22c55e", "#2563eb"],
 			}
 	except Exception:
 		frappe.log_error(frappe.get_traceback(), "Leadership Dashboard - salary chart")
@@ -384,6 +385,7 @@ def get_attendance_movements(filters: dict[str, str]) -> list[dict]:
 	company = filters.get("company")
 	department = filters.get("department")
 	today_date = getdate(today())
+	allowed_groups = {"Lãnh đạo cấp trung", "Người quản lý"}
 
 	employees = frappe.get_all(
 		"Employee",
@@ -394,7 +396,7 @@ def get_attendance_movements(filters: dict[str, str]) -> list[dict]:
 		},
 		fields=["name", "employee_name", "designation", "custom_designation_group"],
 	)
-	emp_map = {e.name: e for e in employees}
+	emp_map = {e.name: e for e in employees if (e.custom_designation_group in allowed_groups)}
 
 	attendances = frappe.get_all(
 		"Attendance",
@@ -411,6 +413,8 @@ def get_attendance_movements(filters: dict[str, str]) -> list[dict]:
 	rows: list[dict] = []
 	for att in attendances:
 		emp = emp_map.get(att.employee) or {}
+		if not emp:
+			continue
 		leave_type = (att.leave_type or "").strip()
 		leave_lower = leave_type.lower()
 		status = _("Nghỉ")
@@ -641,3 +645,55 @@ def safe_get_hr_reminders(days_ahead: int = 60, limit: int = 5) -> dict:
 	except Exception:
 		frappe.log_error(frappe.get_traceback(), "Leadership Dashboard - hr_reminders")
 		return {}
+
+
+def build_present_managers(filters: dict[str, str]) -> list[dict]:
+	"""Nhân sự có mặt tại công ty (leader/mid) hôm nay dựa trên report attendance today."""
+	allowed_groups = {"Lãnh đạo cấp trung", "Người quản lý"}
+	company = filters.get("company")
+	department = filters.get("department")
+	today_date = getdate(nowdate())
+
+	try:
+		rows = get_attendance_today_rows(today_date, department=department)
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "Leadership Dashboard - present managers")
+		rows = []
+
+	emp_ids = [r.get("employee") for r in rows if r.get("employee")]
+	emp_map = {}
+	if emp_ids:
+		emp_rows = frappe.get_all(
+			"Employee",
+			filters={"name": ("in", emp_ids)},
+			fields=["name", "employee_name", "department", "custom_designation_group", "company"],
+		)
+		emp_map = {e.name: e for e in emp_rows}
+
+	def _fmt(dt_val):
+		if not dt_val:
+			return ""
+		try:
+			return get_datetime(dt_val).strftime("%H:%M")
+		except Exception:
+			return str(dt_val)
+
+	result = []
+	for r in rows:
+		emp = emp_map.get(r.get("employee"))
+		if not emp:
+			continue
+		if emp.get("custom_designation_group") not in allowed_groups:
+			continue
+		if company and emp.get("company") != company:
+			continue
+		result.append(
+			{
+				"employee": r.get("employee"),
+				"employee_name": emp.get("employee_name") or r.get("employee"),
+				"department": emp.get("department"),
+				"time": _fmt(r.get("first_in")),
+				"group": emp.get("custom_designation_group"),
+			}
+		)
+	return result
