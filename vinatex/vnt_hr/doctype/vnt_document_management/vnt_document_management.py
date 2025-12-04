@@ -1044,7 +1044,7 @@ def get_document_dashboard_vn():
 
 	return {
 		"employee": emp,
-		"counts": {"completed": completed, "incomplete": incomplete},
+		"counts": {"completed": completed, "incomplete": incomplete, "statuses": status_counts},
 		"status_pie": status_pie,
 		"documents": doc_rows,
 	}

@@ -45,6 +45,15 @@
   .doc-kpi-line { display:flex; align-items:center; gap:10px; margin:10px 0 6px; }
   .doc-kpi-value { font-size:36px; font-weight:800; color:#111827; line-height:1; }
   .doc-kpi-sub { color:#6b7280; font-size:13px; }
+  .doc-kpi-grid { display:grid; grid-template-columns:repeat(2, minmax(180px,1fr)); gap:10px; }
+  .doc-kpi-grid .doc-card { min-height: 146px; }
+  .doc-mini-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:8px; margin-top:8px; }
+  .doc-mini-card { padding:10px 12px; border-radius:10px; background:#f8fafc; border:1px solid #e2e8f0; display:flex; flex-direction:column; gap:4px; }
+  .doc-mini-title { font-size:12px; font-weight:700; color:#475569; display:flex; align-items:center; gap:6px; }
+  .doc-mini-value { font-size:22px; font-weight:800; color:#0f172a; }
+  .doc-mini-card.info { background:#eef2ff; border-color:#c7d2fe; }
+  .doc-mini-card.warn { background:#fffbeb; border-color:#fef3c7; }
+  .doc-mini-card.danger { background:#fef2f2; border-color:#fecdd3; }
   .doc-top-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:stretch; }
   .doc-bottom-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:stretch; margin-top:12px; }
   .doc-kpi-stack { display:flex; flex-direction:column; gap:12px; }
@@ -54,6 +63,8 @@
   .icon-blink { position:relative; display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; font-size:14px; animation: pulseBlink 1.3s ease-in-out infinite; box-shadow:0 6px 18px rgba(15,23,42,0.12); }
   .icon-green { background:#ecfdf3; color:#16a34a; --icon-shadow: rgba(22,163,74,0.35); }
   .icon-amber { background:#fef9c3; color:#d97706; --icon-shadow: rgba(217,119,6,0.35); }
+  .icon-gray { background:#f1f5f9; color:#475569; --icon-shadow: rgba(71,85,105,0.25); }
+  .icon-red { background:#fef2f2; color:#dc2626 !important; border:1px solid #fecdd3; --icon-shadow: rgba(220,38,38,0.25); }
   @keyframes pulseBlink {
     0% { transform: scale(1); box-shadow:0 0 0 0 var(--icon-shadow, rgba(15,23,42,0.2)); opacity: 1; }
     50% { transform: scale(1.12); box-shadow:0 0 0 14px rgba(0,0,0,0); opacity: 0.9; }
@@ -97,6 +108,7 @@
     .doc-card h3 { font-size: 15px; }
     .doc-card small { font-size: 12px; }
     .doc-kpi-stack .doc-card { min-height: 140px; display:flex; flex-direction:column; justify-content:center; }
+    .doc-kpi-grid { grid-template-columns: 1fr; }
     .chart-holder { min-height: 200px !important; height: 220px; }
     #doc-status-pie { min-height: 200px !important; }
     table th, table td { padding: 8px 0; font-size: 12px; }
@@ -107,6 +119,7 @@
     .hr-list { max-height: 200px; }
     .hr-stat { padding: 10px 12px; }
     .hr-stat-value { font-size: 24px; }
+    .doc-mini-grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
   }
   </style>
   <script src="https://code.highcharts.com/highcharts.js"></script>
@@ -125,7 +138,7 @@
   <div id="cards" class="spa-grid"></div>
 
   <div class="doc-top-grid" style="margin:12px 0;">
-    <div class="doc-kpi-stack">
+    <div class="doc-kpi-grid">
       <div class="doc-card" id="doc-kpi-completed">
         <h3>Công việc đã hoàn thành</h3>
         <div class="doc-kpi-line">
@@ -134,13 +147,29 @@
         </div>
         <div class="doc-kpi-sub">Nhiệm vụ đã hoàn thành</div>
       </div>
-      <div class="doc-card" id="doc-kpi-incomplete">
-        <h3>Công việc còn lại</h3>
+      <div class="doc-card" id="doc-kpi-processing">
+        <h3>Đang xử lý</h3>
         <div class="doc-kpi-line">
-          <span class="icon-blink icon-amber">⚑</span>
-          <div class="doc-kpi-value" data-doc-kpi="incomplete">0</div>
+          <span class="icon-blink icon-amber">↻</span>
+          <div class="doc-kpi-value" data-doc-kpi="processing">0</div>
         </div>
-        <div class="doc-kpi-sub">Nhiệm vụ đang xử lý / chưa giao chủ trì</div>
+        <div class="doc-kpi-sub">Đã giao đang xử lý</div>
+      </div>
+      <div class="doc-card" id="doc-kpi-unassigned">
+        <h3>Chưa có chủ trì</h3>
+        <div class="doc-kpi-line">
+          <span class="icon-blink icon-gray">⚑</span>
+          <div class="doc-kpi-value" data-doc-kpi="unassigned">0</div>
+        </div>
+        <div class="doc-kpi-sub">Chưa giao chủ trì</div>
+      </div>
+      <div class="doc-card" id="doc-kpi-returned">
+        <h3>Trả lại</h3>
+        <div class="doc-kpi-line">
+          <span class="icon-blink icon-red">↩</span>
+          <div class="doc-kpi-value" data-doc-kpi="returned">0</div>
+        </div>
+        <div class="doc-kpi-sub">Nhiệm vụ bị trả</div>
       </div>
     </div>
     <div class="doc-card">
@@ -603,7 +632,9 @@
   function renderDocDashboard(payload) {
       const counts = payload.counts || {};
       setDocKpi("completed", counts.completed);
-      setDocKpi("incomplete", counts.incomplete);
+      setDocKpi("processing", (counts.statuses || {})["Đang xử lý"]);
+      setDocKpi("unassigned", (counts.statuses || {})["Chưa giao"]);
+      setDocKpi("returned", (counts.statuses || {})["Trả lại"]);
       renderDocStatusPie(payload.status_pie || []);
       renderDocTable(payload.documents || []);
   }
@@ -671,3 +702,4 @@
   }
 </script>
 {% endblock %}
+
