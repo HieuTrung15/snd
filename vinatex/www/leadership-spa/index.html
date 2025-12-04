@@ -1,0 +1,673 @@
+{% extends "templates/web.html" %}
+{% block title %}Bảng điều hành nhân sự (SPA){% endblock %}
+
+{% block head_include %}
+  <style>
+    :root {
+      --slate-50:#f8fafc; --slate-100:#f1f5f9; --slate-200:#e2e8f0; --slate-700:#334155; --slate-900:#0f172a;
+      --primary:#0ea5e9; --success:#16a34a; --warn:#d97706;
+    }
+    body { background: var(--slate-50); }
+    .spa-shell { margin: auto; padding: 0 0px 0px; font-family: "Inter", system-ui, sans-serif; color: var(--slate-900); }
+    .spa-header { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:16px; }
+    .spa-title { font-size:24px; font-weight:800; }
+    .spa-sub { color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:.06em; }
+    .spa-badge { background:#e0f2fe; border:1px solid #bae6fd; color:#0284c7; padding:6px 10px; border-radius:999px; font-weight:600; font-size:12px; }
+    .spa-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:12px; margin-bottom:16px; }
+    .spa-card { border-radius:12px; padding:14px; box-shadow:0 12px 30px rgba(15,23,42,0.08); border:1px solid #e5e7eb; }
+    .spa-card .title { color:#0f172a; font-size:12px; text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; font-weight:700; }
+    .spa-card .value { font-size:30px; font-weight:800; line-height:1.1; color:#111827; }
+    .spa-card .caption { color:#6b7280; font-size:12px; margin-top:4px; }
+    .spa-card .progress { margin-top:10px; height:6px; background:var(--slate-100); border-radius:999px; overflow:hidden; }
+    .spa-card .bar { height:100%; background:linear-gradient(90deg,#0ea5e9,#22c55e); }
+    .spa-section { background:#fff; border:1px solid var(--slate-200); border-radius:14px; padding:14px 16px; box-shadow:0 12px 40px rgba(15,23,42,0.06); display:flex; flex-direction:column; margin-bottom: 10px;}
+    .spa-section h3 { margin:0 0 6px; font-size:16px; font-weight:700; }
+    .spa-section small { color:#94a3b8; }
+    table { width:100%; border-collapse:separate; border-spacing:0; }
+    th { text-align:left; padding:10px 0; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:#64748b; border-bottom:1px solid var(--slate-200); }
+    td { padding:10px 0; font-size:13px; color:var(--slate-900); border-bottom:1px solid var(--slate-100); }
+    .chip { padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; display:inline-block; }
+    .chip.info { background:#eff6ff; color:#2563eb; }
+    .chip.success { background:#ecfdf3; color:#16a34a; }
+    .chip.warn { background:#fef9c3; color:#d97706; }
+    .empty { color:#94a3b8; font-size:13px; padding:8px 0; }
+    .charts { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:12px; align-items:stretch; }
+  .list-scroll { max-height: 240px; overflow:auto; }
+  .list-scroll::-webkit-scrollbar { width:6px; }
+  .list-scroll::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:999px; }
+  .flex-grow { flex:1 1 auto; min-height:0; }
+  .chart-holder { flex:1 1 auto; min-height:260px; }
+  .doc-board { margin-top: 16px; }
+  .doc-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:12px; }
+  .doc-card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; box-shadow:0 8px 24px rgba(15,23,42,0.06); }
+  .doc-card h3 { margin:0 0 6px; font-size:16px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px; }
+  .doc-card small { color:#94a3b8; }
+  .doc-kpi-line { display:flex; align-items:center; gap:10px; margin:10px 0 6px; }
+  .doc-kpi-value { font-size:36px; font-weight:800; color:#111827; line-height:1; }
+  .doc-kpi-sub { color:#6b7280; font-size:13px; }
+  .doc-top-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:stretch; }
+  .doc-bottom-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:stretch; margin-top:12px; }
+  .doc-kpi-stack { display:flex; flex-direction:column; gap:12px; }
+  .doc-table-scroll { max-height: 420px; overflow:auto; margin-top:6px; }
+  .doc-table-scroll::-webkit-scrollbar { width:6px; }
+  .doc-table-scroll::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:999px; }
+  .icon-blink { position:relative; display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; font-size:14px; animation: pulseBlink 1.3s ease-in-out infinite; box-shadow:0 6px 18px rgba(15,23,42,0.12); }
+  .icon-green { background:#ecfdf3; color:#16a34a; --icon-shadow: rgba(22,163,74,0.35); }
+  .icon-amber { background:#fef9c3; color:#d97706; --icon-shadow: rgba(217,119,6,0.35); }
+  @keyframes pulseBlink {
+    0% { transform: scale(1); box-shadow:0 0 0 0 var(--icon-shadow, rgba(15,23,42,0.2)); opacity: 1; }
+    50% { transform: scale(1.12); box-shadow:0 0 0 14px rgba(0,0,0,0); opacity: 0.9; }
+    100% { transform: scale(1); box-shadow:0 0 0 0 rgba(0,0,0,0); opacity: 1; }
+  }
+  .hr-board { margin-top: 12px; }
+  .hr-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:12px; }
+  .hr-card { background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:14px; box-shadow:0 12px 30px rgba(15,23,42,0.06); display:flex; flex-direction:column; gap:8px; }
+  .hr-card.contracts { border-color:#fecdd3; box-shadow:0 14px 30px rgba(225,29,72,0.08); }
+  .hr-card.birthdays { border-color:#fde68a; box-shadow:0 14px 30px rgba(217,119,6,0.08); }
+  .hr-card.retirements { border-color:#bfdbfe; box-shadow:0 14px 30px rgba(37,99,235,0.08); }
+  .hr-card .hr-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .hr-card .hr-title { font-size:15px; font-weight:700; color:#0f172a; }
+  .hr-card .hr-badge { background:#eef2ff; color:#4f46e5; border-radius:999px; padding:4px 10px; font-size:11px; font-weight:700; letter-spacing:.02em; }
+  .hr-card.contracts .hr-badge { background:#fff1f2; color:#e11d48; }
+  .hr-card.birthdays .hr-badge { background:#fffbeb; color:#d97706; }
+  .hr-card.retirements .hr-badge { background:#eff6ff; color:#2563eb; }
+  .hr-card .hr-count { font-size:32px; font-weight:800; color:#0f172a; }
+  .hr-stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:12px; margin-bottom:12px; }
+  .hr-stat { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:12px 14px; box-shadow:0 10px 24px rgba(15,23,42,0.05); }
+  .hr-stat-label { font-size:12px; letter-spacing:.04em; text-transform:uppercase; color:#94a3b8; }
+  .hr-stat-value { font-size:28px; font-weight:800; color:#0f172a; margin-top:4px; }
+  .hr-list { max-height:220px; overflow:auto; margin-top:4px; }
+  .hr-list::-webkit-scrollbar { width:6px; }
+  .hr-list::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:999px; }
+  .hr-item { padding:8px 0; border-bottom:1px solid var(--slate-100); }
+  .hr-item:last-child { border-bottom:none; }
+  .hr-item .label { font-weight:700; color:#0f172a; }
+  .hr-item .meta { color:#64748b; font-size:12px; display:flex; align-items:center; gap:8px; margin-top:4px; }
+  .chip.small { padding:3px 8px; font-size:11px; }
+  .chip.danger { background:#fee2e2; color:#b91c1c; }
+  @media (max-width: 640px) {
+    .spa-shell { padding: 0 8px 12px; }
+    .spa-grid { grid-template-columns: 1fr !important; }
+    .charts { grid-template-columns: 1fr !important; }
+    .doc-top-grid, .doc-bottom-grid { grid-template-columns: 1fr; }
+    .doc-card { padding: 12px; }
+    .doc-kpi-line { gap: 6px; margin: 8px 0 4px; }
+    .doc-kpi-value { font-size: 30px; }
+    .doc-table-scroll { max-height: 260px; }
+    .doc-card h3 { font-size: 15px; }
+    .doc-card small { font-size: 12px; }
+    .doc-kpi-stack .doc-card { min-height: 140px; display:flex; flex-direction:column; justify-content:center; }
+    .chart-holder { min-height: 200px !important; height: 220px; }
+    #doc-status-pie { min-height: 200px !important; }
+    table th, table td { padding: 8px 0; font-size: 12px; }
+    .hr-grid { grid-template-columns: 1fr; }
+    .hr-card { padding: 12px; }
+    .hr-card .hr-title { font-size: 14px; }
+    .hr-card .hr-count { font-size: 28px; }
+    .hr-list { max-height: 200px; }
+    .hr-stat { padding: 10px 12px; }
+    .hr-stat-value { font-size: 24px; }
+  }
+  </style>
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+  <script src="https://code.highcharts.com/highcharts-more.js"></script>
+{% endblock %}
+
+{% block page_content %}
+<div class="spa-shell">
+  <div class="spa-header">
+    <div>
+      <div class="spa-title">Bảng điều hành nhân sự</div>
+      <div class="spa-sub">EXECUTIVE DASHBOARD</div>
+    </div>
+  </div>
+
+  <div id="cards" class="spa-grid"></div>
+
+  <div class="doc-top-grid" style="margin:12px 0;">
+    <div class="doc-kpi-stack">
+      <div class="doc-card" id="doc-kpi-completed">
+        <h3>Công việc đã hoàn thành</h3>
+        <div class="doc-kpi-line">
+          <span class="icon-blink icon-green">✔</span>
+          <div class="doc-kpi-value" data-doc-kpi="completed">0</div>
+        </div>
+        <div class="doc-kpi-sub">Nhiệm vụ đã hoàn thành</div>
+      </div>
+      <div class="doc-card" id="doc-kpi-incomplete">
+        <h3>Công việc còn lại</h3>
+        <div class="doc-kpi-line">
+          <span class="icon-blink icon-amber">⚑</span>
+          <div class="doc-kpi-value" data-doc-kpi="incomplete">0</div>
+        </div>
+        <div class="doc-kpi-sub">Nhiệm vụ đang xử lý / chưa giao chủ trì</div>
+      </div>
+    </div>
+    <div class="doc-card">
+      <h3>Đi công tác / Nghỉ hôm nay</h3>
+      <small>Thống kê nhanh</small>
+      <table id="summary-table"></table>
+      <div class="list-scroll" data-region="movements" style="margin-top:10px; border-top:1px solid var(--slate-100); padding-top:8px;"></div>
+    </div>
+  </div>
+  <div class="doc-bottom-grid" style="margin-bottom:12px;">
+    <div class="doc-card">
+      <h3>Tỷ trọng trạng thái</h3>
+      <div class="chart-holder" id="doc-status-pie" style="min-height:240px;"></div>
+    </div>
+    <div class="doc-card">
+      <h3>Danh sách văn bản</h3>
+      <div class="doc-table-scroll">
+        <table id="doc-table" style="width:100%; border-collapse:separate; border-spacing:0;"></table>
+      </div>
+    </div>
+  </div>
+
+  <div id="salary-cards" class="spa-grid" style="margin-top:4px;"></div>
+
+  <div class="charts">
+    <div class="spa-section">
+      <h3>Diễn biến lương</h3>
+      <small>Theo tháng</small>
+      <div class="chart-holder" id="chart-salary"></div>
+    </div>
+    <div class="spa-section">
+      <h3>Tuyển dụng & nghỉ việc</h3>
+      <div class="chart-holder" id="chart-turnover"></div>
+    </div>
+  </div>
+
+  <div class="charts">
+    <div class="spa-section">
+      <h3>Diễn biến nhân sự</h3>
+      <small>Tổng số & bình quân</small>
+      <div class="chart-holder" id="chart-headcount"></div>
+    </div>
+    <div class="spa-section">
+      <h3>Trình độ học vấn</h3>
+      <small>Phân bổ nhân sự</small>
+      <div class="chart-holder" id="chart-education"></div>
+    </div>
+  </div>
+
+  <div class="charts">
+    <div class="spa-section hr-board">
+      <h3>Báo cáo nhân sự</h3>
+      <!-- <small>Nhắc việc sắp tới</small> -->
+      <div class="hr-stats">
+        <div class="hr-stat">
+          <div class="hr-stat-label">Tuổi bình quân</div>
+          <div class="hr-stat-value" data-hr-stat="age">-</div>
+        </div>
+        <div class="hr-stat">
+          <div class="hr-stat-label">Thâm niên bình quân</div>
+          <div class="hr-stat-value" data-hr-stat="tenure">-</div>
+        </div>
+      </div>
+      <div class="hr-grid">
+        <div class="hr-card contracts" data-hr-card="contracts">
+          <div class="hr-head">
+            <div class="hr-title">Hợp đồng hết hạn</div>
+            <div class="hr-badge">30 ngày tới</div>
+          </div>
+          <div class="hr-count" data-hr-count="contracts">0</div>
+          <div class="hr-list" data-hr-list="contracts"></div>
+        </div>
+        <div class="hr-card birthdays" data-hr-card="birthdays">
+          <div class="hr-head">
+            <div class="hr-title">Sinh nhật</div>
+            <div class="hr-badge">30 ngày tới</div>
+          </div>
+          <div class="hr-count" data-hr-count="birthdays">0</div>
+          <div class="hr-list" data-hr-list="birthdays"></div>
+        </div>
+        <div class="hr-card retirements" data-hr-card="retirements">
+          <div class="hr-head">
+            <div class="hr-title">Nghỉ hưu</div>
+            <div class="hr-badge">2 tháng tới</div>
+          </div>
+          <div class="hr-count" data-hr-count="retirements">0</div>
+          <div class="hr-list" data-hr-list="retirements"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="charts">
+    <div class="spa-section">
+      <h3>Đi sớm hôm nay</h3>
+      <small>Top giờ check-in sớm nhất</small>
+      <div class="list-scroll" data-region="early-list"></div>
+    </div>
+    <div class="spa-section">
+      <h3>Về muộn hôm nay</h3>
+      <small>Top giờ check-out muộn nhất</small>
+      <div class="list-scroll" data-region="late-list"></div>
+    </div>
+  </div>
+
+  <!-- <div class="spa-section" style="margin-top:12px;">
+    <h3>Danh sách nhân sự</h3>
+    <small>Họ tên, chức danh, nhóm chức danh</small>
+    <div class="list-scroll" data-region="people-list"></div>
+  </div> -->
+</div>
+
+<script>
+  const state = { charts: {} };
+  let pollHandle = null;
+  let docDashboard = null;
+
+  async function fetchData() {
+      try {
+          const csrf = getCsrfToken();
+          const res = await fetch("/api/method/vinatex.vnt_hr.page.leadership_dashboard_backend.get_dashboard_data", {
+              method: "GET",
+              headers: {
+                  Accept: "application/json",
+                  ...(csrf ? { "X-Frappe-CSRF-Token": csrf } : {})
+              },
+              credentials: "include"
+          });
+          const ctype = res.headers.get("content-type") || "";
+          const raw = ctype.includes("json") ? await res.json() : await res.text();
+          const json = ctype.includes("json") ? raw : { message: null, _raw: raw };
+          const payload = json.message && json.message !== "Invalid Request"
+              ? json.message
+              : null;
+          if (!payload) {
+              console.warn("[SPA] API trả lỗi/empty", json?._raw || "");
+              renderData({ cards: [], charts: {}, tables: {}, meta: { filters: {} } });
+          } else {
+              renderData(payload);
+          }
+      } catch (e) {
+          console.error(e);
+          alert("Không thể tải bảng điều hành");
+          renderData({ cards: [], charts: {}, tables: {}, meta: { filters: {} } });
+      }
+  }
+
+  function getCsrfToken() {
+      // Frappe đặt token ở frappe.csrf_token hoặc cookie "frappe_csrf_token"
+      if (window.frappe && frappe.csrf_token) return frappe.csrf_token;
+      const m = document.cookie.match(/(?:^|; )frappe_csrf_token=([^;]+)/);
+      return m ? decodeURIComponent(m[1]) : "";
+  }
+
+  function sampleData() {
+      return {
+          cards: [],
+          charts: {},
+          tables: {},
+          meta: { filters: {} },
+      };
+  }
+
+  function renderData(data) {
+      const salaryCards = data.tables?.salary_cards || [];
+      renderCards(data.cards || [], "cards");
+      renderCards(salaryCards, "salary-cards");
+      renderTable("summary-table", data.tables?.activity_summary || [], ["kpi","value"], ["Chỉ số","Số người"]);
+      renderHrReports(data.tables?.hr_reports || {});
+      renderChart("chart-salary", data.charts?.salary);
+      renderChart("chart-headcount", data.charts?.headcount);
+      renderChart("chart-education", data.charts?.education);
+      renderChart("chart-turnover", data.charts?.turnover);
+      const movements = data.tables?.staff_movements || [];
+      renderMovements(movements);
+      renderPeopleList(movements);
+      renderEarlyLate(data.tables?.early_late || {});
+      fetchDocDashboard();
+  }
+
+  function cardBg(card) {
+      const key = (card.id || card.title || "").toString().toLowerCase();
+      const map = {
+          "total_employees": "#eff6ff",
+          "tổng số nhân sự": "#eff6ff",
+          "attendance_today": "#dbeafe",
+          "số nhân sự đi làm hôm nay": "#dbeafe",
+          "new_hires": "#f5f3ff",
+          "nhân sự mới tháng này": "#f5f3ff",
+          "attrition": "#fffbeb",
+          "nhân sự nghỉ việc tháng này": "#fffbeb",
+          "salary_prev_month": "#f9fafb",
+          "tổng lương tháng trước": "#f9fafb",
+          "salary_paid_ytd": "#ecfdf3",
+          "lương đã chi trong năm": "#ecfdf3",
+          "salary_fund_remaining": "#fef2f2",
+          "quỹ lương dự kiến còn lại": "#fef2f2",
+          "salary_current_month": "#eef2ff",
+          "lương dự kiến tháng này": "#eef2ff",
+      };
+      return map[key] || "#ffffff";
+  }
+
+  function renderCards(cards, targetId = "cards") {
+      const wrap = document.getElementById(targetId);
+      if (!wrap) return;
+      wrap.innerHTML = "";
+      if (!cards.length) {
+          wrap.innerHTML = '<div class="empty">Không có dữ liệu tóm tắt</div>';
+          return;
+      }
+      cards.forEach(card => {
+          const progress = Math.max(0, Math.min(100, Number(card.progress) || 0));
+          const bg = cardBg(card);
+          wrap.insertAdjacentHTML("beforeend", `
+            <div class="spa-card" style="background:${bg};">
+              <div class="title">${escapeHtml(card.title || "")}</div>
+              <div class="value">${escapeHtml(card.display ?? card.value ?? "-")}</div>
+              <div class="caption">${escapeHtml(card.caption || "")}</div>
+              <div class="progress"><div class="bar" style="width:${progress}%;"></div></div>
+            </div>
+          `);
+      });
+  }
+
+  function renderTable(id, rows, keys, headers) {
+      const el = document.getElementById(id);
+      if (!rows.length) {
+          el.innerHTML = `<thead><tr>${headers.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody><tr><td colspan="${headers.length}" class="empty">Không có dữ liệu</td></tr></tbody>`;
+          return;
+      }
+      const thead = `<thead><tr>${headers.map(h=>`<th>${h}</th>`).join("")}</tr></thead>`;
+      const tbody = rows.map(r => {
+          return `<tr>${keys.map(k => {
+              const val = r[k] ?? "-";
+              if (k === "status") {
+                  const cls = String(val).toLowerCase().includes("complete") ? "success" : (String(val).toLowerCase().includes("expiring") ? "info" : "warn");
+                  return `<td><span class="chip ${cls}">${escapeHtml(val)}</span></td>`;
+              }
+              if (k === "percent") return `<td style="text-align:right;">${val != null ? escapeHtml(val + "%") : "-"}</td>`;
+              return `<td>${escapeHtml(val)}</td>`;
+          }).join("")}</tr>`;
+      }).join("");
+      el.innerHTML = `${thead}<tbody>${tbody}</tbody>`;
+  }
+
+  function renderMovements(rows) {
+      const container = document.querySelector('[data-region="movements"]');
+      if (!container) return;
+      container.innerHTML = "";
+      if (!rows.length) {
+          container.innerHTML = '<div class="empty">Không có nhân sự công tác/nghỉ hôm nay</div>';
+          return;
+      }
+      rows.forEach(r => {
+          container.insertAdjacentHTML("beforeend", `
+            <div style="padding:10px 0; border-bottom:1px solid var(--slate-100);">
+              <div style="font-weight:700;">${escapeHtml(r.employee_name || r.employee || "-")}</div>
+              <div style="color:#64748b; font-size:12px;">${escapeHtml(r.group || "")} • ${escapeHtml(r.designation || "")}</div>
+              <div style="margin-top:4px;"><span class="chip ${r.status === "Công tác" ? "info" : "warn"}">${escapeHtml(r.status || "")}</span> ${escapeHtml(r.note || "")}</div>
+            </div>
+          `);
+      });
+  }
+
+  function renderPeopleList(rows) {
+      const container = document.querySelector('[data-region="people-list"]');
+      if (!container) return;
+      container.innerHTML = "";
+      if (!rows.length) {
+          container.innerHTML = '<div class="empty">Không có dữ liệu</div>';
+          return;
+      }
+      rows.forEach(r => {
+          container.insertAdjacentHTML("beforeend", `
+            <div style="padding:10px 0; border-bottom:1px solid var(--slate-100);">
+              <div style="font-weight:700;">${escapeHtml(r.employee_name || r.employee || "-")}</div>
+              <div style="color:#64748b; font-size:12px;">${escapeHtml(r.designation || "")}</div>
+              <div style="color:#94a3b8; font-size:12px;">${escapeHtml(r.group || "")}</div>
+            </div>
+          `);
+      });
+  }
+
+  function renderEarlyLate(groups) {
+      const earlyWrap = document.querySelector('[data-region="early-list"]');
+      const lateWrap = document.querySelector('[data-region="late-list"]');
+      if (earlyWrap) renderContributionList(earlyWrap, groups.early_arrivals || [], "first");
+      if (lateWrap) renderContributionList(lateWrap, groups.late_leavers || [], "last");
+  }
+
+  function renderContributionList(el, rows, mode) {
+      el.innerHTML = "";
+      if (!rows.length) {
+          el.innerHTML = '<div class="empty">Không có dữ liệu</div>';
+          return;
+      }
+      rows.forEach(r => {
+          el.insertAdjacentHTML("beforeend", `
+            <div style="padding:10px 0; border-bottom:1px solid var(--slate-100);">
+              <div style="font-weight:700;">${escapeHtml(r.employee_name || r.employee || "-")}</div>
+              <div style="color:#64748b; font-size:12px;">${escapeHtml(r.department || "")}</div>
+              <div style="margin-top:4px;"><span class="chip ${mode === "first" ? "success" : "info"}">${escapeHtml(r.label || "")}</span> ${escapeHtml(r.time || "")}</div>
+            </div>
+          `);
+      });
+  }
+
+  function renderHrReports(reports) {
+      const ageEl = document.querySelector('[data-hr-stat="age"]');
+      const tenureEl = document.querySelector('[data-hr-stat="tenure"]');
+      const avgAge = reports?.stats?.avg_age;
+      const avgTenure = reports?.stats?.avg_tenure;
+      if (ageEl) ageEl.textContent = avgAge || avgAge === 0 ? `${Number(avgAge).toFixed(1)}` : "-";
+      if (tenureEl) tenureEl.textContent = avgTenure || avgTenure === 0 ? `${Number(avgTenure).toFixed(1)} năm` : "-";
+
+      const defs = [
+          { key: "contracts", empty: "Không có hợp đồng sắp hết hạn" },
+          { key: "birthdays", empty: "Không có sinh nhật sắp tới" },
+          { key: "retirements", empty: "Không có nhân sự nghỉ hưu sắp tới" },
+      ];
+
+      defs.forEach(def => {
+          const card = document.querySelector(`[data-hr-card="${def.key}"]`);
+          if (!card) return;
+          const countEl = card.querySelector(`[data-hr-count="${def.key}"]`);
+          const listEl = card.querySelector(`[data-hr-list="${def.key}"]`);
+          const items = reports?.[def.key]?.items || [];
+          const count = reports?.[def.key]?.count ?? items.length ?? 0;
+          if (countEl) countEl.textContent = Number(count);
+          if (!listEl) return;
+          if (!items.length) {
+              listEl.innerHTML = `<div class="empty">${def.empty}</div>`;
+              return;
+          }
+          listEl.innerHTML = items
+              .map(item => {
+                  const date = item.date ? escapeHtml(String(item.date)) : "";
+                  const statusText = item.status || "";
+                  let statusCls = "info";
+                  if (statusText.toLowerCase().includes("đã")) statusCls = "danger";
+                  const status = statusText ? `<span class="chip small ${statusCls}">${escapeHtml(statusText)}</span>` : "";
+                  const dateHtml = date ? `<strong>${date}</strong>` : "";
+                  return `
+                    <div class="hr-item">
+                      <div class="label">${escapeHtml(item.label || "")}</div>
+                      <div class="meta">
+                        ${dateHtml ? `<span>${dateHtml}</span>` : ""}
+                        ${status}
+                      </div>
+                    </div>
+                  `;
+              })
+              .join("");
+      });
+  }
+
+  function renderChart(id, chart) {
+      const holder = document.getElementById(id);
+      if (!chart || !chart.labels?.length) {
+          holder.innerHTML = '<div class="empty">Không có dữ liệu biểu đồ</div>';
+          return;
+      }
+      holder.style.height = "260px";
+      if (state.charts[id]) {
+          state.charts[id].destroy();
+      }
+      const chartType = chart.type || "column";
+      const series = (chart.datasets || []).map((d, idx) => ({
+          name: d.name || `S${idx+1}`,
+          data: d.values || []
+      }));
+
+      const options = {
+          chart: { type: chartType, height: 260, inverted: !!chart.inverted, backgroundColor: "#fff", spacing: [12,12,12,12] },
+          title: { text: null },
+          xAxis: { categories: chart.labels || [], labels: { style: { fontSize: "11px", color: "#6b7280" } }, lineColor: "#e5e7eb" },
+          yAxis: { title: { text: chart.yTitle || null, style: { fontSize: "12px", color: "#1f2937" } }, labels: { style: { fontSize: "11px", color: "#6b7280" } }, gridLineColor: "#f1f5f9" },
+          legend: { enabled: true },
+          credits: { enabled: false },
+          accessibility: { enabled: false },
+          colors: chart.colors || undefined,
+          plotOptions: chart.dataLabels ? { series: { dataLabels: { enabled: true, format: chart.dataLabelsFormat || "{y:,.0f}", style: { fontSize: "11px", color: "#0f172a" } } } } : { series: { dataLabels: { enabled: false } } },
+          series
+      };
+
+      // Style biểu đồ lương giống mockup: column stacked, nhãn tiền tệ
+      if (id === "chart-salary") {
+          options.chart.type = "column";
+          options.chart.inverted = false;
+          options.xAxis = {
+              categories: chart.labels || [],
+              crosshair: { color: "rgba(59,130,246,0.08)", width: 8 },
+              tickWidth: 0,
+              lineColor: "#e5e7eb",
+              labels: { style: { color: "#6b7280", fontSize: "11px" } },
+          };
+          options.yAxis = {
+              min: 0,
+              title: { text: chart.yTitle || "Tổng chi hàng tháng", style: { color: "#111827", fontWeight: "600" } },
+              labels: {
+                  formatter() { return Highcharts.numberFormat(this.value, 0, ",", ".") + " đ"; },
+                  style: { color: "#6b7280", fontSize: "11px" },
+              },
+              gridLineColor: "#e5e7eb",
+              stackLabels: {
+                  enabled: true,
+                  formatter() { return Highcharts.numberFormat(this.total, 0, ",", ".") + " đ"; },
+                  style: { color: "#6b7280", fontSize: "11px", fontWeight: 500 },
+              },
+          };
+          options.plotOptions = {
+              column: { stacking: "normal", borderWidth: 0, borderRadius: 6, pointPadding: 0.12, groupPadding: 0.16, maxPointWidth: 42 },
+              // Tắt nhãn từng series, chỉ dùng stackLabels trên trục Y để hiện tổng
+              series: { dataLabels: { enabled: false } },
+          };
+          options.tooltip = {
+              shared: true,
+              useHTML: true,
+              backgroundColor: "rgba(15,23,42,0.94)",
+              borderWidth: 0,
+              borderRadius: 8,
+              padding: 10,
+              style: { color: "#f9fafb", fontSize: "12px" },
+              formatter() {
+                  const cat = this.x;
+                  const total = this.points.reduce((sum, p) => sum + p.y, 0);
+                  const header = `<div style="margin-bottom:4px;font-weight:600;">${cat}</div><div style="margin-bottom:4px;">Tổng: <b>${Highcharts.numberFormat(total, 0, ",", ".")} đ</b></div>`;
+                  const lines = this.points.map(p => `<div style="white-space:nowrap;"><span style="color:${p.color}">\u25CF</span> ${p.series.name}: <b>${Highcharts.numberFormat(p.y, 0, ",", ".")} đ</b></div>`).join("");
+                  return header + lines;
+              },
+          };
+      }
+
+      // Làm gọn biểu đồ headcount: thanh ngang dày hơn, bỏ dataLabels
+      if (id === "chart-headcount") {
+          options.chart.type = "column";
+          options.chart.inverted = false;
+          options.plotOptions = {
+              series: { pointPadding: 0.1, groupPadding: 0.08, borderRadius: 6, dataLabels: { enabled: false } },
+          };
+          options.xAxis = { categories: chart.labels || [], lineColor: "#e5e7eb", tickWidth: 0, labels: { style: { fontSize: "11px", color: "#475569" } } };
+          options.yAxis = { min: 0, title: { text: chart.yTitle || null }, gridLineColor: "#e2e8f0", labels: { style: { fontSize: "11px", color: "#6b7280" } } };
+      }
+
+      state.charts[id] = Highcharts.chart(holder, options);
+  }
+
+  async function fetchDocDashboard() {
+      try {
+          const res = await fetch("/api/method/vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.get_document_dashboard_vn", { credentials: "include" });
+          const json = await res.json();
+          docDashboard = json.message || {};
+          renderDocDashboard(docDashboard);
+      } catch (e) {
+          console.error("Doc dashboard fetch failed", e);
+      }
+  }
+
+  function renderDocDashboard(payload) {
+      const counts = payload.counts || {};
+      setDocKpi("completed", counts.completed);
+      setDocKpi("incomplete", counts.incomplete);
+      renderDocStatusPie(payload.status_pie || []);
+      renderDocTable(payload.documents || []);
+  }
+
+  function setDocKpi(key, value) {
+      const el = document.querySelector(`[data-doc-kpi="${key}"]`);
+      if (el) el.textContent = Number(value || 0);
+  }
+
+  function renderDocStatusPie(data) {
+      const holder = document.getElementById("doc-status-pie");
+      if (!holder) return;
+      if (state.charts["doc-status-pie"]) state.charts["doc-status-pie"].destroy();
+      if (!data.length) {
+          holder.innerHTML = '<div class="empty">Không có dữ liệu</div>';
+          return;
+      }
+      state.charts["doc-status-pie"] = Highcharts.chart(holder, {
+          chart: { type: "pie", height: 260, backgroundColor: "#fff" },
+          title: { text: null },
+          credits: { enabled: false },
+          accessibility: { enabled: false },
+          colors: ["#22c55e", "#facc15", "#6366f1", "#ef4444"],
+          plotOptions: {
+              pie: {
+                  innerSize: "55%",
+                  dataLabels: { enabled: true, format: "{point.name}: {point.percentage:.1f}%" }
+              }
+          },
+          series: [{
+              name: "Tasks",
+              data: data.map(d => ({ name: d.name, y: d.value || 0 })),
+          }],
+      });
+  }
+
+  function renderDocTable(rows) {
+      const table = document.getElementById("doc-table");
+      if (!table) return;
+      if (!rows.length) {
+          table.innerHTML = '<tbody><tr><td class="empty">Không có dữ liệu</td></tr></tbody>';
+          return;
+      }
+      const header = `<thead><tr><th style="text-align:left;padding:8px 0;">Số văn bản</th><th style="text-align:left;padding:8px 0;">Người chủ trì</th><th style="text-align:left;padding:8px 0;">Thời hạn</th><th style="text-align:left;padding:8px 0;">Trạng thái</th></tr></thead>`;
+      const body = rows.map(r => `
+        <tr>
+          <td style="padding:6px 0;">${escapeHtml(r.reference_number || "")}</td>
+          <td style="padding:6px 0;">${escapeHtml(r.chairperson || "")}</td>
+          <td style="padding:6px 0;">${escapeHtml(r.deadline || "")}</td>
+          <td style="padding:6px 0;">${escapeHtml(r.status || "")}</td>
+        </tr>
+      `).join("");
+      table.innerHTML = `${header}<tbody>${body}</tbody>`;
+  }
+
+  function escapeHtml(v) {
+      return String(v ?? "").replace(/[&<>\"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+  }
+
+  // Khởi động tự động và realtime
+  fetchData();
+  pollHandle = setInterval(fetchData, 120000);
+  if (window.frappe && frappe.realtime && frappe.realtime.on) {
+      frappe.realtime.on("leadership_dashboard_update", fetchData);
+  }
+</script>
+{% endblock %}

@@ -480,6 +480,100 @@ class VNTDocumentManagement(Document):
 		)
 
 
+def _gather_related_doc_names(emp_name: str, ignore_permissions: bool = False) -> set[str]:
+	"""Tập hợp danh sách văn bản liên quan tới nhân sự (handler/chu_tri/cv_xu_ly/phối hợp)."""
+	doc_names: set[str] = set()
+
+	handler_docs = frappe.get_all(
+		"VNT Document Management",
+		filters={"handler": emp_name, "docstatus": ["<", 2]},
+		fields=["name"],
+		ignore_permissions=ignore_permissions,
+	)
+	doc_names.update(doc.name for doc in handler_docs)
+
+	doc_names.update(
+		row.name
+		for row in frappe.get_all(
+			"VNT Document Management",
+			filters={"nguoi_chu_tri": emp_name, "docstatus": ["<", 2]},
+			fields=["name"],
+			ignore_permissions=ignore_permissions,
+		)
+	)
+
+	doc_names.update(
+		row.name
+		for row in frappe.get_all(
+			"VNT Document Management",
+			filters={"cv_xu_ly": emp_name, "docstatus": ["<", 2]},
+			fields=["name"],
+			ignore_permissions=ignore_permissions,
+		)
+	)
+
+	collab_rows = frappe.get_all(
+		"VNT Document Management Item",
+		filters={"parenttype": "VNT Document Management", "nguoi_phoi_hop": emp_name},
+		fields=["parent"],
+		ignore_permissions=ignore_permissions,
+	)
+	collab_spec_rows = frappe.get_all(
+		"VNT Document Management Item",
+		filters={"parenttype": "VNT Document Management", "cv_xu_ly": emp_name},
+		fields=["parent"],
+		ignore_permissions=ignore_permissions,
+	)
+	doc_names.update(row.parent for row in collab_rows)
+	doc_names.update(row.parent for row in collab_spec_rows)
+	return doc_names
+
+
+def _is_leader(user: str) -> bool:
+	roles = [r.lower() for r in frappe.get_roles(user)]
+	return "lãnh đạo tập đoàn" in roles or "lanh dao tap doan" in roles
+
+
+def _fetch_docs(doc_names: set[str], ignore_permissions: bool = False) -> dict[str, dict]:
+	if not doc_names:
+		return {}
+	doc_fields = [
+		"name",
+		"reference_number",
+		"summary",
+		"type",
+		"handler",
+		"handler_status",
+		"deadline",
+		"nguoi_chu_tri",
+		"chairperson_status",
+		"deadline_chu_tri2",
+		"cv_xu_ly",
+		"trang_thai_chuyen_vien_xu_ly",
+		"deadline_cv_xu_ly",
+		"modified",
+		"docstatus",
+		"date",
+	]
+	try:
+		rows = frappe.get_all(
+			"VNT Document Management",
+			filters={"name": ["in", list(doc_names)], "docstatus": ["<", 2]},
+			fields=doc_fields,
+			ignore_permissions=ignore_permissions,
+		)
+	except Exception:
+		# Nếu DB chưa có đủ cột (môi trường chưa migrate), fallback tối thiểu để tránh 500
+		frappe.log_error(frappe.get_traceback(), "Document Dashboard VN - fetch docs")
+		rows = frappe.get_all(
+			"VNT Document Management",
+			filters={"name": ["in", list(doc_names)], "docstatus": ["<", 2]},
+			fields=["name", "reference_number", "summary", "nguoi_chu_tri", "deadline", "modified"],
+			ignore_permissions=ignore_permissions,
+		)
+	return {row.name: row for row in rows}
+
+
 @frappe.whitelist()
 def get_level1_approvers():
 	"""
@@ -689,6 +783,23 @@ def get_document_overview():
 		)
 	}
 
+	# Dữ liệu child dùng cho phân loại/pending
+	handler_docs = frappe.get_all(
+		"VNT Document Management",
+		filters={"handler": emp_name, "docstatus": ["<", 2]},
+		fields=["name", "reference_number", "summary", "nguoi_chu_tri"],
+	)
+	collab_rows = frappe.get_all(
+		"VNT Document Management Item",
+		filters={"parenttype": "VNT Document Management", "nguoi_phoi_hop": emp_name},
+		fields=["parent", "deadline1", "trang_thai_nguoi_phoi_hop"],
+	)
+	collab_spec_rows = frappe.get_all(
+		"VNT Document Management Item",
+		filters={"parenttype": "VNT Document Management", "cv_xu_ly": emp_name},
+		fields=["parent", "deadline2", "trang_thai_cv_xu_ly"],
+	)
+
 	# Map child rows theo parent
 	collab_by_parent = {}
 	for row in collab_rows:
@@ -791,4 +902,149 @@ def get_document_overview():
 			"completed": _top(completed_list),
 			"overdue": _top(overdue_list),
 		},
+	}
+
+
+def _all_done(status_list: list[str]) -> bool:
+	return bool(status_list) and all(("hoàn" in s.lower()) or ("done" in s.lower()) for s in status_list if s)
+
+
+def _has_value(status_list: list[str], needle: str) -> bool:
+	needle = (needle or "").lower()
+	return any(needle in (s or "").lower() for s in status_list)
+
+
+def _derive_status(parent_status: str, child_statuses: list[str]) -> str:
+	parent_status = (parent_status or "").lower()
+	child_statuses = [(s or "").lower() for s in child_statuses if s is not None]
+
+	if _all_done(child_statuses) and ("hoàn" in parent_status or "done" in parent_status):
+		return "Hoàn thành"
+	if _has_value(child_statuses + [parent_status], "trả"):
+		return "Trả lại"
+	if any(not s for s in child_statuses) or not parent_status:
+		return "Chưa giao"
+	return "Đang xử lý"
+
+
+@frappe.whitelist()
+def get_document_dashboard_vn():
+	"""
+	Bộ dữ liệu tiếng Việt cho dashboard quản lý văn bản:
+	- KPI: hoàn thành / còn lại
+	- Pie theo trạng thái
+	- Bảng văn bản: số, chủ trì, deadline, trạng thái
+	"""
+	user = frappe.session.user
+	is_leader = _is_leader(user)
+	emp = frappe.db.get_value(
+		"Employee", {"user_id": user}, ["name", "employee_name", "department"], as_dict=True
+	)
+
+	if not emp and not is_leader:
+		return {
+			"employee": None,
+			"counts": {"completed": 0, "incomplete": 0},
+			"status_pie": [],
+			"documents": [],
+			"message": "Không tìm thấy Employee gắn với user hiện tại",
+		}
+
+	# Nếu là lãnh đạo tập đoàn: thấy toàn bộ văn bản (đang mở)
+	if is_leader:
+		doc_names = {
+			row.name
+			for row in frappe.get_all(
+				"VNT Document Management",
+				filters={"docstatus": ["<", 2]},
+				fields=["name"],
+				limit=500,
+				ignore_permissions=True,
+			)
+		}
+		docs = _fetch_docs(doc_names, ignore_permissions=True)
+	else:
+		doc_names = _gather_related_doc_names(emp.name)
+		docs = _fetch_docs(doc_names)
+	if not doc_names:
+		return {
+			"employee": emp,
+			"counts": {"completed": 0, "incomplete": 0},
+			"status_pie": [],
+			"documents": [],
+		}
+
+	# items = VNT Document Management Item2 (lấy người chủ trì, deadline)
+	chair_rows = frappe.get_all(
+		"VNT Document Management Item2",
+		filters={"parent": ["in", list(doc_names)], "chu_tri": 1},
+		fields=["parent", "employee", "deadline"],
+		ignore_permissions=is_leader,
+	)
+	chair_emp_ids = {r.employee for r in chair_rows if r.get("employee")}
+	chair_emp_map = (
+		{
+			r.name: r.employee_name
+			for r in frappe.get_all(
+				"Employee",
+				filters={"name": ["in", list(chair_emp_ids)]},
+				fields=["name", "employee_name"],
+				ignore_permissions=is_leader,
+			)
+		}
+		if chair_emp_ids
+		else {}
+	)
+	chair_map = {r.parent: r for r in chair_rows}
+
+	# items2 = VNT Document Management Item (trạng thái xử lý)
+	item_status_rows = frappe.get_all(
+		"VNT Document Management Item",
+		filters={"parent": ["in", list(doc_names)]},
+		fields=["parent", "trang_thai_cv_xu_ly", "trang_thai_nguoi_phoi_hop"],
+		ignore_permissions=is_leader,
+	)
+	status_by_parent: dict[str, list[str]] = {}
+	for row in item_status_rows:
+		if row.trang_thai_cv_xu_ly:
+			status_by_parent.setdefault(row.parent, []).append(row.trang_thai_cv_xu_ly)
+		if row.trang_thai_nguoi_phoi_hop:
+			status_by_parent.setdefault(row.parent, []).append(row.trang_thai_nguoi_phoi_hop)
+
+	status_counts = {"Hoàn thành": 0, "Đang xử lý": 0, "Chưa giao": 0, "Trả lại": 0}
+	doc_rows: list[dict] = []
+
+	for name, doc in docs.items():
+		child_statuses = status_by_parent.get(name) or []
+		status_label = _derive_status(doc.get("trang_thai_chuyen_vien_xu_ly"), child_statuses)
+		# Nếu đã có dòng Chủ trì trong bảng items2 thì coi như đã giao, chuyển trạng thái từ "Chưa giao" sang "Đang xử lý"
+		if status_label == "Chưa giao" and chair_map.get(name):
+			status_label = "Đang xử lý"
+		if status_label in status_counts:
+			status_counts[status_label] += 1
+
+		chair = chair_map.get(name) or {}
+		chair_name = chair_emp_map.get(chair.get("employee")) if chair else None
+		deadline = chair.get("deadline") or doc.get("deadline") or doc.get("deadline_chu_tri2") or doc.get("deadline_cv_xu_ly")
+		doc_rows.append(
+			{
+				"reference_number": doc.get("reference_number") or doc.get("name"),
+				"chairperson": chair_name or chair.get("employee") or chair.get("employee_name") or doc.get("nguoi_chu_tri"),
+				"deadline": str(deadline) if deadline else "",
+				"status": status_label,
+			}
+		)
+
+	completed = status_counts["Hoàn thành"]
+	total = sum(status_counts.values())
+	incomplete = max(total - completed, 0)
+
+	status_pie = [{"name": k, "value": v} for k, v in status_counts.items()]
+	doc_rows.sort(key=lambda r: r.get("deadline") or "")
+
+	return {
+		"employee": emp,
+		"counts": {"completed": completed, "incomplete": incomplete},
+		"status_pie": status_pie,
+		"documents": doc_rows,
 	}
