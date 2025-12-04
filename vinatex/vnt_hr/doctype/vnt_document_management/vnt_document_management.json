@@ -10,9 +10,8 @@
   "bi\u1ec3u_\u0111\u1ed3_x\u1eed_l\u00fd_section",
   "html_editer",
   "th\u00f4ng_tin_chung_section",
-  "employee",
-  "date",
   "type",
+  "employee",
   "naming_series",
   "column_break_fdwp",
   "reference_number",
@@ -58,22 +57,15 @@
   {
    "fieldname": "employee",
    "fieldtype": "Link",
+   "hidden": 1,
    "ignore_user_permissions": 1,
    "in_list_view": 1,
    "label": "Ng\u01b0\u1eddi l\u1eadp",
-   "options": "Employee",
-   "reqd": 1
+   "options": "Employee"
   },
   {
    "fieldname": "column_break_fdwp",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "date",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "Ng\u00e0y l\u1eadp",
-   "reqd": 1
   },
   {
    "fieldname": "section_break_oltr",
@@ -131,8 +123,8 @@
    "fieldname": "handler",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
-   "label": "L\u00e3nh \u0111\u1ea1o T\u1eadp \u0110o\u00e0n",
-   "link_filters": "[]",
+   "label": "L\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n",
+   "link_filters": "[[\"Employee\",\"name\",\"in\",[\"VGT00067\",\"VGT00069\",\"VGT00079\",\"VGT00080\",\"VGT00083\"]]]",
    "no_copy": 1,
    "options": "Employee",
    "reqd": 1
@@ -341,13 +333,14 @@
    "fieldname": "cong_van_di",
    "fieldtype": "Link",
    "label": "C\u00f4ng v\u0103n \u0111i t\u01b0\u01a1ng \u1ee9ng",
-   "options": "VNT Document Management"
+   "options": "VNT Document Management",
+   "permlevel": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-04 14:12:04.011103",
+ "modified": "2025-12-04 14:51:35.569315",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",

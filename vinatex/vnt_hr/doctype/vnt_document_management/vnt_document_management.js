@@ -200,8 +200,6 @@ frappe.ui.form.on("VNT Document Management", {
     }
   },
 
-
-
   refresh(frm) {
     if (frm._handlerStatusLastSaved === undefined) {
       set_handler_status_prev(frm, frm.doc.handler_status || null);
@@ -209,7 +207,7 @@ frappe.ui.form.on("VNT Document Management", {
     if (frm._chairStatusLastSaved === undefined) {
       set_chair_status_prev(frm, frm.doc.chairperson_status || null);
     }
-    
+  
     // Luôn reset viewer mỗi lần refresh
     frm.trigger("render_attach");
     frm.trigger("sync_chair_from_items");
