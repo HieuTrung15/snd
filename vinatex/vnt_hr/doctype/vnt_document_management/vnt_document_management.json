@@ -241,11 +241,11 @@
    "permlevel": 1
   },
   {
-   "depends_on": "eval: doc.cv_xu_ly != \"\"",
+   "depends_on": "eval: doc.cv_xu_ly",
    "fieldname": "deadline_cv_xu_ly",
    "fieldtype": "Date",
    "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh chuy\u00ean vi\u00ean x\u1eed l\u00fd",
-   "mandatory_depends_on": "eval: doc.cv_xu_ly != \"\"",
+   "mandatory_depends_on": "eval: doc.cv_xu_ly",
    "permlevel": 1
   },
   {
@@ -347,7 +347,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-04 13:20:04.464735",
+ "modified": "2025-12-04 14:12:04.011103",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",

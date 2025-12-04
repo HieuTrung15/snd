@@ -99,6 +99,14 @@ const ensure_handler_status_require_roles = (frm) => {
   return false;
 };
 
+const hide_legacy_fields = (frm) => {
+  ["legacy_id", "list_title", "source_url"].forEach((field) => {
+    if (frm.get_field(field)) {
+      frm.set_df_property(field, "hidden", 1);
+    }
+  });
+};
+
 // Đảm bảo chỉ có duy nhất một dòng được chọn Chủ trì
 const ensure_single_chair_row = (frm, cdt, cdn) => {
   const row = (locals[cdt] && locals[cdt][cdn]) || null;
@@ -201,6 +209,7 @@ frappe.ui.form.on("VNT Document Management", {
     if (frm._chairStatusLastSaved === undefined) {
       set_chair_status_prev(frm, frm.doc.chairperson_status || null);
     }
+    
     // Luôn reset viewer mỗi lần refresh
     frm.trigger("render_attach");
     frm.trigger("sync_chair_from_items");
@@ -209,6 +218,7 @@ frappe.ui.form.on("VNT Document Management", {
     frm.trigger("setup_cv_xu_ly_query");
     frm.trigger("setup_cv_xu_ly_query_items2");
     frm.trigger("lock_items2_grid");
+    hide_legacy_fields(frm);
 
     // Chỉ set mặc định khi là phiếu mới
     if (frm.is_new()) {
@@ -216,8 +226,8 @@ frappe.ui.form.on("VNT Document Management", {
         frappe.db.get_value("Employee", { user_id: frappe.session.user }, "name")
           .then(r => r?.message?.name && frm.set_value("employee", r.message.name));
       }
-      if (!frm.doc.date) {
-        frm.set_value("date", frappe.datetime.now_date());
+      if (!frm.doc.received_date) {
+        frm.set_value("received_date", frappe.datetime.now_date());
       }
       frm.trigger("prefill_level1_approvers");
     }
