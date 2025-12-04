@@ -25,13 +25,13 @@
   "section_break_mugf",
   "attach",
   "html",
+  "section_break_fsrf",
+  "items",
   "th\u00f4ng_tin_ng\u01b0\u1eddi_x\u1eed_l\u00fd_section",
   "y_kien_ld_td",
   "column_break_cjki",
   "handler_status",
   "deadline_copy",
-  "section_break_o8ue",
-  "items",
   "qu\u00e1_tr\u00ecnh_x\u1eed_l\u00fd_tab",
   "nguoi_chu_tri",
   "deadline_chu_tri2",
@@ -69,8 +69,7 @@
   },
   {
    "fieldname": "section_break_mugf",
-   "fieldtype": "Section Break",
-   "label": "Th\u00f4ng tin file \u0111\u00ednh k\u00e8m"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "attach",
@@ -153,10 +152,9 @@
   },
   {
    "fieldname": "handler_status",
-   "fieldtype": "Select",
-   "label": "Tr\u1ea1ng th\u00e1i L\u00e3nh \u0111\u1ea1o T\u1eadp \u0110o\u00e0n",
-   "no_copy": 1,
-   "options": "\nChuy\u1ec3n v\u0103n b\u1ea3n\nTr\u1ea3 l\u1ea1i"
+   "fieldtype": "Button",
+   "label": "Chuy\u1ec3n x\u1eed l\u00fd",
+   "no_copy": 1
   },
   {
    "fieldname": "th\u00f4ng_tin_ng\u01b0\u1eddi_x\u1eed_l\u00fd_section",
@@ -166,7 +164,7 @@
    "fieldname": "y_kien_ld_td",
    "fieldtype": "Small Text",
    "label": "\u00dd ki\u1ebfn L\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n",
-   "max_height": "80px"
+   "max_height": "100px"
   },
   {
    "fieldname": "items",
@@ -283,10 +281,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "section_break_o8ue",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "deadline",
    "fieldtype": "Date",
    "label": "Th\u1eddi h\u1ea1n",
@@ -338,12 +332,16 @@
    "fieldtype": "Date",
    "label": "Th\u1eddi h\u1ea1n",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_fsrf",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-04 15:26:11.859501",
+ "modified": "2025-12-04 15:42:11.301732",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
