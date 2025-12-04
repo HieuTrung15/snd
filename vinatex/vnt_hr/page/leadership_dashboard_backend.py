@@ -129,6 +129,14 @@ def build_salary_cards(filters: dict[str, str]) -> list[dict]:
 		cards.extend(
 			[
 				{
+					"id": "salary_current_month",
+					"title": _("Lương dự kiến tháng này"),
+					"value": salary_kpi.get("total_year_salary", 0),
+					"display": f"{salary_kpi.get('total_year_salary', 0):,.0f} đ",
+					"caption": _("Trong tháng tính đến hiện tại"),
+					"progress": 100,
+				},
+				{
 					"id": "salary_prev_month",
 					"title": _("Tổng lương tháng trước"),
 					"value": salary_kpi.get("total_prev_month_salary", 0),
@@ -152,14 +160,7 @@ def build_salary_cards(filters: dict[str, str]) -> list[dict]:
 					"caption": _("Quỹ lương năm - đã chi - dự kiến"),
 					"progress": 100,
 				},
-				{
-					"id": "salary_current_month",
-					"title": _("Lương dự kiến tháng này"),
-					"value": salary_kpi.get("total_year_salary", 0),
-					"display": f"{salary_kpi.get('total_year_salary', 0):,.0f} đ",
-					"caption": _("Tháng hiện tại"),
-					"progress": 100,
-				},
+				
 			]
 		)
 	except Exception:
