@@ -638,6 +638,9 @@ frappe.ui.form.on("VNT Document Management", {
         if (node.key === "handler" && currentStatus === "Chuyển văn bản") {
           return "#22c55e";
         }
+        if (node.key === "handler" && currentStatus === "Trả lại") {
+          return "#f59e0b";
+        }
         return statusColor(node.statusKey);
       }
 
@@ -949,6 +952,7 @@ frappe.ui.form.on("VNT Document Management", {
           <div class="vnt-chip"><span class="vnt-dot" style="background:#3b82f6"></span>Đang xử lý</div>
           <div class="vnt-chip"><span class="vnt-dot" style="background:#f59e0b"></span>Trả lại</div>
           <div class="vnt-chip"><span class="vnt-dot" style="background:#e85b5b"></span>Quá hạn</div>
+          <div class="vnt-chip"><span class="vnt-dot" style="background:#94a3b8"></span>Chưa có trạng thái</div>
         </div>
         ${svg}
         
