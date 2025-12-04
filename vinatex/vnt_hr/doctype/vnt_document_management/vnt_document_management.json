@@ -29,6 +29,7 @@
   "y_kien_ld_td",
   "column_break_cjki",
   "handler_status",
+  "deadline_copy",
   "section_break_o8ue",
   "items",
   "qu\u00e1_tr\u00ecnh_x\u1eed_l\u00fd_tab",
@@ -130,6 +131,7 @@
    "label": "Th\u00f4ng tin v\u0103n b\u1ea3n"
   },
   {
+   "collapsible": 1,
    "fieldname": "th\u00f4ng_tin_chung_section",
    "fieldtype": "Section Break",
    "label": "Th\u00f4ng tin chung"
@@ -164,7 +166,7 @@
    "fieldname": "y_kien_ld_td",
    "fieldtype": "Small Text",
    "label": "\u00dd ki\u1ebfn L\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n",
-   "max_height": "50px"
+   "max_height": "80px"
   },
   {
    "fieldname": "items",
@@ -330,12 +332,18 @@
   {
    "fieldname": "column_break_frgm",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "deadline_copy",
+   "fieldtype": "Date",
+   "label": "Th\u1eddi h\u1ea1n",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-04 15:02:10.691961",
+ "modified": "2025-12-04 15:26:11.859501",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",

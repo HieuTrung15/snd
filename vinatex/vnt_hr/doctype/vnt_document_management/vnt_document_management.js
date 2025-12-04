@@ -243,6 +243,13 @@ frappe.ui.form.on("VNT Document Management", {
     }
   },
 
+  deadline(frm) {
+    const val = frm.doc.deadline || null;
+    if (frm.doc.deadline_copy !== val) {
+      frm.set_value("deadline_copy", val);
+    }
+  },
+
   // Khi trường attach đổi, render lại
   attach(frm) {
     frm.trigger("render_attach");
