@@ -11,7 +11,7 @@
  "is_standard": "Yes",
  "letter_head": "Default Letter Head T\u1eadp \u0111o\u00e0n",
  "letterhead": null,
- "modified": "2025-12-04 13:31:15.143071",
+ "modified": "2025-12-04 13:45:33.725752",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "T\u1ed5ng gi\u00e1 tr\u1ecb t\u1ed3n kho",
@@ -39,6 +39,9 @@
   },
   {
    "role": "Stock User"
+  },
+  {
+   "role": "HR User"
   }
  ],
  "timeout": 0
