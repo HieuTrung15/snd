@@ -28,7 +28,18 @@ const set_handler_status_prev = (frm, val) => {
   frm._handlerStatusLastSaved = val || null;
 };
 
-const is_checked = (val) => val === 1 || val === true || val === "1";
+const is_checked = (val) => {
+  if (val === 1 || val === true) return true;
+  if (typeof val === "number") return val > 0;
+  if (typeof val === "string") {
+    const normalized = val.trim().toLowerCase();
+    if (!normalized) return false;
+    if (["1", "y", "yes", "true", "on", "checked", "t"].includes(normalized)) return true;
+    if (["0", "false", "no"].includes(normalized)) return false;
+    return false;
+  }
+  return false;
+};
 const is_done = (val) => (val || "").trim() === "Hoàn thành";
 
 const get_chair_status_prev = (frm) => {
@@ -42,12 +53,40 @@ const set_chair_status_prev = (frm, val) => {
   frm._chairStatusLastSaved = val || null;
 };
 
-const row_has_role = (row) =>
-  is_checked(row.chu_tri) || is_checked(row.phoi_hop) || is_checked(row.nhan_de_biet);
+const row_has_role = (row) => {
+  if (!row) return false;
+  return ["chu_tri", "phoi_hop", "nhan_de_biet"].some((field) => is_checked(row[field]));
+};
+
+const row_requires_deadline = (row) => {
+  if (!row) return false;
+  return is_checked(row.chu_tri) || is_checked(row.phoi_hop);
+};
 
 const has_any_role_row = (frm) => {
   const rows = Array.isArray(frm.doc.items) ? frm.doc.items : [];
   return rows.some((r) => row_has_role(r));
+};
+
+const prune_items_without_role = (frm) => {
+  const rows = Array.isArray(frm.doc.items) ? frm.doc.items : [];
+  let removed = false;
+
+  for (let i = rows.length - 1; i >= 0; i -= 1) {
+    const row = rows[i] || {};
+    if (!row_has_role(row)) {
+      rows.splice(i, 1);
+      removed = true;
+    }
+  }
+  if (removed) {
+    frm.refresh_field("items");
+    frm.doc.__unsaved = true;
+    if (typeof frm.dirty === "function") {
+      frm.dirty();
+    }
+  }
+  return removed;
 };
 
 const all_specialists_done = (frm) => {
@@ -64,7 +103,8 @@ const validate_handler_status_preconditions = (frm) => {
     return { ok: false, message: "Vui lòng chọn ít nhất 1 dòng Chủ trì/Phối hợp/Nhận để biết trước khi cập nhật Trạng thái Lãnh đạo Tập Đoàn." };
   }
 
-  const missingDeadlineIdx = picked.findIndex((r) => !r.deadline);
+  const needDeadlineRows = rows.filter((r) => row_requires_deadline(r));
+  const missingDeadlineIdx = needDeadlineRows.findIndex((r) => !r.deadline);
   if (missingDeadlineIdx !== -1) {
     return { ok: false, message: "Dòng đã chọn vai trò chưa có Thời hạn hoàn thành. Vui lòng nhập trước khi cập nhật Trạng thái Lãnh đạo Tập Đoàn." };
   }
@@ -270,46 +310,40 @@ frappe.ui.form.on("VNT Document Management", {
 
   async handler_status(frm) {
     if (frm._handlerStatusSaving) return;
-    if (frm._handlerStatusResetting) return;
 
-    const prev = get_handler_status_prev(frm);
-    const newStatus = frm.doc.handler_status;
-
-    if (newStatus === "Chuyển văn bản") {
-      const check = validate_handler_status_preconditions(frm);
-      if (!check.ok) {
-        frappe.msgprint(check.message);
-        frm._handlerStatusResetting = true;
-        await frm.set_value("handler_status", null);
-        frm.doc.__unsaved = false;
-        frm._handlerStatusResetting = false;
-        return;
-      }
+    const check = validate_handler_status_preconditions(frm);
+    if (!check.ok) {
+      frappe.msgprint(check.message);
+      return;
     }
 
-    frm.trigger("render_process_flow");
+    const removed = prune_items_without_role(frm);
+    if (removed) {
+      frm.trigger("sync_chair_from_items");
+      frm.trigger("sync_collab_from_items");
+    }
 
-    if (!frm.is_dirty()) {
-      set_handler_status_prev(frm, frm.doc.handler_status || null);
-      return;
+    // Đảm bảo có name trước khi gọi server
+    if (!frm.doc.name || frm.is_dirty()) {
+      await frm.save();
+    } else if (removed) {
+      // Nếu đã có name nhưng doc không nhận dirty flag, vẫn cần lưu lại việc xoá dòng
+      await frm.save();
     }
 
     frm._handlerStatusSaving = true;
     try {
-      await frm.save();
+      await frappe.call({
+        method: "vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.trigger_handler_transfer",
+        args: { docname: frm.doc.name }
+      });
+      await frm.reload_doc();
       set_handler_status_prev(frm, frm.doc.handler_status || null);
+      frm.trigger("render_process_flow");
     } catch (err) {
-      frappe.msgprint("Lưu không thành công, Trạng thái Lãnh đạo Tập Đoàn sẽ được đặt trống.");
-      try {
-        frm._handlerStatusResetting = true;
-        await frm.set_value("handler_status", prev);
-        frm.doc.__unsaved = false;
-        frm.refresh_field("handler_status");
-      } finally {
-        frm._handlerStatusResetting = false;
-        frm._handlerStatusSaving = false;
-      }
-      return;
+      frappe.msgprint("Thao tác Chuyển văn bản không thành công. Vui lòng thử lại.");
+      // eslint-disable-next-line no-console
+      console.error(err);
     }
     frm._handlerStatusSaving = false;
   },
@@ -443,8 +477,15 @@ frappe.ui.form.on("VNT Document Management", {
       if (!row.nguoi_phoi_hop) return;
       if (!srcByEmp.has(row.nguoi_phoi_hop)) {
         toRemove.push(idx);
-      } else if (!row.trang_thai_nguoi_phoi_hop) {
+        return;
+      }
+
+      const src = srcByEmp.get(row.nguoi_phoi_hop);
+      if (!row.trang_thai_nguoi_phoi_hop) {
         row.trang_thai_nguoi_phoi_hop = "Đang xử lý";
+      }
+      if (src?.deadline && row.deadline1 !== src.deadline) {
+        row.deadline1 = src.deadline;
       }
     });
 
@@ -650,12 +691,10 @@ frappe.ui.form.on("VNT Document Management", {
       if (node.statusKey) {
         const currentStatus = (frm.doc[node.statusKey] || "").trim();
         // Lãnh đạo tập đoàn: xanh khi trạng thái "Chuyển văn bản"
-        if (node.key === "handler" && currentStatus === "Chuyển văn bản") {
+        if (node.key === "handler") {
           return "#22c55e";
         }
-        if (node.key === "handler" && currentStatus === "Trả lại") {
-          return "#f59e0b";
-        }
+        
         return statusColor(node.statusKey);
       }
 

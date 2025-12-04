@@ -32,7 +32,8 @@ class VNTDocumentManagement(Document):
 
 	def _validate_handler_status_roles(self):
 		"""Yêu cầu phải có ít nhất 1 dòng Chủ trì/Phối hợp/Nhận để biết khi đặt trạng thái lãnh đạo."""
-		if not self.handler_status:
+		handler_status = (getattr(self, "handler_status", None) or "").strip()
+		if not handler_status:
 			return
 
 		rows = self.get("items") or []
@@ -40,10 +41,11 @@ class VNTDocumentManagement(Document):
 		if not picked:
 			frappe.throw("Vui lòng chọn ít nhất 1 dòng Chủ trì/Phối hợp/Nhận để biết trước khi cập nhật Trạng thái Lãnh đạo Tập Đoàn.")
 
-		if (self.handler_status or "").strip() == "Chuyển văn bản":
+		if handler_status == "Chuyển văn bản":
+			# Chỉ bắt buộc deadline đối với Chủ trì/Phối hợp; "Nhận để biết" không cần deadline
 			for row in picked:
-				if not row.deadline:
-					frappe.throw("Dòng đã chọn vai trò chưa có Thời hạn hoàn thành. Vui lòng nhập trước khi cập nhật Trạng thái Lãnh đạo Tập Đoàn.")
+				if (row.chu_tri or row.phoi_hop) and not row.deadline:
+					frappe.throw("Dòng đã chọn vai trò Chủ trì/Phối hợp chưa có Thời hạn hoàn thành. Vui lòng nhập trước khi cập nhật Trạng thái Lãnh đạo Tập Đoàn.")
 
 	def _validate_collab_vs_specialist_status(self):
 		"""Người phối hợp không được Hoàn thành khi chuyên viên xử lý chưa Hoàn thành."""
@@ -369,7 +371,7 @@ class VNTDocumentManagement(Document):
 		if (self.type or "").strip() != "Công văn đến":
 			return
 
-		current = (self.handler_status or "").strip()
+		current = (getattr(self, "handler_status", None) or "").strip()
 		if current != "Chuyển văn bản":
 			return
 
@@ -528,6 +530,29 @@ def get_level1_approvers():
 			}
 		)
 	return result
+
+
+@frappe.whitelist()
+def trigger_handler_transfer(docname: str):
+	"""
+	Nút handler_status (Button) - thực hiện logic 'Chuyển văn bản' như trạng thái cũ.
+	"""
+	if not docname:
+		frappe.throw("Thiếu tham chiếu văn bản.")
+
+	doc = frappe.get_doc("VNT Document Management", docname)
+
+	# Bypass fieldtype Button để chạy validate/hooks như khi đặt trạng thái
+	object.__setattr__(doc, "handler_status", "Chuyển văn bản")
+	doc.save(ignore_permissions=True)
+
+	# Ghi lại xuống DB để các báo cáo/overview đọc được
+	try:
+		frappe.db.set_value(doc.doctype, doc.name, "handler_status", "Chuyển văn bản", update_modified=False)
+	except Exception:
+		frappe.log_error("Không thể cập nhật handler_status sau khi chuyển văn bản", "VNT Document Management")
+
+	return {"name": doc.name, "handler_status": getattr(doc, "handler_status", None)}
 
 
 @frappe.whitelist()
