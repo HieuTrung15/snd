@@ -11,18 +11,17 @@
   "html_editer",
   "th\u00f4ng_tin_chung_section",
   "type",
+  "sender",
+  "handler",
   "employee",
   "naming_series",
   "column_break_fdwp",
-  "reference_number",
-  "summary",
-  "section_break_oltr",
   "document_date",
   "received_date",
   "deadline",
-  "column_break_fyg6",
-  "sender",
-  "handler",
+  "column_break_frgm",
+  "reference_number",
+  "summary",
   "section_break_mugf",
   "attach",
   "html",
@@ -65,14 +64,6 @@
   },
   {
    "fieldname": "column_break_fdwp",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "section_break_oltr",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_fyg6",
    "fieldtype": "Column Break"
   },
   {
@@ -335,12 +326,16 @@
    "label": "C\u00f4ng v\u0103n \u0111i t\u01b0\u01a1ng \u1ee9ng",
    "options": "VNT Document Management",
    "permlevel": 1
+  },
+  {
+   "fieldname": "column_break_frgm",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-04 14:51:35.569315",
+ "modified": "2025-12-04 15:02:10.691961",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
