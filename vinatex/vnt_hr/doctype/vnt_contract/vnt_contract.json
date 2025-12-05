@@ -11,7 +11,7 @@
   "job_title",
   "column_break_se5q",
   "type",
-  "contract_term",
+  "contract_term3",
   "contract_term2",
   "from_date",
   "to_date",
@@ -64,14 +64,6 @@
    "fieldname": "column_break_0rga",
    "fieldtype": "Section Break",
    "label": "Th\u00f4ng tin \u0111\u1ecba \u0111i\u1ec3m & ng\u01b0\u1eddi k\u00fd"
-  },
-  {
-   "columns": 1,
-   "fieldname": "contract_term",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Th\u1eddi h\u1ea1n H\u0110 (th\u00e1ng)",
-   "precision": "0"
   },
   {
    "columns": 2,
@@ -228,13 +220,21 @@
    "in_list_view": 1,
    "label": "Th\u1eddi h\u1ea1n H\u0110 (th\u00e1ng) Copy",
    "precision": "0"
+  },
+  {
+   "columns": 1,
+   "fieldname": "contract_term3",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Th\u1eddi h\u1ea1n H\u0110 (th\u00e1ng)",
+   "precision": "0"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-12-05 16:16:39.865347",
+ "modified": "2025-12-05 17:06:54.136948",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Contract",
