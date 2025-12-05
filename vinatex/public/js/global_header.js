@@ -1,6 +1,25 @@
 (() => {
+	const getUserFullName = () => {
+		const frappeObj = window?.frappe;
+		if (!frappeObj) return "";
+
+		// Prefer session fullname, otherwise fall back to boot info
+		if (frappeObj.session?.user_fullname) return frappeObj.session.user_fullname;
+
+		const currentUser = frappeObj.session?.user;
+		const info = currentUser
+			? frappeObj.boot?.user_info?.[currentUser] || frappeObj.boot?.user
+			: null;
+
+		return info?.fullname || info?.full_name || "";
+	};
+
 	const TITLE = "TẬP ĐOÀN DỆT MAY VIỆT NAM";
-	const SUB_TITLE = "";
+	const getSubtitleText = () => {
+		const name = getUserFullName();
+		if (!name) return "";
+		return `Xin chào ${name}`;
+	};
 	const HOME_SIDE_LINES = [
 		"",
 		"",
@@ -44,17 +63,31 @@
 		if (!navbar) return;
 
 		let title = document.getElementById("vnt-search-title");
+		const subtitleText = getSubtitleText();
+
 		if (!title) {
 			title = document.createElement("div");
 			title.id = "vnt-search-title";
 			title.className = "vnt-search-title";
 			title.innerHTML = `
 				<div class="vnt-search-title-line">${TITLE}</div>
-				<div class="vnt-search-subtitle">${SUB_TITLE}</div>
+				<div class="vnt-search-subtitle"></div>
 			`;
 			navbar.appendChild(title);
 		} else if (title.parentElement !== navbar) {
 			navbar.appendChild(title);
+		}
+
+		const subtitleEl = title.querySelector(".vnt-search-subtitle");
+		if (subtitleEl) {
+			if (subtitleText) {
+				subtitleEl.textContent = subtitleText;
+				subtitleEl.style.fontStyle = "italic";
+				subtitleEl.style.display = "";
+			} else {
+				subtitleEl.textContent = "";
+				subtitleEl.style.display = "none";
+			}
 		}
 	};
 
