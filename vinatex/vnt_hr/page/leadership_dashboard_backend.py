@@ -758,8 +758,13 @@ def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
 
 	# ===== ƯU TIÊN SẮP XẾP: đưa Cao Hữu Hiếu, Lê Tiến Trường lên đầu =====
 	priority_order = {
-		"Cao Hữu Hiếu": 1,
 		"Lê Tiến Trường": 0,
+		"Cao Hữu Hiếu": 1,
+		"Phạm Văn Tân":2,
+		"Nguyễn Đức Trị":3,
+		"Nguyễn Song Hải":4,
+		"Lê Mạc Thuấn":5,
+		"Nguyễn Thị Thu Hiền":6, 
 	}
 
 	def _sort_key(row: dict) -> tuple:
