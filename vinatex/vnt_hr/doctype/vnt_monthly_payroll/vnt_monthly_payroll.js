@@ -702,7 +702,7 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		);
 	}
 
-	const applyFlatTax10 = payload.thue_tam_trich === true || payload.thue_tam_trich === 1 || String(payload.thue_tam_trich) === "1";
+	const applyFlatTax10 = payload.thue_tam_trich === true || payload.thue_tam_trich === 1 || String(payload.thue_tam_trich) === "1" || row.employement_type === "Hợp đồng thử việc" || row.employement_type === "Hợp đồng học nghề" || row.employement_type === "Hợp đồng đào tạo nghề" || row.employement_type === "Hợp đồng tập nghề";
 	let tncn;
 
 	if (applyFlatTax10) {
