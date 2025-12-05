@@ -1,4 +1,7 @@
 (() => {
+	const DEFAULT_SALUTATION = "Anh/Chị";
+	let genderSalutationPromise;
+
 	const getUserFullName = () => {
 		const frappeObj = window?.frappe;
 		if (!frappeObj) return "";
@@ -14,11 +17,49 @@
 		return info?.fullname || info?.full_name || "";
 	};
 
+	const mapGenderToSalutation = (gender) => {
+		const g = (gender || "").toString().trim().toLowerCase();
+
+		if (["male", "nam", "m", "anh"].includes(g)) return "Anh";
+		if (["female", "nu", "nữ", "f", "chi", "chị"].includes(g)) return "Chị";
+		return DEFAULT_SALUTATION;
+	};
+
+	const getUserGender = () => {
+		if (genderSalutationPromise) return genderSalutationPromise;
+
+		const frappeObj = window?.frappe;
+		if (!frappeObj) return Promise.resolve(DEFAULT_SALUTATION);
+
+		const currentUser = frappeObj.session?.user;
+		const info =
+			currentUser && (frappeObj.boot?.user_info?.[currentUser] || frappeObj.boot?.user);
+
+		// Try boot info first to avoid an API call if gender is already available
+		if (info?.gender) {
+			genderSalutationPromise = Promise.resolve(mapGenderToSalutation(info.gender));
+			return genderSalutationPromise;
+		}
+
+		genderSalutationPromise = new Promise((resolve) => {
+			frappeObj.call({
+				method: "vinatex.api.user.get_current_user_gender",
+				callback: (r) => resolve(r?.message?.gender),
+				error: () => resolve(null),
+			});
+		})
+			.then((gender) => mapGenderToSalutation(gender))
+			.catch(() => DEFAULT_SALUTATION);
+
+		return genderSalutationPromise;
+	};
+
 	const TITLE = "TẬP ĐOÀN DỆT MAY VIỆT NAM";
-	const getSubtitleText = () => {
+	const getSubtitleText = async () => {
 		const name = getUserFullName();
 		if (!name) return "";
-		return `Xin chào ${name}`;
+		const gender = await getUserGender();
+		return `Xin chào ${gender} ${name}`;
 	};
 	const HOME_SIDE_LINES = [
 		"",
@@ -63,7 +104,6 @@
 		if (!navbar) return;
 
 		let title = document.getElementById("vnt-search-title");
-		const subtitleText = getSubtitleText();
 
 		if (!title) {
 			title = document.createElement("div");
@@ -80,14 +120,22 @@
 
 		const subtitleEl = title.querySelector(".vnt-search-subtitle");
 		if (subtitleEl) {
-			if (subtitleText) {
-				subtitleEl.textContent = subtitleText;
-				subtitleEl.style.fontStyle = "italic";
-				subtitleEl.style.display = "";
-			} else {
-				subtitleEl.textContent = "";
-				subtitleEl.style.display = "none";
-			}
+			const renderSubtitle = (text) => {
+				if (text) {
+					subtitleEl.textContent = text;
+					subtitleEl.style.fontStyle = "italic";
+					subtitleEl.style.display = "";
+				} else {
+					subtitleEl.textContent = "";
+					subtitleEl.style.display = "none";
+				}
+			};
+
+			// Clear first, then populate when gender/name resolve
+			renderSubtitle("");
+			getSubtitleText()
+				.then((text) => renderSubtitle(text))
+				.catch(() => renderSubtitle(""));
 		}
 	};
 

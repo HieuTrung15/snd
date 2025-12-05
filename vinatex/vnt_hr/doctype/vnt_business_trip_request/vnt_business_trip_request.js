@@ -1,3 +1,27 @@
+const ensure_creator_in_items = (frm) => {
+    if (!frm.doc.employee) return;
+    const exists = (frm.doc.items || []).some(row => row.employee === frm.doc.employee);
+    if (exists) return;
+
+    frappe.call({
+        method: "vinatex.vnt_hr.doctype.vnt_business_trip_request.vnt_business_trip_request.get_employee",
+        args: {
+            employee: frm.doc.employee
+        },
+        callback: function (r) {
+            const info = r.message || {};
+            const row = frm.add_child("items");
+            row.employee = frm.doc.employee;
+            row.employee_name = info.employee_name || frm.doc.employee_name;
+            row.department = info.department || frm.doc.department;
+            row.designation = info.designation || frm.doc.designation;
+            row.salutation = info.salutation;
+            frm.refresh_field("items");
+        }
+    });
+};
+
+
 frappe.ui.form.on('VNT Business Trip Request', {
     after_save(frm) {
         // Chỉ auto chạy 1 lần khi còn ở state "Mới tạo"
@@ -24,6 +48,7 @@ frappe.ui.form.on('VNT Business Trip Request', {
                     }
                 });
             }
+            ensure_creator_in_items(frm);
             frappe.call({
                 method: "vinatex.vnt_hr.doctype.vnt_car_registration.vnt_car_registration.get_reports_to",
                 args: {
@@ -38,6 +63,11 @@ frappe.ui.form.on('VNT Business Trip Request', {
             });
         }
 	},
+    employee(frm) {
+        if (frm.is_new()) {
+            ensure_creator_in_items(frm);
+        }
+    },
     vehicle(frm) {
         const targets = [
             "Ô tô TĐ (trên 40 km)",
@@ -119,4 +149,3 @@ frappe.ui.form.on('VNT Business Trip Request Items', {
         
     },
 });
-

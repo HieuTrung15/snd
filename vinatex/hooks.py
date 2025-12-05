@@ -52,7 +52,10 @@ app_include_js = [
 # webform_include_css = {"doctype": "public/css/doctype.css"}
 
 # include js in page
-# page_js = {"page" : "public/js/file.js"}
+page_js = {
+    "leadership-dashboard": "vinatex/vnt_hr/page/leadership_dashboard/leadership_dashboard.js",
+    "test": "vinatex/vnt_hr/page/test/test.js",
+}
 override_whitelisted_methods = {
     # method gốc của HRMS → method của bạn
     "hrms.hr.doctype.leave_application.leave_application.get_leave_approver":

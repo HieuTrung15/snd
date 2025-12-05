@@ -1012,7 +1012,6 @@ def get_company_salary_kpi(
     conditions = [
         "slip.docstatus = 1",
         "slip.year = %(year)s",
-        "emp.branch = 'Văn phòng 1'",
     ]
 
     if company:
@@ -1123,7 +1122,6 @@ def get_company_salary_chart(year: int | None = None,
 		WHERE slip.docstatus = 1
 		  AND slip.year = %(year)s
 		  AND COALESCE(slip.company, emp.company) = %(company)s
-		  AND emp.branch = 'Văn phòng 1'
 	"""
 	salary_rows = frappe.db.sql(sql_salary, params, as_dict=True)
 	# --- 2) PHỤ CẤP THEO THÁNG CHO CẢ CÔNG TY ---
@@ -1138,7 +1136,6 @@ def get_company_salary_chart(year: int | None = None,
 		WHERE slip.docstatus = 1
 		  AND slip.year = %(year)s
 		  AND COALESCE(slip.company, emp.company) = %(company)s
-		  AND emp.branch = 'Văn phòng 1'
 		GROUP BY slip.month
 	"""
 
