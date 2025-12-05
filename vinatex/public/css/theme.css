@@ -99,7 +99,7 @@ h6.uppercase {
 }
 
 .navbar #vnt-search-title .vnt-search-title-line {
-	font-size: 16px;
+	font-size: 14px;
 	font-weight: 800;
 	letter-spacing: 0.8px;
 	text-transform: uppercase;
@@ -166,7 +166,7 @@ h6.uppercase {
 
 @media (max-width: 768px) {
 	.navbar #vnt-search-title .vnt-search-title-line {
-		font-size: 14px;
+		font-size: 12px;
 	}
 	.navbar #vnt-search-title .vnt-search-subtitle {
 		font-size: 10px;
