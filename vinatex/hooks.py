@@ -43,6 +43,10 @@ app_include_js = [
 # include js, css files in header of web template
 # web_include_css = "/assets/vinatex/css/vinatex.css"
 # web_include_js = "/assets/vinatex/js/vinatex.js"
+web_include_js = [
+    f"/assets/vinatex/js/nav_home.js?v={version}",
+]
+
 
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "vinatex/public/scss/website"
