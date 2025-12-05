@@ -104,9 +104,17 @@
   .hr-item { padding:8px 0; border-bottom:1px solid var(--slate-100); }
   .hr-item:last-child { border-bottom:none; }
   .hr-item .label { font-weight:700; color:#0f172a; }
-  .hr-item .meta { color:#64748b; font-size:12px; display:flex; align-items:center; gap:8px; margin-top:4px; }
-  .chip.small { padding:3px 8px; font-size:11px; }
-  .chip.danger { background:#fee2e2; color:#b91c1c; }
+    .hr-item .meta { color:#64748b; font-size:12px; display:flex; align-items:center; gap:8px; margin-top:4px; }
+    .chip.small { padding:3px 8px; font-size:11px; }
+    .chip.danger { background:#fee2e2; color:#b91c1c; }
+    .leader-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:12px; }
+    .leader-block { background:linear-gradient(145deg, #ffffff 0%, #f8fbff 100%); border:1px solid #e2e8f0; border-radius:12px; padding:12px; box-shadow:0 10px 26px rgba(15,23,42,0.05); }
+    .leader-block h4 { margin:0 0 6px; font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:#0f172a; }
+    .leader-list { max-height: 260px; overflow:auto; border-top:1px solid var(--slate-100); padding-top:6px; }
+    .leader-item { padding:10px 0; border-bottom:1px solid var(--slate-100); }
+    .leader-item:last-child { border-bottom:none; }
+    .leader-name { font-weight:800; color:#0f172a; }
+    .leader-meta { color:#475569; font-size:12px; margin-top:4px; }
   @media (max-width: 640px) {
     .spa-shell { padding: 0 8px 12px; }
     .spa-grid { grid-template-columns: 1fr !important; }
@@ -157,8 +165,16 @@
     </div>
     <div class="spa-section">
       <h3>Lãnh đạo ở công ty</h3>
-      <!-- <small>Chỉ hiển thị Lãnh đạo cấp trung / Người quản lý</small> -->
-      <div class="list-scroll" data-region="present-list" style="margin-top:10px; border-top:1px solid var(--slate-100); padding-top:8px;"></div>
+      <div class="leader-grid">
+        <div class="leader-block">
+          <h4>Lãnh đạo Tập đoàn</h4>
+          <div class="leader-list list-scroll" data-region="present-corporate"></div>
+        </div>
+        <div class="leader-block">
+          <h4>Lãnh đạo ban</h4>
+          <div class="leader-list list-scroll" data-region="present-department"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -365,7 +381,7 @@
       renderMovements(movements);
       renderPeopleList(movements);
       renderEarlyLate(data.tables?.early_late || {});
-      renderPresentList(data.tables?.present_managers || []);
+      renderPresentManagers(data.tables?.present_managers || {});
       fetchDocDashboard();
   }
 
@@ -447,6 +463,8 @@
           const isTrip = r.status === "Công tác";
           const badgeBg = isTrip ? "#e0f2fe" : "#fef3c7";
           const badgeColor = isTrip ? "#0369a1" : "#b45309";
+          const destination = isTrip && r.destination ? `<span style="color:#0f172a; font-size:12px; font-weight:600;">${escapeHtml(r.destination)}</span>` : "";
+          const note = r.note ? `<span style="color:#475569; font-size:12px;">${escapeHtml(r.note)}</span>` : "";
           container.insertAdjacentHTML("beforeend", `
             <div style="padding:10px 0; border-bottom:1px solid var(--slate-100); display:flex; align-items:flex-start; gap:10px;">
               <div style="flex:1;">
@@ -457,7 +475,8 @@
                 <span class="hr-badge" style="background:${badgeBg}; color:${badgeColor}; border:none; padding:4px 10px; font-size:11px; font-weight:700;">
                   ${escapeHtml(r.status || "")}
                 </span>
-                <span style="color:#0f172a; font-size:12px;">${escapeHtml(r.note || "")}</span>
+                ${destination}
+                ${note}
               </div>
             </div>
           `);
@@ -483,19 +502,24 @@
       });
   }
 
-  function renderPresentList(rows) {
-      const container = document.querySelector('[data-region="present-list"]');
+  function renderPresentManagers(groups) {
+      renderPresentList('[data-region="present-corporate"]', groups.corporate_leaders || [], "Chưa có lãnh đạo Tập đoàn");
+      renderPresentList('[data-region="present-department"]', groups.department_leaders || [], "Chưa có lãnh đạo ban");
+  }
+
+  function renderPresentList(selector, rows, emptyText = "Không có dữ liệu") {
+      const container = typeof selector === "string" ? document.querySelector(selector) : selector;
       if (!container) return;
       container.innerHTML = "";
       if (!rows.length) {
-          container.innerHTML = '<div class="empty">Không có dữ liệu</div>';
+          container.innerHTML = `<div class="empty">${escapeHtml(emptyText)}</div>`;
           return;
       }
       rows.forEach(r => {
           container.insertAdjacentHTML("beforeend", `
-            <div style="padding:10px 0; border-bottom:1px solid var(--slate-100);">
-              <div style="font-weight:700;">${escapeHtml(r.employee_name || r.employee || "-")}</div>
-              <div style="color:#64748b; font-size:12px;">${escapeHtml(r.department || "")}</div>
+            <div class="leader-item">
+              <div class="leader-name">${escapeHtml(r.employee_name || r.employee || "-")}</div>
+              <div class="leader-meta">${escapeHtml(r.department || "")}</div>
             </div>
           `);
       });

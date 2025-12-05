@@ -19,6 +19,9 @@ except Exception:  # pragma: no cover - defensive for older stacks
 	run_report = None
 
 
+APPROVED_TRIP_STATES = {"Đã duyệt", "Duyệt"}
+
+
 def _percent(part: float, total: float) -> float:
 	return round((part / total) * 100, 1) if total else 0
 
@@ -363,6 +366,7 @@ def build_staff_movements(filters: dict[str, str]) -> list[dict]:
 	ordering = {"Người quản lý": 1, "Lãnh đạo cấp trung": 2, "Chuyên viên, Nhân viên": 3}
 	movements = get_attendance_movements(filters)
 	rows: list[dict] = []
+	today_date = getdate(today())
 	for mv in movements:
 		group = mv.get("group") or ""
 		rows.append(
@@ -376,6 +380,13 @@ def build_staff_movements(filters: dict[str, str]) -> list[dict]:
 				"_order": ordering.get(group, 99),
 			}
 		)
+	trip_destination_map = _get_trip_destination_map(
+		{row["employee"] for row in rows if row.get("status") == _("Công tác")},
+		today_date,
+	)
+	for row in rows:
+		if row.get("status") == _("Công tác"):
+			row["destination"] = trip_destination_map.get(row.get("employee")) or ""
 	rows.sort(key=lambda r: (r["_order"], r.get("employee_name") or ""))
 	return rows
 
@@ -647,8 +658,8 @@ def safe_get_hr_reminders(days_ahead: int = 60, limit: int = 5) -> dict:
 		return {}
 
 
-def build_present_managers(filters: dict[str, str]) -> list[dict]:
-	"""Nhân sự có mặt tại công ty (leader/mid) hôm nay dựa trên report attendance today."""
+def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
+	"""Nhân sự có mặt tại công ty (leader/mid) hôm nay dựa trên report attendance today, tách 2 nhóm."""
 	allowed_groups = {"Lãnh đạo cấp trung", "Người quản lý"}
 	company = filters.get("company")
 	department = filters.get("department")
@@ -678,22 +689,68 @@ def build_present_managers(filters: dict[str, str]) -> list[dict]:
 		except Exception:
 			return str(dt_val)
 
-	result = []
+	result = {"Người quản lý": [], "Lãnh đạo cấp trung": []}
 	for r in rows:
 		emp = emp_map.get(r.get("employee"))
 		if not emp:
 			continue
-		if emp.get("custom_designation_group") not in allowed_groups:
+		group = emp.get("custom_designation_group")
+		if group not in allowed_groups:
 			continue
 		if company and emp.get("company") != company:
 			continue
-		result.append(
+		result[group].append(
 			{
 				"employee": r.get("employee"),
 				"employee_name": emp.get("employee_name") or r.get("employee"),
 				"department": emp.get("department"),
 				"time": _fmt(r.get("first_in")),
-				"group": emp.get("custom_designation_group"),
+				"group": group,
 			}
 		)
-	return result
+	for grp in result.values():
+		grp.sort(key=lambda r: r.get("time") or "")
+	return {
+		"corporate_leaders": result["Người quản lý"],
+		"department_leaders": result["Lãnh đạo cấp trung"],
+	}
+
+
+def _get_trip_destination_map(employees: set[str], the_date) -> dict[str, str]:
+	"""Lấy địa điểm công tác (destination) cho danh sách nhân viên trong ngày."""
+	if not employees:
+		return {}
+	try:
+		requests = frappe.get_all(
+			"VNT Business Trip Request",
+			filters={
+				"workflow_state": ("in", list(APPROVED_TRIP_STATES)),
+				"from_date": ("<=", the_date),
+				"to_date": (">=", the_date),
+			},
+			fields=["name", "employee", "destination"],
+		)
+		parent_map = {r.name: r for r in requests}
+		dest_map: dict[str, str] = {}
+
+		for r in requests:
+			if r.get("employee") in employees:
+				dest_map[r.get("employee")] = r.get("destination") or ""
+
+		if parent_map:
+			item_rows = frappe.get_all(
+				"VNT Business Trip Request Items",
+				filters={"parent": ("in", list(parent_map.keys())), "employee": ("in", list(employees))},
+				fields=["employee", "parent"],
+			)
+			for item in item_rows:
+				parent = parent_map.get(item.parent)
+				if not parent:
+					continue
+				if item.employee in employees:
+					dest_map[item.employee] = parent.get("destination") or ""
+
+		return dest_map
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "Leadership Dashboard - trip destinations")
+		return {}
