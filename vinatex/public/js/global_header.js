@@ -1,5 +1,5 @@
 (() => {
-	const DEFAULT_SALUTATION = "Anh/Chị";
+	const DEFAULT_SALUTATION = "anh/chị";
 	let genderSalutationPromise;
 
 	const getUserFullName = () => {
@@ -20,8 +20,8 @@
 	const mapGenderToSalutation = (gender) => {
 		const g = (gender || "").toString().trim().toLowerCase();
 
-		if (["male", "nam", "m", "anh"].includes(g)) return "Anh";
-		if (["female", "nu", "nữ", "f", "chi", "chị"].includes(g)) return "Chị";
+		if (["male", "nam", "m", "anh"].includes(g)) return "anh";
+		if (["female", "nu", "nữ", "f", "chi", "chị"].includes(g)) return "chị";
 		return DEFAULT_SALUTATION;
 	};
 
