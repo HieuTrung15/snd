@@ -27,6 +27,40 @@ create_car_regis = [
 	"Ô tô (TĐ chịu chi phí)",
 ]
 
+
+def _ensure_creator_in_items(doc: Document):
+	"""Auto-append creator employee info into the items table if missing."""
+	creator_emp = doc.get("employee")
+	if not creator_emp:
+		return
+
+	existing_emps = {
+		getattr(row, "employee")
+		for row in (doc.get("items") or [])
+		if getattr(row, "employee", None)
+	}
+	if creator_emp in existing_emps:
+		return
+
+	emp_info = frappe.db.get_value(
+		"Employee",
+		creator_emp,
+		["employee_name", "department", "designation", "salutation"],
+		as_dict=True,
+	) or {}
+
+	doc.append(
+		"items",
+		{
+			"employee": creator_emp,
+			"employee_name": doc.get("employee_name") or emp_info.get("employee_name"),
+			"department": doc.get("department") or emp_info.get("department"),
+			"designation": doc.get("designation") or emp_info.get("designation"),
+			"salutation": emp_info.get("salutation"),
+		},
+	)
+
+
 class VNTBusinessTripRequest(Document):
 	def on_update(self):
 		_apply_state_effects(self)
@@ -62,6 +96,7 @@ class VNTBusinessTripRequest(Document):
 		#     if row.vehicle_type in targets:
 		#         self.check_vehicle_condition = 1
 		#         break
+		_ensure_creator_in_items(self)
 
 		fd, td = getdate(self.from_date), getdate(self.to_date)
 		if fd > td:
@@ -147,7 +182,6 @@ def _get_prev_and_curr_workflow_state(doc: Document) -> tuple[str | None, str]:
 def _check_emp_checkin_after_cancel(doc: Document):
 	"""kiểm tra nếu nhân viên đã có dữ liệu Employee Checkin trong khoảng nghỉ phép đã duyệt thì tạo attendance tương ứng."""
 	# kiểm tra dữ liệu Attendance
-	from frappe.utils import getdate
 	attendance_records = frappe.get_all(
 		"Attendance",
 		filters={
@@ -384,15 +418,39 @@ def _notify_to_employee_list_2(doc):
 	)
 
 
+def _get_approver_users_in_items(doc: Document, employees: set[str]) -> set[str]:
+	"""Return approver users that should not receive approved notifications if they are in items."""
+	excluded_users = set()
+
+	try:
+		current_user = frappe.session.user
+	except Exception:
+		current_user = None
+
+	if current_user and current_user != "Guest":
+		current_emp = frappe.db.get_value("Employee", {"user_id": current_user}, "name")
+		if current_emp and current_emp in employees:
+			excluded_users.add(current_user)
+
+	for approver_emp in (doc.get("approver"), doc.get("approver_lv2")):
+		if approver_emp and approver_emp in employees:
+			approver_user = get_employee_user_id(approver_emp)
+			if approver_user:
+				excluded_users.add(approver_user)
+
+	return excluded_users
+
+
 def _send_trip_notification(doc: Document, subject: str):
 	employees = _collect_employees(doc)
 	if not employees:
 		return
 
+	excluded_users = _get_approver_users_in_items(doc, employees)
 	users = set()
 	for emp in employees:
 		user = get_employee_user_id(emp)
-		if user:
+		if user and user not in excluded_users:
 			users.add(user)
 
 	if not users:
@@ -404,7 +462,7 @@ def _send_trip_notification(doc: Document, subject: str):
 		"document_name": doc.name,
 	}, list(users))
 	send_rocket_message(
-        to_users=list(user),
+        to_users=list(users),
         title=":bell: Thông báo",
         message=subject,
         link=get_url_to_form(doc.doctype, doc.name)

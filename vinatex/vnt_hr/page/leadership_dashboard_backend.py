@@ -286,7 +286,10 @@ def _filter_rows_by_company(rows: list[dict], company: str) -> list[dict]:
 	company_map = {}
 	if employees:
 		company_rows = frappe.get_all(
-			"Employee", filters={"name": ("in", employees)}, fields=["name", "company"]
+			"Employee",
+			filters={"name": ("in", employees)},
+			fields=["name", "company"],
+			ignore_permissions=True,
 		)
 		company_map = {r.name: r.company for r in company_rows}
 	return [r for r in rows if company_map.get(r.get("employee")) == company]
@@ -406,6 +409,7 @@ def get_attendance_movements(filters: dict[str, str]) -> list[dict]:
 			**({"department": department} if department else {}),
 		},
 		fields=["name", "employee_name", "designation", "custom_designation_group"],
+		ignore_permissions=True,
 	)
 	emp_map = {e.name: e for e in employees if (e.custom_designation_group in allowed_groups)}
 
@@ -419,6 +423,7 @@ def get_attendance_movements(filters: dict[str, str]) -> list[dict]:
 			**({"department": department} if department else {}),
 		},
 		fields=["employee", "employee_name", "leave_type", "company", "department"],
+		ignore_permissions=True,
 	)
 
 	rows: list[dict] = []
@@ -572,7 +577,12 @@ def build_hr_reports_from_reminders() -> dict:
 def _get_employee_status_map(emp_names: set[str]) -> dict[str, str]:
 	if not emp_names:
 		return {}
-	rows = frappe.get_all("Employee", filters={"name": ("in", list(emp_names))}, fields=["name", "status"])
+	rows = frappe.get_all(
+		"Employee",
+		filters={"name": ("in", list(emp_names))},
+		fields=["name", "status"],
+		ignore_permissions=True,
+	)
 	return {r.name: r.status for r in rows}
 
 
@@ -671,13 +681,17 @@ def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
 		frappe.log_error(frappe.get_traceback(), "Leadership Dashboard - present managers")
 		rows = []
 
+	# Những người đang công tác/nghỉ hôm nay (để không auto-mark có mặt)
+	on_leave_or_trip = {mv.get("employee") for mv in get_attendance_movements(filters)}
+
 	emp_ids = [r.get("employee") for r in rows if r.get("employee")]
 	emp_map = {}
 	if emp_ids:
 		emp_rows = frappe.get_all(
 			"Employee",
 			filters={"name": ("in", emp_ids)},
-			fields=["name", "employee_name", "department", "custom_designation_group", "company"],
+			fields=["name", "employee_name", "department", "custom_designation_group", "company", "custom_need_check"],
+			ignore_permissions=True,
 		)
 		emp_map = {e.name: e for e in emp_rows}
 
@@ -690,8 +704,10 @@ def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
 			return str(dt_val)
 
 	result = {"Người quản lý": [], "Lãnh đạo cấp trung": []}
+	checkin_present_ids: set[str] = set()
 	for r in rows:
-		emp = emp_map.get(r.get("employee"))
+		emp_code = r.get("employee")
+		emp = emp_map.get(emp_code)
 		if not emp:
 			continue
 		group = emp.get("custom_designation_group")
@@ -699,17 +715,62 @@ def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
 			continue
 		if company and emp.get("company") != company:
 			continue
+		checkin_present_ids.add(emp_code)
 		result[group].append(
 			{
-				"employee": r.get("employee"),
-				"employee_name": emp.get("employee_name") or r.get("employee"),
+				"employee": emp_code,
+				"employee_name": emp.get("employee_name") or emp_code,
 				"department": emp.get("department"),
 				"time": _fmt(r.get("first_in")),
 				"group": group,
 			}
 		)
-	for grp in result.values():
-		grp.sort(key=lambda r: r.get("time") or "")
+
+	# Auto-mark present nếu có custom_need_check = 1 và không công tác/nghỉ
+	leader_rows = frappe.get_all(
+		"Employee",
+		filters={
+			"status": "Active",
+			"custom_designation_group": ("in", list(allowed_groups)),
+			**({"company": company} if company else {}),
+			**({"department": department} if department else {}),
+		},
+		fields=["name", "employee_name", "department", "custom_designation_group", "company", "custom_need_check"],
+		ignore_permissions=True,
+	)
+	for emp in leader_rows:
+		if not emp.get("custom_need_check"):
+			continue
+		if emp.name in checkin_present_ids:
+			continue
+		if emp.name in on_leave_or_trip:
+			continue
+		group = emp.get("custom_designation_group")
+		result[group].append(
+			{
+				"employee": emp.name,
+				"employee_name": emp.get("employee_name") or emp.name,
+				"department": emp.get("department"),
+				"time": "",
+				"group": group,
+			}
+		)
+
+	# ===== ƯU TIÊN SẮP XẾP: đưa Cao Hữu Hiếu, Lê Tiến Trường lên đầu =====
+	priority_order = {
+		"Cao Hữu Hiếu": 1,
+		"Lê Tiến Trường": 0,
+	}
+
+	def _sort_key(row: dict) -> tuple:
+		name = (row.get("employee_name") or "").strip()
+		time_val = row.get("time") or ""
+		# nhân sự không trong priority_order sẽ có index lớn (99)
+		return (priority_order.get(name, 99), time_val, name)
+
+	for grp_name, grp in result.items():
+		grp.sort(key=_sort_key)
+
 	return {
 		"corporate_leaders": result["Người quản lý"],
 		"department_leaders": result["Lãnh đạo cấp trung"],
@@ -729,6 +790,7 @@ def _get_trip_destination_map(employees: set[str], the_date) -> dict[str, str]:
 				"to_date": (">=", the_date),
 			},
 			fields=["name", "employee", "destination"],
+			ignore_permissions=True,
 		)
 		parent_map = {r.name: r for r in requests}
 		dest_map: dict[str, str] = {}
@@ -742,6 +804,7 @@ def _get_trip_destination_map(employees: set[str], the_date) -> dict[str, str]:
 				"VNT Business Trip Request Items",
 				filters={"parent": ("in", list(parent_map.keys())), "employee": ("in", list(employees))},
 				fields=["employee", "parent"],
+				ignore_permissions=True,
 			)
 			for item in item_rows:
 				parent = parent_map.get(item.parent)
