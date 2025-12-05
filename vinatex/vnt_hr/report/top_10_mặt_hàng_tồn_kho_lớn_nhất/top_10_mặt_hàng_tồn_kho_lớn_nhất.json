@@ -1,0 +1,45 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2025-12-01 13:56:45.275217",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letter_head": "Default Letter Head T\u1eadp \u0111o\u00e0n",
+ "letterhead": null,
+ "modified": "2025-12-05 14:58:55.908705",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "Top 10 m\u1eb7t h\u00e0ng t\u1ed3n kho l\u1edbn nh\u1ea5t",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "SELECT\r\n    ROW_NUMBER() OVER (ORDER BY SUM(b.stock_value) DESC) AS \"Sort:Hidden\",\r\n    b.item_code AS \"Item Code:Link/Item:150\",\r\n    i.item_name AS \"Item Name::250\",\r\n    SUM(b.actual_qty) AS \"Total Qty:Float:120\",\r\n    SUM(b.stock_value) AS \"Total Stock Value:Currency:180\"\r\nFROM `tabBin` b\r\nLEFT JOIN `tabItem` i ON i.name = b.item_code\r\nGROUP BY b.item_code, i.item_name\r\nORDER BY SUM(b.actual_qty) DESC\r\nLIMIT 10;\r\n",
+ "ref_doctype": "Bin",
+ "report_name": "Top 10 m\u1eb7t h\u00e0ng t\u1ed3n kho l\u1edbn nh\u1ea5t",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "Stock Manager"
+  },
+  {
+   "role": "Purchase Manager"
+  },
+  {
+   "role": "Sales User"
+  },
+  {
+   "role": "Sales Manager"
+  },
+  {
+   "role": "Purchase User"
+  },
+  {
+   "role": "Stock User"
+  }
+ ],
+ "timeout": 0
+}
