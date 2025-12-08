@@ -3,7 +3,9 @@
 
 # import frappe
 import frappe
-from frappe.utils import getdate, nowdate, get_url_to_form
+import re
+from datetime import date
+from frappe.utils import getdate, nowdate, get_url_to_form, get_first_day, get_last_day
 from frappe.model.document import Document
 from vinatex.patches.utils.rocket_chat import send_rocket_message
 
@@ -1046,3 +1048,64 @@ def get_document_dashboard_vn():
 		"status_pie": status_pie,
 		"documents": doc_rows,
 	}
+
+
+@frappe.whitelist()
+def get_next_reference_number(
+	department: str | None = None, document_date: str | None = None, type_doc: str | None = None
+) -> str | None:
+	"""Return next incremental reference number for outgoing documents of a department, reset each year."""
+	if not department:
+		return None
+
+	doc_date = getdate(document_date) if document_date else getdate(nowdate())
+	year = doc_date.year
+	year_start = get_first_day(date(year, 1, 1))
+	year_end = get_last_day(date(year, 12, 1))
+
+	abbr = frappe.db.get_value("Department", department, "custom_short_text_qlvb") or ""
+	abbr = (abbr or "").strip()
+	existing_refs = frappe.get_all(
+		"VNT Document Management",
+		filters={
+			"type": "Công văn đi",
+			"department": department,
+			"docstatus": ["<", 2],
+			"document_date": ["between", [year_start, year_end]],
+			"type_doc": type_doc if type_doc else ["in", ["", None]],
+		},
+		fields=["reference_number"],
+	)
+
+	max_num = 0
+	max_width = 0
+	pattern = (
+		re.compile(r"(\d+)(?!.*\d)")
+	)
+
+	for row in existing_refs:
+		ref = (row.reference_number or "").strip()
+		if not ref:
+			continue
+		match = pattern.search(ref) if pattern else None
+		if not match:
+			match = re.search(r"(\d+)(?!.*\d)", ref)
+		if not match:
+			continue
+		num_str = match.group(1)
+		num_val = int(num_str)
+		max_num = max(max_num, num_val)
+		max_width = max(max_width, len(num_str))
+
+	next_num = max_num + 1
+	width = max_width  # giữ padding theo dữ liệu cũ (nếu có), mặc định không ép 3 chữ số
+	render_num = str(next_num).zfill(width) if width else str(next_num)
+	type_doc = (type_doc or "").strip()
+
+	if type_doc:
+		return f"{render_num}/{type_doc}-TĐDMVN"
+
+	# type_doc trống: dùng abbr nếu có
+	if abbr:
+		return f"{render_num}/TĐDMVT-{abbr}"
+	return f"{render_num}/TĐDMVT"

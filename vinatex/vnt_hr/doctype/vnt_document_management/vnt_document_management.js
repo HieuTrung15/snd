@@ -53,6 +53,44 @@ const set_chair_status_prev = (frm, val) => {
   frm._chairStatusLastSaved = val || null;
 };
 
+const maybe_autofill_reference_number = async (frm, opts = {}) => {
+  const type = (frm.doc.type || "").trim();
+  if (type !== "Công văn đi") return;
+
+  const department = frm.doc.department;
+  if (!department) return;
+
+  const docDate = frm.doc.document_date;
+  if (!docDate) return;
+
+  const typeDoc = (frm.doc.type_doc || "").trim();
+
+
+  const currentRef = (frm.doc.reference_number || "").trim();
+  const forced = opts.force === true;
+
+  const autoKey = `${department}__${docDate}__${typeDoc}`;
+
+  // Không đè giá trị người dùng đã nhập trừ khi trước đó là auto và đổi phòng/ban/năm
+  if (currentRef && !forced) return;
+  if (currentRef && forced && frm._autoRefKey === autoKey) return;
+
+  try {
+    const r = await frappe.call({
+      method: "vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.get_next_reference_number",
+      args: { department, document_date: docDate, type_doc: typeDoc },
+    });
+    const nextRef = (r?.message || "").trim();
+    if (nextRef) {
+      frm._autoRefKey = autoKey;
+      frm.set_value("reference_number", nextRef);
+    }
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error(err);
+  }
+};
+
 const row_has_role = (row) => {
   if (!row) return false;
   return ["chu_tri", "phoi_hop", "nhan_de_biet"].some((field) => is_checked(row[field]));
@@ -378,6 +416,7 @@ frappe.ui.form.on("VNT Document Management", {
     }
     else if (frm.doc.type == "Công văn đi") {
       frm.set_value("naming_series", "CVĐI.-.MM..YY.-.####");
+      maybe_autofill_reference_number(frm);
     } else {
       frm.set_value("naming_series", "VBNB.-.MM..YY.-.####");
     }
@@ -386,11 +425,22 @@ frappe.ui.form.on("VNT Document Management", {
     frm.trigger("enforce_chair_edit_permission");
   },
 
+  department(frm) {
+    maybe_autofill_reference_number(frm, { force: true });
+  },
+  type_doc(frm) {
+    maybe_autofill_reference_number(frm, { force: true});
+  },
+
   deadline(frm) {
     const val = frm.doc.deadline || null;
     if (frm.doc.deadline_copy !== val) {
       frm.set_value("deadline_copy", val);
     }
+  },
+
+  document_date(frm) {
+    maybe_autofill_reference_number(frm, { force: true });
   },
 
   // Khi trường attach đổi, render lại

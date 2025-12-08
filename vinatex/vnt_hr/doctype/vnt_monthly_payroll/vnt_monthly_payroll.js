@@ -707,7 +707,7 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 
 	if (applyFlatTax10 ) 
 		{
-			if (row.tongThuNhapChiuThue > 2000000) {
+			if (row.tongThuNhapChiuThue > 2000000 || row.tongThuNhap > 2000000) {
 				const baseForFlatTax = toNumber(row.tong_tn_chiu_thue) || toNumber(tongThuNhap);
 				tncn = Math.round(baseForFlatTax * 0.1);
 			}
