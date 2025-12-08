@@ -671,6 +671,9 @@ def safe_get_hr_reminders(days_ahead: int = 60, limit: int = 5) -> dict:
 def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
 	"""Nhân sự có mặt tại công ty (leader/mid) hôm nay dựa trên report attendance today, tách 2 nhóm."""
 	allowed_groups = {"Lãnh đạo cấp trung", "Người quản lý"}
+	excluded_designation = "thành viên ban kiểm soát không chuyên trách tập đoàn"
+	dept_member_designation_raw = "Thành viên Ban Kiểm soát chuyên trách Tập đoàn"
+	dept_member_designation = dept_member_designation_raw.lower()
 	company = filters.get("company")
 	department = filters.get("department")
 	today_date = getdate(nowdate())
@@ -703,6 +706,20 @@ def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
 		)
 		emp_map = {e.name: e for e in emp_rows}
 
+	def _classify(emp) -> str | None:
+		designation = (emp.get("designation") or "").strip().lower()
+		if designation == excluded_designation:
+			return None
+		if designation == dept_member_designation:
+			return "department"
+		group = emp.get("custom_designation_group")
+		dept = emp.get("department")
+		if group == "Người quản lý" and dept != "Ban Kiểm soát":
+			return "corporate"
+		if (group == "Người quản lý" and dept == "Ban Kiểm soát") or group == "Lãnh đạo cấp trung":
+			return "department"
+		return None
+
 	def _fmt(dt_val):
 		if not dt_val:
 			return ""
@@ -711,27 +728,30 @@ def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
 		except Exception:
 			return str(dt_val)
 
-	result = {"Người quản lý": [], "Lãnh đạo cấp trung": []}
+	result = {"corporate": [], "department": []}
 	checkin_present_ids: set[str] = set()
 	for r in rows:
 		emp_code = r.get("employee")
 		emp = emp_map.get(emp_code)
 		if not emp:
 			continue
-		group = emp.get("custom_designation_group")
-		if group not in allowed_groups:
+		group_code = _classify(emp)
+		if not group_code:
 			continue
 		if company and emp.get("company") != company:
 			continue
+		# Lãnh đạo ban không lấy theo checkin, chỉ auto-mark phía dưới
+		if group_code == "department":
+			continue
 		checkin_present_ids.add(emp_code)
-		result[group].append(
+		result[group_code].append(
 			{
 				"employee": emp_code,
 				"employee_name": emp.get("employee_name") or emp_code,
 				"department": emp.get("department"),
 				"designation": emp.get("designation"),
 				"time": _fmt(r.get("first_in")),
-				"group": group,
+				"group": group_code,
 			}
 		)
 
@@ -740,10 +760,13 @@ def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
 		"Employee",
 		filters={
 			"status": "Active",
-			"custom_designation_group": ("in", list(allowed_groups)),
 			**({"company": company} if company else {}),
 			**({"department": department} if department else {}),
 		},
+		or_filters=[
+			{"custom_designation_group": ("in", list(allowed_groups))},
+			{"designation": ("like", "%Ban Kiểm soát chuyên trách Tập đoàn%")},
+		],
 		fields=[
 			"name",
 			"employee_name",
@@ -760,17 +783,17 @@ def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
 			continue
 		if emp.name in on_leave_or_trip:
 			continue
-		group = emp.get("custom_designation_group")
-		if group not in result:
+		group_code = _classify(emp)
+		if not group_code:
 			continue
-		result[group].append(
+		result[group_code].append(
 			{
 				"employee": emp.name,
 				"employee_name": emp.get("employee_name") or emp.name,
 				"department": emp.get("department"),
 				"designation": emp.get("designation"),
 				"time": "",
-				"group": group,
+				"group": group_code,
 			}
 		)
 
@@ -787,21 +810,21 @@ def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
 
 	designation_priority = {"trưởng ban": 0, "chánh văn phòng": 1}
 
-	def _sort_key(row: dict, group_name: str) -> tuple:
+	def _sort_key(row: dict, group_code: str) -> tuple:
 		name = (row.get("employee_name") or "").strip()
 		designation = (row.get("designation") or "").strip().lower()
 		time_val = row.get("time") or ""
 		# nhân sự không trong priority_order sẽ có index lớn (99)
 		name_order = priority_order.get(name, 99)
-		designation_order = designation_priority.get(designation, 99) if group_name == "Lãnh đạo cấp trung" else 99
+		designation_order = designation_priority.get(designation, 99) if group_code == "department" else 99
 		return (designation_order, name_order, time_val, name)
 
 	for grp_name, grp in result.items():
 		grp.sort(key=lambda row: _sort_key(row, grp_name))
 
 	return {
-		"corporate_leaders": result["Người quản lý"],
-		"department_leaders": result["Lãnh đạo cấp trung"],
+		"corporate_leaders": result["corporate"],
+		"department_leaders": result["department"],
 	}
 
 
