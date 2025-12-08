@@ -690,7 +690,15 @@ def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
 		emp_rows = frappe.get_all(
 			"Employee",
 			filters={"name": ("in", emp_ids)},
-			fields=["name", "employee_name", "department", "custom_designation_group", "company", "custom_need_check"],
+			fields=[
+				"name",
+				"employee_name",
+				"department",
+				"designation",
+				"custom_designation_group",
+				"company",
+				"custom_need_check",
+			],
 			ignore_permissions=True,
 		)
 		emp_map = {e.name: e for e in emp_rows}
@@ -721,6 +729,7 @@ def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
 				"employee": emp_code,
 				"employee_name": emp.get("employee_name") or emp_code,
 				"department": emp.get("department"),
+				"designation": emp.get("designation"),
 				"time": _fmt(r.get("first_in")),
 				"group": group,
 			}
@@ -735,22 +744,31 @@ def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
 			**({"company": company} if company else {}),
 			**({"department": department} if department else {}),
 		},
-		fields=["name", "employee_name", "department", "custom_designation_group", "company", "custom_need_check"],
+		fields=[
+			"name",
+			"employee_name",
+			"department",
+			"designation",
+			"custom_designation_group",
+			"company",
+			"custom_need_check",
+		],
 		ignore_permissions=True,
 	)
 	for emp in leader_rows:
-		if not emp.get("custom_need_check"):
-			continue
 		if emp.name in checkin_present_ids:
 			continue
 		if emp.name in on_leave_or_trip:
 			continue
 		group = emp.get("custom_designation_group")
+		if group not in result:
+			continue
 		result[group].append(
 			{
 				"employee": emp.name,
 				"employee_name": emp.get("employee_name") or emp.name,
 				"department": emp.get("department"),
+				"designation": emp.get("designation"),
 				"time": "",
 				"group": group,
 			}
@@ -760,21 +778,26 @@ def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
 	priority_order = {
 		"Lê Tiến Trường": 0,
 		"Cao Hữu Hiếu": 1,
-		"Phạm Văn Tân":2,
-		"Nguyễn Đức Trị":3,
-		"Nguyễn Song Hải":4,
-		"Lê Mạc Thuấn":5,
-		"Nguyễn Thị Thu Hiền":6, 
+		"Phạm Văn Tân": 2,
+		"Nguyễn Đức Trị": 3,
+		"Nguyễn Song Hải": 4,
+		"Lê Mạc Thuấn": 5,
+		"Nguyễn Thị Thu Hiền": 6,
 	}
 
-	def _sort_key(row: dict) -> tuple:
+	designation_priority = {"trưởng ban": 0, "chánh văn phòng": 1}
+
+	def _sort_key(row: dict, group_name: str) -> tuple:
 		name = (row.get("employee_name") or "").strip()
+		designation = (row.get("designation") or "").strip().lower()
 		time_val = row.get("time") or ""
 		# nhân sự không trong priority_order sẽ có index lớn (99)
-		return (priority_order.get(name, 99), time_val, name)
+		name_order = priority_order.get(name, 99)
+		designation_order = designation_priority.get(designation, 99) if group_name == "Lãnh đạo cấp trung" else 99
+		return (designation_order, name_order, time_val, name)
 
 	for grp_name, grp in result.items():
-		grp.sort(key=_sort_key)
+		grp.sort(key=lambda row: _sort_key(row, grp_name))
 
 	return {
 		"corporate_leaders": result["Người quản lý"],
