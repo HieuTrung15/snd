@@ -1107,5 +1107,5 @@ def get_next_reference_number(
 
 	# type_doc trống: dùng abbr nếu có
 	if abbr:
-		return f"{render_num}/TĐDMVT-{abbr}"
-	return f"{render_num}/TĐDMVT"
+		return f"{render_num}/TĐDMVN-{abbr}"
+	return f"{render_num}/TĐDMVN"
