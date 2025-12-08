@@ -366,6 +366,7 @@
    "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
    "fieldname": "department",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Ban g\u1eedi \u0111i",
    "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
    "options": "Department"
@@ -389,6 +390,7 @@
    "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
    "fieldname": "nguoi_ky",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi k\u00fd",
    "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
    "options": "Employee"
@@ -412,7 +414,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-08 16:22:49.676724",
+ "modified": "2025-12-08 17:04:18.377990",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
