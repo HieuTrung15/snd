@@ -615,7 +615,7 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 
 	const tienAn =
 		(toNumber(payload.meal_allowance) / standardWorkingDays) *
-		Math.round(currentWorkingDays + previousWorkingDays);
+		Math.floor(currentWorkingDays + previousWorkingDays);
 	frappe.model.set_value(row.doctype, row.name, "tien_an", tienAn);
 	row.tien_an = tienAn;
 
@@ -705,10 +705,18 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 	const applyFlatTax10 = payload.thue_tam_trich === true || payload.thue_tam_trich === 1 || String(payload.thue_tam_trich) === "1" || row.employement_type === "Hợp đồng thử việc" || row.employement_type === "Hợp đồng học nghề" || row.employement_type === "Hợp đồng đào tạo nghề" || row.employement_type === "Hợp đồng tập nghề";
 	let tncn;
 
-	if (applyFlatTax10) {
-		const baseForFlatTax = toNumber(row.tong_tn_chiu_thue) || toNumber(tongThuNhap);
-		tncn = Math.round(baseForFlatTax * 0.1);
-	} else {
+	if (applyFlatTax10 ) 
+		{
+			if (row.tongThuNhapChiuThue > 2000000) {
+				const baseForFlatTax = toNumber(row.tong_tn_chiu_thue) || toNumber(tongThuNhap);
+				tncn = Math.round(baseForFlatTax * 0.1);
+			}
+			else {
+				tncn = 0;
+			}
+		
+		} 
+	else {
 		const taxableIncome = Math.max(0, +row.thu_nhap_tinh_thue || 0);
 		const extraWithheldTax = toNumber(payload.thue_tncn_trich_them);
 		const bracketsRaw = Array.isArray(payload.tax_brackets) ? payload.tax_brackets : [];
