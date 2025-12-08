@@ -400,6 +400,7 @@
    "fieldname": "short_text_department",
    "fieldtype": "Data",
    "hidden": 1,
+   "ignore_user_permissions": 1,
    "label": "T\u00ean vi\u1ebft t\u1eaft Ph\u00f2ng/ban",
    "read_only": 1
   },
@@ -414,7 +415,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-08 17:04:18.377990",
+ "modified": "2025-12-08 17:10:12.120218",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
