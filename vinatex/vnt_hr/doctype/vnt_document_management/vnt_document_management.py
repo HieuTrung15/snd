@@ -406,8 +406,6 @@ class VNTDocumentManagement(Document):
 			}
 		).insert(ignore_permissions=True)
 
-		# ToDo (tránh nhân đôi nếu đã có)
-		
 		frappe.get_doc(
 			{
 				"doctype": "ToDo",
