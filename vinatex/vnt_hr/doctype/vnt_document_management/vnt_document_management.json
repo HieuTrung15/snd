@@ -15,10 +15,14 @@
   "handler",
   "employee",
   "naming_series",
+  "noi_nhan",
+  "nguoi_ky",
   "column_break_fdwp",
   "document_date",
   "received_date",
   "deadline",
+  "department",
+  "vnt_doc_mng",
   "column_break_frgm",
   "reference_number",
   "summary",
@@ -76,7 +80,8 @@
    "fieldname": "attach",
    "fieldtype": "Attach",
    "label": "\u0110\u00ednh k\u00e8m",
-   "make_attachment_public": 1
+   "make_attachment_public": 1,
+   "reqd": 1
   },
   {
    "fieldname": "reference_number",
@@ -100,26 +105,29 @@
    "reqd": 1
   },
   {
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "received_date",
    "fieldtype": "Date",
    "label": "Ng\u00e0y \u0111\u1ebfn",
-   "reqd": 1
+   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\""
   },
   {
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "sender",
    "fieldtype": "Data",
    "label": "N\u01a1i g\u1eedi",
-   "reqd": 1
+   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\""
   },
   {
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "handler",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "label": "L\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n",
    "link_filters": "[[\"Employee\",\"name\",\"in\",[\"VGT00067\",\"VGT00069\",\"VGT00079\",\"VGT00080\",\"VGT00083\"]]]",
+   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "no_copy": 1,
-   "options": "Employee",
-   "reqd": 1
+   "options": "Employee"
   },
   {
    "fieldname": "html",
@@ -152,6 +160,7 @@
    "options": "\nCV\u0110I.-.MM..YY.-.####\nCV\u0110EN.-.MM..YY.-.####\nVBNB.-.MM..YY.-.####"
   },
   {
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "handler_status",
    "fieldtype": "Button",
    "label": "Chuy\u1ec3n x\u1eed l\u00fd",
@@ -162,12 +171,14 @@
    "fieldtype": "Section Break"
   },
   {
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "y_kien_ld_td",
    "fieldtype": "Small Text",
    "label": "\u00dd ki\u1ebfn L\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n",
    "max_height": "120px"
   },
   {
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "items",
    "fieldtype": "Table",
    "no_copy": 1,
@@ -277,10 +288,11 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "deadline",
    "fieldtype": "Date",
    "label": "Th\u1eddi h\u1ea1n",
-   "reqd": 1
+   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\""
   },
   {
    "fieldname": "section_break_bpgl",
@@ -324,6 +336,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "deadline_copy",
    "fieldtype": "Date",
    "label": "Th\u1eddi h\u1ea1n",
@@ -335,6 +348,7 @@
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "is_handler_status",
    "fieldtype": "Check",
    "label": "\u0110\u00e3 chuy\u1ec3n x\u1eed l\u00fd",
@@ -345,12 +359,43 @@
    "fieldtype": "Small Text",
    "label": "\u00dd ki\u1ebfn ng\u01b0\u1eddi ch\u1ee7 tr\u00ec",
    "permlevel": 1
+  },
+  {
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Ban g\u1eedi \u0111i",
+   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
+   "options": "Department"
+  },
+  {
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
+   "fieldname": "vnt_doc_mng",
+   "fieldtype": "Link",
+   "label": "C\u00f4ng v\u0103n \u0111\u1ebfn t\u01b0\u01a1ng \u1ee9ng",
+   "link_filters": "[[\"VNT Document Management\",\"type\",\"=\",\"C\u00f4ng v\u0103n \u0111\u1ebfn\"]]",
+   "options": "VNT Document Management"
+  },
+  {
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
+   "fieldname": "noi_nhan",
+   "fieldtype": "Data",
+   "label": "N\u01a1i nh\u1eadn",
+   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\""
+  },
+  {
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
+   "fieldname": "nguoi_ky",
+   "fieldtype": "Link",
+   "label": "Ng\u01b0\u1eddi k\u00fd",
+   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
+   "options": "Employee"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-08 08:48:33.891614",
+ "modified": "2025-12-08 14:24:39.935711",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
