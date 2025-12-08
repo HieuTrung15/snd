@@ -147,6 +147,102 @@ const hide_legacy_fields = (frm) => {
   });
 };
 
+const get_current_employee = async (frm) => {
+  if (frm._currentEmployee !== undefined) return frm._currentEmployee;
+  try {
+    const r = await frappe.db.get_value("Employee", { user_id: frappe.session.user }, "name");
+    frm._currentEmployee = r?.message?.name || null;
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error(err);
+    frm._currentEmployee = null;
+  }
+  return frm._currentEmployee;
+};
+
+const set_handler_editable = (frm, enabled) => {
+  frm.toggle_enable("y_kien_ld_td", enabled);
+  frm.toggle_enable("handler_status", enabled);
+  frm.toggle_enable("y_kien_ld_td", enabled);
+  frm.toggle_enable("is_handler_status", enabled);
+  const grid = frm.fields_dict.items?.grid;
+  frm.set_df_property("items", "read_only", enabled ? 0 : 1);
+  if (grid) {
+    grid.cannot_add_rows = !enabled;
+    grid.cannot_delete_rows = !enabled;
+    grid.refresh();
+  }
+};
+
+const apply_handler_edit_lock = async (frm) => {
+  const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
+  if (!isIncoming) {
+    set_handler_editable(frm, true);
+    return;
+  }
+
+  const currentEmp = await get_current_employee(frm);
+  const hasHandler = !!frm.doc.handler;
+  const canEdit = !hasHandler || (currentEmp && frm.doc.handler === currentEmp);
+  set_handler_editable(frm, !!canEdit);
+};
+
+const set_creator_editable = (frm, enabled) => {
+  const fields = ["type", "sender", "handler", "document_date", "received_date", "deadline", "reference_number", "summary", "attach"];
+  fields.forEach((field) => frm.toggle_enable(field, enabled));
+};
+
+const apply_creator_edit_lock = async (frm) => {
+  const creator = frm.doc.employee || null;
+  if (!creator) {
+    set_creator_editable(frm, true);
+    return;
+  }
+  const currentEmp = await get_current_employee(frm);
+  const canEdit = currentEmp && creator === currentEmp;
+  set_creator_editable(frm, !!canEdit);
+};
+
+const set_chair_editable = (frm, enabled) => {
+  const fields = ["chairperson_status", "cong_van_di", "y_kien_chu_tri", "deadline_cv_xu_ly", "cv_xu_ly"];
+  fields.forEach((field) => frm.toggle_enable(field, enabled));
+
+  const grid = frm.fields_dict.items3?.grid;
+  frm.set_df_property("items3", "read_only", enabled ? 0 : 1);
+  if (grid) {
+    grid.cannot_add_rows = !enabled;
+    grid.cannot_delete_rows = !enabled;
+    grid.refresh();
+  }
+
+  const gridCollab = frm.fields_dict.items2?.grid;
+  frm.set_df_property("items2", "read_only", enabled ? 0 : 1);
+  if (gridCollab) {
+    gridCollab.df.read_only = enabled ? 0 : 1;
+    gridCollab.refresh();
+  }
+
+  const gridItem4 = frm.fields_dict.item4?.grid;
+  frm.set_df_property("item4", "read_only", enabled ? 0 : 1);
+  if (gridItem4) {
+    gridItem4.cannot_add_rows = !enabled;
+    gridItem4.cannot_delete_rows = !enabled;
+    gridItem4.refresh();
+  }
+};
+
+const apply_chair_edit_lock = async (frm) => {
+  const chair = frm.doc.nguoi_chu_tri || null;
+  const specialist = frm.doc.cv_xu_ly || null;
+  if (!chair && !specialist) {
+    set_chair_editable(frm, false);
+    return;
+  }
+  const currentEmp = await get_current_employee(frm);
+  const canEdit = currentEmp && ((chair && chair === currentEmp) || (specialist && specialist === currentEmp));
+  set_chair_editable(frm, !!canEdit);
+};
+
 // Đảm bảo chỉ có duy nhất một dòng được chọn Chủ trì
 const ensure_single_chair_row = (frm, cdt, cdn) => {
   const row = (locals[cdt] && locals[cdt][cdn]) || null;
@@ -238,6 +334,7 @@ frappe.ui.form.on("VNT Document Management", {
     if (frm.doc.chairperson) {
       frm.set_value("nguoi_chu_tri", frm.doc.chairperson);
     }
+    frm.trigger("enforce_chair_edit_permission");
   },
 
   refresh(frm) {
@@ -253,6 +350,9 @@ frappe.ui.form.on("VNT Document Management", {
     frm.trigger("sync_chair_from_items");
     frm.trigger("sync_collab_from_items");
     frm.trigger("render_process_flow");
+    frm.trigger("enforce_handler_edit_permission");
+    frm.trigger("enforce_creator_edit_permission");
+    frm.trigger("enforce_chair_edit_permission");
     frm.trigger("setup_cv_xu_ly_query");
     frm.trigger("setup_cv_xu_ly_query_items2");
     frm.trigger("lock_items2_grid");
@@ -281,6 +381,9 @@ frappe.ui.form.on("VNT Document Management", {
     } else {
       frm.set_value("naming_series", "VBNB.-.MM..YY.-.####");
     }
+    frm.trigger("enforce_handler_edit_permission");
+    frm.trigger("enforce_creator_edit_permission");
+    frm.trigger("enforce_chair_edit_permission");
   },
 
   deadline(frm) {
@@ -302,6 +405,9 @@ frappe.ui.form.on("VNT Document Management", {
 
   handler(frm) {
     frm.trigger("render_process_flow");
+    frm.trigger("enforce_handler_edit_permission");
+    frm.trigger("enforce_creator_edit_permission");
+    frm.trigger("enforce_chair_edit_permission");
   },
 
   employee_status(frm) {
@@ -309,7 +415,19 @@ frappe.ui.form.on("VNT Document Management", {
   },
 
   async handler_status(frm) {
+    if ((frm.doc.type || "").trim() === "Công văn đến" && frm.doc.handler) {
+      const currentEmp = await get_current_employee(frm);
+      if (!currentEmp || frm.doc.handler !== currentEmp) {
+        frappe.msgprint("Chỉ Lãnh đạo Tập đoàn được chỉ định mới có thể Chuyển xử lý.");
+        return;
+      }
+    }
+
     if (frm._handlerStatusSaving) return;
+    if (is_checked(frm.doc.is_handler_status)) {
+      frappe.msgprint("Văn bản đã được chuyển xử lý trước đó, không gửi lại thông báo.");
+      return;
+    }
 
     const check = validate_handler_status_preconditions(frm);
     if (!check.ok) {
@@ -340,6 +458,10 @@ frappe.ui.form.on("VNT Document Management", {
       await frm.reload_doc();
       set_handler_status_prev(frm, frm.doc.handler_status || null);
       frm.trigger("render_process_flow");
+      if (!is_checked(frm.doc.is_handler_status)) {
+        await frm.set_value("is_handler_status", 1);
+        await frm.save();
+      }
     } catch (err) {
       frappe.msgprint("Thao tác Chuyển văn bản không thành công. Vui lòng thử lại.");
       // eslint-disable-next-line no-console
@@ -383,6 +505,7 @@ frappe.ui.form.on("VNT Document Management", {
 
   cv_xu_ly(frm) {
     frm.trigger("render_process_flow");
+    frm.trigger("enforce_chair_edit_permission");
   },
 
   trang_thai_chuyen_vien_xu_ly(frm) {
@@ -395,6 +518,18 @@ frappe.ui.form.on("VNT Document Management", {
 
   info_recipient_status(frm) {
     frm.trigger("render_process_flow");
+  },
+
+  async enforce_handler_edit_permission(frm) {
+    await apply_handler_edit_lock(frm);
+  },
+
+  async enforce_creator_edit_permission(frm) {
+    await apply_creator_edit_lock(frm);
+  },
+
+  async enforce_chair_edit_permission(frm) {
+    await apply_chair_edit_lock(frm);
   },
 
   setup_cv_xu_ly_query(frm) {
@@ -461,6 +596,7 @@ frappe.ui.form.on("VNT Document Management", {
     }
 
     if (Object.keys(updates).length) frm.set_value(updates);
+    frm.trigger("enforce_chair_edit_permission");
   },
 
   sync_collab_from_items(frm) {
@@ -1049,5 +1185,17 @@ frappe.ui.form.on("VNT Document Management Item", {
   },
   deadline2(frm, cdt, cdn) {
     ensure_spec_deadline_within_collab(cdt, cdn);
+  }
+});
+
+// Child table hooks: VNT Document Management Item3 (items3, item4)
+frappe.ui.form.on("VNT Document Management Item3", {
+  attach(_frm, cdt, cdn) {
+    const row = locals[cdt] && locals[cdt][cdn];
+    if (!row || !row.attach) return;
+    const currentUser = frappe.session?.user || null;
+    if (!currentUser) return;
+    if (row.user === currentUser) return;
+    frappe.model.set_value(cdt, cdn, "user", currentUser);
   }
 });

@@ -8,7 +8,8 @@
  "field_order": [
   "file_name",
   "attach",
-  "note"
+  "note",
+  "user"
  ],
  "fields": [
   {
@@ -18,7 +19,6 @@
    "label": "T\u00ean file"
   },
   {
-   "columns": 2,
    "fieldname": "attach",
    "fieldtype": "Attach",
    "in_list_view": 1,
@@ -30,13 +30,21 @@
    "fieldtype": "Small Text",
    "in_list_view": 1,
    "label": "Ghi ch\u00fa"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Ng\u01b0\u1eddi t\u1ea3i l\u00ean",
+   "options": "User",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-28 09:27:16.094165",
+ "modified": "2025-12-08 08:34:11.657740",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management Item3",

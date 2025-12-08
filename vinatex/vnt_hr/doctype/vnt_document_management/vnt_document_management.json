@@ -31,6 +31,7 @@
   "y_kien_ld_td",
   "column_break_cjki",
   "handler_status",
+  "is_handler_status",
   "deadline_copy",
   "qu\u00e1_tr\u00ecnh_x\u1eed_l\u00fd_tab",
   "nguoi_chu_tri",
@@ -38,7 +39,7 @@
   "chairperson_status",
   "cong_van_di",
   "column_break_iblk",
-  "\u00fd_ki\u1ebfn_ng\u01b0\u1eddi_ch\u1ee7_tr\u00ec",
+  "y_kien_chu_tri",
   "section_break_manr",
   "cv_xu_ly",
   "deadline_cv_xu_ly",
@@ -140,7 +141,7 @@
    "fieldtype": "Select",
    "label": "Lo\u1ea1i v\u0103n b\u1ea3n",
    "no_copy": 1,
-   "options": "\nC\u00f4ng v\u0103n \u0111\u1ebfn\nC\u00f4ng v\u0103n \u0111i\nQuy\u1ebft \u0111\u1ecbnh\nC\u00f4ng vi\u1ec7c n\u1ed9i b\u1ed9",
+   "options": "\nC\u00f4ng v\u0103n \u0111\u1ebfn\nC\u00f4ng v\u0103n \u0111i",
    "reqd": 1
   },
   {
@@ -164,7 +165,7 @@
    "fieldname": "y_kien_ld_td",
    "fieldtype": "Small Text",
    "label": "\u00dd ki\u1ebfn L\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n",
-   "max_height": "100px"
+   "max_height": "120px"
   },
   {
    "fieldname": "items",
@@ -206,12 +207,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "\u00fd_ki\u1ebfn_ng\u01b0\u1eddi_ch\u1ee7_tr\u00ec",
-   "fieldtype": "Small Text",
-   "label": "\u00dd ki\u1ebfn ng\u01b0\u1eddi ch\u1ee7 tr\u00ec",
-   "permlevel": 1
-  },
-  {
    "fieldname": "section_break_manr",
    "fieldtype": "Section Break"
   },
@@ -232,7 +227,7 @@
    "permlevel": 1
   },
   {
-   "depends_on": "eval: doc.cv_xu_ly != \"\"",
+   "depends_on": "eval: doc.cv_xu_ly",
    "fieldname": "trang_thai_chuyen_vien_xu_ly",
    "fieldtype": "Select",
    "label": "Tr\u1ea1ng th\u00e1i chuy\u00ean vi\u00ean x\u1eed l\u00fd",
@@ -245,6 +240,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval: doc.cv_xu_ly",
    "fieldname": "y_kien_chuyen_vien_xu_ly",
    "fieldtype": "Small Text",
    "label": "\u00dd ki\u1ebfn chuy\u00ean vi\u00ean x\u1eed l\u00fd",
@@ -336,6 +332,19 @@
   {
    "fieldname": "section_break_fsrf",
    "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_handler_status",
+   "fieldtype": "Check",
+   "label": "\u0110\u00e3 chuy\u1ec3n x\u1eed l\u00fd",
+   "read_only": 1
+  },
+  {
+   "fieldname": "y_kien_chu_tri",
+   "fieldtype": "Small Text",
+   "label": "\u00dd ki\u1ebfn ng\u01b0\u1eddi ch\u1ee7 tr\u00ec",
+   "permlevel": 1
   }
  ],
  "grid_page_length": 50,

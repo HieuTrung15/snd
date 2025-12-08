@@ -390,7 +390,7 @@ class VNTDocumentManagement(Document):
 		if not user_id:
 			return
 
-		content = f"{self.sender or ''} v/v {self.summary or ''}".strip(" /")
+		content = f"{self.sender or ''} {self.summary or ''}".strip(" /")
 		if not content:
 			content = "Văn bản mới"
 
@@ -406,8 +406,6 @@ class VNTDocumentManagement(Document):
 			}
 		).insert(ignore_permissions=True)
 
-		# ToDo (tránh nhân đôi nếu đã có)
-		
 		frappe.get_doc(
 			{
 				"doctype": "ToDo",
