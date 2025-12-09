@@ -15,6 +15,7 @@
   "designation",
   "bhxh",
   "bank_ac_no",
+  "get_salary_employee",
   "section_break_e5sa",
   "hs_luong_cb",
   "luong_cb",
@@ -514,13 +515,18 @@
    "label": "Ti\u1ec1n g\u1eedi xe (23-1)",
    "precision": "0",
    "read_only": 1
+  },
+  {
+   "fieldname": "get_salary_employee",
+   "fieldtype": "Button",
+   "label": "T\u00ednh l\u1ea1i l\u01b0\u01a1ng"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-29 12:55:56.376338",
+ "modified": "2025-12-09 09:03:31.328234",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Monthly Payroll Item",
