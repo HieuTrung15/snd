@@ -658,7 +658,7 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 
 	const tienAn =
 		(toNumber(payload.meal_allowance) / standardWorkingDays) *
-		toNumber(row.ngay_cong);
+		(toNumber(row.ngay_cong) + toNumber(row.ngay_cong_cu));
 	frappe.model.set_value(row.doctype, row.name, "tien_an", tienAn);
 	row.tien_an = tienAn;
 
