@@ -218,6 +218,18 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 });
 
 frappe.ui.form.on("VNT Monthly Payroll Item", {
+	get_salary_employee(frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		if (!row || !row.employee) {
+			frappe.msgprint(__("Vui lòng chọn nhân sự trước khi tính lại lương."));
+			return;
+		}
+		if (!frm.doc.month || !frm.doc.year) {
+			frappe.msgprint(__("Vui lòng chọn Tháng và Năm trước khi tính lương."));
+			return;
+		}
+		frm.events.compute_row(frm, row, { freeze: true, refresh: true });
+	},
 	employee(frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
 		if (frm._vnt_skip_employee_compute) {
@@ -372,6 +384,11 @@ function run_salary_compute(frm, opts = {}) {
 
 	frappe.dom.freeze(__("Đang tính lương, vui lòng đợi..."));
 	return compute_all_items(frm, rowsToCompute)
+		.then(() => {
+			if (frm.is_dirty()) {
+				return frm.save();
+			}
+		})
 		.catch((err) => {
 			console.error(err);
 			frappe.msgprint(
@@ -491,6 +508,12 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 
 	const regionalMinWage = toNumber(payload.regional_minimum_wage);
 	const corporateMinWage = toNumber(payload.corporate_minimum_wage);
+	const pcDangOverrideRaw = payload.custom_muc_luong_pc_dang;
+	const hasPcDangOverride =
+		pcDangOverrideRaw !== undefined &&
+		pcDangOverrideRaw !== null &&
+		pcDangOverrideRaw !== "";
+	const pcDangOverride = hasPcDangOverride ? toNumber(pcDangOverrideRaw) : null;
 
 	frappe.model.set_value(
 		row.doctype,
@@ -502,7 +525,13 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		row.doctype,
 		row.name,
 		"pc_dang1",
-		regionalMinWage * toNumber(row.hs_pc_dang_1)
+		(() => {
+			const value = hasPcDangOverride
+				? pcDangOverride
+				: regionalMinWage * toNumber(row.hs_pc_dang_1);
+			row.pc_dang1 = value;
+			return value;
+		})()
 	);
 	frappe.model.set_value(
 		row.doctype,
@@ -623,7 +652,13 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		row.doctype,
 		row.name,
 		"pc_dang2",
-		toNumber(row.hs_pc_dang_1) * corporateMinWage
+		(() => {
+			const value = hasPcDangOverride
+				? pcDangOverride
+				: toNumber(row.hs_pc_dang_1) * corporateMinWage;
+			row.pc_dang2 = value;
+			return value;
+		})()
 	);
 	frappe.model.set_value(
 		row.doctype,
@@ -767,11 +802,33 @@ function compute_all_items(frm, rows = []) {
 		return Promise.resolve();
 	}
 
-	return computables.reduce((promise, row) => {
-		return promise.then(() =>
-			Promise.resolve(frm.events.compute_row(frm, row, { freeze: false, refresh: false }))
-		);
+	const total = computables.length;
+	const title = __("Đang tính lương");
+	frappe.show_progress(title, 0, total, __("Bắt đầu tính lương..."));
+
+	let done = 0;
+	const run = computables.reduce((promise, row) => {
+		return promise
+			.then(() =>
+				Promise.resolve(
+					frm.events.compute_row(frm, row, {
+						freeze: false,
+						refresh: false,
+					})
+				)
+			)
+			.finally(() => {
+				done += 1;
+				const label = __("{0}/{1} nhân sự: {2}", [
+					done,
+					total,
+					row.employee_name || row.employee || "",
+				]);
+				frappe.show_progress(title, done, total, label);
+			});
 	}, Promise.resolve());
+
+	return run.finally(() => frappe.show_progress(title, total, total, __("Hoàn tất"), true));
 }
 
 function toNumber(value) {
