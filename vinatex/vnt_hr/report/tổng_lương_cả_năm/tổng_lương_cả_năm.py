@@ -182,6 +182,12 @@ def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, mo
 	dang_vien = (employee_ctx.get("dang_vien") or "").strip()
 	so_npt = cint(employee_ctx.get("so_npt") or 0)
 	emp_contract_type = (employee_ctx.get("employment_type") or "").strip()
+	pc_dang_override_raw = payload.get("custom_muc_luong_pc_dang")
+	pc_dang_override = flt(pc_dang_override_raw) if pc_dang_override_raw not in (None, "") else None
+	has_pc_dang_override = pc_dang_override not in (None, 0)
+	pc_dang_coeff_raw = payload.get("custom_allowance_coefficient_1")
+	pc_dang_coeff = flt(pc_dang_coeff_raw) if pc_dang_coeff_raw not in (None, "") else hs_pc_dang_1
+	hs_pc_dang_1 = pc_dang_coeff
 
 	reference_salary = flt(payload.get("reference_salary"))
 	regional_minimum_wage = flt(payload.get("regional_minimum_wage"))
@@ -236,7 +242,7 @@ def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, mo
 
 	# Lương cơ bản & phụ cấp 1
 	luong_cb = regional_minimum_wage * hs_luong_cb
-	pc_dang1 = regional_minimum_wage * hs_pc_dang_1
+	pc_dang1 = pc_dang_override if has_pc_dang_override else regional_minimum_wage * hs_pc_dang_1
 	pc_kiem_nhiem1 = regional_minimum_wage * hs_pc_kiem_nhiem1
 
 	# Tổng lương tính BHXH (giới hạn 20 * reference_salary)
@@ -282,10 +288,10 @@ def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, mo
 	# Tiền ăn ca
 	tien_an = 0
 	if standard_days:
-		tien_an = (meal_allowance / standard_days) * _js_round(current_working_days + previous_working_days)
+		tien_an = (meal_allowance / standard_days) * (current_working_days + previous_working_days)
 
 	# Phụ cấp loại 2
-	pc_dang2 = hs_pc_dang_1 * corporate_minimum_wage
+	pc_dang2 = pc_dang_override if has_pc_dang_override else hs_pc_dang_1 * corporate_minimum_wage
 	pc_kiem_nhiem2 = hs_pc_kiem_nhiem1 * corporate_minimum_wage
 
 	# Công tác phí
