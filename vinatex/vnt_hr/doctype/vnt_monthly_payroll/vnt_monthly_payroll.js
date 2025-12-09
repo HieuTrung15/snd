@@ -197,6 +197,7 @@ frappe.ui.form.on("VNT Monthly Payroll", {
 			company: frm.doc.company,
 			month: frm.doc.month,
 			year: frm.doc.year,
+			docname: frm.doc.name,
 		};
 		const freeze = opts.freeze !== false;
 		const refresh = opts.refresh !== false;
@@ -644,6 +645,17 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 	frappe.model.set_value(row.doctype, row.name, "luong_nghiphep_vr", luongNghiPhepVR);
 
 	frappe.model.set_value(row.doctype, row.name, "nghi_kluong_bhxh", payload.nghi_kluong_bhxh);
+
+	if (
+		payload.hasOwnProperty("previous_truy_thu") &&
+		payload.previous_truy_thu !== null &&
+		payload.previous_truy_thu !== undefined &&
+		payload.previous_truy_thu !== ""
+	) {
+		const prevTruyThu = toNumber(payload.previous_truy_thu);
+		frappe.model.set_value(row.doctype, row.name, "truy_thu", prevTruyThu);
+		row.truy_thu = prevTruyThu;
+	}
 
 	const tienLuongHQCV = ((row.muc_luong_theo_hqcv) / standardWorkingDays) * currentWorkingDays;
 	frappe.model.set_value(row.doctype, row.name, "tien_luong_hqcv", tienLuongHQCV);

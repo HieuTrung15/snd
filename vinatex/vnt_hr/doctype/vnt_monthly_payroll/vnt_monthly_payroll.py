@@ -502,7 +502,7 @@ def get_employee_salary_history(employee):
 
 
 @frappe.whitelist()
-def compute_item(employee, company=None, month=None, year=None):
+def compute_item(employee, company=None, month=None, year=None, docname=None):
     """Tính các tham số dùng cho bảng lương theo kỳ (month, year) và employee."""
     if not month or not year:
         return {}
@@ -816,7 +816,43 @@ def compute_item(employee, company=None, month=None, year=None):
         "employment_type": employee_info.get("employment_type"),
         "custom_muc_luong_pc_dang": employee_info.get("custom_muc_luong_pc_dang"),
         "custom_allowance_coefficient_1": employee_info.get("custom_allowance_coefficient_1"),
+        "previous_truy_thu": get_latest_truy_thu(employee, month=month, year=year, exclude_doc=docname),
     }
+
+
+def get_latest_truy_thu(employee, month=None, year=None, exclude_doc=None):
+    """Lấy giá trị truy thu thuế TNCN gần nhất (bảng lương trước, đã xác nhận)."""
+    if not employee:
+        return None
+
+    params = {"employee": employee}
+    conditions = ["item.employee = %(employee)s", "parent.docstatus = 1"]
+
+    if exclude_doc:
+        params["exclude_doc"] = exclude_doc
+        conditions.append("parent.name != %(exclude_doc)s")
+
+    if month and year:
+        params["month"] = str(int(month)).zfill(2)
+        params["year"] = cint(year)
+        conditions.append("(parent.month != %(month)s OR parent.year != %(year)s)")
+
+    sql = f"""
+        SELECT item.truy_thu
+        FROM `tabVNT Monthly Payroll Item` item
+        INNER JOIN `tabVNT Monthly Payroll` parent ON parent.name = item.parent
+        WHERE {" AND ".join(conditions)}
+        ORDER BY
+            parent.year DESC,
+            CAST(parent.month AS UNSIGNED) DESC,
+            parent.creation DESC,
+            item.creation DESC
+        LIMIT 1
+    """
+    row = frappe.db.sql(sql, params, as_dict=True)
+    if not row:
+        return None
+    return flt(row[0].get("truy_thu")) if row[0].get("truy_thu") is not None else None
 
 
 def _get_previous_month_and_year(base_date):
