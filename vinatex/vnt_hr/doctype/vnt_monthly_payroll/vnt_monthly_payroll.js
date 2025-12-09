@@ -509,11 +509,28 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 	const regionalMinWage = toNumber(payload.regional_minimum_wage);
 	const corporateMinWage = toNumber(payload.corporate_minimum_wage);
 	const pcDangOverrideRaw = payload.custom_muc_luong_pc_dang;
-	const hasPcDangOverride =
-		pcDangOverrideRaw !== undefined &&
-		pcDangOverrideRaw !== null &&
-		pcDangOverrideRaw !== "";
-	const pcDangOverride = hasPcDangOverride ? toNumber(pcDangOverrideRaw) : null;
+	const pcDangOverride =
+		pcDangOverrideRaw === undefined || pcDangOverrideRaw === null || pcDangOverrideRaw === ""
+			? null
+			: toNumber(pcDangOverrideRaw);
+	const hasPcDangOverride = Number.isFinite(pcDangOverride) && pcDangOverride !== 0;
+
+	const pcDangCoeffRaw = payload.custom_allowance_coefficient_1;
+	const pcDangCoeff =
+		pcDangCoeffRaw === undefined || pcDangCoeffRaw === null || pcDangCoeffRaw === ""
+			? toNumber(row.hs_pc_dang_1)
+			: toNumber(pcDangCoeffRaw);
+	if (Number.isFinite(pcDangCoeff)) {
+		row.hs_pc_dang_1 = pcDangCoeff;
+		frappe.model.set_value(row.doctype, row.name, "hs_pc_dang_1", pcDangCoeff);
+	}
+
+	const pcDang1Value = hasPcDangOverride
+		? pcDangOverride
+		: regionalMinWage * pcDangCoeff;
+	const pcDang2Value = hasPcDangOverride
+		? pcDangOverride
+		: pcDangCoeff * corporateMinWage;
 
 	frappe.model.set_value(
 		row.doctype,
@@ -526,11 +543,8 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		row.name,
 		"pc_dang1",
 		(() => {
-			const value = hasPcDangOverride
-				? pcDangOverride
-				: regionalMinWage * toNumber(row.hs_pc_dang_1);
-			row.pc_dang1 = value;
-			return value;
+			row.pc_dang1 = pcDang1Value;
+			return pcDang1Value;
 		})()
 	);
 	frappe.model.set_value(
@@ -541,7 +555,7 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 	);
 
 	const luongCb = toNumber(row.luong_cb);
-	const pcDang1 = toNumber(row.pc_dang1);
+	const pcDang1 = toNumber(pcDang1Value);
 	const pcKiemNhiem1 = toNumber(row.pc_kiem_nhiem1);
 	const referenceSalary = toNumber(payload.reference_salary);
 
@@ -653,11 +667,8 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		row.name,
 		"pc_dang2",
 		(() => {
-			const value = hasPcDangOverride
-				? pcDangOverride
-				: toNumber(row.hs_pc_dang_1) * corporateMinWage;
-			row.pc_dang2 = value;
-			return value;
+			row.pc_dang2 = pcDang2Value;
+			return pcDang2Value;
 		})()
 	);
 	frappe.model.set_value(
@@ -679,8 +690,9 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 	frappe.model.set_value(row.doctype, row.name, "tien_gui_xe", tienGuiXe);
 	row.tien_gui_xe = tienGuiXe;
 
+	const pcDang2 = toNumber(pcDang2Value);
 	const tongThuNhap =
-		toNumber(row.pc_dang2) +
+		pcDang2 +
 		toNumber(row.pc_kiem_nhiem2) +
 		toNumber(row.luong_nghiphep_vr) +
 		toNumber(row.tien_luong_hqcv) +
