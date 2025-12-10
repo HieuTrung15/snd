@@ -108,14 +108,6 @@ def _format_date_value(value: date | None) -> str:
 def _ensure_todo_for_confirmation(doc: Document, user: str, dates: list[date] | None = None):
 	if not user:
 		return
-	# Chỉ tạo một ToDo mở cho mỗi (doc, user); tránh trùng assignment
-	# if frappe.db.exists("ToDo", {
-	# 	"reference_type": doc.doctype,
-	# 	"reference_name": doc.name,
-	# 	"allocated_to": user,
-	# 	"status": ["not in", ["Closed", "Cancelled"]],
-	# }):
-	# 	return
 	mapped_employee = frappe.db.get_value("Employee", {"user_id": user}, "name")
 	if mapped_employee and mapped_employee != doc.employee:
 		return
@@ -135,6 +127,27 @@ def _ensure_todo_for_confirmation(doc: Document, user: str, dates: list[date] | 
 	description = _("Xác nhận chấm công từ {0} đến {1} ({2} ngày) của {3}").format(
 		start_label, end_label, days_count, doc.employee_name or doc.employee or _("Nhân viên")
 	)
+
+	existing = frappe.get_all(
+		"ToDo",
+		filters={
+			"reference_type": doc.doctype,
+			"reference_name": doc.name,
+			"allocated_to": user,
+			"status": ["!=", "Cancelled"],
+		},
+		pluck="name",
+		limit=1,
+	)
+	if existing:
+		# Cập nhật mô tả và đảm bảo ở trạng thái mở thay vì tạo dòng trùng.
+		frappe.db.set_value(
+			"ToDo",
+			existing[0],
+			{"description": description, "status": "Open"},
+			update_modified=False,
+		)
+		return
 
 	new_todo = frappe.new_doc("ToDo")
 	new_todo.description = description

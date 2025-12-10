@@ -526,6 +526,22 @@ def _gather_related_doc_names(emp_name: str, ignore_permissions: bool = False) -
 	)
 	doc_names.update(row.parent for row in collab_rows)
 	doc_names.update(row.parent for row in collab_spec_rows)
+
+	# Công văn đi: người lập/ người ký
+	outgoing_signed = frappe.get_all(
+		"VNT Document Management",
+		filters={"type": "Công văn đi", "nguoi_ky": emp_name, "docstatus": ["<", 2]},
+		fields=["name"],
+		ignore_permissions=True,
+	)
+	outgoing_created = frappe.get_all(
+		"VNT Document Management",
+		filters={"type": "Công văn đi", "employee": emp_name, "docstatus": ["<", 2]},
+		fields=["name"],
+		ignore_permissions=ignore_permissions,
+	)
+	doc_names.update(row.name for row in outgoing_signed)
+	doc_names.update(row.name for row in outgoing_created)
 	return doc_names
 
 
@@ -554,6 +570,8 @@ def _fetch_docs(doc_names: set[str], ignore_permissions: bool = False) -> dict[s
 		"modified",
 		"docstatus",
 		"date",
+		"nguoi_ky",
+		"employee",
 	]
 	try:
 		rows = frappe.get_all(
@@ -706,15 +724,29 @@ def get_document_overview():
 
 	today = getdate(nowdate())
 	emp_name = emp.name
+	is_superviewer = emp_name == "VGT00161"
+	ignore_permissions = is_superviewer
 
 	# === Thu thập các văn bản liên quan tới nhân viên hiện tại ===
 	doc_names = set()
+	signed_outgoing_docs = []
+
+	if is_superviewer:
+		# Nhân sự đặc biệt: xem toàn bộ văn bản đang mở
+		all_rows = frappe.get_all(
+			"VNT Document Management",
+			filters={"docstatus": ["<", 2]},
+			fields=["name"],
+			ignore_permissions=True,
+		)
+		doc_names.update(row.name for row in all_rows)
 
 	# Lãnh đạo (handler)
 	handler_docs = frappe.get_all(
 		"VNT Document Management",
 		filters={"handler": emp_name, "docstatus": ["<", 2]},
 		fields=["name", "reference_number", "summary", "nguoi_chu_tri"],
+		ignore_permissions=ignore_permissions,
 	)
 	doc_names.update(doc.name for doc in handler_docs)
 
@@ -725,6 +757,7 @@ def get_document_overview():
 			"VNT Document Management",
 			filters={"nguoi_chu_tri": emp_name, "docstatus": ["<", 2]},
 			fields=["name"],
+			ignore_permissions=ignore_permissions,
 		)
 	)
 
@@ -735,6 +768,25 @@ def get_document_overview():
 			"VNT Document Management",
 			filters={"cv_xu_ly": emp_name, "docstatus": ["<", 2]},
 			fields=["name"],
+			ignore_permissions=ignore_permissions,
+		)
+	)
+
+	# Người ký/Gửi công văn đi
+	signed_outgoing_docs = frappe.get_all(
+		"VNT Document Management",
+		filters={"type": "Công văn đi", "nguoi_ky": emp_name, "docstatus": ["<", 2]},
+		fields=["name"],
+		ignore_permissions=True,
+	)
+	doc_names.update(row.name for row in signed_outgoing_docs)
+	doc_names.update(
+		row.name
+		for row in frappe.get_all(
+			"VNT Document Management",
+			filters={"type": "Công văn đi", "employee": emp_name, "docstatus": ["<", 2]},
+			fields=["name"],
+			ignore_permissions=ignore_permissions,
 		)
 	)
 
@@ -743,11 +795,13 @@ def get_document_overview():
 		"VNT Document Management Item",
 		filters={"parenttype": "VNT Document Management", "nguoi_phoi_hop": emp_name},
 		fields=["parent", "deadline1", "trang_thai_nguoi_phoi_hop"],
+		ignore_permissions=ignore_permissions,
 	)
 	collab_spec_rows = frappe.get_all(
 		"VNT Document Management Item",
 		filters={"parenttype": "VNT Document Management", "cv_xu_ly": emp_name},
 		fields=["parent", "deadline2", "trang_thai_cv_xu_ly"],
+		ignore_permissions=ignore_permissions,
 	)
 	doc_names.update(row.parent for row in collab_rows)
 	doc_names.update(row.parent for row in collab_spec_rows)
@@ -775,11 +829,18 @@ def get_document_overview():
 		"trang_thai_chuyen_vien_xu_ly",
 		"deadline_cv_xu_ly",
 		"modified",
+		"employee",
+		"nguoi_ky",
+		"docstatus",
 	]
+	doc_fetch_ignore_permissions = ignore_permissions or bool(signed_outgoing_docs)
 	docs = {
 		row.name: row
 		for row in frappe.get_all(
-			"VNT Document Management", filters={"name": ["in", list(doc_names)]}, fields=doc_fields
+			"VNT Document Management",
+			filters={"name": ["in", list(doc_names)]},
+			fields=doc_fields,
+			ignore_permissions=doc_fetch_ignore_permissions,
 		)
 	}
 
@@ -788,16 +849,19 @@ def get_document_overview():
 		"VNT Document Management",
 		filters={"handler": emp_name, "docstatus": ["<", 2]},
 		fields=["name", "reference_number", "summary", "nguoi_chu_tri"],
+		ignore_permissions=ignore_permissions,
 	)
 	collab_rows = frappe.get_all(
 		"VNT Document Management Item",
 		filters={"parenttype": "VNT Document Management", "nguoi_phoi_hop": emp_name},
 		fields=["parent", "deadline1", "trang_thai_nguoi_phoi_hop"],
+		ignore_permissions=ignore_permissions,
 	)
 	collab_spec_rows = frappe.get_all(
 		"VNT Document Management Item",
 		filters={"parenttype": "VNT Document Management", "cv_xu_ly": emp_name},
 		fields=["parent", "deadline2", "trang_thai_cv_xu_ly"],
+		ignore_permissions=ignore_permissions,
 	)
 
 	# Map child rows theo parent
@@ -818,12 +882,24 @@ def get_document_overview():
 	def _is_completed(status):
 		return (status or "").strip().lower() == "hoàn thành"
 
+	def _outgoing_status(doc):
+		if getattr(doc, "docstatus", None) == 1:
+			return "Hoàn thành"
+		if getattr(doc, "docstatus", None) == 2:
+			return "Trả lại"
+		return ""
+
 	assignments = []
+	seen_assignments = set()
 
 	def _add_assignment(docname, role, status=None, deadline=None):
 		doc = docs.get(docname)
 		if not doc:
 			return
+		key = (docname, role)
+		if key in seen_assignments:
+			return
+		seen_assignments.add(key)
 		deadline_date = _to_date(deadline)
 		is_done = _is_completed(status)
 		is_overdue = bool(deadline_date and (deadline_date < today) and not is_done)
@@ -845,6 +921,11 @@ def get_document_overview():
 			_add_assignment(name, "Người chủ trì", doc.chairperson_status, doc.deadline_chu_tri2)
 		if doc.cv_xu_ly == emp_name:
 			_add_assignment(name, "Chuyên viên xử lý", doc.trang_thai_chuyen_vien_xu_ly, doc.deadline_cv_xu_ly)
+		if doc.type == "Công văn đi":
+			if getattr(doc, "employee", None) == emp_name:
+				_add_assignment(name, "Người lập", _outgoing_status(doc))
+			if getattr(doc, "nguoi_ky", None) == emp_name:
+				_add_assignment(name, "Người ký", _outgoing_status(doc))
 
 	for row in collab_by_parent.values():
 		for item in row:
@@ -869,6 +950,7 @@ def get_document_overview():
 				filters={"parent": ["in", list(handler_doc_names)], "chu_tri": 1},
 				fields=["parent"],
 				distinct=True,
+				ignore_permissions=ignore_permissions,
 			)
 		}
 	pending_assignment = []
@@ -964,8 +1046,15 @@ def get_document_dashboard_vn():
 		}
 		docs = _fetch_docs(doc_names, ignore_permissions=True)
 	else:
+		signed_outgoing_docs = frappe.get_all(
+			"VNT Document Management",
+			filters={"type": "Công văn đi", "nguoi_ky": emp.name, "docstatus": ["<", 2]},
+			fields=["name"],
+			ignore_permissions=True,
+		)
 		doc_names = _gather_related_doc_names(emp.name)
-		docs = _fetch_docs(doc_names)
+		doc_names.update(row.name for row in signed_outgoing_docs)
+		docs = _fetch_docs(doc_names, ignore_permissions=bool(signed_outgoing_docs))
 	if not doc_names:
 		return {
 			"employee": emp,
