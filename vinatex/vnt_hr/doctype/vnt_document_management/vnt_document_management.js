@@ -366,6 +366,10 @@ frappe.ui.form.on("VNT Document Management", {
     }
 
     ensure_spec_deadline_not_after_chair(frm);
+    if (frm.doc.type == "Công văn đi" &&  !frm.doc.document_date) {
+      frm.set_value("document_date", frappe.datetime.now_date());
+    }
+
   },
 
   chairperson(frm) {
@@ -405,6 +409,10 @@ frappe.ui.form.on("VNT Document Management", {
       if (!frm.doc.received_date) {
         frm.set_value("received_date", frappe.datetime.now_date());
       }
+      if (frm.doc.type == "Công văn đi" && !frm.doc.document_date) {
+        frm.set_value("document_date", frappe.datetime.now_date());
+      }
+      
       frm.trigger("prefill_level1_approvers");
     }
   },
@@ -415,11 +423,16 @@ frappe.ui.form.on("VNT Document Management", {
       frm.set_value("naming_series", "CVĐEN.-.MM..YY.-.####");
     }
     else if (frm.doc.type == "Công văn đi") {
+      if (!frm.doc.document_date) {
+        frm.set_value("document_date", frappe.datetime.now_date());
+      }
       frm.set_value("naming_series", "CVĐI.-.MM..YY.-.####");
       maybe_autofill_reference_number(frm);
     } else {
       frm.set_value("naming_series", "VBNB.-.MM..YY.-.####");
     }
+
+
     frm.trigger("enforce_handler_edit_permission");
     frm.trigger("enforce_creator_edit_permission");
     frm.trigger("enforce_chair_edit_permission");
@@ -430,6 +443,7 @@ frappe.ui.form.on("VNT Document Management", {
   },
   type_doc(frm) {
     maybe_autofill_reference_number(frm, { force: true});
+    
   },
 
   deadline(frm) {
