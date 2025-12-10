@@ -480,8 +480,8 @@ class VNTDocumentManagement(Document):
 		)
 
 
-def _gather_related_doc_names(emp_name: str, ignore_permissions: bool = False) -> set[str]:
-	"""Tập hợp danh sách văn bản liên quan tới nhân sự (handler/chu_tri/cv_xu_ly/phối hợp)."""
+def _gather_related_doc_names(emp_name: str, emp_department: str | None = None, ignore_permissions: bool = False) -> set[str]:
+	"""Tập hợp danh sách văn bản liên quan tới nhân sự (handler/chu_tri/cv_xu_ly/phối hợp/ban gửi đi)."""
 	doc_names: set[str] = set()
 
 	handler_docs = frappe.get_all(
@@ -534,16 +534,6 @@ def _gather_related_doc_names(emp_name: str, ignore_permissions: bool = False) -
 		fields=["name"],
 		ignore_permissions=True,
 	)
-	emp_dept = emp.department if emp else None
-	if emp_dept:
-		same_dept_outgoing = frappe.get_all(
-			"VNT Document Management",
-			filters={"type": "Công văn đi", "department": emp_dept, "docstatus": ["<", 2]},
-			fields=["name"],
-			ignore_permissions=ignore_permissions,
-		)
-		doc_names.update(row.name for row in same_dept_outgoing)
-
 	outgoing_created = frappe.get_all(
 		"VNT Document Management",
 		filters={"type": "Công văn đi", "employee": emp_name, "docstatus": ["<", 2]},
@@ -552,6 +542,17 @@ def _gather_related_doc_names(emp_name: str, ignore_permissions: bool = False) -
 	)
 	doc_names.update(row.name for row in outgoing_signed)
 	doc_names.update(row.name for row in outgoing_created)
+
+	# Công văn đi: tất cả nhân sự thuộc Ban gửi đi đều xem được
+	if emp_department:
+		dept_outgoing = frappe.get_all(
+			"VNT Document Management",
+			filters={"type": "Công văn đi", "department": emp_department, "docstatus": ["<", 2]},
+			fields=["name"],
+			ignore_permissions=True,
+		)
+		doc_names.update(row.name for row in dept_outgoing)
+
 	return doc_names
 
 
@@ -727,7 +728,7 @@ def get_document_overview():
 	"""
 	user = frappe.session.user
 	emp = frappe.db.get_value(
-		"Employee", {"user_id": user}, ["name", "employee_name"], as_dict=True
+		"Employee", {"user_id": user}, ["name", "employee_name", "department"], as_dict=True
 	)
 	if not emp:
 		return {
@@ -739,12 +740,14 @@ def get_document_overview():
 
 	today = getdate(nowdate())
 	emp_name = emp.name
+	emp_department = emp.get("department")
 	is_superviewer = emp_name == "VGT00161"
 	ignore_permissions = is_superviewer
 
 	# === Thu thập các văn bản liên quan tới nhân viên hiện tại ===
 	doc_names = set()
 	signed_outgoing_docs = []
+	dept_outgoing_docs = []
 
 	if is_superviewer:
 		# Nhân sự đặc biệt: xem toàn bộ văn bản đang mở
@@ -804,6 +807,14 @@ def get_document_overview():
 			ignore_permissions=ignore_permissions,
 		)
 	)
+	if emp_department:
+		dept_outgoing_docs = frappe.get_all(
+			"VNT Document Management",
+			filters={"type": "Công văn đi", "department": emp_department, "docstatus": ["<", 2]},
+			fields=["name"],
+			ignore_permissions=True,
+		)
+		doc_names.update(row.name for row in dept_outgoing_docs)
 
 	# Người phối hợp / chuyên viên phối hợp (từ child table)
 	collab_rows = frappe.get_all(
@@ -847,8 +858,9 @@ def get_document_overview():
 		"employee",
 		"nguoi_ky",
 		"docstatus",
+		"department",
 	]
-	doc_fetch_ignore_permissions = ignore_permissions or bool(signed_outgoing_docs)
+	doc_fetch_ignore_permissions = ignore_permissions or bool(signed_outgoing_docs) or bool(dept_outgoing_docs)
 	docs = {
 		row.name: row
 		for row in frappe.get_all(
@@ -941,7 +953,9 @@ def get_document_overview():
 				_add_assignment(name, "Người lập", _outgoing_status(doc))
 			if getattr(doc, "nguoi_ky", None) == emp_name:
 				_add_assignment(name, "Người ký", _outgoing_status(doc))
-			if (doc.type_doc or "").strip().upper == "QĐ":
+			if emp_department and getattr(doc, "department", None) == emp_department:
+				_add_assignment(name, "Ban gửi đi", _outgoing_status(doc))
+			if (doc.type_doc or "").strip().upper() == "QĐ":
 				_add_assignment(name, "Quyết định", _outgoing_status(doc))
 
 	for row in collab_by_parent.values():
@@ -987,19 +1001,24 @@ def get_document_overview():
 	def _top(lst):
 		return lst[:6]
 
+	assigned_top = _top(assigned_list)
+	pending_top = _top(pending_assignment)
+	completed_top = _top(completed_list)
+	overdue_top = _top(overdue_list)
+
 	return {
 		"employee": emp,
 		"counts": {
-			"assigned": len(assigned_list),
-			"pending_assignment": len(pending_assignment),
-			"completed": len(completed_list),
-			"overdue": len(overdue_list),
+			"assigned": len(assigned_top),
+			"pending_assignment": len(pending_top),
+			"completed": len(completed_top),
+			"overdue": len(overdue_top),
 		},
 		"lists": {
-			"assigned": _top(assigned_list),
-			"pending_assignment": _top(pending_assignment),
-			"completed": _top(completed_list),
-			"overdue": _top(overdue_list),
+			"assigned": assigned_top,
+			"pending_assignment": pending_top,
+			"completed": completed_top,
+			"overdue": overdue_top,
 		},
 	}
 
@@ -1039,8 +1058,9 @@ def get_document_dashboard_vn():
 	emp = frappe.db.get_value(
 		"Employee", {"user_id": user}, ["name", "employee_name", "department"], as_dict=True
 	)
+	is_superviewer = bool(emp and emp.get("name") == "VGT00161")
 
-	if not emp and not is_leader:
+	if not emp and not is_leader and not is_superviewer:
 		return {
 			"employee": None,
 			"counts": {"completed": 0, "incomplete": 0},
@@ -1049,8 +1069,8 @@ def get_document_dashboard_vn():
 			"message": "Không tìm thấy Employee gắn với user hiện tại",
 		}
 
-	# Nếu là lãnh đạo tập đoàn: thấy toàn bộ văn bản (đang mở)
-	if is_leader:
+	# Nếu là lãnh đạo tập đoàn hoặc superviewer: thấy toàn bộ văn bản (đang mở)
+	if is_leader or is_superviewer:
 		doc_names = {
 			row.name
 			for row in frappe.get_all(
@@ -1069,7 +1089,7 @@ def get_document_dashboard_vn():
 			fields=["name"],
 			ignore_permissions=True,
 		)
-		doc_names = _gather_related_doc_names(emp.name)
+		doc_names = _gather_related_doc_names(emp.name, emp.get("department"))
 		doc_names.update(row.name for row in signed_outgoing_docs)
 		docs = _fetch_docs(doc_names, ignore_permissions=bool(signed_outgoing_docs))
 	if not doc_names:
