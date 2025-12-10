@@ -16,11 +16,26 @@ from erpnext.setup.doctype.employee.employee import (
 class VntEmployee(Employee):
     # hàm khi validate sẽ tính toán số lượng người phụ thuộc khi có tick is_dependent trong bảng custom_vnt_employee_tax, sau đó gán vào trường custom_relation_number
     def validate(self):
+        self._validate_contract_terms()
         total_dependent = 0
         for row in self.get("custom_vnt_employee_tax"):
             if row.is_dependent:
                 total_dependent += 1
         self.custom_relation_number = total_dependent
+
+    def _validate_contract_terms(self):
+        """Chỉ cho nhập số trong trường 'Thời hạn HĐ (tháng)' của bảng custom_vnt_contract."""
+        for row in self.get("custom_vnt_contract") or []:
+            val = row.get("contract_term")
+            if val in (None, ""):
+                continue
+            try:
+                int(str(val))
+            except (TypeError, ValueError):
+                frappe.throw(
+                    frappe._("Dòng {0}: Thời hạn HĐ (tháng) phải là số nguyên.").format(row.idx),
+                    title=frappe._("Lỗi dữ liệu"),
+                )
         
 
 @frappe.whitelist()
