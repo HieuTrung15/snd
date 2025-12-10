@@ -410,13 +410,13 @@
    "fieldname": "type_doc",
    "fieldtype": "Select",
    "label": "Lo\u1ea1i",
-   "options": "\nTB\nUQ\nBC\nGM\nTM\nTTr"
+   "options": "\nTB\nUQ\nBC\nGM\nTM\nQ\u0110\nTTr"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-08 17:16:47.824192",
+ "modified": "2025-12-10 13:43:29.625787",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
