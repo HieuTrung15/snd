@@ -534,6 +534,16 @@ def _gather_related_doc_names(emp_name: str, ignore_permissions: bool = False) -
 		fields=["name"],
 		ignore_permissions=True,
 	)
+	emp_dept = emp.department if emp else None
+	if emp_dept:
+		same_dept_outgoing = frappe.get_all(
+			"VNT Document Management",
+			filters={"type": "Công văn đi", "department": emp_dept, "docstatus": ["<", 2]},
+			fields=["name"],
+			ignore_permissions=ignore_permissions,
+		)
+		doc_names.update(row.name for row in same_dept_outgoing)
+
 	outgoing_created = frappe.get_all(
 		"VNT Document Management",
 		filters={"type": "Công văn đi", "employee": emp_name, "docstatus": ["<", 2]},
@@ -568,11 +578,16 @@ def _fetch_docs(doc_names: set[str], ignore_permissions: bool = False) -> dict[s
 		"trang_thai_chuyen_vien_xu_ly",
 		"deadline_cv_xu_ly",
 		"modified",
-		"docstatus",
-		"date",
-		"nguoi_ky",
 		"employee",
+		"nguoi_ky",
+		"docstatus",
+		"document_date",
+		"received_date",
+		"sender",
+		"department",
+		"type_doc",
 	]
+
 	try:
 		rows = frappe.get_all(
 			"VNT Document Management",
@@ -926,6 +941,8 @@ def get_document_overview():
 				_add_assignment(name, "Người lập", _outgoing_status(doc))
 			if getattr(doc, "nguoi_ky", None) == emp_name:
 				_add_assignment(name, "Người ký", _outgoing_status(doc))
+			if (doc.type_doc or "").strip().upper == "QĐ":
+				_add_assignment(name, "Quyết định", _outgoing_status(doc))
 
 	for row in collab_by_parent.values():
 		for item in row:
@@ -1106,23 +1123,45 @@ def get_document_dashboard_vn():
 	for name, doc in docs.items():
 		child_statuses = status_by_parent.get(name) or []
 		status_label = _derive_status(doc.get("trang_thai_chuyen_vien_xu_ly"), child_statuses)
-		# Nếu đã có dòng Chủ trì trong bảng items2 thì coi như đã giao, chuyển trạng thái từ "Chưa giao" sang "Đang xử lý"
 		if status_label == "Chưa giao" and chair_map.get(name):
 			status_label = "Đang xử lý"
 		if status_label in status_counts:
 			status_counts[status_label] += 1
 
+		# Loại hiển thị (Quyết định nếu type_doc = QĐ)
+		raw_type = doc.get("type")
+		type_doc = (doc.get("type_doc") or "").strip().upper()
+		display_type = raw_type
+		if raw_type == "Công văn đi" and type_doc == "QĐ":
+			display_type = "Quyết định"
+
 		chair = chair_map.get(name) or {}
 		chair_name = chair_emp_map.get(chair.get("employee")) if chair else None
-		deadline = chair.get("deadline") or doc.get("deadline") or doc.get("deadline_chu_tri2") or doc.get("deadline_cv_xu_ly")
+		deadline = (
+			chair.get("deadline")
+			or doc.get("deadline")
+			or doc.get("deadline_chu_tri2")
+			or doc.get("deadline_cv_xu_ly")
+		)
+
 		doc_rows.append(
 			{
-				"reference_number": doc.get("reference_number") or doc.get("name"),
-				"chairperson": chair_name or chair.get("employee") or chair.get("employee_name") or doc.get("nguoi_chu_tri"),
+				"name": name,
+				"reference_number": doc.get("reference_number") or name,
+				"summary": doc.get("summary"),
+				"type": display_type,
+				"document_date": str(doc.get("document_date") or "") if doc.get("document_date") else "",
+				"received_date": str(doc.get("received_date") or "") if doc.get("received_date") else "",
+				"sender": doc.get("sender"),
+				"chairperson": chair_name
+					or chair.get("employee")
+					or chair.get("employee_name")
+					or doc.get("nguoi_chu_tri"),
 				"deadline": str(deadline) if deadline else "",
 				"status": status_label,
 			}
 		)
+
 
 	completed = status_counts["Hoàn thành"]
 	total = sum(status_counts.values())
