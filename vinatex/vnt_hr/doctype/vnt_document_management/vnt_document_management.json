@@ -151,7 +151,7 @@
    "fieldtype": "Select",
    "label": "Lo\u1ea1i v\u0103n b\u1ea3n",
    "no_copy": 1,
-   "options": "\nC\u00f4ng v\u0103n \u0111\u1ebfn\nC\u00f4ng v\u0103n \u0111i",
+   "options": "\nC\u00f4ng v\u0103n \u0111\u1ebfn\nC\u00f4ng v\u0103n \u0111i\nQuy\u1ebft \u0111\u1ecbnh",
    "reqd": 1
   },
   {
@@ -159,7 +159,7 @@
    "fieldtype": "Select",
    "hidden": 1,
    "label": "Naming Series",
-   "options": "\nCV\u0110I.-.MM..YY.-.####\nCV\u0110EN.-.MM..YY.-.####\nVBNB.-.MM..YY.-.####"
+   "options": "\nCV\u0110I.-.MM..YY.-.####\nCV\u0110EN.-.MM..YY.-.####\nQ\u0110.-.MM..YY.-.####"
   },
   {
    "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
@@ -410,13 +410,13 @@
    "fieldname": "type_doc",
    "fieldtype": "Select",
    "label": "Lo\u1ea1i",
-   "options": "\nTB\nUQ\nBC\nGM\nTM\nQ\u0110\nTTr"
+   "options": "\nTB\nUQ\nBC\nGM\nTM\nTTr"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-10 13:43:29.625787",
+ "modified": "2025-12-10 16:17:15.045202",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",

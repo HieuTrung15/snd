@@ -199,6 +199,7 @@ const get_current_employee = async (frm) => {
 };
 
 const set_handler_editable = (frm, enabled) => {
+  if (frm._is_chair_scope_active || frm._is_handler_scope_active || frm._is_specialist_scope_active || frm._is_collab_scope_active) return; // Đang khóa form, bỏ qua
   frm.toggle_enable("y_kien_ld_td", enabled);
   frm.toggle_enable("handler_status", enabled);
   frm.toggle_enable("y_kien_ld_td", enabled);
@@ -209,6 +210,314 @@ const set_handler_editable = (frm, enabled) => {
     grid.cannot_add_rows = !enabled;
     grid.cannot_delete_rows = !enabled;
     grid.refresh();
+  }
+};
+
+const enforce_chair_scope = async (frm) => {
+  const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
+  if (!isIncoming) {
+    frm._is_chair_scope_active = false;
+    return;
+  }
+
+  const currentEmp = frm._currentEmployee || (await get_current_employee(frm));
+  if (!currentEmp || frm.doc.nguoi_chu_tri !== currentEmp) {
+    frm._is_chair_scope_active = false;
+    return;
+  }
+
+  frm._is_chair_scope_active = true;
+
+  const allowed = new Set(["chairperson_status", "y_kien_chu_tri", "cv_xu_ly", "deadline_cv_xu_ly", "items3"]);
+
+  Object.keys(frm.fields_dict || {}).forEach((fieldname) => {
+    const field = frm.fields_dict[fieldname];
+    const df = field?.df;
+    if (!df) return;
+    if (["Column Break", "Section Break", "Tab Break"].includes(df.fieldtype)) return;
+    const isAllowed = allowed.has(fieldname);
+    frm.set_df_property(fieldname, "read_only", isAllowed ? 0 : 1);
+    frm.toggle_enable(fieldname, isAllowed);
+    if (!isAllowed && typeof field.refresh === "function") {
+      field.refresh();
+    }
+  });
+
+  // Khóa thao tác thêm/xóa cho các bảng không được phép
+  const lockGrid = (grid) => {
+    if (!grid) return;
+    grid.df.read_only = 1;
+    grid.df.in_place_edit = false;
+    (grid.docfields || []).forEach((df) => {
+      df.read_only = 1;
+      df.in_grid_editable_form = 0;
+      df.in_place_edit = false;
+    });
+    grid.cannot_add_rows = true;
+    grid.cannot_delete_rows = true;
+    grid.wrapper.find("input, select, textarea, button").prop("disabled", true);
+    grid.wrapper.find(".grid-add-row, .grid-remove-rows, .grid-remove-all-rows").hide();
+    if (grid.grid_rows) {
+      grid.grid_rows.forEach((row) => {
+        if (typeof row.toggle_editable === "function") {
+          row.toggle_editable(false);
+        }
+      });
+    }
+    grid.refresh();
+  };
+  lockGrid(frm.fields_dict.items?.grid);
+  lockGrid(frm.fields_dict.items2?.grid);
+  lockGrid(frm.fields_dict.item4?.grid);
+};
+
+const enforce_handler_scope = async (frm) => {
+  if (frm._is_chair_scope_active) {
+    frm._is_handler_scope_active = false;
+    return; // Ưu tiên khóa của Chủ trì
+  }
+
+  const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
+  if (!isIncoming) {
+    frm._is_handler_scope_active = false;
+    return;
+  }
+
+  const currentEmp = frm._currentEmployee || (await get_current_employee(frm));
+  if (!currentEmp || frm.doc.handler !== currentEmp) {
+    frm._is_handler_scope_active = false;
+    return;
+  }
+
+  frm._is_handler_scope_active = true;
+
+  const allowed = new Set(["y_kien_ld_td", "handler_status", "is_handler_status", "items"]);
+
+  Object.keys(frm.fields_dict || {}).forEach((fieldname) => {
+    const field = frm.fields_dict[fieldname];
+    const df = field?.df;
+    if (!df) return;
+    if (["Column Break", "Section Break", "Tab Break"].includes(df.fieldtype)) return;
+    const isAllowed = allowed.has(fieldname);
+    frm.set_df_property(fieldname, "read_only", isAllowed ? 0 : 1);
+    frm.toggle_enable(fieldname, isAllowed);
+    if (!isAllowed && typeof field.refresh === "function") {
+      field.refresh();
+    }
+  });
+
+  const lockGrid = (grid, forceReadOnly = true) => {
+    if (!grid) return;
+    if (!allowed.has(grid.df?.fieldname) || forceReadOnly) {
+      grid.df.read_only = 1;
+      grid.df.in_place_edit = false;
+      (grid.docfields || []).forEach((df) => {
+        df.read_only = 1;
+        df.in_grid_editable_form = 0;
+        df.in_place_edit = false;
+      });
+      grid.cannot_add_rows = true;
+      grid.cannot_delete_rows = true;
+      grid.wrapper.find("input, select, textarea, button").prop("disabled", true);
+      grid.wrapper.find(".grid-add-row, .grid-remove-rows, .grid-remove-all-rows").hide();
+      if (grid.grid_rows) {
+        grid.grid_rows.forEach((row) => {
+          if (typeof row.toggle_editable === "function") {
+            row.toggle_editable(false);
+          }
+        });
+      }
+    } else {
+      grid.df.read_only = 0;
+      grid.cannot_add_rows = false;
+      grid.cannot_delete_rows = false;
+      grid.wrapper.find("input, select, textarea, button").prop("disabled", false);
+      grid.wrapper.find(".grid-add-row, .grid-remove-rows, .grid-remove-all-rows").show();
+    }
+    grid.refresh();
+  };
+
+  lockGrid(frm.fields_dict.items?.grid, false); // items được phép sửa
+  lockGrid(frm.fields_dict.items2?.grid);
+  lockGrid(frm.fields_dict.items3?.grid);
+  lockGrid(frm.fields_dict.item4?.grid);
+};
+
+const enforce_specialist_scope = async (frm) => {
+  if (frm._is_chair_scope_active || frm._is_handler_scope_active) {
+    frm._is_specialist_scope_active = false;
+    return; // Ưu tiên khóa của Chủ trì/Lãnh đạo
+  }
+
+  const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
+  if (!isIncoming) {
+    frm._is_specialist_scope_active = false;
+    return;
+  }
+
+  const currentEmp = frm._currentEmployee || (await get_current_employee(frm));
+  if (!currentEmp || frm.doc.cv_xu_ly !== currentEmp) {
+    frm._is_specialist_scope_active = false;
+    return;
+  }
+
+  frm._is_specialist_scope_active = true;
+
+  const allowed = new Set(["trang_thai_chuyen_vien_xu_ly", "y_kien_chuyen_vien_xu_ly", "items3"]);
+
+  Object.keys(frm.fields_dict || {}).forEach((fieldname) => {
+    const field = frm.fields_dict[fieldname];
+    const df = field?.df;
+    if (!df) return;
+    if (["Column Break", "Section Break", "Tab Break"].includes(df.fieldtype)) return;
+    const isAllowed = allowed.has(fieldname);
+    frm.set_df_property(fieldname, "read_only", isAllowed ? 0 : 1);
+    frm.toggle_enable(fieldname, isAllowed);
+    if (!isAllowed && typeof field.refresh === "function") {
+      field.refresh();
+    }
+  });
+
+  const lockGrid = (grid, isAllowedGrid) => {
+    if (!grid) return;
+    if (isAllowedGrid) {
+      grid.df.read_only = 0;
+      grid.df.in_place_edit = true;
+      grid.cannot_add_rows = false;
+      grid.cannot_delete_rows = false;
+      grid.wrapper.find("input, select, textarea, button").prop("disabled", false);
+      grid.wrapper.find(".grid-add-row, .grid-remove-rows, .grid-remove-all-rows").show();
+    } else {
+      grid.df.read_only = 1;
+      grid.df.in_place_edit = false;
+      (grid.docfields || []).forEach((df) => {
+        df.read_only = 1;
+        df.in_grid_editable_form = 0;
+        df.in_place_edit = false;
+      });
+      grid.cannot_add_rows = true;
+      grid.cannot_delete_rows = true;
+      grid.wrapper.find("input, select, textarea, button").prop("disabled", true);
+      grid.wrapper.find(".grid-add-row, .grid-remove-rows, .grid-remove-all-rows").hide();
+      if (grid.grid_rows) {
+        grid.grid_rows.forEach((row) => {
+          if (typeof row.toggle_editable === "function") {
+            row.toggle_editable(false);
+          }
+        });
+      }
+    }
+    grid.refresh();
+  };
+
+  lockGrid(frm.fields_dict.items?.grid, false);
+  lockGrid(frm.fields_dict.items2?.grid, false);
+  lockGrid(frm.fields_dict.items3?.grid, true); // items3 được phép sửa
+  lockGrid(frm.fields_dict.item4?.grid, false);
+};
+
+const enforce_collab_scope = async (frm) => {
+  if (frm._is_chair_scope_active || frm._is_handler_scope_active || frm._is_specialist_scope_active) {
+    frm._is_collab_scope_active = false;
+    return; // Ưu tiên khóa cao hơn
+  }
+
+  const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
+  if (!isIncoming) {
+    frm._is_collab_scope_active = false;
+    return;
+  }
+
+  const currentEmp = frm._currentEmployee || (await get_current_employee(frm));
+  const rows = Array.isArray(frm.doc.items2) ? frm.doc.items2 : [];
+  const myRows = rows.filter((row) => row.nguoi_phoi_hop === currentEmp);
+  if (!currentEmp || !myRows.length) {
+    frm._is_collab_scope_active = false;
+    return;
+  }
+
+  frm._is_collab_scope_active = true;
+
+  const allowed = new Set(["items2", "item4"]);
+
+  Object.keys(frm.fields_dict || {}).forEach((fieldname) => {
+    const field = frm.fields_dict[fieldname];
+    const df = field?.df;
+    if (!df) return;
+    if (["Column Break", "Section Break", "Tab Break"].includes(df.fieldtype)) return;
+    const isAllowed = allowed.has(fieldname);
+    frm.set_df_property(fieldname, "read_only", isAllowed ? 0 : 1);
+    frm.toggle_enable(fieldname, isAllowed);
+    if (!isAllowed && typeof field.refresh === "function") {
+      field.refresh();
+    }
+  });
+
+  // Khóa các bảng khác
+  const lockGrid = (grid) => {
+    if (!grid) return;
+    grid.df.read_only = 1;
+    grid.df.in_place_edit = false;
+    (grid.docfields || []).forEach((df) => {
+      df.read_only = 1;
+      df.in_grid_editable_form = 0;
+      df.in_place_edit = false;
+    });
+    grid.cannot_add_rows = true;
+    grid.cannot_delete_rows = true;
+    grid.wrapper.find("input, select, textarea, button").prop("disabled", true);
+    grid.wrapper.find(".grid-add-row, .grid-remove-rows, .grid-remove-all-rows").hide();
+    if (grid.grid_rows) {
+      grid.grid_rows.forEach((row) => {
+        if (typeof row.toggle_editable === "function") {
+          row.toggle_editable(false);
+        }
+      });
+    }
+    grid.refresh();
+  };
+  lockGrid(frm.fields_dict.items?.grid);
+  lockGrid(frm.fields_dict.items3?.grid);
+
+  // items4: cho phép sửa
+  const gridItem4 = frm.fields_dict.item4?.grid;
+  if (gridItem4) {
+    gridItem4.df.read_only = 0;
+    gridItem4.df.in_place_edit = true;
+    gridItem4.cannot_add_rows = false;
+    gridItem4.cannot_delete_rows = false;
+    gridItem4.wrapper.find("input, select, textarea, button").prop("disabled", false);
+    gridItem4.wrapper.find(".grid-add-row, .grid-remove-rows, .grid-remove-all-rows").show();
+    gridItem4.refresh();
+  }
+
+  // items2: chỉ cho chỉnh trường được phép và chỉ trên dòng của mình
+  const gridCollab = frm.fields_dict.items2?.grid;
+  if (gridCollab) {
+    const allowedChild = new Set(["trang_thai_nguoi_phoi_hop", "y_kien_nguoi_phoi_hop", "cv_xu_ly", "deadline2"]);
+    gridCollab.df.read_only = 0;
+    gridCollab.df.in_place_edit = true;
+    gridCollab.cannot_add_rows = true;
+    gridCollab.cannot_delete_rows = true;
+    gridCollab.wrapper.find(".grid-add-row, .grid-remove-rows, .grid-remove-all-rows").hide();
+    (gridCollab.docfields || []).forEach((df) => {
+      const canEdit = allowedChild.has(df.fieldname);
+      df.read_only = canEdit ? 0 : 1;
+      df.in_grid_editable_form = canEdit ? 1 : 0;
+      df.in_place_edit = canEdit;
+    });
+    gridCollab.refresh();
+    if (gridCollab.grid_rows) {
+      gridCollab.grid_rows.forEach((row) => {
+        const mine = row.doc?.nguoi_phoi_hop === currentEmp;
+        row.toggle_editable(!!mine);
+        if (!mine) {
+          row.row && row.row.find("input, select, textarea, button").prop("disabled", true);
+        } else {
+          row.row && row.row.find("input, select, textarea, button").prop("disabled", false);
+        }
+      });
+    }
   }
 };
 
@@ -223,9 +532,11 @@ const apply_handler_edit_lock = async (frm) => {
   const hasHandler = !!frm.doc.handler;
   const canEdit = !hasHandler || (currentEmp && frm.doc.handler === currentEmp);
   set_handler_editable(frm, !!canEdit);
+  await enforce_handler_scope(frm);
 };
 
 const set_creator_editable = (frm, enabled) => {
+  if (frm._is_chair_scope_active || frm._is_handler_scope_active || frm._is_specialist_scope_active || frm._is_collab_scope_active) return; // Đang khóa form, bỏ qua
   const fields = ["type", "sender", "handler", "document_date", "received_date", "deadline", "reference_number", "summary", "attach"];
   fields.forEach((field) => frm.toggle_enable(field, enabled));
 };
@@ -241,7 +552,9 @@ const apply_creator_edit_lock = async (frm) => {
   set_creator_editable(frm, !!canEdit);
 };
 
-const set_chair_editable = (frm, enabled) => {
+const set_chair_editable = (frm, enabled, opts = {}) => {
+  const allowItems2 = opts.allowItems2 !== undefined ? opts.allowItems2 : enabled;
+  const allowItem4 = opts.allowItem4 !== undefined ? opts.allowItem4 : enabled;
   const fields = ["chairperson_status", "cong_van_di", "y_kien_chu_tri", "deadline_cv_xu_ly", "cv_xu_ly"];
   fields.forEach((field) => frm.toggle_enable(field, enabled));
 
@@ -254,17 +567,20 @@ const set_chair_editable = (frm, enabled) => {
   }
 
   const gridCollab = frm.fields_dict.items2?.grid;
-  frm.set_df_property("items2", "read_only", enabled ? 0 : 1);
+  frm.set_df_property("items2", "read_only", allowItems2 ? 0 : 1);
   if (gridCollab) {
-    gridCollab.df.read_only = enabled ? 0 : 1;
+    gridCollab.df.read_only = allowItems2 ? 0 : 1;
+    gridCollab.cannot_add_rows = !allowItems2;
+    gridCollab.cannot_delete_rows = !allowItems2;
     gridCollab.refresh();
   }
 
   const gridItem4 = frm.fields_dict.item4?.grid;
-  frm.set_df_property("item4", "read_only", enabled ? 0 : 1);
+  frm.set_df_property("item4", "read_only", allowItem4 ? 0 : 1);
   if (gridItem4) {
-    gridItem4.cannot_add_rows = !enabled;
-    gridItem4.cannot_delete_rows = !enabled;
+    gridItem4.df.read_only = allowItem4 ? 0 : 1;
+    gridItem4.cannot_add_rows = !allowItem4;
+    gridItem4.cannot_delete_rows = !allowItem4;
     gridItem4.refresh();
   }
 };
@@ -274,11 +590,21 @@ const apply_chair_edit_lock = async (frm) => {
   const specialist = frm.doc.cv_xu_ly || null;
   if (!chair && !specialist) {
     set_chair_editable(frm, false);
+    frm._is_chair_scope_active = false;
     return;
   }
   const currentEmp = await get_current_employee(frm);
-  const canEdit = currentEmp && ((chair && chair === currentEmp) || (specialist && specialist === currentEmp));
-  set_chair_editable(frm, !!canEdit);
+  const isChairUser = currentEmp && chair === currentEmp;
+  const canEditHeader = currentEmp && chair === currentEmp;
+  const isCollabUser = await is_collab_user(frm, currentEmp);
+  const allowItems2 = canEditHeader ? false : !!isCollabUser; // Người chủ trì chỉ được sửa các field cho phép, không sửa bảng phối hợp
+  const allowItem4 = canEditHeader ? false : false; // Không cho sửa item4 khi là chủ trì/chuyên viên chính
+  set_chair_editable(frm, !!canEditHeader, { allowItems2, allowItem4 });
+  if (isChairUser) {
+    await enforce_chair_scope(frm);
+  } else {
+    frm._is_chair_scope_active = false;
+  }
 };
 
 // Đảm bảo chỉ có duy nhất một dòng được chọn Chủ trì
@@ -398,6 +724,11 @@ frappe.ui.form.on("VNT Document Management", {
     frm.trigger("setup_cv_xu_ly_query");
     frm.trigger("setup_cv_xu_ly_query_items2");
     frm.trigger("lock_items2_grid");
+    // Đặt khóa sau cùng để ghi đè mọi toggle khác (không chờ async)
+    enforce_chair_scope(frm);
+    enforce_handler_scope(frm);
+    enforce_specialist_scope(frm);
+    enforce_collab_scope(frm);
     hide_legacy_fields(frm);
 
     // Chỉ set mặc định khi là phiếu mới
@@ -428,8 +759,8 @@ frappe.ui.form.on("VNT Document Management", {
       }
       frm.set_value("naming_series", "CVĐI.-.MM..YY.-.####");
       maybe_autofill_reference_number(frm);
-    } else {
-      frm.set_value("naming_series", "VBNB.-.MM..YY.-.####");
+    } else if (frm.doc.type == "Quyết định") {
+      frm.set_value("naming_series", "QĐ.-.MM..YY.-.####");
     }
 
 
@@ -570,6 +901,8 @@ frappe.ui.form.on("VNT Document Management", {
   cv_xu_ly(frm) {
     frm.trigger("render_process_flow");
     frm.trigger("enforce_chair_edit_permission");
+    enforce_specialist_scope(frm);
+    enforce_collab_scope(frm);
   },
 
   trang_thai_chuyen_vien_xu_ly(frm) {
