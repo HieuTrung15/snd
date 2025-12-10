@@ -318,7 +318,7 @@ class VNTDocumentManagement(Document):
 			if not user_ids:
 				return
 
-			message = f"Bạn được giao {role_label} xử lý CV đến số {ref} {sender} {summary}"
+			message = f"Bạn được giao {role_label} CV đến số {ref} {sender} {summary}"
 			for user in user_ids:
 				frappe.get_doc(
 					{
