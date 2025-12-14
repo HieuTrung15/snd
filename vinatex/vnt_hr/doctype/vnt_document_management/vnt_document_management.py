@@ -718,13 +718,18 @@ def filter_cv_xu_ly_by_collab(doctype, txt, searchfield, start, page_len, filter
 
 
 @frappe.whitelist()
-def get_document_overview():
+@frappe.whitelist()
+def get_document_overview(limit: int = 6):
 	"""
 	Tổng hợp nhanh 4 nhóm việc cần theo dõi cho Custom HTML Block "Quản lý văn bản":
 	- assigned: Việc đã được giao cho tôi (còn đang mở)
 	- pending_assignment: Văn bản tôi là Lãnh đạo nhưng chưa giao Người chủ trì
 	- completed: Việc tôi đã hoàn thành
 	- overdue: Việc của tôi đã quá hạn (chưa hoàn thành)
+
+	NOTE:
+	- counts: là tổng thực tế
+	- lists: trả về top `limit` phần tử để UI render nhanh
 	"""
 	user = frappe.session.user
 	emp = frappe.db.get_value(
@@ -738,9 +743,13 @@ def get_document_overview():
 			"message": "Không tìm thấy Employee gắn với user hiện tại",
 		}
 
+	from frappe.utils import getdate, nowdate
+
 	today = getdate(nowdate())
 	emp_name = emp.name
 	emp_department = emp.get("department")
+
+	# Superviewer: xem toàn bộ văn bản đang mở
 	is_superviewer = emp_name == "VGT00161"
 	ignore_permissions = is_superviewer
 
@@ -750,14 +759,13 @@ def get_document_overview():
 	dept_outgoing_docs = []
 
 	if is_superviewer:
-		# Nhân sự đặc biệt: xem toàn bộ văn bản đang mở
 		all_rows = frappe.get_all(
 			"VNT Document Management",
 			filters={"docstatus": ["<", 2]},
 			fields=["name"],
 			ignore_permissions=True,
 		)
-		doc_names.update(row.name for row in all_rows)
+		doc_names.update(r.name for r in all_rows)
 
 	# Lãnh đạo (handler)
 	handler_docs = frappe.get_all(
@@ -766,12 +774,12 @@ def get_document_overview():
 		fields=["name", "reference_number", "summary", "nguoi_chu_tri"],
 		ignore_permissions=ignore_permissions,
 	)
-	doc_names.update(doc.name for doc in handler_docs)
+	doc_names.update(d.name for d in handler_docs)
 
 	# Người chủ trì
 	doc_names.update(
-		row.name
-		for row in frappe.get_all(
+		r.name
+		for r in frappe.get_all(
 			"VNT Document Management",
 			filters={"nguoi_chu_tri": emp_name, "docstatus": ["<", 2]},
 			fields=["name"],
@@ -781,8 +789,8 @@ def get_document_overview():
 
 	# Chuyên viên xử lý chính
 	doc_names.update(
-		row.name
-		for row in frappe.get_all(
+		r.name
+		for r in frappe.get_all(
 			"VNT Document Management",
 			filters={"cv_xu_ly": emp_name, "docstatus": ["<", 2]},
 			fields=["name"],
@@ -797,16 +805,19 @@ def get_document_overview():
 		fields=["name"],
 		ignore_permissions=True,
 	)
-	doc_names.update(row.name for row in signed_outgoing_docs)
+	doc_names.update(r.name for r in signed_outgoing_docs)
+
 	doc_names.update(
-		row.name
-		for row in frappe.get_all(
+		r.name
+		for r in frappe.get_all(
 			"VNT Document Management",
 			filters={"type": "Công văn đi", "employee": emp_name, "docstatus": ["<", 2]},
 			fields=["name"],
 			ignore_permissions=ignore_permissions,
 		)
 	)
+
+	# Công văn đi: tất cả nhân sự thuộc Ban gửi đi đều xem được
 	if emp_department:
 		dept_outgoing_docs = frappe.get_all(
 			"VNT Document Management",
@@ -814,7 +825,7 @@ def get_document_overview():
 			fields=["name"],
 			ignore_permissions=True,
 		)
-		doc_names.update(row.name for row in dept_outgoing_docs)
+		doc_names.update(r.name for r in dept_outgoing_docs)
 
 	# Người phối hợp / chuyên viên phối hợp (từ child table)
 	collab_rows = frappe.get_all(
@@ -829,8 +840,8 @@ def get_document_overview():
 		fields=["parent", "deadline2", "trang_thai_cv_xu_ly"],
 		ignore_permissions=ignore_permissions,
 	)
-	doc_names.update(row.parent for row in collab_rows)
-	doc_names.update(row.parent for row in collab_spec_rows)
+	doc_names.update(r.parent for r in collab_rows)
+	doc_names.update(r.parent for r in collab_spec_rows)
 
 	if not doc_names:
 		return {
@@ -839,7 +850,7 @@ def get_document_overview():
 			"lists": {"assigned": [], "pending_assignment": [], "completed": [], "overdue": []},
 		}
 
-	# Lấy thông tin chi tiết văn bản để render UI
+	# === Fetch docs để render UI ===
 	doc_fields = [
 		"name",
 		"reference_number",
@@ -859,11 +870,13 @@ def get_document_overview():
 		"nguoi_ky",
 		"docstatus",
 		"department",
+		"type_doc",
 	]
+
 	doc_fetch_ignore_permissions = ignore_permissions or bool(signed_outgoing_docs) or bool(dept_outgoing_docs)
 	docs = {
-		row.name: row
-		for row in frappe.get_all(
+		r.name: r
+		for r in frappe.get_all(
 			"VNT Document Management",
 			filters={"name": ["in", list(doc_names)]},
 			fields=doc_fields,
@@ -871,34 +884,14 @@ def get_document_overview():
 		)
 	}
 
-	# Dữ liệu child dùng cho phân loại/pending
-	handler_docs = frappe.get_all(
-		"VNT Document Management",
-		filters={"handler": emp_name, "docstatus": ["<", 2]},
-		fields=["name", "reference_number", "summary", "nguoi_chu_tri"],
-		ignore_permissions=ignore_permissions,
-	)
-	collab_rows = frappe.get_all(
-		"VNT Document Management Item",
-		filters={"parenttype": "VNT Document Management", "nguoi_phoi_hop": emp_name},
-		fields=["parent", "deadline1", "trang_thai_nguoi_phoi_hop"],
-		ignore_permissions=ignore_permissions,
-	)
-	collab_spec_rows = frappe.get_all(
-		"VNT Document Management Item",
-		filters={"parenttype": "VNT Document Management", "cv_xu_ly": emp_name},
-		fields=["parent", "deadline2", "trang_thai_cv_xu_ly"],
-		ignore_permissions=ignore_permissions,
-	)
-
 	# Map child rows theo parent
 	collab_by_parent = {}
-	for row in collab_rows:
-		collab_by_parent.setdefault(row.parent, []).append(row)
+	for r in collab_rows:
+		collab_by_parent.setdefault(r.parent, []).append(r)
 
 	collab_spec_by_parent = {}
-	for row in collab_spec_rows:
-		collab_spec_by_parent.setdefault(row.parent, []).append(row)
+	for r in collab_spec_rows:
+		collab_spec_by_parent.setdefault(r.parent, []).append(r)
 
 	def _to_date(val):
 		try:
@@ -927,9 +920,11 @@ def get_document_overview():
 		if key in seen_assignments:
 			return
 		seen_assignments.add(key)
+
 		deadline_date = _to_date(deadline)
 		is_done = _is_completed(status)
 		is_overdue = bool(deadline_date and (deadline_date < today) and not is_done)
+
 		assignments.append(
 			{
 				"docname": docname,
@@ -943,11 +938,14 @@ def get_document_overview():
 			}
 		)
 
+	# Vai trò theo doc
 	for name, doc in docs.items():
 		if doc.nguoi_chu_tri == emp_name:
 			_add_assignment(name, "Người chủ trì", doc.chairperson_status, doc.deadline_chu_tri2)
 		if doc.cv_xu_ly == emp_name:
 			_add_assignment(name, "Chuyên viên xử lý", doc.trang_thai_chuyen_vien_xu_ly, doc.deadline_cv_xu_ly)
+
+		# Công văn đi / Quyết định
 		if doc.type == "Công văn đi":
 			if getattr(doc, "employee", None) == emp_name:
 				_add_assignment(name, "Người lập", _outgoing_status(doc))
@@ -958,25 +956,26 @@ def get_document_overview():
 			if (doc.type_doc or "").strip().upper() == "QĐ":
 				_add_assignment(name, "Quyết định", _outgoing_status(doc))
 
-	for row in collab_by_parent.values():
-		for item in row:
+	# Vai trò từ child
+	for rows in collab_by_parent.values():
+		for item in rows:
 			_add_assignment(item.parent, "Người phối hợp", item.trang_thai_nguoi_phoi_hop, item.deadline1)
 
-	for row in collab_spec_by_parent.values():
-		for item in row:
+	for rows in collab_spec_by_parent.values():
+		for item in rows:
 			_add_assignment(item.parent, "Chuyên viên phối hợp", item.trang_thai_cv_xu_ly, item.deadline2)
 
 	assigned_list = [a for a in assignments if not _is_completed(a.get("status"))]
 	completed_list = [a for a in assignments if _is_completed(a.get("status"))]
 	overdue_list = [a for a in assignments if a.get("overdue")]
 
-	# Văn bản chưa giao Người chủ trì (dành cho lãnh đạo)
-	handler_doc_names = {doc.name for doc in handler_docs}
+	# === pending_assignment: Văn bản handler nhưng chưa giao Người chủ trì ===
+	handler_doc_names = {d.name for d in handler_docs}
 	has_chair = set()
 	if handler_doc_names:
 		has_chair = {
-			row.parent
-			for row in frappe.get_all(
+			r.parent
+			for r in frappe.get_all(
 				"VNT Document Management Item2",
 				filters={"parent": ["in", list(handler_doc_names)], "chu_tri": 1},
 				fields=["parent"],
@@ -984,41 +983,37 @@ def get_document_overview():
 				ignore_permissions=ignore_permissions,
 			)
 		}
+
 	pending_assignment = []
-	for doc in handler_docs:
-		if doc.nguoi_chu_tri or doc.name in has_chair:
+	for d in handler_docs:
+		if d.nguoi_chu_tri or d.name in has_chair:
 			continue
-		full_doc = docs.get(doc.name)
+		full_doc = docs.get(d.name)
 		pending_assignment.append(
 			{
-				"docname": doc.name,
-				"reference_number": doc.reference_number,
-				"summary": full_doc.summary if full_doc else doc.summary,
+				"docname": d.name,
+				"reference_number": d.reference_number,
+				"summary": (full_doc.summary if full_doc else d.summary),
 			}
 		)
 
-	# Giới hạn danh sách trả về để block render nhanh (phần tử đầu)
+	# === Trả về: counts = tổng; lists = top N ===
 	def _top(lst):
-		return lst[:6]
-
-	assigned_top = _top(assigned_list)
-	pending_top = _top(pending_assignment)
-	completed_top = _top(completed_list)
-	overdue_top = _top(overdue_list)
+		return (lst or [])[: int(limit or 6)]
 
 	return {
 		"employee": emp,
 		"counts": {
-			"assigned": len(assigned_top),
-			"pending_assignment": len(pending_top),
-			"completed": len(completed_top),
-			"overdue": len(overdue_top),
+			"assigned": len(assigned_list),
+			"pending_assignment": len(pending_assignment),
+			"completed": len(completed_list),
+			"overdue": len(overdue_list),
 		},
 		"lists": {
-			"assigned": assigned_top,
-			"pending_assignment": pending_top,
-			"completed": completed_top,
-			"overdue": overdue_top,
+			"assigned": _top(assigned_list),
+			"pending_assignment": _top(pending_assignment),
+			"completed": _top(completed_list),
+			"overdue": _top(overdue_list),
 		},
 	}
 
