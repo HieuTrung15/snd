@@ -42,6 +42,12 @@ const is_checked = (val) => {
 };
 const is_done = (val) => (val || "").trim() === "Hoàn thành";
 
+const toggle_process_section = (frm) => {
+  const isOutgoing = (frm.doc.type || "").trim() === "Công văn đến";
+  frm.toggle_display("biểu_đồ_xử_lý_section", isOutgoing);
+  frm.toggle_display("html_editer", isOutgoing);
+};
+
 const get_chair_status_prev = (frm) => {
   if (frm._chairStatusLastSaved === undefined) {
     frm._chairStatusLastSaved = frm.doc.chairperson_status || null;
@@ -760,6 +766,7 @@ frappe.ui.form.on("VNT Document Management", {
     enforce_specialist_scope(frm);
     enforce_collab_scope(frm);
     refresh_handler_controls_visibility(frm);
+    toggle_process_section(frm);
     hide_legacy_fields(frm);
 
     // Chỉ set mặc định khi là phiếu mới
@@ -798,6 +805,7 @@ frappe.ui.form.on("VNT Document Management", {
     frm.trigger("enforce_handler_edit_permission");
     frm.trigger("enforce_creator_edit_permission");
     frm.trigger("enforce_chair_edit_permission");
+    toggle_process_section(frm);
   },
 
   department(frm) {
