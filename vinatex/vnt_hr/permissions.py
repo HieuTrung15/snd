@@ -127,7 +127,32 @@ def vnt_document_management_permission_query_conditions(user=None):
     if not emp:
         return allow_empty_type
 
+    emp_dept = frappe.db.get_value("Employee", emp, "department")
     esc = frappe.db.escape(emp)
+    esc_dept = frappe.db.escape(emp_dept) if emp_dept else None
+    outgoing_clause = ""
+    if esc_dept:
+        outgoing_clause = f"""
+            OR (
+                `tabVNT Document Management`.type = 'Công văn đi'
+                AND (
+                    `tabVNT Document Management`.employee = {esc}
+                    OR `tabVNT Document Management`.nguoi_ky = {esc}
+                    OR `tabVNT Document Management`.department = {esc_dept}
+                )
+            )
+        """
+    else:
+        outgoing_clause = f"""
+            OR (
+                `tabVNT Document Management`.type = 'Công văn đi'
+                AND (
+                    `tabVNT Document Management`.employee = {esc}
+                    OR `tabVNT Document Management`.nguoi_ky = {esc}
+                )
+            )
+        """
+
     return f"""
         (
             {allow_empty_type}
@@ -151,6 +176,7 @@ def vnt_document_management_permission_query_conditions(user=None):
                     OR it.cv_xu_ly = {esc}
                   )
             )
+            {outgoing_clause}
         )
     """
 
@@ -173,6 +199,7 @@ def vnt_document_management_has_permission(doc=None, user=None, ptype=None):
     emp = _user_employee(user)
     if not emp:
         return False
+    emp_dept = frappe.db.get_value("Employee", emp, "department")
 
     # 1) Kiểm tra document đã load
     direct = {
@@ -183,6 +210,11 @@ def vnt_document_management_has_permission(doc=None, user=None, ptype=None):
     }
     if emp in direct:
         return True
+    if getattr(doc, "type", "").strip() == "Công văn đi":
+        if emp_dept and getattr(doc, "department", None) == emp_dept:
+            return True
+        if getattr(doc, "nguoi_ky", None) == emp:
+            return True
 
     # 2) Kiểm tra child đã load
     for row in getattr(doc, "items", []) or []:
