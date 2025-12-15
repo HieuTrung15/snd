@@ -42,6 +42,12 @@ const is_checked = (val) => {
 };
 const is_done = (val) => (val || "").trim() === "Hoàn thành";
 
+const toggle_process_section = (frm) => {
+  const isOutgoing = (frm.doc.type || "").trim() === "Công văn đến";
+  frm.toggle_display("biểu_đồ_xử_lý_section", isOutgoing);
+  frm.toggle_display("html_editer", isOutgoing);
+};
+
 const get_chair_status_prev = (frm) => {
   if (frm._chairStatusLastSaved === undefined) {
     frm._chairStatusLastSaved = frm.doc.chairperson_status || null;
@@ -128,9 +134,16 @@ const prune_items_without_role = (frm) => {
 };
 
 const all_specialists_done = (frm) => {
-  if (!is_done(frm.doc.trang_thai_chuyen_vien_xu_ly)) return false;
+  // Nếu đã gán chuyên viên chính, yêu cầu trạng thái Hoàn thành; nếu chưa gán thì bỏ qua
+  if (frm.doc.cv_xu_ly && !is_done(frm.doc.trang_thai_chuyen_vien_xu_ly)) return false;
   const rows = Array.isArray(frm.doc.items2) ? frm.doc.items2 : [];
-  return rows.every((r) => is_done(r.trang_thai_cv_xu_ly) && is_done(r.trang_thai_nguoi_phoi_hop));
+  return rows.every((r) => {
+    // Người phối hợp phải Hoàn thành
+    if (!is_done(r.trang_thai_nguoi_phoi_hop)) return false;
+    // Nếu có chuyên viên phối hợp thì yêu cầu Hoàn thành, nếu không có thì bỏ qua điều kiện này
+    if (r.cv_xu_ly && !is_done(r.trang_thai_cv_xu_ly)) return false;
+    return true;
+  });
 };
 
 const validate_handler_status_preconditions = (frm) => {
@@ -153,6 +166,7 @@ const validate_handler_status_preconditions = (frm) => {
 const ensure_collab_not_done_before_specialist = (cdt, cdn) => {
   const row = (locals[cdt] && locals[cdt][cdn]) || null;
   if (!row) return;
+  if (!row.cv_xu_ly) return; // Nếu chưa giao chuyên viên phối hợp, cho phép Người phối hợp tự hoàn thành
   if ((row.trang_thai_nguoi_phoi_hop || "").trim() !== "Hoàn thành") return;
   if ((row.trang_thai_cv_xu_ly || "").trim() === "Hoàn thành") return;
 
@@ -196,6 +210,28 @@ const get_current_employee = async (frm) => {
     frm._currentEmployee = null;
   }
   return frm._currentEmployee;
+};
+
+const can_view_handler_controls = async (frm) => {
+  const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
+  if (!isIncoming) return true;
+
+  const handler = (frm.doc.handler || "").trim();
+  if (!handler) return true; // chưa giao lãnh đạo -> cho xem để hiểu cần giao
+
+  if (frappe.user.has_role("Administrator") || frappe.user.has_role("System Manager")) {
+    return true;
+  }
+
+  const currentEmp = frm._currentEmployee || (await get_current_employee(frm));
+  return !!(currentEmp && handler === currentEmp);
+};
+
+const refresh_handler_controls_visibility = async (frm) => {
+  const shouldShow = await can_view_handler_controls(frm);
+  ["handler_status", "is_handler_status"].forEach((fieldname) => {
+    frm.set_df_property(fieldname, "hidden", shouldShow ? 0 : 1);
+  });
 };
 
 const set_handler_editable = (frm, enabled) => {
@@ -729,6 +765,8 @@ frappe.ui.form.on("VNT Document Management", {
     enforce_handler_scope(frm);
     enforce_specialist_scope(frm);
     enforce_collab_scope(frm);
+    refresh_handler_controls_visibility(frm);
+    toggle_process_section(frm);
     hide_legacy_fields(frm);
 
     // Chỉ set mặc định khi là phiếu mới
@@ -767,6 +805,7 @@ frappe.ui.form.on("VNT Document Management", {
     frm.trigger("enforce_handler_edit_permission");
     frm.trigger("enforce_creator_edit_permission");
     frm.trigger("enforce_chair_edit_permission");
+    toggle_process_section(frm);
   },
 
   department(frm) {
@@ -803,6 +842,7 @@ frappe.ui.form.on("VNT Document Management", {
     frm.trigger("enforce_handler_edit_permission");
     frm.trigger("enforce_creator_edit_permission");
     frm.trigger("enforce_chair_edit_permission");
+    refresh_handler_controls_visibility(frm);
   },
 
   employee_status(frm) {

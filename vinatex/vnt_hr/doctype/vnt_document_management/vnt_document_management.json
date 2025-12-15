@@ -1,466 +1,466 @@
 {
- "actions": [],
- "allow_rename": 1,
- "autoname": "naming_series:",
- "creation": "2025-10-29 16:27:38.345490",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "th\u00f4ng_tin_chung_tab",
-  "bi\u1ec3u_\u0111\u1ed3_x\u1eed_l\u00fd_section",
-  "html_editer",
-  "th\u00f4ng_tin_chung_section",
-  "type",
-  "department",
-  "type_doc",
-  "sender",
-  "handler",
-  "employee",
-  "naming_series",
-  "noi_nhan",
-  "column_break_fdwp",
-  "document_date",
-  "nguoi_ky",
-  "received_date",
-  "deadline",
-  "vnt_doc_mng",
-  "short_text_department",
-  "column_break_frgm",
-  "reference_number",
-  "summary",
-  "section_break_mugf",
-  "attach",
-  "html",
-  "section_break_fsrf",
-  "items",
-  "th\u00f4ng_tin_ng\u01b0\u1eddi_x\u1eed_l\u00fd_section",
-  "y_kien_ld_td",
-  "column_break_cjki",
-  "handler_status",
-  "is_handler_status",
-  "deadline_copy",
-  "qu\u00e1_tr\u00ecnh_x\u1eed_l\u00fd_tab",
-  "nguoi_chu_tri",
-  "deadline_chu_tri2",
-  "chairperson_status",
-  "cong_van_di",
-  "column_break_iblk",
-  "y_kien_chu_tri",
-  "section_break_manr",
-  "cv_xu_ly",
-  "deadline_cv_xu_ly",
-  "trang_thai_chuyen_vien_xu_ly",
-  "column_break_mpyt",
-  "y_kien_chuyen_vien_xu_ly",
-  "section_break_bpgl",
-  "items3",
-  "th\u00f4ng_tin_ng\u01b0\u1eddi_ph\u1ed1i_h\u1ee3p_tab",
-  "section_break_mxli",
-  "items2",
-  "item4",
-  "amended_from"
- ],
- "fields": [
-  {
-   "fieldname": "employee",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "ignore_user_permissions": 1,
-   "in_list_view": 1,
-   "label": "Ng\u01b0\u1eddi l\u1eadp",
-   "options": "Employee"
-  },
-  {
-   "fieldname": "column_break_fdwp",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "section_break_mugf",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "attach",
-   "fieldtype": "Attach",
-   "label": "\u0110\u00ednh k\u00e8m",
-   "make_attachment_public": 1,
-   "reqd": 1
-  },
-  {
-   "fieldname": "reference_number",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "S\u1ed1 hi\u1ec7u v\u0103n b\u1ea3n",
-   "reqd": 1
-  },
-  {
-   "fieldname": "summary",
-   "fieldtype": "Small Text",
-   "in_list_view": 1,
-   "label": "Tr\u00edch y\u1ebfu",
-   "max_height": "100px",
-   "reqd": 1
-  },
-  {
-   "fieldname": "document_date",
-   "fieldtype": "Date",
-   "label": "Ng\u00e0y v\u0103n b\u1ea3n",
-   "reqd": 1
-  },
-  {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
-   "fieldname": "received_date",
-   "fieldtype": "Date",
-   "label": "Ng\u00e0y \u0111\u1ebfn",
-   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\""
-  },
-  {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
-   "fieldname": "sender",
-   "fieldtype": "Data",
-   "label": "N\u01a1i g\u1eedi",
-   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\""
-  },
-  {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
-   "fieldname": "handler",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "label": "L\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n",
-   "link_filters": "[[\"Employee\",\"name\",\"in\",[\"VGT00067\",\"VGT00069\",\"VGT00079\",\"VGT00080\",\"VGT00083\"]]]",
-   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
-   "no_copy": 1,
-   "options": "Employee"
-  },
-  {
-   "fieldname": "html",
-   "fieldtype": "HTML"
-  },
-  {
-   "fieldname": "th\u00f4ng_tin_chung_tab",
-   "fieldtype": "Tab Break",
-   "label": "Th\u00f4ng tin v\u0103n b\u1ea3n"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "th\u00f4ng_tin_chung_section",
-   "fieldtype": "Section Break",
-   "label": "Th\u00f4ng tin chung"
-  },
-  {
-   "fieldname": "type",
-   "fieldtype": "Select",
-   "label": "Lo\u1ea1i v\u0103n b\u1ea3n",
-   "no_copy": 1,
-   "options": "\nC\u00f4ng v\u0103n \u0111\u1ebfn\nC\u00f4ng v\u0103n \u0111i\nQuy\u1ebft \u0111\u1ecbnh",
-   "reqd": 1
-  },
-  {
-   "fieldname": "naming_series",
-   "fieldtype": "Select",
-   "hidden": 1,
-   "label": "Naming Series",
-   "options": "\nCV\u0110I.-.MM..YY.-.####\nCV\u0110EN.-.MM..YY.-.####\nQ\u0110.-.MM..YY.-.####"
-  },
-  {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
-   "fieldname": "handler_status",
-   "fieldtype": "Button",
-   "label": "Chuy\u1ec3n x\u1eed l\u00fd",
-   "no_copy": 1
-  },
-  {
-   "fieldname": "th\u00f4ng_tin_ng\u01b0\u1eddi_x\u1eed_l\u00fd_section",
-   "fieldtype": "Section Break"
-  },
-  {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
-   "fieldname": "y_kien_ld_td",
-   "fieldtype": "Small Text",
-   "label": "\u00dd ki\u1ebfn L\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n",
-   "max_height": "120px"
-  },
-  {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
-   "fieldname": "items",
-   "fieldtype": "Table",
-   "no_copy": 1,
-   "options": "VNT Document Management Item2"
-  },
-  {
-   "fieldname": "qu\u00e1_tr\u00ecnh_x\u1eed_l\u00fd_tab",
-   "fieldtype": "Tab Break",
-   "label": "Th\u00f4ng tin ng\u01b0\u1eddi ch\u1ee7 tr\u00ec"
-  },
-  {
-   "fieldname": "nguoi_chu_tri",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "label": "Ng\u01b0\u1eddi ch\u1ee7 tr\u00ec",
-   "options": "Employee",
-   "permlevel": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "deadline_chu_tri2",
-   "fieldtype": "Date",
-   "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh ng\u01b0\u1eddi ch\u1ee7 tr\u00ec",
-   "permlevel": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "chairperson_status",
-   "fieldtype": "Select",
-   "label": "Tr\u1ea1ng th\u00e1i Ng\u01b0\u1eddi ch\u1ee7 tr\u00ec",
-   "no_copy": 1,
-   "options": "\n\u0110ang x\u1eed l\u00fd\nHo\u00e0n th\u00e0nh\nTr\u1ea3 l\u1ea1i",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "column_break_iblk",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "section_break_manr",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "cv_xu_ly",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "label": "Chuy\u00ean vi\u00ean x\u1eed l\u00fd",
-   "options": "Employee",
-   "permlevel": 1
-  },
-  {
-   "depends_on": "eval: doc.cv_xu_ly",
-   "fieldname": "deadline_cv_xu_ly",
-   "fieldtype": "Date",
-   "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh chuy\u00ean vi\u00ean x\u1eed l\u00fd",
-   "mandatory_depends_on": "eval: doc.cv_xu_ly",
-   "permlevel": 1
-  },
-  {
-   "depends_on": "eval: doc.cv_xu_ly",
-   "fieldname": "trang_thai_chuyen_vien_xu_ly",
-   "fieldtype": "Select",
-   "label": "Tr\u1ea1ng th\u00e1i chuy\u00ean vi\u00ean x\u1eed l\u00fd",
-   "no_copy": 1,
-   "options": "\n\u0110ang x\u1eed l\u00fd\nHo\u00e0n th\u00e0nh",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "column_break_mpyt",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval: doc.cv_xu_ly",
-   "fieldname": "y_kien_chuyen_vien_xu_ly",
-   "fieldtype": "Small Text",
-   "label": "\u00dd ki\u1ebfn chuy\u00ean vi\u00ean x\u1eed l\u00fd",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "th\u00f4ng_tin_ng\u01b0\u1eddi_ph\u1ed1i_h\u1ee3p_tab",
-   "fieldtype": "Tab Break",
-   "label": "Th\u00f4ng tin ng\u01b0\u1eddi ph\u1ed1i h\u1ee3p"
-  },
-  {
-   "fieldname": "section_break_mxli",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "items2",
-   "fieldtype": "Table",
-   "no_copy": 1,
-   "options": "VNT Document Management Item",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "html_editer",
-   "fieldtype": "HTML"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "bi\u1ec3u_\u0111\u1ed3_x\u1eed_l\u00fd_section",
-   "fieldtype": "Section Break",
-   "label": "Bi\u1ec3u \u0111\u1ed3 x\u1eed l\u00fd"
-  },
-  {
-   "fieldname": "column_break_cjki",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
-   "fieldname": "deadline",
-   "fieldtype": "Date",
-   "label": "Th\u1eddi h\u1ea1n",
-   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\""
-  },
-  {
-   "fieldname": "section_break_bpgl",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "items3",
-   "fieldtype": "Table",
-   "label": "Danh s\u00e1ch file \u0111\u00ednh k\u00e8m Ban ch\u1ee7 tr\u00ec",
-   "no_copy": 1,
-   "options": "VNT Document Management Item3",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "item4",
-   "fieldtype": "Table",
-   "label": "Danh s\u00e1ch \u0111\u00ednh k\u00e8m Ban ph\u1ed1i h\u1ee3p",
-   "no_copy": 1,
-   "options": "VNT Document Management Item3",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "VNT Document Management",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "cong_van_di",
-   "fieldtype": "Link",
-   "label": "C\u00f4ng v\u0103n \u0111i t\u01b0\u01a1ng \u1ee9ng",
-   "options": "VNT Document Management",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "column_break_frgm",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
-   "fieldname": "deadline_copy",
-   "fieldtype": "Date",
-   "label": "Th\u1eddi h\u1ea1n",
-   "read_only": 1
-  },
-  {
-   "fieldname": "section_break_fsrf",
-   "fieldtype": "Section Break"
-  },
-  {
-   "default": "0",
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
-   "fieldname": "is_handler_status",
-   "fieldtype": "Check",
-   "label": "\u0110\u00e3 chuy\u1ec3n x\u1eed l\u00fd",
-   "read_only": 1
-  },
-  {
-   "fieldname": "y_kien_chu_tri",
-   "fieldtype": "Small Text",
-   "label": "\u00dd ki\u1ebfn ng\u01b0\u1eddi ch\u1ee7 tr\u00ec",
-   "permlevel": 1
-  },
-  {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
-   "fieldname": "department",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "label": "Ban g\u1eedi \u0111i",
-   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
-   "options": "Department"
-  },
-  {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
-   "fieldname": "vnt_doc_mng",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "label": "C\u00f4ng v\u0103n \u0111\u1ebfn t\u01b0\u01a1ng \u1ee9ng",
-   "link_filters": "[[\"VNT Document Management\",\"type\",\"=\",\"C\u00f4ng v\u0103n \u0111\u1ebfn\"]]",
-   "options": "VNT Document Management"
-  },
-  {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
-   "fieldname": "noi_nhan",
-   "fieldtype": "Data",
-   "label": "N\u01a1i nh\u1eadn",
-   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\""
-  },
-  {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
-   "fieldname": "nguoi_ky",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "label": "Ng\u01b0\u1eddi k\u00fd",
-   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
-   "options": "Employee"
-  },
-  {
-   "fetch_from": "department.custom_short_text_qlvb",
-   "fetch_if_empty": 1,
-   "fieldname": "short_text_department",
-   "fieldtype": "Data",
-   "ignore_user_permissions": 1,
-   "label": "T\u00ean vi\u1ebft t\u1eaft Ph\u00f2ng/ban",
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
-   "fieldname": "type_doc",
-   "fieldtype": "Select",
-   "label": "Lo\u1ea1i",
-   "options": "\nTB\nUQ\nBC\nGM\nTM\nTTr"
-  }
- ],
- "grid_page_length": 50,
- "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2025-12-10 16:17:15.045202",
- "modified_by": "Administrator",
- "module": "VNT HR",
- "name": "VNT Document Management",
- "naming_rule": "By \"Naming Series\" field",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Employee",
-   "select": 1,
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "permlevel": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Employee",
-   "select": 1,
-   "share": 1,
-   "write": 1
-  }
- ],
- "row_format": "Dynamic",
- "rows_threshold_for_grid_search": 20,
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": []
+  "actions": [],
+  "allow_rename": 1,
+  "autoname": "naming_series:",
+  "creation": "2025-10-29 16:27:38.345490",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "thông_tin_chung_tab",
+    "biểu_đồ_xử_lý_section",
+    "html_editer",
+    "thông_tin_chung_section",
+    "type",
+    "department",
+    "type_doc",
+    "sender",
+    "handler",
+    "employee",
+    "naming_series",
+    "noi_nhan",
+    "column_break_fdwp",
+    "document_date",
+    "nguoi_ky",
+    "received_date",
+    "deadline",
+    "vnt_doc_mng",
+    "short_text_department",
+    "column_break_frgm",
+    "reference_number",
+    "summary",
+    "section_break_mugf",
+    "attach",
+    "html",
+    "section_break_fsrf",
+    "items",
+    "thông_tin_người_xử_lý_section",
+    "y_kien_ld_td",
+    "column_break_cjki",
+    "handler_status",
+    "is_handler_status",
+    "deadline_copy",
+    "quá_trình_xử_lý_tab",
+    "nguoi_chu_tri",
+    "deadline_chu_tri2",
+    "chairperson_status",
+    "cong_van_di",
+    "column_break_iblk",
+    "y_kien_chu_tri",
+    "section_break_manr",
+    "cv_xu_ly",
+    "deadline_cv_xu_ly",
+    "trang_thai_chuyen_vien_xu_ly",
+    "column_break_mpyt",
+    "y_kien_chuyen_vien_xu_ly",
+    "section_break_bpgl",
+    "items3",
+    "thông_tin_người_phối_hợp_tab",
+    "section_break_mxli",
+    "items2",
+    "item4",
+    "amended_from"
+  ],
+  "fields": [
+    {
+      "fieldname": "employee",
+      "fieldtype": "Link",
+      "hidden": 1,
+      "ignore_user_permissions": 1,
+      "in_list_view": 1,
+      "label": "Người lập",
+      "options": "Employee"
+    },
+    {
+      "fieldname": "column_break_fdwp",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "section_break_mugf",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "attach",
+      "fieldtype": "Attach",
+      "label": "Đính kèm",
+      "make_attachment_public": 1,
+      "reqd": 1
+    },
+    {
+      "fieldname": "reference_number",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "label": "Số hiệu văn bản",
+      "reqd": 1
+    },
+    {
+      "fieldname": "summary",
+      "fieldtype": "Small Text",
+      "in_list_view": 1,
+      "label": "Trích yếu",
+      "max_height": "100px",
+      "reqd": 1
+    },
+    {
+      "fieldname": "document_date",
+      "fieldtype": "Date",
+      "label": "Ngày văn bản",
+      "reqd": 1
+    },
+    {
+      "depends_on": "eval: doc.type == \"Công văn đến\"",
+      "fieldname": "received_date",
+      "fieldtype": "Date",
+      "label": "Ngày đến",
+      "mandatory_depends_on": "eval: doc.type == \"Công văn đến\""
+    },
+    {
+      "depends_on": "eval: doc.type == \"Công văn đến\"",
+      "fieldname": "sender",
+      "fieldtype": "Data",
+      "label": "Nơi gửi",
+      "mandatory_depends_on": "eval: doc.type == \"Công văn đến\""
+    },
+    {
+      "depends_on": "eval: doc.type == \"Công văn đến\"",
+      "fieldname": "handler",
+      "fieldtype": "Link",
+      "ignore_user_permissions": 1,
+      "label": "Lãnh đạo Tập đoàn",
+      "link_filters": "[[\"Employee\",\"name\",\"in\",[\"VGT00067\",\"VGT00069\",\"VGT00079\",\"VGT00080\",\"VGT00083\"]]]",
+      "mandatory_depends_on": "eval: doc.type == \"Công văn đến\"",
+      "no_copy": 1,
+      "options": "Employee"
+    },
+    {
+      "fieldname": "html",
+      "fieldtype": "HTML"
+    },
+    {
+      "fieldname": "thông_tin_chung_tab",
+      "fieldtype": "Tab Break",
+      "label": "Thông tin văn bản"
+    },
+    {
+      "collapsible": 1,
+      "fieldname": "thông_tin_chung_section",
+      "fieldtype": "Section Break",
+      "label": "Thông tin chung"
+    },
+    {
+      "fieldname": "type",
+      "fieldtype": "Select",
+      "label": "Loại văn bản",
+      "no_copy": 1,
+      "options": "\nCông văn đến\nCông văn đi\nQuyết định",
+      "reqd": 1
+    },
+    {
+      "fieldname": "naming_series",
+      "fieldtype": "Select",
+      "hidden": 1,
+      "label": "Naming Series",
+      "options": "\nCVĐI.-.MM..YY.-.####\nCVĐEN.-.MM..YY.-.####\nQĐ.-.MM..YY.-.####"
+    },
+    {
+      "depends_on": "eval: doc.type == \"Công văn đến\"",
+      "fieldname": "handler_status",
+      "fieldtype": "Button",
+      "label": "Chuyển xử lý",
+      "no_copy": 1
+    },
+    {
+      "fieldname": "thông_tin_người_xử_lý_section",
+      "fieldtype": "Section Break"
+    },
+    {
+      "depends_on": "eval: doc.type == \"Công văn đến\"",
+      "fieldname": "y_kien_ld_td",
+      "fieldtype": "Small Text",
+      "label": "Ý kiến Lãnh đạo Tập đoàn",
+      "max_height": "120px"
+    },
+    {
+      "depends_on": "eval: doc.type == \"Công văn đến\"",
+      "fieldname": "items",
+      "fieldtype": "Table",
+      "no_copy": 1,
+      "options": "VNT Document Management Item2"
+    },
+    {
+      "fieldname": "quá_trình_xử_lý_tab",
+      "fieldtype": "Tab Break",
+      "label": "Thông tin người chủ trì"
+    },
+    {
+      "fieldname": "nguoi_chu_tri",
+      "fieldtype": "Link",
+      "ignore_user_permissions": 1,
+      "label": "Người chủ trì",
+      "options": "Employee",
+      "permlevel": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "deadline_chu_tri2",
+      "fieldtype": "Date",
+      "label": "Thời hạn hoàn thành người chủ trì",
+      "permlevel": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "chairperson_status",
+      "fieldtype": "Select",
+      "label": "Trạng thái Người chủ trì",
+      "no_copy": 1,
+      "options": "\nĐang xử lý\nHoàn thành\nTrả lại",
+      "permlevel": 1
+    },
+    {
+      "fieldname": "column_break_iblk",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "section_break_manr",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "cv_xu_ly",
+      "fieldtype": "Link",
+      "ignore_user_permissions": 1,
+      "label": "Chuyên viên xử lý",
+      "options": "Employee",
+      "permlevel": 1
+    },
+    {
+      "depends_on": "eval: doc.cv_xu_ly",
+      "fieldname": "deadline_cv_xu_ly",
+      "fieldtype": "Date",
+      "label": "Thời hạn hoàn thành chuyên viên xử lý",
+      "mandatory_depends_on": "eval: doc.cv_xu_ly",
+      "permlevel": 1
+    },
+    {
+      "depends_on": "eval: doc.cv_xu_ly",
+      "fieldname": "trang_thai_chuyen_vien_xu_ly",
+      "fieldtype": "Select",
+      "label": "Trạng thái chuyên viên xử lý",
+      "no_copy": 1,
+      "options": "\nĐang xử lý\nHoàn thành",
+      "permlevel": 1
+    },
+    {
+      "fieldname": "column_break_mpyt",
+      "fieldtype": "Column Break"
+    },
+    {
+      "depends_on": "eval: doc.cv_xu_ly",
+      "fieldname": "y_kien_chuyen_vien_xu_ly",
+      "fieldtype": "Small Text",
+      "label": "Ý kiến chuyên viên xử lý",
+      "permlevel": 1
+    },
+    {
+      "fieldname": "thông_tin_người_phối_hợp_tab",
+      "fieldtype": "Tab Break",
+      "label": "Thông tin người phối hợp"
+    },
+    {
+      "fieldname": "section_break_mxli",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "items2",
+      "fieldtype": "Table",
+      "no_copy": 1,
+      "options": "VNT Document Management Item",
+      "permlevel": 1
+    },
+    {
+      "fieldname": "html_editer",
+      "fieldtype": "HTML"
+    },
+    {
+      "collapsible": 1,
+      "fieldname": "biểu_đồ_xử_lý_section",
+      "fieldtype": "Section Break",
+      "label": "Biểu đồ xử lý"
+    },
+    {
+      "fieldname": "column_break_cjki",
+      "fieldtype": "Column Break"
+    },
+    {
+      "depends_on": "eval: doc.type == \"Công văn đến\"",
+      "fieldname": "deadline",
+      "fieldtype": "Date",
+      "label": "Thời hạn",
+      "mandatory_depends_on": "eval: doc.type == \"Công văn đến\""
+    },
+    {
+      "fieldname": "section_break_bpgl",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "items3",
+      "fieldtype": "Table",
+      "label": "Danh sách file đính kèm Ban chủ trì",
+      "no_copy": 1,
+      "options": "VNT Document Management Item3",
+      "permlevel": 1
+    },
+    {
+      "fieldname": "item4",
+      "fieldtype": "Table",
+      "label": "Danh sách đính kèm Ban phối hợp",
+      "no_copy": 1,
+      "options": "VNT Document Management Item3",
+      "permlevel": 1
+    },
+    {
+      "fieldname": "amended_from",
+      "fieldtype": "Link",
+      "label": "Amended From",
+      "no_copy": 1,
+      "options": "VNT Document Management",
+      "print_hide": 1,
+      "read_only": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "cong_van_di",
+      "fieldtype": "Link",
+      "label": "Công văn đi tương ứng",
+      "options": "VNT Document Management",
+      "permlevel": 1
+    },
+    {
+      "fieldname": "column_break_frgm",
+      "fieldtype": "Column Break"
+    },
+    {
+      "depends_on": "eval: doc.type == \"Công văn đến\"",
+      "fieldname": "deadline_copy",
+      "fieldtype": "Date",
+      "label": "Thời hạn",
+      "read_only": 1
+    },
+    {
+      "fieldname": "section_break_fsrf",
+      "fieldtype": "Section Break"
+    },
+    {
+      "default": "0",
+      "depends_on": "eval: doc.type == \"Công văn đến\"",
+      "fieldname": "is_handler_status",
+      "fieldtype": "Check",
+      "label": "Đã chuyển xử lý",
+      "read_only": 1
+    },
+    {
+      "fieldname": "y_kien_chu_tri",
+      "fieldtype": "Small Text",
+      "label": "Ý kiến người chủ trì",
+      "permlevel": 1
+    },
+    {
+      "depends_on": "eval: doc.type == \"Công văn đi\"",
+      "fieldname": "department",
+      "fieldtype": "Link",
+      "ignore_user_permissions": 1,
+      "label": "Ban gửi đi",
+      "mandatory_depends_on": "eval: doc.type == \"Công văn đi\"",
+      "options": "Department"
+    },
+    {
+      "depends_on": "eval: doc.type == \"Công văn đi\"",
+      "fieldname": "vnt_doc_mng",
+      "fieldtype": "Link",
+      "ignore_user_permissions": 1,
+      "label": "Công văn đến tương ứng",
+      "link_filters": "[[\"VNT Document Management\",\"type\",\"=\",\"Công văn đến\"]]",
+      "options": "VNT Document Management"
+    },
+    {
+      "depends_on": "eval: doc.type == \"Công văn đi\"",
+      "fieldname": "noi_nhan",
+      "fieldtype": "Data",
+      "label": "Nơi nhận",
+      "mandatory_depends_on": "eval: doc.type == \"Công văn đi\""
+    },
+    {
+      "depends_on": "eval: doc.type == \"Công văn đi\"",
+      "fieldname": "nguoi_ky",
+      "fieldtype": "Link",
+      "ignore_user_permissions": 1,
+      "label": "Người ký",
+      "mandatory_depends_on": "eval: doc.type == \"Công văn đi\"",
+      "options": "Employee"
+    },
+    {
+      "fetch_from": "department.custom_short_text_qlvb",
+      "fetch_if_empty": 1,
+      "fieldname": "short_text_department",
+      "fieldtype": "Data",
+      "ignore_user_permissions": 1,
+      "label": "Tên viết tắt Phòng/ban",
+      "read_only": 1
+    },
+    {
+      "depends_on": "eval: doc.type == \"Công văn đi\"",
+      "fieldname": "type_doc",
+      "fieldtype": "Select",
+      "label": "Loại",
+      "options": "\nTB\nUQ\nBC\nGM\nTM\nTTr"
+    }
+  ],
+  "grid_page_length": 50,
+  "index_web_pages_for_search": 1,
+  "links": [],
+  "modified": "2025-12-10 16:17:15.045202",
+  "modified_by": "Administrator",
+  "module": "VNT HR",
+  "name": "VNT Document Management",
+  "naming_rule": "By \"Naming Series\" field",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "email": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Employee",
+      "select": 1,
+      "share": 1,
+      "write": 1
+    },
+    {
+      "email": 1,
+      "permlevel": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Employee",
+      "select": 1,
+      "share": 1,
+      "write": 1
+    }
+  ],
+  "row_format": "Dynamic",
+  "rows_threshold_for_grid_search": 20,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": []
 }

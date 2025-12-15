@@ -117,18 +117,21 @@ def vnt_document_management_permission_query_conditions(user=None):
     if not user or user == "Guest":
         return "1=0"
 
+    allow_empty_type = "ifnull(`tabVNT Document Management`.type, '') = ''"
+
     # Cho Administrator/System Manager view all
     if user == "Administrator" or "System Manager" in frappe.get_roles(user):
         return ""
 
     emp = _user_employee(user)
     if not emp:
-        return "1=0"
+        return allow_empty_type
 
     esc = frappe.db.escape(emp)
     return f"""
         (
-            `tabVNT Document Management`.employee = {esc}
+            {allow_empty_type}
+            OR `tabVNT Document Management`.employee = {esc}
             OR `tabVNT Document Management`.handler = {esc}
             OR `tabVNT Document Management`.nguoi_chu_tri = {esc}
             OR `tabVNT Document Management`.cv_xu_ly = {esc}
@@ -161,6 +164,10 @@ def vnt_document_management_has_permission(doc=None, user=None, ptype=None):
 
     # Khi doc=None (check cấp doctype), cho phép để còn áp dụng query_conditions
     if not doc:
+        return True
+
+    # Văn bản chưa chọn loại -> mở cho tất cả
+    if not (getattr(doc, "type", None) or "").strip():
         return True
 
     emp = _user_employee(user)

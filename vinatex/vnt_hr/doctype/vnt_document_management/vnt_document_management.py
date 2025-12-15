@@ -24,13 +24,18 @@ class VNTDocumentManagement(Document):
 		self._maybe_notify_chair_on_specialist_done()
 		self._maybe_notify_collab_specialists_assignment()
 		self._maybe_notify_collab_on_spec_done()
+		self._maybe_close_handler_todo_on_transfer()
+		self._maybe_close_specialist_todo_on_done()
+		self._maybe_close_chair_todo_on_done()
+		self._maybe_close_collab_todos_on_done()
 
 	def after_insert(self):
-		if (self.type or "").strip() != "Công văn đến":
-			return
-
-		self._notify_incoming_to_handler()
-		self._notify_office_group()
+		doc_type = (self.type or "").strip()
+		if doc_type == "Công văn đến":
+			self._notify_incoming_to_handler()
+			self._notify_office_group()
+		elif doc_type == "Công văn đi":
+			self._notify_outgoing_department_members()
 
 	def _validate_handler_status_roles(self):
 		"""Yêu cầu phải có ít nhất 1 dòng Chủ trì/Phối hợp/Nhận để biết khi đặt trạng thái lãnh đạo."""
@@ -53,6 +58,10 @@ class VNTDocumentManagement(Document):
 		"""Người phối hợp không được Hoàn thành khi chuyên viên xử lý chưa Hoàn thành."""
 		items2 = self.get("items2") or []
 		for row in items2:
+			# Nếu chưa giao chuyên viên phối hợp, cho phép người phối hợp tự hoàn thành
+			if not (row.cv_xu_ly or "").strip():
+				continue
+
 			if (row.trang_thai_nguoi_phoi_hop or "").strip() == "Hoàn thành" and (row.trang_thai_cv_xu_ly or "").strip() != "Hoàn thành":
 				frappe.throw("Người phối hợp chỉ được chọn Hoàn thành sau khi Chuyên viên xử lý đã Hoàn thành.")
 
@@ -61,12 +70,17 @@ class VNTDocumentManagement(Document):
 		if (self.chairperson_status or "").strip() != "Hoàn thành":
 			return
 
-		if (self.trang_thai_chuyen_vien_xu_ly or "").strip() != "Hoàn thành":
+		# Nếu đã gán chuyên viên chính thì yêu cầu Hoàn thành; nếu chưa gán thì bỏ qua điều kiện này
+		if self.cv_xu_ly and (self.trang_thai_chuyen_vien_xu_ly or "").strip() != "Hoàn thành":
 			frappe.throw("Người chủ trì chỉ được chọn Hoàn thành sau khi Chuyên viên xử lý đã Hoàn thành.")
 
 		items2 = self.get("items2") or []
 		for row in items2:
-			if (row.trang_thai_cv_xu_ly or "").strip() != "Hoàn thành" or (row.trang_thai_nguoi_phoi_hop or "").strip() != "Hoàn thành":
+			# Người phối hợp phải Hoàn thành
+			if (row.trang_thai_nguoi_phoi_hop or "").strip() != "Hoàn thành":
+				frappe.throw("Người chủ trì chỉ được chọn Hoàn thành sau khi tất cả dòng phối hợp đã Hoàn thành.")
+			# Nếu dòng có chuyên viên phối hợp, yêu cầu chuyên viên phối hợp cũng Hoàn thành
+			if row.cv_xu_ly and (row.trang_thai_cv_xu_ly or "").strip() != "Hoàn thành":
 				frappe.throw("Người chủ trì chỉ được chọn Hoàn thành sau khi tất cả dòng phối hợp đã Hoàn thành.")
 
 	def _validate_specialist_deadline(self):
@@ -80,6 +94,126 @@ class VNTDocumentManagement(Document):
 		for row in self.get("items2") or []:
 			if row.deadline2 and row.deadline1 and getdate(row.deadline2) > getdate(row.deadline1):
 				frappe.throw("Thời hạn Chuyên viên xử lý không được muộn hơn thời hạn Người phối hợp.")
+
+	def _close_todos_for_user(self, user_id: str | None):
+		"""Close open ToDos for this doc allocated to given user."""
+		if not user_id:
+			return
+
+		todos = frappe.get_all(
+			"ToDo",
+			filters={
+				"reference_type": self.doctype,
+				"reference_name": self.name,
+				"allocated_to": user_id,
+				"status": ["!=", "Cancelled"],
+			},
+			fields=["name", "status"],
+			ignore_permissions=True,
+		)
+
+		for row in todos:
+			if (row.status or "").strip().lower() == "closed":
+				continue
+			frappe.db.set_value("ToDo", row.name, "status", "Closed", update_modified=False)
+
+	def _maybe_close_handler_todo_on_transfer(self):
+		"""
+		Khi lãnh đạo bấm 'Chuyển văn bản' và đã tick 'Đã chuyển xử lý',
+		đóng ToDo được tạo lúc nhận công văn đến cho Lãnh đạo Tập đoàn.
+		"""
+		if (self.type or "").strip() != "Công văn đến":
+			return
+
+		current_status = (getattr(self, "handler_status", None) or "").strip()
+		if current_status != "Chuyển văn bản":
+			return
+
+		if not self.name or not self.handler:
+			return
+
+		user_id = frappe.db.get_value("Employee", self.handler, "user_id")
+		if not user_id:
+			return
+		self._close_todos_for_user(user_id)
+
+	def _maybe_close_specialist_todo_on_done(self):
+		"""
+		Khi chuyên viên xử lý chính Hoàn thành, đóng ToDo đã giao cho chuyên viên này.
+		"""
+		if (self.type or "").strip() != "Công văn đến":
+			return
+		if not self.name or not self.cv_xu_ly:
+			return
+
+		current_status = (getattr(self, "trang_thai_chuyen_vien_xu_ly", None) or "").strip()
+		if current_status != "Hoàn thành":
+			return
+
+		prev_status = (self.get_db_value("trang_thai_chuyen_vien_xu_ly") or "").strip() if self.name else ""
+		if prev_status == "Hoàn thành":
+			return
+
+		user_id = frappe.db.get_value("Employee", self.cv_xu_ly, "user_id")
+		if not user_id:
+			return
+		self._close_todos_for_user(user_id)
+
+	def _maybe_close_chair_todo_on_done(self):
+		"""
+		Khi Người chủ trì Hoàn thành, đóng ToDo đã giao cho Người chủ trì.
+		"""
+		if (self.type or "").strip() != "Công văn đến":
+			return
+		if not self.name or not self.nguoi_chu_tri:
+			return
+
+		current_status = (getattr(self, "chairperson_status", None) or "").strip()
+		if current_status != "Hoàn thành":
+			return
+
+		prev_status = (self.get_db_value("chairperson_status") or "").strip() if self.name else ""
+		if prev_status == "Hoàn thành":
+			return
+
+		user_id = frappe.db.get_value("Employee", self.nguoi_chu_tri, "user_id")
+		if not user_id:
+			return
+		self._close_todos_for_user(user_id)
+
+	def _maybe_close_collab_todos_on_done(self):
+		"""
+		Khi Người phối hợp hoặc Chuyên viên phối hợp (items2) Hoàn thành, đóng ToDo tương ứng.
+		"""
+		if (self.type or "").strip() != "Công văn đến":
+			return
+		if not self.name:
+			return
+
+		prev_rows = {
+			row.name: row
+			for row in frappe.get_all(
+				"VNT Document Management Item",
+				filters={"parent": self.name},
+				fields=["name", "trang_thai_nguoi_phoi_hop", "trang_thai_cv_xu_ly"],
+				ignore_permissions=True,
+			)
+		}
+
+		for row in self.get("items2") or []:
+			# Người phối hợp
+			if (row.trang_thai_nguoi_phoi_hop or "").strip() == "Hoàn thành":
+				prev_status = (prev_rows.get(row.name).trang_thai_nguoi_phoi_hop or "").strip() if prev_rows.get(row.name) else ""
+				if prev_status != "Hoàn thành" and row.nguoi_phoi_hop:
+					user_id = frappe.db.get_value("Employee", row.nguoi_phoi_hop, "user_id")
+					self._close_todos_for_user(user_id)
+
+			# Chuyên viên phối hợp
+			if (row.trang_thai_cv_xu_ly or "").strip() == "Hoàn thành":
+				prev_spec_status = (prev_rows.get(row.name).trang_thai_cv_xu_ly or "").strip() if prev_rows.get(row.name) else ""
+				if prev_spec_status != "Hoàn thành" and row.cv_xu_ly:
+					user_id = frappe.db.get_value("Employee", row.cv_xu_ly, "user_id")
+					self._close_todos_for_user(user_id)
 
 	def _maybe_notify_primary_specialist_assignment(self):
 		"""Khi Người chủ trì gán Chuyên viên xử lý và deadline, gửi noti/ToDo/Rocket.Chat cho chuyên viên."""
@@ -459,22 +593,61 @@ class VNTDocumentManagement(Document):
 
 			# ToDo (mỗi user một ToDo, tránh trùng)
 			
-			frappe.get_doc(
-				{
-					"doctype": "ToDo",
-					"status": "Open",
-					"allocated_to": user,
-					"reference_type": self.doctype,
-					"reference_name": self.name,
-					"description": message,
-					"priority": "Medium",
-				}
-			).insert(ignore_permissions=True)
+			# frappe.get_doc(
+			# 	{
+			# 		"doctype": "ToDo",
+			# 		"status": "Open",
+			# 		"allocated_to": user,
+			# 		"reference_type": self.doctype,
+			# 		"reference_name": self.name,
+			# 		"description": message,
+			# 		"priority": "Medium",
+			# 	}
+			# ).insert(ignore_permissions=True)
 
 		# Rocket.Chat
 		send_rocket_message(
 			to_users=user_list,
 			title=":bell: Thông báo Công văn đến",
+			message=message,
+			link=get_url_to_form(self.doctype, self.name),
+		)
+
+	def _notify_outgoing_department_members(self):
+		"""Gửi thông báo công văn đi tới toàn bộ nhân sự thuộc Ban gửi đi."""
+		if (self.type or "").strip() != "Công văn đi":
+			return
+		if not self.department or not self.name:
+			return
+
+		emp_rows = frappe.get_all(
+			"Employee",
+			filters={"department": self.department},
+			fields=["name", "employee_name", "user_id"],
+		)
+		user_ids = [r.user_id for r in emp_rows if r.user_id]
+		if not user_ids:
+			return
+
+		dept_name = frappe.db.get_value("Department", self.department, "department_name") or self.department
+		ref = self.reference_number or self.name
+		message = f"{dept_name} vừa ban hành Công văn đi số {ref}"
+
+		for user in user_ids:
+			frappe.get_doc(
+				{
+					"doctype": "Notification Log",
+					"for_user": user,
+					"subject": message,
+					"type": "Alert",
+					"document_type": self.doctype,
+					"document_name": self.name,
+				}
+			).insert(ignore_permissions=True)
+
+		send_rocket_message(
+			to_users=user_ids,
+			title=":bell: Công văn đi",
 			message=message,
 			link=get_url_to_form(self.doctype, self.name),
 		)
@@ -679,6 +852,12 @@ def trigger_handler_transfer(docname: str):
 		frappe.db.set_value(doc.doctype, doc.name, "handler_status", "Chuyển văn bản", update_modified=False)
 	except Exception:
 		frappe.log_error("Không thể cập nhật handler_status sau khi chuyển văn bản", "VNT Document Management")
+
+	# Đóng ToDo của Lãnh đạo (nếu có)
+	if doc.handler:
+		user_id = frappe.db.get_value("Employee", doc.handler, "user_id")
+		if user_id:
+			doc._close_todos_for_user(user_id)
 
 	return {"name": doc.name, "handler_status": getattr(doc, "handler_status", None)}
 
@@ -1197,9 +1376,9 @@ def get_document_dashboard_vn():
 def get_next_reference_number(
 	department: str | None = None, document_date: str | None = None, type_doc: str | None = None
 ) -> str | None:
-	"""Return next incremental reference number for outgoing documents of a department, reset each year."""
-	if not department:
-		return None
+	"""
+	Return next incremental reference number for outgoing documents, shared across all departments/type_doc per year.
+	"""
 
 	doc_date = getdate(document_date) if document_date else getdate(nowdate())
 	year = doc_date.year
@@ -1212,10 +1391,8 @@ def get_next_reference_number(
 		"VNT Document Management",
 		filters={
 			"type": "Công văn đi",
-			"department": department,
 			"docstatus": ["<", 2],
 			"document_date": ["between", [year_start, year_end]],
-			"type_doc": type_doc if type_doc else ["in", ["", None]],
 		},
 		fields=["reference_number"],
 	)
