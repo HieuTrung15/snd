@@ -278,6 +278,10 @@ def _apply_state_effects(doc: Document):
 		or prev_state == "Chờ lãnh đạo tập đoàn duyệt" and curr_state == "Từ chối":
 		_notify_employees_rejected(doc)
 		return
+	
+	if prev_state == "Mới tạo" and curr_state == "Đã duyệt":
+		replace_attendance_for_business_trip(doc)
+		return
 
 	if prev_state == "Đã duyệt" and curr_state == "Hủy":
 		# delete_todos_for_doc(doc)
