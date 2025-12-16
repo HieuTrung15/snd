@@ -3,16 +3,16 @@ from frappe.utils import getdate, add_days, add_months, nowdate
 
 # ====== CONFIG: CÔNG TÁC (bạn chỉnh cho khớp doctype/field thực tế) ======
 TRIP_PARENT_DOCTYPE = "VNT Business Trip Request"
-TRIP_ITEM_DOCTYPE   = "VNT Business Trip Request Items"  # bạn có doctype này :contentReference[oaicite:5]{index=5}
-TRIP_PARENTFIELD    = "items"                            # đổi nếu field table khác
-TRIP_FROM_FIELD     = "from_date"                        # đổi nếu khác
-TRIP_TO_FIELD       = "to_date"                          # đổi nếu khác
-TRIP_DEST_FIELD     = "destination"                      # bạn yêu cầu hiển thị destination
+TRIP_ITEM_DOCTYPE   = "VNT Business Trip Request Items"  
+TRIP_PARENTFIELD    = "items"                            
+TRIP_FROM_FIELD     = "from_date"                        
+TRIP_TO_FIELD       = "to_date"                          
+TRIP_DEST_FIELD     = "destination"                      
 
 # ====== CONFIG: HỌP ======
 MEETING_DOCTYPE = "VNT Meeting Room Booking"
-MEETING_LIST_EMP_CHILD = "VNT Car Registration Employee"  # options của list_emp :contentReference[oaicite:6]{index=6}
-MEETING_LIST_EMP_PARENTFIELD = "list_emp"                 # fieldname list_emp :contentReference[oaicite:7]{index=7}
+MEETING_LIST_EMP_CHILD = "VNT Car Registration Employee"  
+MEETING_LIST_EMP_PARENTFIELD = "list_emp"                
 
 
 def _month_range(year: int, month: int):
@@ -69,7 +69,7 @@ def get_department_calendar(year: int | None = None, month: int | None = None):
     # =========================
     # 1) CÔNG TÁC (theo dept)
     # =========================
-    # NOTE: doctype/field công tác bạn cần chỉnh TRIP_* cho đúng schema thực tế.
+    
     trip_sql = f"""
         SELECT
             t.name AS request_name,
@@ -130,7 +130,7 @@ def get_department_calendar(year: int | None = None, month: int | None = None):
     # =========================
     # 2) HỌP (VNT Meeting Room Booking)
     # =========================
-    # Booking có department fetch_from employee.department :contentReference[oaicite:8]{index=8}
+    # Booking có department fetch_from employee.department 
     bookings = frappe.get_all(
         MEETING_DOCTYPE,
         filters={
@@ -146,7 +146,7 @@ def get_department_calendar(year: int | None = None, month: int | None = None):
     if bookings:
         booking_names = [b["name"] for b in bookings]
 
-        # list_emp là Table MultiSelect :contentReference[oaicite:9]{index=9}
+        # list_emp là Table MultiSelect 
         list_rows = frappe.get_all(
             MEETING_LIST_EMP_CHILD,
             filters={
@@ -179,7 +179,7 @@ def get_department_calendar(year: int | None = None, month: int | None = None):
         for b in bookings:
             k = getdate(b["date"]).strftime("%Y-%m-%d")
 
-            # danh sách người họp = người đề xuất + list_emp (giống logic notify đang duyệt list_emp) :contentReference[oaicite:10]{index=10}
+            # danh sách người họp = người đề xuất + list_emp (giống logic notify đang duyệt list_emp) 
             participants = []
             seen = set()
 
@@ -202,7 +202,7 @@ def get_department_calendar(year: int | None = None, month: int | None = None):
                 "start_time": b.get("start_time"),
                 "end_time": b.get("end_time"),
                 "room_name": b.get("room_name"),
-                "note": b.get("note"),  # note là “Nội dung cuộc họp” :contentReference[oaicite:11]{index=11}
+                "note": b.get("note"),  
                 "people": participants,
             })
 
