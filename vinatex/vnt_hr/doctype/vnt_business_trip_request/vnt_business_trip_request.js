@@ -21,6 +21,17 @@ const ensure_creator_in_items = (frm) => {
     });
 };
 
+const ensure_initial_workflow_state = (frm) => {
+    if (!frm.is_new()) {
+        return;
+    }
+    const initial_state = "Mới tạo";
+    if (frm.doc.workflow_state !== initial_state) {
+        frm.doc.workflow_state = initial_state;
+        frm.refresh_field("workflow_state");
+    }
+};
+
 
 frappe.ui.form.on('VNT Business Trip Request', {
     after_save(frm) {
@@ -37,9 +48,13 @@ frappe.ui.form.on('VNT Business Trip Request', {
                 }
             });
         }
-    },
-    refresh(frm) {
-        if (frm.is_new()) {
+	    },
+    before_save(frm) {
+		ensure_initial_workflow_state(frm);
+	},
+	refresh(frm) {
+	    if (frm.is_new()) {
+            ensure_initial_workflow_state(frm);
             if (!frm.doc.employee) {
                 frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name")
                 .then(r => {

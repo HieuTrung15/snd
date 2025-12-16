@@ -196,7 +196,8 @@
    "fieldname": "vehicle",
    "fieldtype": "Table MultiSelect",
    "label": "Ph\u01b0\u01a1ng ti\u1ec7n di chuy\u1ec3n",
-   "options": "VNT Trip Transportation"
+   "options": "VNT Trip Transportation",
+   "reqd": 1
   },
   {
    "default": "0",
@@ -233,7 +234,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-17 09:31:20.475335",
+ "modified": "2025-12-16 13:36:26.131561",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Business Trip Request",

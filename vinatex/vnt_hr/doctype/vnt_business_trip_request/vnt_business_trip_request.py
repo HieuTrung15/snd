@@ -4,7 +4,7 @@ from frappe.model.document import Document
 from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 import unicodedata
-from frappe.model.workflow import apply_workflow
+from frappe.model.workflow import get_workflow
 from vinatex.patches.utils.rocket_chat import send_rocket_message
 from hrms.hr.utils import get_holiday_dates_for_employee
 
@@ -15,6 +15,26 @@ def _norm(s: str) -> str:
 def _in_state(state: str, states: set) -> bool:
 	ns = _norm(state)
 	return ns in {_norm(x) for x in states}
+
+def _reset_workflow_state_on_new(doc: Document):
+	"""Ensure duplicated/new docs always begin at the first workflow state."""
+	if not doc.is_new():
+		return
+
+	try:
+		workflow = get_workflow(doc.doctype)
+	except Exception:
+		return
+
+	if not workflow or not workflow.states:
+		return
+
+	default_state = workflow.states[0].state
+	fieldname = workflow.workflow_state_field or "workflow_state"
+	current_state = (doc.get(fieldname) or "").strip()
+
+	if default_state and current_state != default_state:
+		doc.set(fieldname, default_state)
 
 # ---- Workflow states ----
 PENDING_STATES  = {"Chờ duyệt"}
@@ -78,6 +98,7 @@ class VNTBusinessTripRequest(Document):
 		cancel_vehicle_requests_for_trip(self)
 
 	def validate(self):
+		_reset_workflow_state_on_new(self)
 		# danh sách phương tiện cần check
 		# trường hợp cần 2 cấp duyệt
 		# targets = [
