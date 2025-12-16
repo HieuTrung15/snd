@@ -54,6 +54,7 @@
    "fetch_from": "employee.department",
    "fieldname": "department",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Ph\u00f2ng ban",
    "options": "Department"
   },
@@ -247,7 +248,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-17 09:32:08.860417",
+ "modified": "2025-12-16 15:16:20.996961",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Car Registration",
