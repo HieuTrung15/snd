@@ -464,7 +464,7 @@
           const badgeBg = isTrip ? "#e0f2fe" : "#fef3c7";
           const badgeColor = isTrip ? "#0369a1" : "#b45309";
           const destination = isTrip && r.destination
-            ? `Công tác tại ${escapeHtml(r.destination)}`
+            ? `${escapeHtml(r.destination)}`
             : "";
           const showNote = r.note && (!isTrip || r.note !== r.status);
           const note = showNote ? escapeHtml(r.note) : "";

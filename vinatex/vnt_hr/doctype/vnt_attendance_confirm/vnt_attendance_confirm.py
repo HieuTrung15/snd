@@ -184,7 +184,7 @@ def _notify_confirmation(doc: Document, user: str, dates: list[date] | None = No
 	mapped_employee = frappe.db.get_value("Employee", {"user_id": user}, "name")
 	if mapped_employee and mapped_employee != doc.employee:
 		return
-	_ensure_todo_for_confirmation(doc, user, norm_dates)
+	# _ensure_todo_for_confirmation(doc, user, norm_dates)
 	_send_notification(doc, user, subject, message)
  
 

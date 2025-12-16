@@ -8,9 +8,9 @@ def get_my_todos(limit: int = 4):
         return []
 
     try:
-        limit = int(limit or 4)
+        limit = int(limit or 3)
     except Exception:
-        limit = 4
+        limit = 3
 
     filters = {"status": "Open"}
     if user != "Administrator":
@@ -48,6 +48,14 @@ def get_my_todos(limit: int = 4):
             order_by="modified desc",
             limit_page_length=limit,
         )
+
+    priority_description = "Xác nhận chấm công"
+    def is_priority(todo):
+        desc = (todo.get("description") or "").strip()
+        return desc.startswith(priority_description)
+
+    todos.sort(key=lambda t: t.get("modified") or "", reverse=True)
+    todos.sort(key=lambda t: 0 if is_priority(t) else 1)
 
     for t in todos:
         raw = t.get("description") or ""
