@@ -20,6 +20,16 @@ except Exception:  # pragma: no cover - defensive for older stacks
 
 
 APPROVED_TRIP_STATES = {"Đã duyệt", "Duyệt"}
+PRIORITY_NAME_ORDER = {
+	"Lê Tiến Trường": 0,
+	"Cao Hữu Hiếu": 1,
+	"Phạm Văn Tân": 2,
+	"Nguyễn Đức Trị": 3,
+	"Nguyễn Song Hải": 4,
+	"Lê Mạc Thuấn": 5,
+	"Nguyễn Thị Thu Hiền": 6,
+}
+DESIGNATION_PRIORITY = {"trưởng ban": 0, "chánh văn phòng": 1}
 
 
 def _percent(part: float, total: float) -> float:
@@ -390,7 +400,13 @@ def build_staff_movements(filters: dict[str, str]) -> list[dict]:
 	for row in rows:
 		if row.get("status") == _("Công tác"):
 			row["destination"] = trip_destination_map.get(row.get("employee")) or ""
-	rows.sort(key=lambda r: (r["_order"], r.get("employee_name") or ""))
+	rows.sort(
+		key=lambda r: (
+			* _leader_sort_key(r, group_code="department"),
+			r.get("_order", 99),
+			r.get("employee_name") or "",
+		)
+	)
 	return rows
 
 
@@ -684,27 +700,33 @@ def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
 		frappe.log_error(frappe.get_traceback(), "Leadership Dashboard - present managers")
 		rows = []
 
-	# Những người đang công tác/nghỉ hôm nay (để không auto-mark có mặt)
-	on_leave_or_trip = {mv.get("employee") for mv in get_attendance_movements(filters)}
+	leader_rows = frappe.get_all(
+		"Employee",
+		filters={
+			"status": "Active",
+			**({"company": company} if company else {}),
+			**({"department": department} if department else {}),
+		},
+		or_filters=[
+			{"custom_designation_group": ("in", list(allowed_groups))},
+			{"designation": ("like", "%Ban Kiểm soát chuyên trách Tập đoàn%")},
+		],
+		fields=[
+			"name",
+			"employee_name",
+			"department",
+			"designation",
+			"custom_designation_group",
+			"company",
+			"custom_need_check",
+		],
+		ignore_permissions=True,
+	)
+	leader_map = {e.name: e for e in leader_rows}
+	leader_ids = set(leader_map.keys())
 
-	emp_ids = [r.get("employee") for r in rows if r.get("employee")]
-	emp_map = {}
-	if emp_ids:
-		emp_rows = frappe.get_all(
-			"Employee",
-			filters={"name": ("in", emp_ids)},
-			fields=[
-				"name",
-				"employee_name",
-				"department",
-				"designation",
-				"custom_designation_group",
-				"company",
-				"custom_need_check",
-			],
-			ignore_permissions=True,
-		)
-		emp_map = {e.name: e for e in emp_rows}
+	# Những người đang công tác/nghỉ hôm nay (để không auto-mark có mặt)
+	on_leave_or_trip = _get_absent_employee_ids(today_date, leader_ids)
 
 	def _classify(emp) -> str | None:
 		designation = (emp.get("designation") or "").strip().lower()
@@ -732,7 +754,9 @@ def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
 	checkin_present_ids: set[str] = set()
 	for r in rows:
 		emp_code = r.get("employee")
-		emp = emp_map.get(emp_code)
+		if not emp_code or emp_code in on_leave_or_trip:
+			continue
+		emp = leader_map.get(emp_code)
 		if not emp:
 			continue
 		group_code = _classify(emp)
@@ -756,28 +780,6 @@ def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
 		)
 
 	# Auto-mark present nếu có custom_need_check = 1 và không công tác/nghỉ
-	leader_rows = frappe.get_all(
-		"Employee",
-		filters={
-			"status": "Active",
-			**({"company": company} if company else {}),
-			**({"department": department} if department else {}),
-		},
-		or_filters=[
-			{"custom_designation_group": ("in", list(allowed_groups))},
-			{"designation": ("like", "%Ban Kiểm soát chuyên trách Tập đoàn%")},
-		],
-		fields=[
-			"name",
-			"employee_name",
-			"department",
-			"designation",
-			"custom_designation_group",
-			"company",
-			"custom_need_check",
-		],
-		ignore_permissions=True,
-	)
 	for emp in leader_rows:
 		if emp.name in checkin_present_ids:
 			continue
@@ -797,30 +799,8 @@ def build_present_managers(filters: dict[str, str]) -> dict[str, list[dict]]:
 			}
 		)
 
-	# ===== ƯU TIÊN SẮP XẾP: đưa Cao Hữu Hiếu, Lê Tiến Trường lên đầu =====
-	priority_order = {
-		"Lê Tiến Trường": 0,
-		"Cao Hữu Hiếu": 1,
-		"Phạm Văn Tân": 2,
-		"Nguyễn Đức Trị": 3,
-		"Nguyễn Song Hải": 4,
-		"Lê Mạc Thuấn": 5,
-		"Nguyễn Thị Thu Hiền": 6,
-	}
-
-	designation_priority = {"trưởng ban": 0, "chánh văn phòng": 1}
-
-	def _sort_key(row: dict, group_code: str) -> tuple:
-		name = (row.get("employee_name") or "").strip()
-		designation = (row.get("designation") or "").strip().lower()
-		time_val = row.get("time") or ""
-		# nhân sự không trong priority_order sẽ có index lớn (99)
-		name_order = priority_order.get(name, 99)
-		designation_order = designation_priority.get(designation, 99) if group_code == "department" else 99
-		return (designation_order, name_order, time_val, name)
-
 	for grp_name, grp in result.items():
-		grp.sort(key=lambda row: _sort_key(row, grp_name))
+		grp.sort(key=lambda row: _leader_sort_key(row, grp_name))
 
 	return {
 		"corporate_leaders": result["corporate"],
@@ -868,3 +848,108 @@ def _get_trip_destination_map(employees: set[str], the_date) -> dict[str, str]:
 	except Exception:
 		frappe.log_error(frappe.get_traceback(), "Leadership Dashboard - trip destinations")
 		return {}
+
+
+def _get_trip_employees_on_date(the_date, employees: set[str] | None = None) -> set[str]:
+	"""Danh sách mã NV có đơn công tác (được duyệt) trùng ngày."""
+	if not the_date:
+		return set()
+	if employees is not None and not employees:
+		return set()
+	try:
+		parent_filters = {
+			"workflow_state": ("in", list(APPROVED_TRIP_STATES)),
+			"docstatus": 1,
+			"from_date": ("<=", the_date),
+			"to_date": (">=", the_date),
+		}
+		if employees:
+			parent_filters["employee"] = ("in", list(employees))
+
+		requests = frappe.get_all(
+			"VNT Business Trip Request",
+			filters=parent_filters,
+			fields=["name", "employee"],
+			ignore_permissions=True,
+		)
+		req_names = [r.name for r in requests]
+		trip_emp = {r.employee for r in requests if r.employee}
+
+		if req_names:
+			item_filters = {"parent": ("in", req_names)}
+			if employees:
+				item_filters["employee"] = ("in", list(employees))
+			items = frappe.get_all(
+				"VNT Business Trip Request Items",
+				filters=item_filters,
+				fields=["employee"],
+				ignore_permissions=True,
+			)
+			for item in items:
+				if item.employee:
+					trip_emp.add(item.employee)
+
+		if employees:
+			trip_emp = {emp for emp in trip_emp if emp in employees}
+		return trip_emp
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "Leadership Dashboard - trip employees on date")
+		return set()
+
+
+def _get_absent_employee_ids(the_date, employees: set[str] | None = None) -> set[str]:
+	"""Hợp nhất danh sách nghỉ phép/công tác trong ngày để lọc khỏi danh sách có mặt."""
+	if not the_date:
+		return set()
+	if employees is not None and not employees:
+		return set()
+
+	emp_filter = {"employee": ("in", list(employees))} if employees else {}
+	absent: set[str] = set()
+
+	# Nghỉ phép
+	try:
+		leave_rows = frappe.get_all(
+			"Leave Application",
+			filters={
+				"docstatus": 1,
+				"from_date": ("<=", the_date),
+				"to_date": (">=", the_date),
+				**emp_filter,
+			},
+			fields=["employee"],
+			ignore_permissions=True,
+		)
+		absent.update(r.employee for r in leave_rows if r.employee)
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "Leadership Dashboard - leave on date")
+
+	# Attendance On Leave (phòng trường hợp không có đơn)
+	try:
+		att_rows = frappe.get_all(
+			"Attendance",
+			filters={"docstatus": 1, "status": "On Leave", "attendance_date": the_date, **emp_filter},
+			fields=["employee"],
+			ignore_permissions=True,
+		)
+		absent.update(r.employee for r in att_rows if r.employee)
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "Leadership Dashboard - attendance on leave")
+
+	# Công tác
+	absent.update(_get_trip_employees_on_date(the_date, employees))
+
+	return absent
+
+
+def _leader_sort_key(row: dict, group_code: str | None = None) -> tuple:
+	"""
+	Sắp xếp ưu tiên theo tên nổi bật trước, sau đó chức danh; dùng cho cả danh sách lãnh đạo & công tác/nghỉ.
+	group_code "department" sẽ áp dụng ưu tiên chức danh.
+	"""
+	name = (row.get("employee_name") or "").strip()
+	designation = (row.get("designation") or "").strip().lower()
+	time_val = row.get("time") or ""
+	name_order = PRIORITY_NAME_ORDER.get(name, 99)
+	designation_order = DESIGNATION_PRIORITY.get(designation, 99) if group_code == "department" else 99
+	return (name_order, designation_order, time_val, name)
