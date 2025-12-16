@@ -32,27 +32,39 @@ const ensure_initial_workflow_state = (frm) => {
     }
 };
 
+const AUTO_WORKFLOW_STATE = "Mới tạo";
+const AUTO_WORKFLOW_ACTION = "Chuyển duyệt";
+
+const apply_initial_workflow_transition = (frm) => {
+    if (frm.is_new() || !frm._should_apply_initial_workflow) return;
+    frm._should_apply_initial_workflow = false;
+    frappe.call({
+        method: "frappe.model.workflow.apply_workflow",
+        args: {
+            doc: {
+                doctype: frm.doc.doctype,
+                name: frm.doc.name,
+            },
+            action: AUTO_WORKFLOW_ACTION,
+        },
+        callback() {
+            frm.reload_doc();
+        }
+    });
+};
 
 frappe.ui.form.on('VNT Business Trip Request', {
     after_save(frm) {
-        // Chỉ auto chạy 1 lần khi còn ở state "Mới tạo"
-        if (frm.doc.workflow_state === "Mới tạo") {
-            frappe.call({
-                method: "frappe.model.workflow.apply_workflow",
-                args: {
-                    doc: frm.doc,
-                    action: "Chuyển duyệt", // action trong workflow
-                },
-                callback() {
-                    frm.reload_doc();
-                }
-            });
-        }
-	    },
+        // Đánh dấu để thực thi sau khi form refresh với tên chính thức
+        frm._should_apply_initial_workflow = frm.doc.workflow_state === AUTO_WORKFLOW_STATE;
+    },
     before_save(frm) {
 		ensure_initial_workflow_state(frm);
 	},
 	refresh(frm) {
+        if (frm._should_apply_initial_workflow && !frm.is_new()) {
+            apply_initial_workflow_transition(frm);
+        }
 	    if (frm.is_new()) {
             ensure_initial_workflow_state(frm);
             if (!frm.doc.employee) {
@@ -133,7 +145,6 @@ frappe.ui.form.on('VNT Business Trip Request', {
                 },
                 callback (r) {
                     if (r.message) {
-                        console.log("abc", r.message)
                         frm.set_value("approver_lv2", r.message.name);
                         frm.set_value("approver_name_lv2", r.message.employee_name);
 
