@@ -8,7 +8,7 @@ from hrms.hr.doctype.attendance.attendance import (
 from datetime import datetime, date, time, timedelta
 from frappe.utils import getdate, now_datetime
 
-STANDARD_START_TIME = time(8, 17)
+STANDARD_START_TIME = time(8, 15)
 STANDARD_END_TIME = time(17, 0)
 
 
