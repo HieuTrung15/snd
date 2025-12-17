@@ -5,11 +5,28 @@ frappe.ui.form.on("Leave Application", {
 		frappe.throw(__('Vui lòng nhập "Lý do từ chối" trước khi từ chối.'));
 		}
 	},
+	before_save (frm) {
+		// Set status cho document mới trước khi save
+		if (frm.is_new() && !frm.doc.status) {
+			frm.set_value("status", "Approved");
+		}
+	},
 
 	after_save (frm) {
-		if (frm.is_new()) {
-			frm.set_value("status", "Approved");
-			frm.refresh_field("status");
+		if (frm.doc.workflow_state === "Mới tạo") {
+			// Ensure document is persisted (not a temporary `new-...` name) before applying workflow
+			const apply = () => {
+				frappe.xcall("frappe.model.workflow.apply_workflow", {
+					doc: frm.doc,
+					action: "Chuyển duyệt",
+				}).then(() => frm.reload_doc());
+			};
+
+			if ((frm.doc.name || "").startsWith("new-")) {
+				frm.reload_doc().then(apply).catch(() => apply());
+			} else {
+				apply();
+			}
 		}
 	},
 	half_day(frm) {
