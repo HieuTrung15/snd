@@ -3,13 +3,15 @@ from __future__ import annotations
 
 import time
 import json
+import re
 from dataclasses import dataclass
 from typing import Optional, Dict, Any, Tuple
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse, unquote
 
 import frappe
 import requests
 from frappe.utils.password import set_encrypted_password
+from frappe.utils.data import escape_html
 
 GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 SETTINGS_DOCTYPE = "VNT Teams URL"
@@ -21,6 +23,8 @@ CACHE_TOKEN_KEY = "vnt_teams_graph:access_token"
 CACHE_TOKEN_EXP_KEY = "vnt_teams_graph:access_token_exp"
 CACHE_CHAT_KEY_PREFIX = "vnt_teams_graph:chat_id:"  # + target_user_id or upn
 CACHE_USER_KEY_PREFIX = "vnt_teams_graph:user_id:"  # + upn/email
+
+_URL_RE = re.compile(r"(https?://[^\s<]+)")
 
 
 @dataclass
@@ -328,6 +332,71 @@ def _graph_request(method: str, url: str, token: str, json_body: Any = None, ret
     return resp
 
 
+def _shorten_url_for_display(url: str) -> str:
+    """
+    Default strategy: display last non-empty path segment (e.g. .../VTMSG-2025-12-0002)
+    fallback: hostname, fallback: original url.
+    """
+    try:
+        p = urlparse(url)
+        path = (p.path or "").strip("/")
+        if path:
+            seg = path.split("/")[-1]
+            if seg:
+                return unquote(seg)
+        if p.netloc:
+            return p.netloc
+    except Exception:
+        pass
+    return url
+
+
+def _format_message_content(
+    content: str,
+    content_type: str,
+    linkify: bool,
+    linkify_mode: str = "full",
+) -> Tuple[str, str]:
+    """
+    Graph supports `contentType`: "text" or "html".
+    - "text": nhanh, đơn giản, nhưng Teams đôi khi không auto-link URL.
+    - "html": có thể dùng <a href="...">...</a> để click được.
+    """
+    ct = (content_type or "text").strip().lower()
+    if ct not in ("text", "html"):
+        ct = "text"
+
+    if ct == "text" and not linkify:
+        return "text", content
+
+    # Always return HTML if ct == "html" OR linkify enabled.
+    mode = (linkify_mode or "full").strip().lower()
+    if mode not in ("full", "short"):
+        mode = "full"
+
+    raw = content or ""
+
+    if not linkify:
+        safe = escape_html(raw).replace("\n", "<br>")
+        return "html", safe
+
+    # Build HTML with escaped non-url parts, and <a> for URLs.
+    out: list[str] = []
+    pos = 0
+    for m in _URL_RE.finditer(raw):
+        start, end = m.span(1)
+        if start > pos:
+            out.append(escape_html(raw[pos:start]).replace("\n", "<br>"))
+        url = m.group(1)
+        display = _shorten_url_for_display(url) if mode == "short" else url
+        out.append(f'<a href="{escape_html(url)}">{escape_html(display)}</a>')
+        pos = end
+    if pos < len(raw):
+        out.append(escape_html(raw[pos:]).replace("\n", "<br>"))
+
+    return "html", "".join(out)
+
+
 def _user_cache_key(upn_or_email: str) -> str:
     return f"{CACHE_USER_KEY_PREFIX}{upn_or_email}".lower()
 
@@ -441,6 +510,9 @@ def send_chat_message(
     *,
     to_upn_or_email: Optional[str] = None,
     settings_docname: Optional[str] = None,
+    content_type: str = "text",
+    linkify: bool = False,
+    linkify_mode: str = "full",
     token: Optional[str] = None,
     token_ms: Optional[int] = None,
     user_lookup_ms: Optional[int] = None,
@@ -450,9 +522,13 @@ def send_chat_message(
     settings = settings or get_settings()
     token = token or get_access_token(settings)
 
-    body = {
-        "body": {"content": content}
-    }
+    ct, formatted = _format_message_content(
+        content,
+        content_type=content_type,
+        linkify=linkify,
+        linkify_mode=linkify_mode,
+    )
+    body = {"body": {"contentType": ct, "content": formatted}}
     url = f"{GRAPH_BASE}/chats/{chat_id}/messages"
 
     start = time.time()
@@ -523,9 +599,13 @@ def notify_user(
     upn_or_email: str,
     message: str,
     settings_docname: Optional[str] = None,
+    content_type: str = "text",
+    linkify: bool = False,
+    linkify_mode: str = "full",
 ) -> Dict[str, Any]:
     """
     High-level: email/UPN -> user_id -> chat_id -> send message
+    Gửi tin nhắn qua Teams chat tới user xác định bởi email/UPN.
     """
     settings = get_settings(settings_docname)
     total_start = time.time()
@@ -561,6 +641,9 @@ def notify_user(
         settings=settings,
         to_upn_or_email=upn_or_email,
         settings_docname=settings.name,
+        content_type=content_type,
+        linkify=linkify,
+        linkify_mode=linkify_mode,
         token=token,
         token_ms=token_ms,
         user_lookup_ms=user_lookup_ms,
@@ -570,12 +653,26 @@ def notify_user(
 
 
 @frappe.whitelist()
-def notify_user_api(upn_or_email: str, message: str, settings_docname: Optional[str] = None) -> Dict[str, Any]:
+def notify_user_api(
+    upn_or_email: str,
+    message: str,
+    settings_docname: Optional[str] = None,
+    content_type: str = "text",
+    linkify: bool = False,
+    linkify_mode: str = "full",
+) -> Dict[str, Any]:
     """
     Whitelisted wrapper: call from client/script.
     """
     # frappe.only_for("System Manager")  # chỉnh role nếu muốn
-    return notify_user(upn_or_email, message, settings_docname=settings_docname)
+    return notify_user(
+        upn_or_email,
+        message,
+        settings_docname=settings_docname,
+        content_type=content_type,
+        linkify=linkify,
+        linkify_mode=linkify_mode,
+    )
 
 
 @frappe.whitelist()
@@ -583,7 +680,7 @@ def enqueue_notify_user(upn_or_email: str, message: str, settings_docname: Optio
     """
     Background job: tránh chậm UI.
     """
-    frappe.only_for("System Manager")  # chỉnh role nếu muốn
+    # frappe.only_for("System Manager")  # chỉnh role nếu muốn
 
     job = frappe.enqueue(
         "vinatex.integrations.teams_graph.notify_user",
