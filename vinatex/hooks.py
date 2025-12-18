@@ -82,6 +82,7 @@ doctype_js = {
 	"ToDo": "vinatex/doctype/overrides/todo.js",
     "User": "vinatex/doctype/overrides/user.js",
     "Job Requisition": "vinatex/doctype/overrides/job_requisition.js",
+    "*": "public/js/hide_connections.js"
 }
 doctype_list_js = {
     "VNT Salary Slip": "vinatex/vnt_hr/doctype/vnt_salary_slip/vnt_salary_slip_list.js",
