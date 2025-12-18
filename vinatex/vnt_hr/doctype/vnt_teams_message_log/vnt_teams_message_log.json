@@ -1,0 +1,191 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2025-12-18 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "section_break_main",
+  "send_time",
+  "status",
+  "to_upn_or_email",
+  "settings",
+  "column_break_1",
+  "chat_id",
+  "graph_message_id",
+  "http_status",
+  "duration_ms",
+  "send_ms",
+  "total_ms",
+  "token_ms",
+  "user_lookup_ms",
+  "chat_ms",
+  "section_break_payload",
+  "message",
+  "response_json",
+  "error"
+ ],
+ "fields": [
+  {
+   "default": "VTMSG-.YYYY.-.MM.-.####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "VTMSG-.YYYY.-.MM.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_main",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "send_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Send Time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Success\nFailure",
+   "read_only": 1
+  },
+  {
+   "fieldname": "to_upn_or_email",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "To (UPN/Email)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "settings",
+   "fieldtype": "Link",
+   "label": "Settings",
+   "options": "VNT Teams URL",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "chat_id",
+   "fieldtype": "Data",
+   "label": "Chat ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "graph_message_id",
+   "fieldtype": "Data",
+   "label": "Graph Message ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "http_status",
+   "fieldtype": "Int",
+   "label": "HTTP Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "duration_ms",
+   "fieldtype": "Int",
+   "label": "Duration (ms)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "send_ms",
+   "fieldtype": "Int",
+   "label": "Send (ms)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_ms",
+   "fieldtype": "Int",
+   "label": "Total (ms)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "token_ms",
+   "fieldtype": "Int",
+   "label": "Token (ms)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "user_lookup_ms",
+   "fieldtype": "Int",
+   "label": "User Lookup (ms)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "chat_ms",
+   "fieldtype": "Int",
+   "label": "Chat (ms)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_payload",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Long Text",
+   "label": "Message",
+   "read_only": 1
+  },
+  {
+   "fieldname": "response_json",
+   "fieldtype": "Code",
+   "label": "Response JSON",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "error",
+   "fieldtype": "Long Text",
+   "label": "Error",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-12-18 13:36:45.906440",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Teams Message Log",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Infomation Technology",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "send_time",
+ "sort_order": "DESC",
+ "states": []
+}
