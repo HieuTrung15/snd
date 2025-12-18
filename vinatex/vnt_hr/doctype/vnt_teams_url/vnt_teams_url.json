@@ -1,0 +1,109 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-12-18 08:57:46.386936",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_8pfr",
+  "auth_type",
+  "callback_url",
+  "auth_url",
+  "access_token_url",
+  "client_id",
+  "client_secret",
+  "me_id",
+  "scope",
+  "refresh_token"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_8pfr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "auth_type",
+   "fieldtype": "Data",
+   "label": "Auth Type"
+  },
+  {
+   "fieldname": "callback_url",
+   "fieldtype": "Data",
+   "label": "Callback URL"
+  },
+  {
+   "fieldname": "auth_url",
+   "fieldtype": "Data",
+   "label": "Auth URL"
+  },
+  {
+   "fieldname": "access_token_url",
+   "fieldtype": "Data",
+   "label": "Access Token URL"
+  },
+  {
+   "fieldname": "client_id",
+   "fieldtype": "Data",
+   "label": "Client ID"
+  },
+  {
+   "fieldname": "client_secret",
+   "fieldtype": "Password",
+   "label": "Client Secret"
+  },
+  {
+   "fieldname": "me_id",
+   "fieldtype": "Data",
+   "label": "Me_id"
+  },
+  {
+   "fieldname": "scope",
+   "fieldtype": "Data",
+   "label": "Scope"
+  },
+  {
+   "fieldname": "refresh_token",
+   "fieldtype": "Password",
+   "label": "Refresh Token"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-12-18 09:17:20.386884",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Teams URL",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Infomation Technology",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
