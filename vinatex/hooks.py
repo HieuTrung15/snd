@@ -37,7 +37,8 @@ app_include_js = [
 	f"/assets/vinatex/js/report_actions_override.js?v={version}",
 	f"/assets/vinatex/js/fullWidth.js?v={version}",
     f"/assets/vinatex/js/custom_notification.js?v={version}",
-    f"/assets/vinatex/js/hide_id_column.js?v={version}"
+    f"/assets/vinatex/js/hide_id_column.js?v={version}",
+    f"/assets/vinatex/js/hide_connections.js?v={version}",
 ]
 
 # include js, css files in header of web template
@@ -82,7 +83,6 @@ doctype_js = {
 	"ToDo": "vinatex/doctype/overrides/todo.js",
     "User": "vinatex/doctype/overrides/user.js",
     "Job Requisition": "vinatex/doctype/overrides/job_requisition.js",
-    "*": "public/js/hide_connections.js"
 }
 doctype_list_js = {
     "VNT Salary Slip": "vinatex/vnt_hr/doctype/vnt_salary_slip/vnt_salary_slip_list.js",
