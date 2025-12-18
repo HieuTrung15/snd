@@ -454,3 +454,97 @@ Nothing New, Không có tin mới
 There is nothing new to show you right now., Hiện tại không có gì mới để hiển thị cho bạn.
 {0} M, {0} tr
 VNT Recurring Extra Benefit, Bảng phụ cấp hàng tháng
+More Info, Thông tin thêm
+Customer's Purchase Order, Đơn đặt hàng của khách hàng
+Customer's Purchase Order Date, Ngày đơn đặt hàng của khách hàng
+Accounting Dimensions, Chiều hạch toán kế toán
+Project, Dự án
+Currency and Price List, Tiền tệ và bảng giá
+Items, Danh sách hàng hóa
+Add Multiple, Thêm nhiều dòng
+Item Name, Tên hàng hóa
+Item Code, Mã hàng hóa
+Stock UOM, Đơn vị tính hàng tồn kho
+UOM, Đơn vị tính
+Qty as per Stock UOM, Số lượng theo đơn vị tính hàng tồn kho
+Price List Rate, Giá theo bảng giá
+Distributed Discount Amount, Số tiền chiết khấu phân bổ
+Rate of Stock UOM, Đơn giá theo đơn vị tính hàng tồn kho
+Grant Commission, Ghi nhận hoa hồng
+Billed Amt, Số tiền đã lập hóa đơn
+Valuation Rate, Giá trị định giá
+Drop Ship, Giao hàng trực tiếp
+Item Weight Details, Chi tiết trọng lượng hàng hóa
+Weight UOM, ĐVT đo trọng lượng
+Total Weight, Tổng trọng lượng
+Delivery Warehouse, Kho giao hàng
+Against Blanket Order, Dựa trên đơn hàng khung
+Qty (Warehouse), Số lượng (Kho)
+Qty (Company), Số lượng (Công ty)
+Manufacturing Section, Mục sản xuất
+BOM No, Số BOM
+Planning, Lập kế hoạch
+Projected Qty, Số lượng dự kiến
+Ordered Qty, Số lượng đã đặt hàng
+Production Plan Qty, Số lượng kế hoạch sản xuất
+Work Order Qty, Số lượng lệnh sản xuất
+Delivered Qty, Số lượng đã giao
+Picked Qty (in Stock UOM), Số lượng đã lấy (theo ĐVT kho)
+Inter Transfer Reference, Tham chiếu chuyển kho nội bộ
+Material Request, Yêu cầu vật tư
+Material Request Item, Mã hàng yêu cầu vật tư
+Net Rate, Đơn giá thuần
+Net Amount, Thành tiền thuần
+Production Item, Mã hàng sản xuất
+Item, Mã hàng
+Item to be manufactured or repacked, Hàng hóa cần sản xuất hoặc đóng gói lại
+Is Active, Đang hoạt động
+Is Default, Mặc định
+Allow Alternative Item, Cho phép sử dụng mã hàng thay thế
+Set rate of sub-assembly item based on BOM, Thiết lập đơn giá của BTP dựa trên BOM 
+Item UOM, ĐVT hàng hóa
+Quantity of item obtained after manufacturing / repacking from given quantities of raw materials, Số lượng mặt hàng thu được sau khi sản xuất / đóng gói lại từ danh sách NVL
+Cost Configuration, Cấu hình chi phí
+Rate Of Materials Based On, Đơn giá NVL dựa trên
+Last Purchase Rate, Đơn giá mua cuối cùng
+Raw Materials, Nguyên vật liệu
+Do Not Explode, Không tách BOM
+Is Stock Item, Là mặt hàng tồn kho
+Item Description, Mô tả hàng hóa
+Conversion Factor, Hệ số quy đổi
+Stock Qty, Số lượng tồn kho
+Rate & Amount, Đơn giá & Thành tiền
+Amount, Thành tiền
+Sourced by Supplier, Nguồn từ nhà cung cấp
+Operations, Công đoạn
+With Operations, Có công đoạn
+Manage cost of operations, Quản lý chi phí công đoạn
+Finished Goods based Operating Cost, Chi phí vận hành theo thành phẩm
+Finished Goods Based Operating Cost, Chi phí vận hành theo thành phẩm
+Operating Cost Per BOM Quantity, Chi phí vận hành theo định mức BOM
+Transfer Material Against, Chuyển vật tư theo
+Work Order, Lệnh sản xuất
+Job Card, Phiếu công việc
+Routing, Quy trình công việc
+Scrap & Process Loss, Phế phẩm & hao hụt quy trình
+New Version, Phiên bản mới
+Browse BOM, Duyệt BOM
+Is Return, Là hàng trả lại
+Apply Putaway Rule, Áp dụng quy tắc sắp xếp kho
+Rejected Warehouse, Kho hàng bị từ chối
+Accepted Warehouse, Kho hàng được chấp nhận
+Purchase Receipt, Phiếu nhập kho từ nhà cung cấp
+Stock Entry, Phiếu điều chuyển kho
+Other Info, Thông tin khác
+Stock Entry Type, Loại phiếu điều chuyển kho
+Edit Posting Date and Time, Chỉnh sửa ngày và giờ ghi sổ
+Posting Date, Ngày ghi sổ
+Posting Time, Giờ ghi sổ
+BOM Info, Thông tin BOM
+Scan Mode, Chế độ quét
+Disables auto-fetching of existing quantity, Vô hiệu hóa tự động lấy số lượng hiện có
+Opening Stock, Tồn kho đầu kỳ
+Returned Qty, Số lượng trả lại
+Item To Manufacture, Hàng hóa cần sản xuất
+Qty To Manufacture, Số lượng cần sản xuất
+Required Items, Nguyên vật liệu cần thiết
