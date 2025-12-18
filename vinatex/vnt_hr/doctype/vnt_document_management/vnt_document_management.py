@@ -5,7 +5,7 @@
 import frappe
 import re
 from datetime import date
-from frappe.utils import getdate, nowdate, get_url_to_form, get_first_day, get_last_day
+from frappe.utils import getdate, nowdate, get_url_to_form, get_first_day, get_last_day,cint
 from frappe.model.document import Document
 from vinatex.patches.utils.rocket_chat import send_rocket_message
 
@@ -1429,3 +1429,384 @@ def get_next_reference_number(
 	if abbr:
 		return f"{render_num}/TĐDMVN-{abbr}"
 	return f"{render_num}/TĐDMVN"
+
+@frappe.whitelist()
+def get_document_kpis_v2():
+	"""
+	KPI  Custom HTML Block:
+	- total_visible: tổng số văn bản user nhìn thấy trên UI (theo logic liên quan/leader/superviewer)
+	- incoming_completed: số Công văn đến có trạng thái Hoàn thành
+	- incoming_processing: số Công văn đến có trạng thái Đang xử lý
+	- incoming_overdue: số Công văn đến bị Quá hạn (deadline < today và chưa hoàn thành)
+	"""
+	user = frappe.session.user
+	emp = frappe.db.get_value(
+		"Employee", {"user_id": user}, ["name", "employee_name", "department"], as_dict=True
+	)
+
+	is_leader = _is_leader(user)
+	is_superviewer = bool(emp and emp.get("name") == "VGT00161")
+
+	# Nếu không có Employee mà không phải leader/superviewer -> trả 0
+	if not emp and not is_leader and not is_superviewer:
+		return {
+			"employee": None,
+			"counts": {"total_visible": 0, "incoming_completed": 0, "incoming_processing": 0, "incoming_overdue": 0},
+			"message": "Không tìm thấy Employee gắn với user hiện tại",
+		}
+
+	# === 1) Tập hợp doc_names user nhìn thấy ===
+	if is_leader or is_superviewer:
+		doc_names = {
+			r.name
+			for r in frappe.get_all(
+				"VNT Document Management",
+				filters={"docstatus": ["<", 2]},
+				fields=["name"],
+				limit=2000,
+				ignore_permissions=True,
+			)
+		}
+		docs = _fetch_docs(doc_names, ignore_permissions=True)
+	else:
+		# Công văn đi: người ký có thể xem (ignore_permissions=True)
+		signed_outgoing = frappe.get_all(
+			"VNT Document Management",
+			filters={"type": "Công văn đi", "nguoi_ky": emp.name, "docstatus": ["<", 2]},
+			fields=["name"],
+			ignore_permissions=True,
+		)
+
+		doc_names = _gather_related_doc_names(emp.name, emp.get("department"))
+		doc_names.update(r.name for r in signed_outgoing)
+
+		# Nếu có signed_outgoing thì fetch ignore_permissions để khỏi rớt quyền
+		docs = _fetch_docs(doc_names, ignore_permissions=bool(signed_outgoing))
+
+	total_visible = len(doc_names)
+	if not doc_names:
+		return {
+			"employee": emp,
+			"counts": {"total_visible": 0, "incoming_completed": 0, "incoming_processing": 0, "incoming_overdue": 0},
+		}
+
+	# === 2) Lọc Công văn đến ===
+	incoming_names = [name for name, d in (docs or {}).items() if (d.get("type") or "").strip() == "Công văn đến"]
+	if not incoming_names:
+		return {
+			"employee": emp,
+			"counts": {"total_visible": total_visible, "incoming_completed": 0, "incoming_processing": 0, "incoming_overdue": 0},
+		}
+
+	from frappe.utils import getdate, nowdate
+	today = getdate(nowdate())
+
+	# chair_rows: lấy deadline chủ trì nếu có (chu_tri=1)
+	chair_rows = frappe.get_all(
+		"VNT Document Management Item2",
+		filters={"parent": ["in", incoming_names], "chu_tri": 1},
+		fields=["parent", "deadline"],
+		ignore_permissions=True,
+	)
+	chair_map = {r.parent: r for r in chair_rows}
+
+	# status ở items2 (bảng phối hợp)
+	item_status_rows = frappe.get_all(
+		"VNT Document Management Item",
+		filters={"parent": ["in", incoming_names]},
+		fields=["parent", "trang_thai_cv_xu_ly", "trang_thai_nguoi_phoi_hop"],
+		ignore_permissions=True,
+	)
+	status_by_parent: dict[str, list[str]] = {}
+	for r in item_status_rows:
+		if r.trang_thai_cv_xu_ly:
+			status_by_parent.setdefault(r.parent, []).append(r.trang_thai_cv_xu_ly)
+		if r.trang_thai_nguoi_phoi_hop:
+			status_by_parent.setdefault(r.parent, []).append(r.trang_thai_nguoi_phoi_hop)
+
+	# doc có “đã giao chủ trì” hay chưa (để Chưa giao -> Đang xử lý)
+	has_chair = set()
+	has_chair.update(chair_map.keys())
+
+	def _best_deadline(docname: str, doc: dict):
+		chair = chair_map.get(docname) or {}
+		return (
+			chair.get("deadline")
+			or doc.get("deadline")
+			or doc.get("deadline_chu_tri2")
+			or doc.get("deadline_cv_xu_ly")
+		)
+
+	incoming_completed = 0
+	incoming_processing = 0
+	incoming_overdue = 0
+
+	for name in incoming_names:
+		doc = docs.get(name) or {}
+		child_statuses = status_by_parent.get(name) or []
+
+		status_label = _derive_status(doc.get("trang_thai_chuyen_vien_xu_ly"), child_statuses)
+		if status_label == "Chưa giao" and name in has_chair:
+			status_label = "Đang xử lý"
+
+		deadline_val = _best_deadline(name, doc)
+		try:
+			dl = getdate(deadline_val) if deadline_val else None
+		except Exception:
+			dl = None
+
+		# Derive Quá hạn
+		if dl and dl < today and status_label != "Hoàn thành":
+			status_label = "Quá hạn"
+
+		if status_label == "Hoàn thành":
+			incoming_completed += 1
+		elif status_label == "Đang xử lý":
+			incoming_processing += 1
+		elif status_label == "Quá hạn":
+			incoming_overdue += 1
+
+	return {
+		"employee": emp,
+		"counts": {
+			"total_visible": total_visible,
+			"incoming_completed": incoming_completed,
+			"incoming_processing": incoming_processing,
+			"incoming_overdue": incoming_overdue,
+		},
+	}
+
+# ===== Custom HTML Block API (v2) =====
+# KPI + danh sách dùng chung 1 logic trạng thái, chỉ tính 3 loại: Công văn đến/đi/Quyết định
+
+import frappe
+from frappe.utils import getdate, nowdate, cint
+
+_ALLOWED_BLOCK_TYPES = ("Công văn đến", "Công văn đi", "Quyết định")
+
+
+def _block_best_deadline(d: dict):
+	return d.get("deadline_chu_tri2") or d.get("deadline_cv_xu_ly") or d.get("deadline")
+
+
+def _block_normalize_status(raw: str) -> str:
+	s = (raw or "").strip()
+	low = s.lower()
+
+	if not s:
+		return "Đang xử lý"
+	if "hoàn" in low or "done" in low:
+		return "Hoàn thành"
+	if "trả" in low:
+		return "Trả lại"
+	if "quá" in low or "over" in low:
+		return "Quá hạn"
+	return "Đang xử lý"
+
+
+def _block_compute_status(doc: dict, today=None) -> str:
+	today = today or getdate(nowdate())
+
+	# Công văn đi + Quyết định (lưu dạng Công văn đi + type_doc=QĐ)
+	is_outgoing_or_qd = (doc.get("type") == "Công văn đi") or ((doc.get("type_doc") or "").strip().upper() == "QĐ")
+	if is_outgoing_or_qd:
+		return "Hoàn thành" if int(doc.get("docstatus") or 0) == 1 else "Đang xử lý"
+
+	# Công văn đến: giữ logic cũ + quá hạn theo deadline
+	raw = (doc.get("chairperson_status") or doc.get("trang_thai_chuyen_vien_xu_ly") or "")
+	st = _block_normalize_status(raw)
+
+	try:
+		dl_val = _block_best_deadline(doc)
+		dl = getdate(dl_val) if dl_val else None
+	except Exception:
+		dl = None
+
+	if dl and dl < today and st not in ("Hoàn thành", "Trả lại"):
+		return "Quá hạn"
+	return st
+
+
+@frappe.whitelist()
+def get_document_block_data_v2(
+	type_doc: str | None = None,
+	q: str | None = None,
+	from_date: str | None = None,
+	to_date: str | None = None,
+	status_filter: str | None = None,  # "", "Hoàn thành", "Đang xử lý", "Quá hạn"
+	page: int | None = 1,
+	page_size: int | None = 20,
+):
+	"""
+	Trả dữ liệu cho Custom HTML Block:
+	- rows: danh sách theo trang + computed_status
+	- has_next: có trang tiếp theo không
+	- kpis: { total, completed, processing, overdue } (tính trên toàn bộ tập lọc, KHÔNG theo status_filter)
+
+	Chỉ tính 3 loại: Công văn đến / Công văn đi / Quyết định.
+	"""
+	page = max(1, cint(page or 1))
+	page_size = max(1, cint(page_size or 20))
+
+	type_doc = (type_doc or "").strip() or "Công văn đến"
+	if type_doc not in _ALLOWED_BLOCK_TYPES:
+		type_doc = "Công văn đến"
+
+	q = (q or "").strip()
+	status_filter = (status_filter or "").strip()
+
+	# ===== Filters =====
+	post_filter = None
+	base_filters = [["docstatus", "<", 2]]
+
+	# Quyết định lưu: type="Công văn đi" + type_doc="QĐ"
+	if type_doc == "Quyết định":
+		base_filters.append(["type", "=", "Công văn đi"])
+		base_filters.append(["type_doc", "=", "QĐ"])
+	else:
+		base_filters.append(["type", "=", type_doc])
+
+		# Khi chọn "Công văn đi" thì loại QĐ ra bằng post_filter
+		# (tránh filter ["type_doc","!=","QĐ"] làm rớt luôn NULL)
+		if type_doc == "Công văn đi":
+			post_filter = lambda d: (d.get("type_doc") or "").strip().upper() != "QĐ"
+
+	if from_date:
+		base_filters.append(["document_date", ">=", from_date])
+	if to_date:
+		base_filters.append(["document_date", "<=", to_date])
+
+	or_filters = None
+	if q:
+		or_filters = [
+			["reference_number", "like", f"%{q}%"],
+			["summary", "like", f"%{q}%"],
+			["sender", "like", f"%{q}%"],
+			["noi_nhan", "like", f"%{q}%"],
+		]
+
+	fields = [
+		"name",
+		"type",
+		"type_doc",
+		"docstatus",
+		"reference_number",
+		"summary",
+		"document_date",
+		"received_date",
+		"sender",
+		"noi_nhan",
+		"department",
+		"nguoi_chu_tri",
+		"chairperson_status",
+		"trang_thai_chuyen_vien_xu_ly",
+		"deadline",
+		"deadline_cv_xu_ly",
+		"deadline_chu_tri2",
+	]
+
+	today = getdate(nowdate())
+	DOCTYPE_NAME = "VNT Document Management"
+
+	# ===== 1) KPI counts (không theo status_filter) =====
+	kpis = {"total": 0, "completed": 0, "processing": 0, "overdue": 0}
+
+	batch = 2000
+	offset = 0
+	while True:
+		chunk = frappe.get_list(
+			DOCTYPE_NAME,
+			filters=base_filters,
+			or_filters=or_filters,
+			fields=[
+				"type",
+				"type_doc",
+				"docstatus",
+				"chairperson_status",
+				"trang_thai_chuyen_vien_xu_ly",
+				"deadline",
+				"deadline_cv_xu_ly",
+				"deadline_chu_tri2",
+			],
+			limit_start=offset,
+			limit_page_length=batch,
+			order_by=None,
+			ignore_permissions=False,
+		) or []
+
+		if not chunk:
+			break
+
+		for d in chunk:
+			if post_filter and not post_filter(d):
+				continue
+
+			kpis["total"] += 1
+			st = _block_compute_status(d, today=today)
+
+			if st == "Hoàn thành":
+				kpis["completed"] += 1
+			elif st == "Đang xử lý":
+				kpis["processing"] += 1
+			elif st == "Quá hạn":
+				kpis["overdue"] += 1
+
+		if len(chunk) < batch:
+			break
+		offset += batch
+
+	# ===== 2) Rows theo trang + status_filter =====
+	want_start = (page - 1) * page_size
+	want_end = want_start + page_size + 1  # +1 để biết has_next
+
+	matched = []
+	skipped = 0
+	db_offset = 0
+
+	while len(matched) < want_end:
+		chunk = frappe.get_list(
+			DOCTYPE_NAME,
+			filters=base_filters,
+			or_filters=or_filters,
+			fields=fields,
+			limit_start=db_offset,
+			limit_page_length=batch,
+			order_by="document_date desc",
+			ignore_permissions=False,
+		) or []
+
+		if not chunk:
+			break
+
+		for d in chunk:
+			if post_filter and not post_filter(d):
+				continue
+
+			st = _block_compute_status(d, today=today)
+			if status_filter and st != status_filter:
+				continue
+
+			if skipped < want_start:
+				skipped += 1
+				continue
+
+			d["computed_status"] = st
+			matched.append(d)
+
+			if len(matched) >= want_end:
+				break
+
+		if len(chunk) < batch:
+			break
+		db_offset += batch
+
+	has_next = len(matched) > page_size
+	rows = matched[:page_size]
+
+	return {
+		"rows": rows,
+		"has_next": has_next,
+		"kpis": kpis,
+		"type_doc": type_doc,
+		"status_filter": status_filter or None,
+	}
