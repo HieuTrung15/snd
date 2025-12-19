@@ -31,3 +31,17 @@
     pointer-events: none;
     z-index: 2;
 }
+
+/* Trong lúc init: ẩn badge gốc của ERPNext để không nháy số sai */
+body.vnt-notif-init .notifications-icon .indicator,
+body.vnt-notif-init .dropdown-notifications .indicator,
+body.vnt-notif-init .notifications-icon [class*="indicator"],
+body.vnt-notif-init .notifications-icon .vnt-notification-badge {
+  display: none !important;
+}
+
+/* Luôn ẩn indicator mặc định trên icon chuông để tránh hiển thị đè */
+.notifications-icon .indicator,
+.notifications-icon [class*="indicator"] {
+    display: none !important;
+}

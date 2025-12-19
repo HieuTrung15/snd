@@ -1,359 +1,244 @@
-// giảm thông báo đã nhanh hơn nhưng chưa có thay đổi giao diện
-// (function () {
-//     // Vẽ lại badge & màu theo count
-//     function renderBadge($btn, count) {
-//         $btn.find('.vnt-notification-badge').remove();
+// ✅ Bật chế độ init càng sớm càng tốt để ẩn badge gốc
+document.documentElement.classList.add('vnt-notif-init');
+document.addEventListener('DOMContentLoaded', () => {
+  document.body.classList.add('vnt-notif-init');
+});
 
-//         if (count > 0) {
-//             $btn.append(`<span class="vnt-notification-badge">${count}</span>`);
-//             $btn.removeClass('text-muted').addClass('text-danger');
-//         } else {
-//             $btn.addClass('text-muted').removeClass('text-danger');
-//         }
-//     }
-
-//     // Lấy số unread từ server
-//     function updateNotificationBadge() {
-//         const $btn = $('.notifications-icon');
-//         if (!$btn.length) return;
-
-//         frappe.call({
-//             method: "frappe.client.get_count",
-//             args: {
-//                 doctype: "Notification Log",
-//                 filters: {
-//                     for_user: frappe.session.user,
-//                     read: 0
-//                 }
-//             },
-//             callback(r) {
-//                 const count = r.message || 0;
-//                 renderBadge($btn, count);
-//             }
-//         });
-//     }
-
-//     // Giảm ngay 1 đơn vị trên UI (optimistic)
-//     function decreaseBadgeOnce() {
-//         const $btn = $('.notifications-icon');
-//         if (!$btn.length) return;
-
-//         const $badge = $btn.find('.vnt-notification-badge');
-//         if (!$badge.length) return;
-
-//         const current = parseInt($badge.text(), 10);
-//         if (isNaN(current) || current <= 0) return;
-
-//         const next = current - 1;
-//         renderBadge($btn, next);
-//     }
-
-//     // Chỉ giữ tab Notifications + thêm tab "Mark all as read" trên cùng hàng
-//     function customizeNotificationDropdown() {
-//         const $dd = $('.dropdown-notifications:visible');
-//         if (!$dd.length) return;
-
-//         const $tabs = $dd.find('.nav-tabs').first();
-//         if (!$tabs.length) return;
-
-//         // 1) Ẩn Events, What's New, chỉ giữ Notifications
-//         $tabs.find('.nav-link').each(function () {
-//             const text = ($(this).text() || '').trim();
-//             if (text === 'Notifications') {
-//                 $(this)
-//                     .addClass('active')
-//                     .attr('aria-selected', 'true');
-//             } else {
-//                 $(this).closest('li').addClass('d-none');
-//             }
-//         });
-
-//         // 2) Chỉ hiển thị tab-pane Notifications
-//         $dd.find('.tab-pane').each(function () {
-//             const id = (this.id || '').toLowerCase();
-//             if (id.indexOf('notification') !== -1) {
-//                 $(this).addClass('active show').show();
-//             } else {
-//                 $(this).removeClass('active show').hide();
-//             }
-//         });
-
-//         // 3) Thêm tab "Mark all as read" ở bên phải hàng tab (nếu chưa có)
-//         if (!$tabs.find('.vnt-mark-all-read').length) {
-//             const $markTab = $(`
-//                 <li class="nav-item ms-auto vnt-mark-all-tab">
-//                     <a href="#" class="nav-link vnt-mark-all-read">
-//                         ${__('Mark all as read')}
-//                     </a>
-//                 </li>
-//             `);
-//             $tabs.append($markTab);
-//         }
-
-//         // 4) Ẩn icon/settings khác nếu có
-//         $dd.find('.notifications-settings, .notification-settings, .btn-settings').hide();
-//     }
-
-//     function setup_custom_notifications() {
-//         const $btn = $('.notifications-icon');
-
-//         if (!$btn.length) {
-//             setTimeout(setup_custom_notifications, 300);
-//             return;
-//         }
-
-//         // Thay icon SVG mặc định trong .notifications-seen & .notifications-unseen
-//         const customSvg = `
-//             <svg class="es-icon icon-sm vnt-bell" viewBox="0 0 24 24">
-//                 <path d="M12 2 C8.7 2 6 4.7 6 8 v5.5l-1.5 2V17h15v-1.5L18 13.5V8c0-3.3-2.7-6-6-6zM10 19a2 2 0 0 0 4 0h-4z"></path>
-//             </svg>
-//         `;
-
-//         $btn.find('.notifications-seen svg, .notifications-unseen svg').remove();
-//         $btn.find('.notifications-seen').append(customSvg);
-//         $btn.find('.notifications-unseen').append(customSvg);
-
-//         // Cập nhật lần đầu khi load trang
-//         updateNotificationBadge();
-
-//         // Realtime khi có notification mới
-//         if (frappe.realtime && frappe.realtime.on) {
-//             frappe.realtime.on('notification', function () {
-//                 updateNotificationBadge();
-//             });
-//         }
-
-//         // Dự phòng: 10s refresh 1 lần
-//         setInterval(updateNotificationBadge, 10000);
-
-//         // Dropdown mở ra → custom lại UI tabs + Mark all as read
-//         $(document).on('shown.bs.dropdown', '.dropdown-notifications', function () {
-//             customizeNotificationDropdown();
-//         });
-
-//         // Bấm vào 1 thông báo → giảm số ngay lập tức, rồi sync lại từ server
-//         $(document).on(
-//             'click',
-//             '.dropdown-notifications .tab-pane.active a:not(.nav-link):not(.vnt-mark-all-read)',
-//             function () {
-//                 decreaseBadgeOnce();                    // giảm ngay
-//                 setTimeout(updateNotificationBadge, 300); // sync DB
-//             }
-//         );
-
-//         // Bấm tab "Mark all as read" → mark tất cả là đã đọc + badge = 0
-//         $(document).on('click', '.dropdown-notifications .vnt-mark-all-read', function (e) {
-//             e.preventDefault();
-//             e.stopPropagation();
-
-//             frappe.call({
-//                 method: 'frappe.desk.doctype.notification_log.notification_log.mark_all_as_read',
-//                 callback() {
-//                 const $btn = $('.notifications-icon');
-//                 renderBadge($btn, 0);
-//                 }
-//             });
-//         });
-//     }
-
-//     $(document).ready(function () {
-//         setup_custom_notifications();
-//     });
-// })();
-
-// vinatex_theme/public/js/custom_notifications.js
-
-// Ẩn Events, What's New và icon Settings trong dropdown thông báo
 $(document).on('shown.bs.dropdown', '.dropdown-notifications', function () {
     const $dd = $(this);
 
-    // Ẩn 2 tab Events & What's New
     $dd.find('#todays_events').hide();
     $dd.find('#changelog_feed').hide();
 
-    // Đảm bảo tab Notifications còn lại hiển thị
     $dd.find('#notifications').show();
     $dd.find('.notifications-settings, .notification-settings, .btn-settings').hide();
-    $dd.find('#notifications').show();
-
     $(this).find('.full-log-btn').hide();
 });
 
 
-
 (function () {
-    // Vẽ lại badge & màu theo count
-    function renderBadge($btn, count) {
-        $btn.find('.vnt-notification-badge').remove();
+    const OPTIMISTIC_GUARD_MS = 4000;
 
-        if (count > 0) {
-            $btn.append(`<span class="vnt-notification-badge">${count}</span>`);
-            $btn.removeClass('text-muted').addClass('text-danger');
-        } else {
-            $btn.addClass('text-muted').removeClass('text-danger');
+    // ✅ localStorage key cho “cách 2”
+    const LS_KEY = "vnt_notif_unread_count";
+
+    let inited = false;
+
+    let inflight = false;
+    let pending = false;
+
+    // chống trừ double
+    const decremented = new Set();
+    let lastPointerAt = 0;
+    const POINTER_GAP = 200;
+
+    let optimisticGuard = null;
+
+    function $btn() { return $('.notifications-icon'); }
+
+    function finishInitUI() {
+        document.documentElement.classList.remove('vnt-notif-init');
+        if (document.body) document.body.classList.remove('vnt-notif-init');
+    }
+
+    function saveLocalCount(count) {
+        try { localStorage.setItem(LS_KEY, String(count)); } catch (e) {}
+    }
+
+    function loadLocalCount() {
+        try {
+            const n = parseInt(localStorage.getItem(LS_KEY) || "0", 10);
+            return isNaN(n) ? null : n;
+        } catch (e) {
+            return null;
         }
     }
 
-    // Lấy số unread từ server
-    function updateNotificationBadge() {
-        const $btn = $('.notifications-icon');
-        if (!$btn.length) return;
+    function renderBadge(count, { save = true } = {}) {
+        const $b = $btn();
+        if (!$b.length) return;
+
+        $b.find('.vnt-notification-badge').remove();
+
+        if (count > 0) {
+            $b.append(`<span class="vnt-notification-badge">${count}</span>`);
+            $b.removeClass('text-muted').addClass('text-danger');
+        } else {
+            $b.addClass('text-muted').removeClass('text-danger');
+        }
+
+        if (save) saveLocalCount(count);
+
+        // ✅ Sau khi đã render được số (từ local hoặc server) thì bỏ init để hiện badge
+        finishInitUI();
+    }
+
+    function getBadgeCount() {
+        const $b = $btn();
+        const $badge = $b.find('.vnt-notification-badge');
+        if (!$badge.length) return 0;
+        const n = parseInt($badge.text(), 10);
+        return isNaN(n) ? 0 : n;
+    }
+
+    // ✅ Count dùng API cache của bạn
+    function updateBadgeFromServer(force = false) {
+        if (inflight && !force) { pending = true; return; }
+        inflight = true;
+        pending = false;
 
         frappe.call({
-            method: "frappe.client.get_count",
-            args: {
-                doctype: "Notification Log",
-                filters: {
-                    for_user: frappe.session.user,
-                    read: 0
-                }
-            },
-            callback(r) {
+            method: "vinatex.api.custom_notification.get_unread_notification_count",
+            freeze: false,
+            callback: (r) => {
                 const count = r.message || 0;
-                renderBadge($btn, count);
+                if (shouldIgnoreServerCount(count)) return;
+                renderBadge(count, { save: true });
+            },
+            always: () => {
+                inflight = false;
+                if (pending) setTimeout(() => updateBadgeFromServer(true), 150);
             }
         });
     }
 
-    // Giảm ngay 1 đơn vị trên UI (optimistic)
-    function decreaseBadgeOnce() {
-        const $btn = $('.notifications-icon');
-        if (!$btn.length) return;
-
-        const $badge = $btn.find('.vnt-notification-badge');
-        if (!$badge.length) return;
-
-        const current = parseInt($badge.text(), 10);
-        if (isNaN(current) || current <= 0) return;
-
-        const next = current - 1;
-        renderBadge($btn, next);
+    // ✅ Invalidate cache bằng frappe.call
+    function invalidateCacheSafe() {
+        frappe.call({
+            method: "vinatex.api.custom_notification.invalidate_unread_notification_cache",
+            freeze: false
+        });
     }
 
-    // Tuỳ biến dropdown:
-    //  - Ẩn Events / What's New
-    //  - Dùng icon #icon-mark-as-read làm nút "Mark all as read"
-    function customizeNotificationDropdown() {
-        const $dd = $('.dropdown-notifications:visible');
-        if (!$dd.length) return;
+    function activateOptimisticGuard({ ignoreValue }) {
+        if (typeof ignoreValue !== "number") {
+            optimisticGuard = null;
+            return;
+        }
+        optimisticGuard = {
+            ignoreValue,
+            expiresAt: Date.now() + OPTIMISTIC_GUARD_MS
+        };
+    }
 
-        const $tabs = $dd.find('.nav-tabs').first();
-        if ($tabs.length) {
-            // 1) Chỉ giữ tab Notifications, ẩn Events / What's New
-            $tabs.find('.nav-link').each(function () {
-                const text = ($(this).text() || '').trim();
-                if (text === 'Notifications') {
-                    $(this)
-                        .addClass('active')
-                        .attr('aria-selected', 'true');
-                } else {
-                    $(this).closest('li').hide();
-                }
-            });
+    function shouldIgnoreServerCount(count) {
+        if (!optimisticGuard) return false;
+
+        if (Date.now() > optimisticGuard.expiresAt) {
+            optimisticGuard = null;
+            return false;
         }
 
-        // 2) Chỉ hiển thị pane Notifications
-        const $notifPane = $dd
-            .find('.tab-pane')
-            .filter(function () {
-                const id = (this.id || '').toLowerCase();
-                return id.indexOf('notification') !== -1;
-            })
-            .first();
-
-        if ($notifPane.length) {
-            $dd.find('.tab-pane').not($notifPane).removeClass('active show').hide();
-            $notifPane.addClass('active show').show();
+        if (count === optimisticGuard.ignoreValue) {
+            return true;
         }
 
-        // 3) Tìm nút chứa icon #icon-mark-as-read và biến nó thành "Mark all as read"
-        const $markBtn = $dd
-            .find('button, a')
-            .filter(function () {
-                return $(this).find('use[href="#icon-mark-as-read"]').length > 0;
-            })
-            .first();
+        optimisticGuard = null;
+        return false;
+    }
 
-        if ($markBtn.length) {
-            $markBtn.addClass('vnt-mark-all-read btn btn-sm btn-link');
-            $markBtn.find('svg').remove(); // bỏ icon cũ
-            $markBtn.text(__('Mark all as read'));
-        }
+    // ✅ Trừ badge ngay khi pointerdown
+    function bindInstantDecrement() {
+        document.addEventListener('pointerdown', function (e) {
+            const a = e.target.closest('.dropdown-menu.notifications-list a.recent-item.notification-item');
+            if (!a) return;
+
+            if (e.target.closest('.mark-as-read')) return;
+
+            const name = a.getAttribute('data-name');
+            if (!name) return;
+
+            const now = Date.now();
+            if (now - lastPointerAt < POINTER_GAP) return;
+            lastPointerAt = now;
+
+            if (decremented.has(name)) return;
+            decremented.add(name);
+
+            const current = getBadgeCount();
+            const next = Math.max(current - 1, 0);
+            if (current !== next) {
+                renderBadge(next, { save: true });
+            }
+            activateOptimisticGuard({ ignoreValue: current });
+
+            invalidateCacheSafe();
+            setTimeout(() => updateBadgeFromServer(true), 400);
+        }, { capture: true });
     }
 
     function setup_custom_notifications() {
-        const $btn = $('.notifications-icon');
+        if (inited) return;
+        inited = true;
 
-        if (!$btn.length) {
-            setTimeout(setup_custom_notifications, 200);
+        const $b = $btn();
+        if (!$b.length) {
+            inited = false;
+            setTimeout(setup_custom_notifications, 300);
             return;
         }
 
-        // Thay icon SVG mặc định trong .notifications-seen & .notifications-unseen
+        // thay icon
         const customSvg = `
             <svg class="es-icon icon-sm vnt-bell" viewBox="0 0 24 24">
                 <path d="M12 2 C8.7 2 6 4.7 6 8 v5.5l-1.5 2V17h15v-1.5L18 13.5V8c0-3.3-2.7-6-6-6zM10 19a2 2 0 0 0 4 0h-4z"></path>
             </svg>
         `;
-        $btn.find('.notifications-seen svg, .notifications-unseen svg').remove();
-        $btn.find('.notifications-seen').append(customSvg);
-        $btn.find('.notifications-unseen').append(customSvg);
+        $b.find('.notifications-seen svg, .notifications-unseen svg').remove();
+        $b.find('.notifications-seen').append(customSvg);
+        $b.find('.notifications-unseen').append(customSvg);
 
-        // Cập nhật lần đầu khi load
-        updateNotificationBadge();
+        bindInstantDecrement();
 
-        // Realtime khi Frappe bắn notification mới
-        if (frappe.realtime && frappe.realtime.on) {
-            frappe.realtime.on('notification', function () {
-                updateNotificationBadge();
-            });
+        // ✅ CÁCH 2: render từ localStorage NGAY LẬP TỨC (để user thấy 12 luôn)
+        const cached = loadLocalCount();
+        if (cached !== null) {
+            renderBadge(cached, { save: false }); // không ghi lại
+        } else {
+            // nếu chưa có cache, vẫn bỏ init UI để khỏi ẩn mãi
+            finishInitUI();
         }
 
-        // Dự phòng: 10s refresh 1 lần
-        setInterval(updateNotificationBadge, 1500);
+        // Sync thật từ server
+        updateBadgeFromServer(true);
 
-        // Khi dropdown mở → ẩn Events/What's New + đổi icon ✔ thành "Mark all as read"
+        // realtime
+        if (frappe.realtime && frappe.realtime.on) {
+            frappe.realtime.on('notification', () => updateBadgeFromServer(true));
+            frappe.realtime.on('connect', () => updateBadgeFromServer(true));
+        }
+
+        // dropdown open
         $(document).on('shown.bs.dropdown', '.dropdown-notifications', function () {
-            customizeNotificationDropdown();
+            updateBadgeFromServer(true);
         });
 
-        // Bấm vào 1 thông báo → giảm số ngay, rồi sync lại
-        $(document).on(
-            'click',
-            '.dropdown-notifications .tab-pane.active a:not(.nav-link):not(.vnt-mark-all-read)',
-            function () {
-                decreaseBadgeOnce();
-                setTimeout(updateNotificationBadge, 1000);
-            }
-        );
-
-        // Bấm "Mark all as read" (chính là icon cũ đã đổi thành text) → mark hết + badge = 0
+        // Mark all as read
         $(document).on('click', '.dropdown-notifications .vnt-mark-all-read', function (e) {
             e.preventDefault();
             e.stopPropagation();
 
+            const beforeMark = getBadgeCount();
             frappe.call({
                 method: 'frappe.desk.doctype.notification_log.notification_log.mark_all_as_read',
                 callback() {
-                    const $btn = $('.notifications-icon');
-                    renderBadge($btn, 0);
+                    activateOptimisticGuard({ ignoreValue: beforeMark });
+                    renderBadge(0, { save: true });
+                    invalidateCacheSafe();
+                    setTimeout(() => updateBadgeFromServer(true), 200);
                 }
             });
         });
     }
 
-    $(document).ready(function () {
-        setup_custom_notifications();
-    });
+    $(document).ready(setup_custom_notifications);
 })();
 
-// Tắt popup "Version Updated" khi bench migrate
+// Tắt popup "Version Updated"
 $(document).ready(function () {
     if (frappe.realtime && frappe.realtime.off) {
         frappe.realtime.off("version-update");
     }
 });
 
-frappe.assets.check = function() {
-  // Không làm gì cả, tắt kiểm tra cập nhật
-};
+frappe.assets.check = function () {};
