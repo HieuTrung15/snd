@@ -36,6 +36,7 @@ app_include_js = [
 	f"/assets/vinatex/js/title-wrap.js?v={version}",
 	f"/assets/vinatex/js/report_actions_override.js?v={version}",
 	f"/assets/vinatex/js/fullWidth.js?v={version}",
+    f"/assets/vinatex/js/workspace_redirects.js?v={version}",
     f"/assets/vinatex/js/custom_notification.js?v={version}",
     f"/assets/vinatex/js/hide_id_column.js?v={version}",
     f"/assets/vinatex/js/hide_connections.js?v={version}",
