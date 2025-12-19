@@ -75,9 +75,15 @@ $(document).on('shown.bs.dropdown', '.dropdown-notifications', function () {
 
     function getBadgeCount() {
         const $b = $btn();
-        const $badge = $b.find('.vnt-notification-badge');
+        // If there are multiple notification icons on the page, only
+        // consider the first badge as the source of truth to avoid
+        // concatenated texts like "12 11" when calling `.text()` on
+        // a collection. This prevents wrong parses and duplicate
+        // displays of old/new counts.
+        const $badge = $b.find('.vnt-notification-badge').first();
         if (!$badge.length) return 0;
-        const n = parseInt($badge.text(), 10);
+        const text = $badge.text().trim();
+        const n = parseInt(text, 10);
         return isNaN(n) ? 0 : n;
     }
 
@@ -156,14 +162,20 @@ $(document).on('shown.bs.dropdown', '.dropdown-notifications', function () {
             decremented.add(name);
 
             const current = getBadgeCount();
-            const next = Math.max(current - 1, 0);
-            if (current !== next) {
-                renderBadge(next, { save: true });
-            }
+            // Delay the visual decrement to ~0.7s after user clicks to view
+            // the notification (so the detail view can open first).
+            // Keep optimistic guard active immediately to avoid server
+            // responses overwriting the expected behavior.
             activateOptimisticGuard({ ignoreValue: current });
 
-            invalidateCacheSafe();
-            setTimeout(() => updateBadgeFromServer(true), 400);
+            setTimeout(() => {
+                const next = Math.max(current - 1, 0);
+                if (current !== next) {
+                    renderBadge(next, { save: true });
+                }
+                invalidateCacheSafe();
+                setTimeout(() => updateBadgeFromServer(true), 400);
+            }, 700);
         }, { capture: true });
     }
 
