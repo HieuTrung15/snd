@@ -85,6 +85,7 @@ def get_department_calendar(year: int | None = None, month: int | None = None):
          AND i.parenttype = %s
          AND i.parentfield = %s
         WHERE t.docstatus < 2
+          AND t.workflow_state = %s
           AND i.department = %s
           AND t.`{TRIP_FROM_FIELD}` <= %s
           AND t.`{TRIP_TO_FIELD}`   >= %s
@@ -93,7 +94,7 @@ def get_department_calendar(year: int | None = None, month: int | None = None):
     try:
         trip_rows = frappe.db.sql(
             trip_sql,
-            (TRIP_PARENT_DOCTYPE, TRIP_PARENTFIELD, dept, end, start),
+            (TRIP_PARENT_DOCTYPE, TRIP_PARENTFIELD, "Đã duyệt", dept, end, start),
             as_dict=True
         )
     except Exception:
