@@ -37,7 +37,6 @@
    "fieldname": "employee_name",
    "fieldtype": "Data",
    "hidden": 1,
-   "in_standard_filter": 1,
    "label": "T\u00ean nh\u00e2n s\u1ef1 l\u1eadp k\u1ebf ho\u1ea1ch"
   },
   {
@@ -56,6 +55,7 @@
    "fetch_from": "employee.department",
    "fieldname": "department",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Ph\u00f2ng/ ban",
    "options": "Department",
@@ -64,12 +64,15 @@
   {
    "fieldname": "date",
    "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Ng\u00e0y l\u1eadp k\u1ebf ho\u1ea1ch",
    "reqd": 1
   },
   {
    "fieldname": "year",
    "fieldtype": "Int",
+   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "K\u1ebf ho\u1ea1ch tuy\u1ec3n d\u1ee5ng n\u0103m",
    "reqd": 1
@@ -94,7 +97,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-28 13:11:27.855414",
+ "modified": "2025-12-22 16:08:40.864897",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Recruitment Plan",

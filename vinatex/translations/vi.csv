@@ -548,3 +548,9 @@ Returned Qty, Số lượng trả lại
 Item To Manufacture, Hàng hóa cần sản xuất
 Qty To Manufacture, Số lượng cần sản xuất
 Required Items, Nguyên vật liệu cần thiết
+{0} minutes ago,{0} phút trước
+{0} hours ago,{0} giờ trước
+{0} days ago,{0} ngày trước
+{0} weeks ago,{0} tuần trước
+{0} months ago,{0} tháng trước
+{0} years ago,{0} năm trước
