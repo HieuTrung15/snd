@@ -359,28 +359,56 @@ def _format_message_content(
 ) -> Tuple[str, str]:
     """
     Graph supports `contentType`: "text" or "html".
-    - "text": nhanh, đơn giản, nhưng Teams đôi khi không auto-link URL.
-    - "html": có thể dùng <a href="...">...</a> để click được.
+
+    Quy ước:
+    - content_type="text": gửi text thuần. Nếu linkify=True thì convert URL -> <a>.
+    - content_type="html": TIN CẬY NỘI DUNG HTML do code server tạo ra.
+        + Nếu linkify=False: GIỮ NGUYÊN HTML (không escape), chỉ normalize newline -> <br>.
+        + Nếu linkify=True: chỉ linkify các URL trần, còn các phần khác vẫn escape để tránh injection từ input lẫn lộn.
     """
     ct = (content_type or "text").strip().lower()
     if ct not in ("text", "html"):
         ct = "text"
 
-    if ct == "text" and not linkify:
-        return "text", content
+    raw = content or ""
 
-    # Always return HTML if ct == "html" OR linkify enabled.
+    # 1) TEXT mode
+    if ct == "text":
+        if not linkify:
+            return "text", raw
+
+        # linkify trong text-mode: trả HTML để clickable ổn định
+        mode = (linkify_mode or "full").strip().lower()
+        if mode not in ("full", "short"):
+            mode = "full"
+
+        out: list[str] = []
+        pos = 0
+        for m in _URL_RE.finditer(raw):
+            start, end = m.span(1)
+            if start > pos:
+                out.append(escape_html(raw[pos:start]).replace("\n", "<br>"))
+            url = m.group(1)
+            display = _shorten_url_for_display(url) if mode == "short" else url
+            out.append(f'<a href="{escape_html(url)}">{escape_html(display)}</a>')
+            pos = end
+        if pos < len(raw):
+            out.append(escape_html(raw[pos:]).replace("\n", "<br>"))
+
+        return "html", "".join(out)
+
+    # 2) HTML mode
+    # Nếu bạn đã chủ động tạo HTML (ví dụ <a href>...</a>) thì KHÔNG được escape nữa.
+    if not linkify:
+        # normalize newline để không bị dính 1 dòng nếu bạn dùng \n trong template
+        return "html", raw.replace("\n", "<br>")
+
+    # HTML + linkify: trường hợp hiếm, nếu raw có URL trần thì convert URL trần thành <a>.
+    # An toàn: escape các đoạn không phải URL để tránh input bẩn trộn HTML.
     mode = (linkify_mode or "full").strip().lower()
     if mode not in ("full", "short"):
         mode = "full"
 
-    raw = content or ""
-
-    if not linkify:
-        safe = escape_html(raw).replace("\n", "<br>")
-        return "html", safe
-
-    # Build HTML with escaped non-url parts, and <a> for URLs.
     out: list[str] = []
     pos = 0
     for m in _URL_RE.finditer(raw):
@@ -705,12 +733,17 @@ def notify_user_api(
 
 
 @frappe.whitelist()
-def enqueue_notify_user(upn_or_email: str | Iterable[str], message: str, settings_docname: Optional[str] = None) -> str:
+def enqueue_notify_user(
+    upn_or_email: str | Iterable[str],
+    message: str,
+    settings_docname: Optional[str] = None,
+    content_type: str = "text",
+    linkify: bool = False,
+    linkify_mode: str = "full",
+) -> str:
     """
     Background job: tránh chậm UI.
     """
-    # frappe.only_for("System Manager")  # chỉnh role nếu muốn
-
     job = frappe.enqueue(
         "vinatex.integrations.teams_graph.notify_user",
         queue="default",
@@ -719,6 +752,9 @@ def enqueue_notify_user(upn_or_email: str | Iterable[str], message: str, setting
         upn_or_email=upn_or_email,
         message=message,
         settings_docname=settings_docname,
+        content_type=content_type,
+        linkify=linkify,
+        linkify_mode=linkify_mode,
     )
     return str(job) if job else "enqueued"
 

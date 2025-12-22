@@ -13,6 +13,23 @@ BOT_USER_ID = "HPBAWPdZdETWatSig"
 
 rocket = RocketChat(user_id=BOT_USER_ID, auth_token=BOT_TOKEN, server_url=SERVER_URL.rstrip("/"))
 
+def send_rocket_message_async(to_users, message, link=None, title=None):
+    """
+    Enqueue send_rocket_message để tránh freeze UI.
+    """
+    frappe.enqueue(
+        "vinatex.patches.utils.rocket_chat.send_rocket_message",
+        queue="default",
+        timeout=60,
+        is_async=True,
+        to_users=to_users,
+        message=message,
+        link=link,
+        title=title,
+    )
+    return "enqueued"
+
+
 def send_rocket_message(to_users, message, link=None, title=None):
     """
     Gửi tin nhắn Rocket.Chat cho 1 hoặc nhiều user.
