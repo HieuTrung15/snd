@@ -5,7 +5,7 @@ import time
 import json
 import re
 from dataclasses import dataclass
-from typing import Optional, Dict, Any, Tuple
+from typing import Optional, Dict, Any, Tuple, Iterable
 from urllib.parse import urlencode, urlparse, unquote
 
 import frappe
@@ -595,72 +595,101 @@ def send_chat_message(
     return payload
 
 
+def _normalize_recipients(upn_or_email: str | Iterable[str] | None) -> list[str]:
+    if upn_or_email is None:
+        return []
+    if isinstance(upn_or_email, str):
+        trimmed = upn_or_email.strip()
+        return [trimmed] if trimmed else []
+
+    recipients: list[str] = []
+    for entry in upn_or_email:
+        if not entry:
+            continue
+        if not isinstance(entry, str):
+            entry = str(entry)
+        trimmed = entry.strip()
+        if trimmed:
+            recipients.append(trimmed)
+    return recipients
+
+
 def notify_user(
-    upn_or_email: str,
+    upn_or_email: str | Iterable[str],
     message: str,
     settings_docname: Optional[str] = None,
     content_type: str = "text",
     linkify: bool = False,
     linkify_mode: str = "full",
-) -> Dict[str, Any]:
+) -> Dict[str, Any] | list[Dict[str, Any]]:
     """
-    High-level: email/UPN -> user_id -> chat_id -> send message
-    Gửi tin nhắn qua Teams chat tới user xác định bởi email/UPN.
+    High-level: email/UPN -> user_id -> chat_id -> send message.
+    Gửi tin nhắn qua Teams chat tới 1 hoặc nhiều user xác định bởi email/UPN.
     """
+    recipients = _normalize_recipients(upn_or_email)
+    if not recipients:
+        frappe.throw("Chưa cung cấp user Teams để gửi tin nhắn.")
+
     settings = get_settings(settings_docname)
-    total_start = time.time()
 
     t0 = time.time()
     token = get_access_token(settings)
     token_ms = int((time.time() - t0) * 1000)
 
-    try:
-        t1 = time.time()
-        target_id = get_user_id_by_upn(upn_or_email, settings=settings, token=token)
-        user_lookup_ms = int((time.time() - t1) * 1000)
+    responses: list[Dict[str, Any]] = []
+    for recipient in recipients:
+        total_start = time.time()
+        try:
+            t1 = time.time()
+            target_id = get_user_id_by_upn(recipient, settings=settings, token=token)
+            user_lookup_ms = int((time.time() - t1) * 1000)
 
-        t2 = time.time()
-        chat_id = get_or_create_one_on_one_chat(target_id, settings=settings, token=token)
-        chat_ms = int((time.time() - t2) * 1000)
-    except Exception:
-        _log_message_send(
-            to_upn_or_email=upn_or_email,
-            chat_id=None,
-            message=message,
-            settings_docname=settings.name,
-            status="Failure",
-            total_ms=int((time.time() - total_start) * 1000),
-            token_ms=token_ms,
-            error=frappe.get_traceback(),
+            t2 = time.time()
+            chat_id = get_or_create_one_on_one_chat(target_id, settings=settings, token=token)
+            chat_ms = int((time.time() - t2) * 1000)
+        except Exception:
+            _log_message_send(
+                to_upn_or_email=recipient,
+                chat_id=None,
+                message=message,
+                settings_docname=settings.name,
+                status="Failure",
+                total_ms=int((time.time() - total_start) * 1000),
+                token_ms=token_ms,
+                error=frappe.get_traceback(),
+            )
+            raise
+
+        responses.append(
+            send_chat_message(
+                chat_id,
+                message,
+                settings=settings,
+                to_upn_or_email=recipient,
+                settings_docname=settings.name,
+                content_type=content_type,
+                linkify=linkify,
+                linkify_mode=linkify_mode,
+                token=token,
+                token_ms=token_ms,
+                user_lookup_ms=user_lookup_ms,
+                chat_ms=chat_ms,
+                total_start=total_start,
+            )
         )
-        raise
 
-    return send_chat_message(
-        chat_id,
-        message,
-        settings=settings,
-        to_upn_or_email=upn_or_email,
-        settings_docname=settings.name,
-        content_type=content_type,
-        linkify=linkify,
-        linkify_mode=linkify_mode,
-        token=token,
-        token_ms=token_ms,
-        user_lookup_ms=user_lookup_ms,
-        chat_ms=chat_ms,
-        total_start=total_start,
-    )
+    return responses[0] if len(responses) == 1 else responses
 
 
 @frappe.whitelist()
 def notify_user_api(
-    upn_or_email: str,
+    upn_or_email: str | Iterable[str],
     message: str,
     settings_docname: Optional[str] = None,
     content_type: str = "text",
     linkify: bool = False,
     linkify_mode: str = "full",
-) -> Dict[str, Any]:
+) -> Dict[str, Any] | list[Dict[str, Any]]:
     """
     Whitelisted wrapper: call from client/script.
     """
@@ -676,7 +705,7 @@ def notify_user_api(
 
 
 @frappe.whitelist()
-def enqueue_notify_user(upn_or_email: str, message: str, settings_docname: Optional[str] = None) -> str:
+def enqueue_notify_user(upn_or_email: str | Iterable[str], message: str, settings_docname: Optional[str] = None) -> str:
     """
     Background job: tránh chậm UI.
     """
