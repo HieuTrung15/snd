@@ -1803,6 +1803,23 @@ def get_document_block_data_v2(
 	has_next = len(matched) > page_size
 	rows = matched[:page_size]
 
+	# ===== 3) Enrich rows for incoming: chair_department =====
+	if type_doc == "Công văn đến" and rows:
+		chair_ids = sorted({r.get("nguoi_chu_tri") for r in rows if r.get("nguoi_chu_tri")})
+		chair_dept_map = {}
+		if chair_ids:
+			emps = frappe.get_all(
+				"Employee",
+				filters={"name": ["in", chair_ids]},
+				fields=["name", "department"],
+				ignore_permissions=True,
+			) or []
+			chair_dept_map = {e["name"]: e.get("department") for e in emps}
+
+		for r in rows:
+			emp = r.get("nguoi_chu_tri")
+			r["chair_department"] = chair_dept_map.get(emp, "") if emp else ""
+
 	return {
 		"rows": rows,
 		"has_next": has_next,
