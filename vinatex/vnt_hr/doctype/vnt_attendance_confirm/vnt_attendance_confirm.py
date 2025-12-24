@@ -214,10 +214,9 @@ def _notify_reject_employee_result(doc: Document):
 
 def _make_attendance_from_confirmation(doc: Document):
 	# Tạo Attendance cho các ngày trong items
-	check_all = False
+	created = False
 	for row in doc.get("items") or []:
 		att_check = row.get("type") and row.get("confirm") == "Đồng ý"
-		check_all = True
 		if not att_check:
 			continue
 		existing_att = frappe.db.exists("Attendance", {
@@ -239,7 +238,8 @@ def _make_attendance_from_confirmation(doc: Document):
 			"docstatus": 1,
 		})
 		att.insert()
-	if check_all:
+		created = True
+	if created:
 		_notify_employee_result(doc)
 
 

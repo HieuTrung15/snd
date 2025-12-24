@@ -21,6 +21,12 @@ LEADER_DESIGNATIONS = {
     "Phó Tổng Giám đốc Tập đoàn",
     "Giám đốc điều hành Tập đoàn",
 }
+LEADER_DESIGNATION_ORDER = {
+    "Chủ tịch Hội đồng quản trị Tập đoàn": 0,
+    "Tổng Giám đốc Tập đoàn": 1,
+    "Phó Tổng Giám đốc Tập đoàn": 2,
+    "Giám đốc điều hành Tập đoàn": 3,
+}
 
 
 def _month_range(year: int, month: int):
@@ -67,6 +73,15 @@ def _add_date_range(by_date: dict, start, end, kind: str, payload: dict):
         k = cur.strftime("%Y-%m-%d")
         _push(by_date, k, kind, payload)
         cur = add_days(cur, 1)
+
+
+def _sort_people_by_leader_order(people: list[dict], leader_map: dict) -> list[dict]:
+    def sort_key(item: dict):
+        leader = leader_map.get(item.get("employee") or "") or {}
+        designation = leader.get("designation") or ""
+        return (LEADER_DESIGNATION_ORDER.get(designation, 99), item.get("employee_name") or "")
+
+    return sorted(people or [], key=sort_key)
 
 
 @frappe.whitelist()
@@ -386,6 +401,7 @@ def get_department_calendar(year: int | None = None, month: int | None = None):
             )
 
         for trip in leader_trip_map.values():
+            trip["people"] = _sort_people_by_leader_order(trip["people"], leader_map)
             fd = getdate(trip["from_date"])
             td = getdate(trip["to_date"])
             s = fd if fd > start else start
