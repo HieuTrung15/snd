@@ -25,10 +25,12 @@ def get_my_todos(limit: int = 4):
             "reference_type",
             "reference_name",
             "status",
+            "priority",
+            "creation",
             "modified",
         ],
         order_by="modified desc",
-        limit_page_length=limit,
+        limit_page_length=0,
     )
 
     # nếu không còn todo đang mở thì trả về todo đã đóng
@@ -43,24 +45,27 @@ def get_my_todos(limit: int = 4):
                 "reference_type",
                 "reference_name",
                 "status",
+                "priority",
+                "creation",
                 "modified",
             ],
             order_by="modified desc",
-            limit_page_length=limit,
+            limit_page_length=0,
         )
 
-    priority_description = "Xác nhận chấm công"
-    def is_priority(todo):
-        desc = (todo.get("description") or "").strip()
-        return desc.startswith(priority_description)
-
-    todos.sort(key=lambda t: t.get("modified") or "", reverse=True)
-    todos.sort(key=lambda t: 0 if is_priority(t) else 1)
+    priority_rank = {
+        "Urgent": 0,
+        "High": 1,
+        "Medium": 2,
+        "Low": 3,
+    }
+    todos.sort(key=lambda t: t.get("creation") or "", reverse=True)
+    todos.sort(key=lambda t: priority_rank.get(t.get("priority") or "", 4))
+    todos = todos[:limit]
 
     for t in todos:
         raw = t.get("description") or ""
         clean = strip_html(raw).strip()
-        # vì FE đã clamp 2 dòng, bạn có thể nới chút để nhìn tự nhiên hơn
         if len(clean) > 220:
             clean = clean[:220] + "…"
         t["description"] = clean
