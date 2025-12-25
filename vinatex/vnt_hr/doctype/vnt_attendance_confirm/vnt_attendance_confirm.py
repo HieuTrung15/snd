@@ -31,7 +31,8 @@ class VNTAttendanceConfirm(Document):
 		if type_confirm:
 			_make_attendance_from_confirmation(self)
 			_reject_attendance_from_confirmation(self)
-			_close_approver_todos(self)
+			if not pending:
+				_close_approver_todos(self)
 
 	def on_cancel(self):
 		_cancel_attendance_from_confirmation(self)
@@ -147,7 +148,6 @@ def _ensure_todo_for_confirmation(doc: Document, user: str, dates: list[date] | 
 			"ToDo",
 			existing[0],
 			{"description": description, "status": "Open"},
-			update_modified=False,
 		)
 		return
 
@@ -277,9 +277,7 @@ def _notify_approver_pending(doc: Document):
 	if not user or not doc.items:
 		return
 
-	_ensure_todo_for_approver(doc, user)
-
-	subject = _("Chờ duyệt chấm công: {0}").format(doc.employee_name or doc.employee or _("Nhân viên"))
+	subject = _("Phê duyệt giải trình chấm công: {0}").format(doc.employee_name or doc.employee or _("Nhân viên"))
 	message = _(
 		"{0} đã gửi bảng chấm công từ {1} đến {2}.")
 	message = message.format(
@@ -287,23 +285,29 @@ def _notify_approver_pending(doc: Document):
 		frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
 		frappe.format_value(doc.to_date, {"fieldtype": "Date"}) if doc.to_date else _("(chưa rõ)"),
 	)
+	_ensure_todo_for_approver(doc, user, subject)
 	_send_notification(doc, user, subject, message)
 
 
-def _ensure_todo_for_approver(doc: Document, user: str):
-	existing = frappe.db.exists("ToDo", {
-		"reference_type": doc.doctype,
-		"reference_name": doc.name,
-		"allocated_to": user,
-		"status": ["!=", "Cancelled"],
-	})
+def _ensure_todo_for_approver(doc: Document, user: str, description: str):
+	existing = frappe.db.get_value(
+		"ToDo",
+		{
+			"reference_type": doc.doctype,
+			"reference_name": doc.name,
+			"allocated_to": user,
+			"status": ["!=", "Cancelled"],
+		},
+		"name",
+	)
 	if existing:
+		frappe.db.set_value(
+			"ToDo",
+			existing,
+			{"description": description, "status": "Open"},
+		)
 		return
 
-	description = _("Giải trình chấm công bất thường {0} của {1}.").format(
-		frappe.format_value(doc.from_date, {"fieldtype": "Date"}) if doc.from_date else _("(chưa rõ)"),
-		doc.employee_name or doc.employee or _("Nhân viên"),
-	)
 	new_todo = frappe.new_doc("ToDo")
 	new_todo.description = description
 	new_todo.allocated_to = user
