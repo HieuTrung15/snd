@@ -20,8 +20,10 @@ class VNTAttendanceConfirm(Document):
 
 	def on_update(self):
 		# nếu các dòng trong items có giải trình và không có phê duyệt thì gửi thông báo đến người duyệt
-		pending = [row for row in (self.get("items") or []) if row.get("type") and not row.get("confirm")]
-		if pending:
+		items = self.get("items") or []
+		all_types_filled = all(row.get("type") for row in items) if items else False
+		pending = [row for row in items if row.get("type") and not row.get("confirm")]
+		if all_types_filled and pending:
 			_notify_approver_pending(self)
 			_close_employee_todos(self)
 
