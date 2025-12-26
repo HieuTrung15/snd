@@ -1,8 +1,8 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:DKX-{#####}",
- "creation": "2025-10-28 14:29:35.864319",
+ "autoname": "naming_series:",
+ "creation": "2025-12-22 10:30:32.909791",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -36,7 +36,8 @@
   "services",
   "column_break_kxuy",
   "car_type",
-  "amended_from"
+  "amended_from",
+  "naming_series"
  ],
  "fields": [
   {
@@ -242,17 +243,24 @@
    "fieldtype": "Data",
    "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t c\u1ea5p 2",
    "read_only": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Naming Series",
+   "options": "DKX-.####"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-16 15:16:20.996961",
+ "modified": "2025-12-26 09:21:58.872706",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Car Registration",
- "naming_rule": "Expression",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
