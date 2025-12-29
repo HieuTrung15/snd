@@ -6,6 +6,14 @@ from frappe.model.document import Document
 
 
 class VNTRecruitmentPlan(Document):
+	def validate(self):
+		if not self.status:
+			self.status = "Tạo mới"
+
+		if self.status == "Đã phê duyệt":
+			#set docstatus to 1 (Submitted)
+			self.docstatus = 1
+
 	def after_insert(self):
 		self.create_job_requisitions()
 
