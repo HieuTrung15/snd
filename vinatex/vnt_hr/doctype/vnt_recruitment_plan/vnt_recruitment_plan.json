@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "KHTD-.{year}.-.####",
+ "autoname": "format:KHTD-{year}-{dpt_abbr}",
  "creation": "2025-10-14 08:34:15.263073",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -10,10 +10,12 @@
   "employee",
   "employee_name",
   "date",
+  "year",
   "column_break_r4vr",
   "company",
   "department",
-  "year",
+  "dpt_abbr",
+  "status",
   "section_break_b1fo",
   "items",
   "note"
@@ -92,16 +94,29 @@
    "fieldname": "note",
    "fieldtype": "Small Text",
    "label": "Ghi ch\u00fa"
+  },
+  {
+   "fetch_from": "department.custom_short_text_qlvb",
+   "fieldname": "dpt_abbr",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "T\u00ean vi\u1ebft t\u1eaft ph\u00f2ng/ban"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Tr\u1ea1ng th\u00e1i",
+   "options": "M\u1edbi t\u1ea1o\nCh\u1edd ph\u00ea duy\u1ec7t\n\u0110\u00e3 ph\u00ea duy\u1ec7t\nT\u1eeb ch\u1ed1i"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-22 16:08:40.864897",
+ "modified": "2025-12-29 14:04:53.221241",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Recruitment Plan",
- "naming_rule": "Expression (old style)",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
@@ -121,5 +136,22 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [
+  {
+   "color": "Blue",
+   "title": "M\u1edbi t\u1ea1o"
+  },
+  {
+   "color": "Green",
+   "title": "Ch\u1edd ph\u00ea duy\u1ec7t"
+  },
+  {
+   "color": "Light Blue",
+   "title": "\u0110\u00e3 ph\u00ea duy\u1ec7t"
+  },
+  {
+   "color": "Red",
+   "title": "T\u1eeb ch\u1ed1i"
+  }
+ ]
 }

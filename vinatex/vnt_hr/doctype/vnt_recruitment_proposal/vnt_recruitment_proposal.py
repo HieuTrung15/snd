@@ -7,6 +7,13 @@ from frappe.utils import nowdate
 
 
 class VNTRecruitmentProposal(Document):
+	def validate(self):
+		if not self.status:
+			self.status = "Mới tạo"
+
+		if self.status == "Đã phê duyệt":
+			self.docstatus = 1
+
 	def after_insert(self):
 		self.create_job_requisitions()
 
