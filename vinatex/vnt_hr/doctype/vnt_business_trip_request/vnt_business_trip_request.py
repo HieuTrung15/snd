@@ -431,7 +431,7 @@ def _notify_if_pending(doc: Document):
 	# 		url
 	# 	),
 	# )
-	# ensure_todo(doc, approver_user)
+	ensure_todo(doc, approver_user)
 
 
 def _notify_if_pending_lv2(doc: Document):
