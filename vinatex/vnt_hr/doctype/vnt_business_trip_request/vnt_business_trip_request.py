@@ -123,35 +123,57 @@ class VNTBusinessTripRequest(Document):
 		if fd > td:
 			frappe.throw(_("Từ ngày không được lớn hơn Đến ngày"))
 
-		conflict = frappe.db.sql(
-			"""
-			SELECT name, from_date, to_date, workflow_state
-			FROM `tabVNT Business Trip Request`
-			WHERE employee = %(employee)s
-			  AND docstatus != 2
-			  AND name != %(name)s
-			  AND COALESCE(workflow_state, '') NOT IN %(states)s
-			  AND NOT (%(fd)s > to_date OR %(td)s < from_date)
-			LIMIT 1
-			""",
-			{
-				"employee": self.employee,
-				"name": self.name,
-				"fd": fd,
-				"td": td,
-				"states": REJECT_STATES,  # tuple/list OK
-			},
-			as_dict=True,
-		)
+		def _check_conflict_for_employee(emp: str):
+			c = frappe.db.sql(
+				"""
+				SELECT r.name, r.workflow_state, r.from_date, r.to_date
+				FROM `tabVNT Business Trip Request` r
+				WHERE r.docstatus != 2
+				AND r.name != %(name)s
+				AND COALESCE(r.workflow_state, '') NOT IN %(ignore_states)s
+				AND NOT (%(fd)s > r.to_date OR %(td)s < r.from_date)
+				AND (
+						r.employee = %(emp)s
+						OR EXISTS (
+							SELECT 1
+							FROM `tabVNT Business Trip Request Items` i
+							WHERE i.parent = r.name
+							AND i.employee = %(emp)s
+						)
+				)
+				ORDER BY r.from_date ASC
+				LIMIT 1
+				""",
+				{
+					"name": self.name or "",
+					"fd": self.from_date,
+					"td": self.to_date,
+					"emp": emp,
+					"ignore_states": REJECT_STATES,
+				},
+				as_dict=True,
+			)
+			return c[0] if c else None
 
-		if conflict:
-			c = conflict[0]
-			frappe.throw(_(
-				f"Nhân viên đã có phiếu công tác {c.name} "
-				f"({c.workflow_state}) từ {c.from_date} đến {c.to_date}. "
-				f"Không thể tạo thêm phiếu trùng thời gian."
-			))
+		# 1) gom toàn bộ nhân sự trong phiếu hiện tại (bảng cha + items)
+		emps = {self.employee} if self.employee else set()
+		emps.update({row.employee for row in (self.items or []) if row.employee})
 
+		# 2) check từng người
+		for emp in emps:
+			conflict = _check_conflict_for_employee(emp)
+			if conflict:
+				emp_name = frappe.db.get_value("Employee", emp, "employee_name") or emp
+				frappe.throw(_(
+					"Nhân sự {0} đã có phiếu đi công tác {1} ({2}) trong khoảng {3} đến {4}. "
+					"Không thể tạo phiếu trùng thời gian."
+				).format(
+					emp_name,
+					conflict.name,
+					conflict.workflow_state or "",
+					formatdate(conflict.from_date, "dd-mm-yyyy"),
+					formatdate(conflict.to_date, "dd-mm-yyyy"),
+				))
 
 # def get_leave_approver_level_2(employee: str):
 # 	# lấy approver trên Employee trước
