@@ -478,7 +478,7 @@ def _notify_to_employee_list(doc):
 	_send_trip_notification(
 		doc,
 		_("Đơn đi công tác của {0} từ ngày {1} đến ngày {2} đã được lãnh đạo duyệt").format(
-			doc.employee_name or _("(không rõ)"), doc.from_date, doc.to_date
+			doc.employee_name or _("(không rõ)"), formatdate(doc.from_date, "dd-MM-yyyy"), formatdate(doc.to_date, "dd-MM-yyyy")
 		),
 	)
 
@@ -488,7 +488,7 @@ def _notify_to_employee_list_2(doc):
 	_send_trip_notification(
 		doc,
 		_("Đơn đi công tác của {0} từ ngày {1} đến ngày {2} đã được lãnh đạo tập đoàn duyệt.").format(
-			doc.employee_name or _("(không rõ)"), doc.from_date, doc.to_date
+			doc.employee_name or _("(không rõ)"), formatdate(doc.from_date, "dd-MM-yyyy"), formatdate(doc.to_date, "dd-MM-yyyy")
 		),
 	)
 
@@ -690,14 +690,14 @@ def _notify_to_office_manager(doc: Document):
 		return
 	make_notification_logs({
 		"type": "Alert",
-		"subject": _("Công tác của {0} cần vé máy bay. Vui lòng kiểm tra.").format(doc.employee_name or _("(không rõ)")),
+		"subject": _("Công tác tại {0} của {1} từ {2} đến {3} cần vé máy bay.").format(doc.destination or _("(không rõ)"), doc.employee_name or _("(không rõ)"), formatdate(doc.from_date, "dd-MM-yyyy"), formatdate(doc.to_date, "dd-MM-yyyy")),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, user_list)
 	send_rocket_message(
         to_users=user_list,
         title=":bell: Thông báo",
-        message=_("Công tác của {0} cần vé máy bay. Vui lòng kiểm tra.").format(doc.employee_name or _("(không rõ)")),
+        message=_("Công tác của {0} cần vé máy bay.").format(doc.employee_name or _("(không rõ)")),
         link=get_url_to_form(doc.doctype, doc.name)
     )
 	# url = get_url_to_form(doc.doctype, doc.name)
