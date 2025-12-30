@@ -7,6 +7,17 @@ frappe.ui.form.on("VNT Attendance Confirm", {
 			frappe.msgprint(__('Không có dữ liệu để xác nhận.'));
 		}	
 	},
+	before_save (frm) {
+		flag = false;
+		$.each(frm.doc.items || [], function (i, row) {
+			if (!row.type) {
+				flag = true;
+			}
+		});
+		if (flag) {
+			frappe.show_alert({ message: __('Anh/chị vui lòng điền giải trình cho tất cả các ngày.'), indicator: "orange" }, 5);
+		}
+	},
 	refresh(frm) {
         // frm.add_custom_button(__('Sync Timekeeper Data'), function() {
 		// 	frappe.call({
@@ -34,10 +45,9 @@ frappe.ui.form.on("VNT Attendance Confirm", {
 	},
 	confirm (frm) {
 		$.each(frm.doc.items || [], function (i, row) {
-			// if (!row.confirm) {
-			// 	frappe.model.set_value(row.doctype, row.name, "confirm", frm.doc.confirm);
-			// }
-			frappe.model.set_value(row.doctype, row.name, "confirm", frm.doc.confirm);
+			if (row.type) {
+				frappe.model.set_value(row.doctype, row.name, "confirm", frm.doc.confirm);
+			}
 		});
 		refresh_field("items");
 	}
