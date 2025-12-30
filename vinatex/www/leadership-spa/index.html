@@ -266,21 +266,21 @@
         </div>
         <div class="doc-kpi-sub">Đã giao đang xử lý</div>
       </div>
-      <div class="doc-card" id="doc-kpi-unassigned">
-        <h3>Công việc chưa có chủ trì</h3>
-        <div class="doc-kpi-line">
-          <span class="icon-blink icon-gray">⚑</span>
-          <div class="doc-kpi-value" data-doc-kpi="unassigned">0</div>
-        </div>
-        <div class="doc-kpi-sub">Chưa giao chủ trì</div>
-      </div>
-      <div class="doc-card" id="doc-kpi-returned">
-        <h3>Văn bản trả lại</h3>
+      <div class="doc-card" id="doc-kpi-overdue">
+        <h3>Công việc quá hạn</h3>
         <div class="doc-kpi-line">
           <span class="icon-blink icon-red">↩</span>
-          <div class="doc-kpi-value" data-doc-kpi="returned">0</div>
+          <div class="doc-kpi-value" data-doc-kpi="overdue">0</div>
         </div>
-        <div class="doc-kpi-sub">Nhiệm vụ bị trả</div>
+        <div class="doc-kpi-sub">Quá hạn xử lý</div>
+      </div>
+      <div class="doc-card" id="doc-kpi-total">
+        <h3>Tổng số nhiệm vụ</h3>
+        <div class="doc-kpi-line">
+          <span class="icon-blink icon-gray">⚑</span>
+          <div class="doc-kpi-value" data-doc-kpi="total">0</div>
+        </div>
+        <div class="doc-kpi-sub">Tổng nhiệm vụ đang theo dõi</div>
       </div>
     </div>
     <div class="doc-bottom-grid" style="margin-bottom:0;">
@@ -728,11 +728,16 @@
   }
 
   function renderDocDashboard(payload) {
-      const counts = payload.counts || {};
-      setDocKpi("completed", counts.completed);
-      setDocKpi("processing", (counts.statuses || {})["Đang xử lý"]);
-      setDocKpi("unassigned", (counts.statuses || {})["Chưa giao"]);
-      setDocKpi("returned", (counts.statuses || {})["Trả lại"]);
+      const statuses = (payload.counts || {}).statuses || {};
+      const completed = Number(statuses["Hoàn thành"] || 0);
+      const processing = Number(statuses["Đang xử lý"] || 0);
+      const overdue = Number(statuses["Quá hạn"] || 0);
+      const returned = Number(statuses["Trả lại"] || 0);
+      const total = completed + processing + overdue + returned;
+      setDocKpi("completed", completed);
+      setDocKpi("processing", processing);
+      setDocKpi("overdue", overdue);
+      setDocKpi("total", total);
       renderDocStatusPie(payload.status_pie || []);
       renderDocTable(payload.documents || []);
   }
