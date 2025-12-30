@@ -34,9 +34,10 @@ frappe.ui.form.on("VNT Attendance Confirm", {
 	},
 	confirm (frm) {
 		$.each(frm.doc.items || [], function (i, row) {
-			if (!row.confirm) {
-				frappe.model.set_value(row.doctype, row.name, "confirm", frm.doc.confirm);
-			}
+			// if (!row.confirm) {
+			// 	frappe.model.set_value(row.doctype, row.name, "confirm", frm.doc.confirm);
+			// }
+			frappe.model.set_value(row.doctype, row.name, "confirm", frm.doc.confirm);
 		});
 		refresh_field("items");
 	}
