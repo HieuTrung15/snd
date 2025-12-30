@@ -17,7 +17,7 @@ frappe.ui.form.on("VNT Car Registration", {
             });
         }
     },
-	 refresh(frm) {
+	refresh(frm) {
         if (frm.is_new()) {
             frappe.call({
                 method: "frappe.client.get_value",
@@ -63,8 +63,20 @@ frappe.ui.form.on("VNT Car Registration", {
                     }
                 }
             });
+            
         }
 	},
+    employee(frm) {
+        frappe.call({
+            method: "vinatex.vnt_hr.doctype.vnt_car_registration.vnt_car_registration.check_leave_approver_2",
+            args: {
+                employee: frm.doc.employee
+            },
+            callback: function (r) {
+                frm.set_value("leave_approver_2", r.message);
+            }
+        });
+    },
     distance(frm) {
         if (frm.doc.distance) {
             // frm.set_value("approver_lv2", "tanpv@vinatex.com.vn")

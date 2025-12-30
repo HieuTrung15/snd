@@ -729,3 +729,17 @@ def get_reports_to(user):
 			return approver_emp
 
 	return employee_doc.name, employee_doc.employee_name
+
+
+@frappe.whitelist()
+def check_leave_approver_2(employee: str | None = None) -> bool:
+	"""Kiểm tra nhân viên có user thuộc role 'Leave Approver 2' hay không."""
+	if not employee:
+		return False
+
+	user_id = frappe.db.get_value("Employee", employee, "user_id")
+	if not user_id:
+		return False
+
+	roles = frappe.get_roles(user_id)
+	return "Leave Approver L2" in roles
