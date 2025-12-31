@@ -395,6 +395,7 @@
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi k\u00fd",
+   "link_filters": "[[\"Employee\",\"custom_designation_group\",\"in\",[\"L\u00e3nh \u0111\u1ea1o c\u1ea5p trung\",\"Ng\u01b0\u1eddi qu\u1ea3n l\u00fd\"]]]",
    "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\" || doc.type == \"Quy\u1ebft \u0111\u1ecbnh\"",
    "options": "Employee"
   },
@@ -434,7 +435,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-15 16:19:41.142526",
+ "modified": "2025-12-31 16:05:46.020327",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
