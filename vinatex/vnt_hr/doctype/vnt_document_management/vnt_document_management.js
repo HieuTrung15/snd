@@ -1188,7 +1188,7 @@ frappe.ui.form.on("VNT Document Management", {
           const res = r?.message || [];
           const found = new Set();
           res.forEach((emp) => {
-            nameCache[emp.name] = emp.employee_name || emp.name;
+            nameCache[emp.name] = emp.employee_name;
             found.add(emp.name);
           });
           missing.forEach((id) => {
