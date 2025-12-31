@@ -1,0 +1,77 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:rule_code",
+ "creation": "2025-12-30 16:40:11.316275",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "rule_code",
+  "column_break_noji",
+  "is_active",
+  "section_break_onwp",
+  "rule_json",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "rule_code",
+   "fieldtype": "Data",
+   "label": "M\u00e3 rule",
+   "no_copy": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_noji",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "K\u00edch ho\u1ea1t"
+  },
+  {
+   "fieldname": "rule_json",
+   "fieldtype": "JSON",
+   "label": "Rule JSON"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "M\u00f4 t\u1ea3"
+  },
+  {
+   "fieldname": "section_break_onwp",
+   "fieldtype": "Section Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-12-30 16:43:32.104871",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT KPI Rule",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
