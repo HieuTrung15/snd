@@ -1,0 +1,132 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-12-30 16:52:39.785433",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "user",
+  "column_break_wudc",
+  "department",
+  "company",
+  "section_break_yjiy",
+  "period",
+  "type",
+  "column_break_xwfc",
+  "manager_employee",
+  "approver_employee",
+  "section_break_vzwa",
+  "total_weight",
+  "column_break_jncd",
+  "ghi_ch\u00fa"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Nh\u00e2n s\u1ef1",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "T\u00e0i kho\u1ea3n",
+   "options": "User"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Ph\u00f2ng/ban",
+   "options": "Department"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "C\u00f4ng ty",
+   "options": "Company"
+  },
+  {
+   "fieldname": "column_break_wudc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_yjiy",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "period",
+   "fieldtype": "Link",
+   "label": "K\u1ef3 t\u00ednh KPI",
+   "options": "VNT KPI Period"
+  },
+  {
+   "fieldname": "manager_employee",
+   "fieldtype": "Link",
+   "label": "Qu\u1ea3n l\u00fd tr\u1ef1c ti\u1ebfp",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "column_break_xwfc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "approver_employee",
+   "fieldtype": "Link",
+   "label": "C\u1ea5p duy\u1ec7t",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "period.period_name",
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Lo\u1ea1i"
+  },
+  {
+   "fieldname": "section_break_vzwa",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "total_weight",
+   "fieldtype": "Float",
+   "label": "Tr\u1ecdng s\u1ed1",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_jncd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ghi_ch\u00fa",
+   "fieldtype": "Small Text",
+   "label": "Ghi ch\u00fa"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-12-30 17:20:12.794509",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT KPI Plan",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

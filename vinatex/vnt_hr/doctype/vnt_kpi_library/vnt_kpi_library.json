@@ -1,0 +1,102 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:kpi_name",
+ "creation": "2025-12-30 16:44:13.602989",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "kpi_name",
+  "kpi_type",
+  "department",
+  "column_break_bvky",
+  "tr\u1ecdng_s\u1ed1_m\u1eb7c_\u0111\u1ecbnh_",
+  "t\u1ea7n_su\u1ea5t",
+  "section_break_enmv",
+  "description",
+  "column_break_crud",
+  "measurement_hint"
+ ],
+ "fields": [
+  {
+   "fieldname": "kpi_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean KPI m\u1eabu",
+   "unique": 1
+  },
+  {
+   "fieldname": "kpi_type",
+   "fieldtype": "Select",
+   "label": "Lo\u1ea1i",
+   "options": "\nTheo KPI\nC\u00f4ng vi\u1ec7c n\u1ed9i b\u1ed9\n\u0110\u1ed9t xu\u1ea5t"
+  },
+  {
+   "fieldname": "column_break_bvky",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tr\u1ecdng_s\u1ed1_m\u1eb7c_\u0111\u1ecbnh_",
+   "fieldtype": "Float",
+   "label": "Tr\u1ecdng s\u1ed1 m\u1eb7c \u0111\u1ecbnh (%)",
+   "precision": "2"
+  },
+  {
+   "fieldname": "t\u1ea7n_su\u1ea5t",
+   "fieldtype": "Select",
+   "label": "T\u1ea7n su\u1ea5t",
+   "options": "\nTh\u00e1ng\nQu\u00fd\nN\u0103m\n\u0110\u1ed9t xu\u1ea5t"
+  },
+  {
+   "fieldname": "section_break_enmv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "M\u00f4 t\u1ea3"
+  },
+  {
+   "fieldname": "column_break_crud",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "measurement_hint",
+   "fieldtype": "Small Text",
+   "label": "G\u1ee3i \u00fd \u0111o l\u01b0\u1eddng"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Ph\u00f2ng/ban",
+   "options": "Department"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-12-30 16:51:42.420264",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT KPI Library",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
