@@ -15,7 +15,29 @@ from vinatex.patches.utils.rocket_chat import send_rocket_message
 
 class VNTAttendanceConfirm(Document):
 	def on_submit(self):
-		_cron_submit_attendance_confirm()
+		# Nếu người đang đăng nhập là Leave Approver thì bỏ qua logic server-side
+		user_id = frappe.db.get_value("Employee", self.employee, "user_id")
+		roles = frappe.get_roles(user_id)
+		if "Leave Approver" in roles:
+			return
+		# Trước khi submit: kiểm tra các dòng items phải có cả `type` và `confirm`.
+		dates = set()
+		for row in (self.get("items") or []):
+			if not row.get("type") or not row.get("confirm"):
+				d = row.get("date")
+				if d:
+					dates.add(getdate(d))
+				else:
+					dates.add(None)
+
+		if dates:
+			# Sort known dates and keep unknown (None) at the end
+			known = sorted([d for d in dates if d is not None])
+			# Format as DD-MM-YYYY and join with comma
+			missing = [d.strftime("%d-%m-%Y") for d in known]
+			if None in dates:
+				missing.append(_format_date_value(None))
+			frappe.throw(_("Không thể phê duyệt cho các ngày: {0}.").format(", ".join(missing)))
 
 
 	def on_update(self):
@@ -34,8 +56,40 @@ class VNTAttendanceConfirm(Document):
 			if not pending:
 				_close_approver_todos(self)
 
+
 	def on_cancel(self):
 		_cancel_attendance_from_confirmation(self)
+
+
+	def before_save(self):
+		# Nếu người đang đăng nhập là Leave Approver thì bỏ qua logic server-side
+		user_id = frappe.db.get_value("Employee", self.employee, "user_id")
+		roles = frappe.get_roles(user_id)
+		if "Leave Approver" in roles:
+			return
+		# Kiểm tra nếu có dòng items chưa điền `type` thì cảnh báo (như client alert)
+		flag = False
+		for row in (self.get("items") or []):
+			if not row.get("type"):
+				flag = True
+				break
+		if flag:
+			frappe.msgprint(
+				_("Anh/chị vui lòng điền giải trình cho tất cả các ngày."),
+				indicator="orange",
+				alert=True
+			)
+		# Reset trường confirm giống behavior client-side
+		# self.confirm = ''
+
+
+@frappe.whitelist()
+def is_employee_leave_approver(employee: str | None = None) -> bool:
+	"""Return True if the employee's mapped user has the Leave Approver role."""
+	user_id = _employee_user_id(employee)
+	if not user_id:
+		return False
+	return "Leave Approver" in frappe.get_roles(user_id)
 
 
 def _employee_user_id(employee: str | None) -> str | None:

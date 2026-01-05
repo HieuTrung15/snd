@@ -46,7 +46,6 @@
    "read_only": 1
   },
   {
-   "allow_on_submit": 1,
    "columns": 3,
    "fieldname": "type",
    "fieldtype": "Data",
@@ -85,7 +84,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-30 13:27:31.208221",
+ "modified": "2025-12-31 14:32:29.080521",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Attendance Confirm Item",

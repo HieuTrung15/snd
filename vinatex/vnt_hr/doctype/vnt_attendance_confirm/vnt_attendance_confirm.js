@@ -8,29 +8,9 @@ frappe.ui.form.on("VNT Attendance Confirm", {
 		}	
 	},
 	before_save (frm) {
-		flag = false;
-		$.each(frm.doc.items || [], function (i, row) {
-			if (!row.type) {
-				flag = true;
-			}
-		});
-		if (flag) {
-			frappe.show_alert({ message: __('Anh/chị vui lòng điền giải trình cho tất cả các ngày.'), indicator: "orange" }, 5);
-		}
+		frm.doc.confirm = '';
 	},
 	refresh(frm) {
-        // frm.add_custom_button(__('Sync Timekeeper Data'), function() {
-		// 	frappe.call({
-		// 		method: "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.make_attendance_confirm",
-		// 		// method: "vinatex.vinatex.doctype.overrides.timekeeping.get_timekeeping_data_morning",
-		// 		args: {
-                    
-        //         },
-		// 		callback: function(r) {
-		// 			console.log("r", r.message);
-		// 		}
-		// 	});
-		// });
 		frm.set_df_property("items", "cannot_delete_rows", true);
 		frm.set_df_property("items", "cannot_add_rows", true);
 		// const grid = frm.get_field('items').grid;
@@ -39,30 +19,33 @@ frappe.ui.form.on("VNT Attendance Confirm", {
 		// 	grid.wrapper.find('.grid-static-col .icon-sm').hide();
 		// });
 	},
-	after_save(frm) {
-		// reset confirm selector after saving to avoid accidental re-apply
-		frm.set_value("confirm", "");
-	},
 	confirm (frm) {
-		$.each(frm.doc.items || [], function (i, row) {
-			if (row.type) {
-				frappe.model.set_value(row.doctype, row.name, "confirm", frm.doc.confirm);
-			}
+		// Check if the employee is a Leave Approver
+		frappe.call({
+			method: "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.is_employee_leave_approver",
+			args: {
+				employee: frm.doc.employee,
+			},
+			callback(res) {
+				const skip_alert = res && res.message === true;
+				let missing_type = false;
+				(frm.doc.items || []).forEach(row => {
+					if (row.type) {
+						frappe.model.set_value(row.doctype, row.name, "confirm", frm.doc.confirm);
+					}
+					else {
+						missing_type = true;
+					}
+				});
+				if (missing_type && !skip_alert) {
+					frappe.show_alert({ message: __('Anh/chị vui lòng điền giải trình cho tất cả các ngày.'), indicator: "orange" }, 5);
+				}
+				refresh_field("items");
+			},
 		});
-		refresh_field("items");
 	}
 });
 
 frappe.ui.form.on("VNT Attendance Confirm", "validate", function(frm) {
-	// (frm.doc.items || []).forEach(function(row) {
-	// 	if (!row.type) {
-	// 		frappe.throw(__('Vui lòng điền giải trình cho ngày {0}.', [frappe.format(row.date, {fieldtype: 'Date'}) || row.idx]));
-	// 	}
-	// });
 
-	// (frm.doc.items || []).forEach(function(row) {
-	// 	if (!row.type && !row.confirm) {
-	// 		frappe.throw(__('Vui lòng chọn Đồng ý/ Từ chối cho ngày {0}.', [frappe.format(row.date, {fieldtype: 'Date'}) || row.idx]));
-	// 	}
-	// });
 });
