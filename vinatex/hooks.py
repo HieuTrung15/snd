@@ -73,7 +73,8 @@ override_doctype_class = {
     "Leave Allowcation": "vinatex.vinatex.doctype.overrides.leave_allowcation.VntLeaveAllocation",
 	"Attendance": "vinatex.vinatex.doctype.overrides.attendance.VntAttendance",
     "Employee": "vinatex.vinatex.doctype.overrides.employee.VntEmployee",
-    "User": "vinatex.vinatex.doctype.overrides.user.CustomUser"
+    "User": "vinatex.vinatex.doctype.overrides.user.CustomUser",
+    "Holiday List": "vinatex.vinatex.doctype.overrides.holiday_list.VntHolidayList",
 }
 
 # include js in doctype views
@@ -226,7 +227,7 @@ scheduler_events = {
             "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.make_attendance_confirm",
         ],
 		"0 7 4 * *": [
-			"vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm._cron_submit_attendance_confirm",
+			# "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm._cron_submit_attendance_confirm",
 		],
 		#Chạy tính lại tuổi hàng năm
 		"00 01 1 1 *": [
