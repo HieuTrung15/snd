@@ -8,7 +8,7 @@ frappe.query_reports["Số ngày chấm công bất thường"] = {
       label: "Nhân viên",
       fieldtype: "Link",
       options: "Employee",
-      reqd: 1,
+      reqd: 0,
     },
     {
       fieldname: "company",
