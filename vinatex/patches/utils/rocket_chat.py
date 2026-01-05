@@ -9,8 +9,7 @@ SERVER_URL  = "https://chat.vinatex.com.vn"
 # BOT_TOKEN   = "PACpeEU-WnuBvzdclmCurNEYkU5jiRZAFoKgAfhYROw"      # Personal Access Token
 
 BOT_TOKEN = "ZfYrSJG4uP2kwgYUkznpjvRzBJTVp8LZMSxkNx7bNUB"
-# BOT_USER_ID = "HPBAWPdZdETWatSig"
-BOT_USER_ID = ""
+BOT_USER_ID = "HPBAWPdZdETWatSig"
 
 rocket = RocketChat(user_id=BOT_USER_ID, auth_token=BOT_TOKEN, server_url=SERVER_URL.rstrip("/"))
 

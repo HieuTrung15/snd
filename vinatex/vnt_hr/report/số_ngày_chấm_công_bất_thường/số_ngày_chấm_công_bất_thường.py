@@ -164,12 +164,11 @@ def _resolve_period(filters):
 	if filters.get("from_date") and filters.get("to_date"):
 		return getdate(filters["from_date"]), getdate(filters["to_date"])
 
-	ref_date = getdate(add_days(today(), -1))
+	ref_date = getdate(today())
 	month = cint(filters.get("month") or 0)
 	year = cint(filters.get("year") or 0)
 	if month and year:
 		start = get_first_day(getdate(f"{year:04d}-{month:02d}-01"))
 	else:
 		start = get_first_day(ref_date)
-	end = get_last_day(start)
-	return start, min(end, ref_date)
+	return start, get_last_day(start)
