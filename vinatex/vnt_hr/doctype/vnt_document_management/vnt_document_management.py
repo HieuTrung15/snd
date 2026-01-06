@@ -1297,30 +1297,15 @@ def get_document_dashboard_vn():
 	)
 	chair_map = {r.parent: r for r in chair_rows}
 
-	# items2 = VNT Document Management Item (trạng thái xử lý)
-	item_status_rows = frappe.get_all(
-		"VNT Document Management Item",
-		filters={"parent": ["in", list(doc_names)]},
-		fields=["parent", "trang_thai_cv_xu_ly", "trang_thai_nguoi_phoi_hop"],
-		ignore_permissions=is_leader,
-	)
-	status_by_parent: dict[str, list[str]] = {}
-	for row in item_status_rows:
-		if row.trang_thai_cv_xu_ly:
-			status_by_parent.setdefault(row.parent, []).append(row.trang_thai_cv_xu_ly)
-		if row.trang_thai_nguoi_phoi_hop:
-			status_by_parent.setdefault(row.parent, []).append(row.trang_thai_nguoi_phoi_hop)
-
-	status_counts = {"Hoàn thành": 0, "Đang xử lý": 0, "Chưa giao": 0, "Trả lại": 0}
+	status_counts = {"Hoàn thành": 0, "Đang xử lý": 0, "Quá hạn": 0, "Trả lại": 0}
 	doc_rows: list[dict] = []
+	today = getdate(nowdate())
 
 	for name, doc in docs.items():
-		child_statuses = status_by_parent.get(name) or []
-		status_label = _derive_status(doc.get("trang_thai_chuyen_vien_xu_ly"), child_statuses)
-		if status_label == "Chưa giao" and chair_map.get(name):
+		status_label = _block_compute_status(doc, today=today)
+		if status_label not in status_counts:
 			status_label = "Đang xử lý"
-		if status_label in status_counts:
-			status_counts[status_label] += 1
+		status_counts[status_label] += 1
 
 		# Loại hiển thị (Quyết định nếu type_doc = QĐ)
 		raw_type = doc.get("type")
