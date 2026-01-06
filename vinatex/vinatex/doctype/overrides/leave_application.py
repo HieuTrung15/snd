@@ -670,6 +670,238 @@ def get_leave_approver_level_2(employee: str):
 	return
 
 @frappe.whitelist()
+def get_leave_details_with_year(employee, date, to_date=None):
+	"""
+	Hiển thị phép năm theo năm dựa trên Leave Ledger Entry.
+	Nếu to_date <= 31/03 năm nay thì hiển thị cả năm trước (carry forward còn hiệu lực).
+	"""
+	from frappe.utils import cint, flt, getdate, nowdate
+	from hrms.hr.doctype.leave_application.leave_application import get_leave_approver
+	
+	from_dt = getdate(date)
+	to_dt = getdate(to_date) if to_date else from_dt
+	today = getdate(nowdate())
+	current_year = today.year
+	previous_year = current_year - 1
+	precision = cint(frappe.db.get_single_value("System Settings", "float_precision")) or 2
+	q1_end = getdate(f"{current_year}-03-31")
+	
+	# Xác định các năm cần hiển thị
+	years = set([from_dt.year, to_dt.year])
+	if to_dt <= q1_end:
+		years.add(previous_year)
+	years = sorted(years)
+	
+	leave_allocation = {}
+	
+	# Lấy allocation hiện tại (năm nay) có chứa carry forward
+	current_alloc = frappe.db.get_value(
+		"Leave Allocation",
+		{"employee": employee, "leave_type": "Nghỉ phép năm", "docstatus": 1,
+		 "from_date": ["<=", str(today)], "to_date": [">=", str(today)]},
+		["name", "total_leaves_allocated", "new_leaves_allocated", "unused_leaves", "from_date", "to_date"],
+		as_dict=True
+	)
+	
+	if current_alloc:
+		# Phép năm nay (new allocation)
+		new_allocated = flt(current_alloc.new_leaves_allocated or 0, precision)
+		
+		# Lấy phép năm TRƯỚC (allocation gốc của năm trước)
+		prev_alloc = frappe.db.get_value(
+			"Leave Allocation",
+			{"employee": employee, "leave_type": "Nghỉ phép năm", "docstatus": 1,
+			 "from_date": [">=", f"{previous_year}-01-01"], "to_date": ["<=", f"{previous_year}-12-31"]},
+			["total_leaves_allocated", "from_date", "to_date"], as_dict=True
+		)
+		
+		# CF = tổng phép năm trước (không phải unused_leaves vì nó đã trừ sẵn)
+		cf_allocated = flt(prev_alloc.total_leaves_allocated, precision) if prev_alloc else 0
+		
+		# Tổng đã nghỉ = TẤT CẢ phiếu nghỉ phép năm (cả năm trước + năm nay trong Q1)
+		total_taken = flt(frappe.db.sql("""
+			SELECT IFNULL(SUM(total_leave_days), 0) FROM `tabLeave Application`
+			WHERE employee=%s AND leave_type='Nghỉ phép năm' AND docstatus=1
+			AND ((from_date >= %s AND to_date <= %s) OR (from_date >= %s AND to_date <= %s))
+		""", (employee, 
+			  prev_alloc.from_date if prev_alloc else f"{previous_year}-01-01", 
+			  prev_alloc.to_date if prev_alloc else f"{previous_year}-12-31",
+			  current_alloc.from_date, q1_end))[0][0], precision)
+		
+		# Phiếu nghỉ sau Q1 chỉ trừ vào năm nay
+		after_q1_taken = flt(frappe.db.sql("""
+			SELECT IFNULL(SUM(total_leave_days), 0) FROM `tabLeave Application`
+			WHERE employee=%s AND leave_type='Nghỉ phép năm' AND docstatus=1
+			AND from_date > %s AND to_date <= %s
+		""", (employee, q1_end, current_alloc.to_date))[0][0], precision)
+		
+		# Phép chờ duyệt
+		total_pending = flt(frappe.db.sql("""
+			SELECT IFNULL(SUM(total_leave_days), 0) FROM `tabLeave Application`
+			WHERE employee=%s AND leave_type='Nghỉ phép năm' AND status='Open'
+		""", (employee,))[0][0], precision)
+		
+		# Phân bổ: ưu tiên trừ vào phép năm trước (CF) trước
+		cf_taken = min(total_taken, cf_allocated)
+		new_taken = max(0, total_taken - cf_allocated) + after_q1_taken
+		
+		cf_avail = max(0, cf_allocated - cf_taken)
+		cf_pending = min(total_pending, cf_avail)
+		new_pending = max(0, total_pending - cf_avail)
+		
+		cf_remaining = max(0, cf_avail - cf_pending)
+		new_remaining = max(0, new_allocated - new_taken - new_pending)
+		
+		# Tính expired (phép năm trước hết hạn sau 31/03)
+		cf_expired = 0
+		if today > q1_end and cf_remaining > 0:
+			cf_expired = cf_remaining
+			cf_remaining = 0
+		
+		# Hiển thị theo năm
+		if previous_year in years and cf_allocated > 0:
+			leave_allocation[f"Nghỉ phép năm ({previous_year})"] = {
+				"total_leaves": cf_allocated,
+				"expired_leaves": flt(cf_expired, precision),
+				"leaves_taken": flt(cf_taken, precision),
+				"leaves_pending_approval": flt(cf_pending, precision),
+				"remaining_leaves": flt(cf_remaining, precision),
+			}
+		
+		if current_year in years and new_allocated > 0:
+			leave_allocation[f"Nghỉ phép năm ({current_year})"] = {
+				"total_leaves": new_allocated,
+				"expired_leaves": 0,
+				"leaves_taken": flt(new_taken, precision),
+				"leaves_pending_approval": flt(new_pending, precision),
+				"remaining_leaves": flt(new_remaining, precision),
+			}
+	
+	# Nếu chỉ query năm trước (allocation cũ đã kết thúc)
+	if previous_year in years and f"Nghỉ phép năm ({previous_year})" not in leave_allocation:
+		prev_alloc = frappe.db.get_value(
+			"Leave Allocation",
+			{"employee": employee, "leave_type": "Nghỉ phép năm", "docstatus": 1,
+			 "from_date": [">=", f"{previous_year}-01-01"], "to_date": ["<=", f"{previous_year}-12-31"]},
+			["total_leaves_allocated", "from_date", "to_date"], as_dict=True
+		)
+		if prev_alloc:
+			total = flt(prev_alloc.total_leaves_allocated, precision)
+			taken = flt(frappe.db.sql("""
+				SELECT IFNULL(SUM(total_leave_days), 0) FROM `tabLeave Application`
+				WHERE employee=%s AND leave_type='Nghỉ phép năm' AND docstatus=1
+				AND from_date>=%s AND to_date<=%s
+			""", (employee, prev_alloc.from_date, prev_alloc.to_date))[0][0], precision)
+			pending = flt(frappe.db.sql("""
+				SELECT IFNULL(SUM(total_leave_days), 0) FROM `tabLeave Application`
+				WHERE employee=%s AND leave_type='Nghỉ phép năm' AND status='Open'
+				AND from_date>=%s AND to_date<=%s
+			""", (employee, prev_alloc.from_date, prev_alloc.to_date))[0][0], precision)
+			
+			leave_allocation[f"Nghỉ phép năm ({previous_year})"] = {
+				"total_leaves": total,
+				"expired_leaves": 0,
+				"leaves_taken": taken,
+				"leaves_pending_approval": pending,
+				"remaining_leaves": max(0, total - taken - pending),
+			}
+	
+	# Các loại nghỉ phép khác
+	others = frappe.get_all(
+		"Leave Allocation",
+		filters={"employee": employee, "leave_type": ["!=", "Nghỉ phép năm"], "docstatus": 1,
+				 "from_date": ["<=", str(to_dt)], "to_date": [">=", str(from_dt)]},
+		fields=["leave_type", "total_leaves_allocated", "from_date", "to_date"],
+		group_by="leave_type"
+	)
+	
+	for o in others:
+		lt, total = o.leave_type, flt(o.total_leaves_allocated, precision)
+		taken = flt(frappe.db.sql("""
+			SELECT IFNULL(SUM(total_leave_days),0) FROM `tabLeave Application`
+			WHERE employee=%s AND leave_type=%s AND docstatus=1 AND from_date>=%s AND to_date<=%s
+		""", (employee, lt, o.from_date, o.to_date))[0][0], precision)
+		pending = flt(frappe.db.sql("""
+			SELECT IFNULL(SUM(total_leave_days),0) FROM `tabLeave Application`
+			WHERE employee=%s AND leave_type=%s AND status='Open' AND from_date>=%s AND to_date<=%s
+		""", (employee, lt, o.from_date, o.to_date))[0][0], precision)
+		
+		leave_allocation[lt] = {
+			"total_leaves": total, "expired_leaves": 0, "leaves_taken": taken,
+			"leaves_pending_approval": pending, "remaining_leaves": max(0, total - taken - pending),
+		}
+	
+	lwp = frappe.get_list("Leave Type", filters={"is_lwp": 1}, pluck="name")
+	return {"leave_allocation": leave_allocation, "leave_approver": get_leave_approver(employee), "lwps": lwp}
+
+
+def _get_total_annual_leave_balance(employee, to_date):
+	"""
+	Tính tổng phép năm còn lại = phép năm trước (nếu còn hiệu lực) + phép năm nay.
+	Phép năm trước còn hiệu lực nếu to_date <= 31/03 năm nay.
+	"""
+	from frappe.utils import flt, getdate, nowdate
+	
+	to_dt = getdate(to_date)
+	today = getdate(nowdate())
+	current_year = today.year
+	previous_year = current_year - 1
+	q1_end = getdate(f"{current_year}-03-31")
+	
+	total_balance = 0
+	
+	# Lấy allocation năm nay
+	current_alloc = frappe.db.get_value(
+		"Leave Allocation",
+		{"employee": employee, "leave_type": "Nghỉ phép năm", "docstatus": 1,
+		 "from_date": ["<=", str(today)], "to_date": [">=", str(today)]},
+		["total_leaves_allocated", "new_leaves_allocated", "unused_leaves", "from_date", "to_date"],
+		as_dict=True
+	)
+	
+	if not current_alloc:
+		return 0
+	
+	# Phép năm nay
+	new_allocated = flt(current_alloc.new_leaves_allocated or 0)
+	
+	# Phép năm trước (từ allocation gốc)
+	prev_alloc = frappe.db.get_value(
+		"Leave Allocation",
+		{"employee": employee, "leave_type": "Nghỉ phép năm", "docstatus": 1,
+		 "from_date": [">=", f"{previous_year}-01-01"], "to_date": ["<=", f"{previous_year}-12-31"]},
+		["total_leaves_allocated", "from_date", "to_date"], as_dict=True
+	)
+	cf_allocated = flt(prev_alloc.total_leaves_allocated) if prev_alloc else 0
+	
+	# Tổng đã nghỉ (cả năm trước + năm nay trong Q1)
+	total_taken = flt(frappe.db.sql("""
+		SELECT IFNULL(SUM(total_leave_days), 0) FROM `tabLeave Application`
+		WHERE employee=%s AND leave_type='Nghỉ phép năm' AND docstatus=1
+		AND ((from_date >= %s AND to_date <= %s) OR (from_date >= %s AND to_date <= %s))
+	""", (employee,
+		  prev_alloc.from_date if prev_alloc else f"{previous_year}-01-01",
+		  prev_alloc.to_date if prev_alloc else f"{previous_year}-12-31",
+		  current_alloc.from_date, q1_end))[0][0])
+	
+	# Phép sau Q1 chỉ trừ năm nay
+	after_q1_taken = flt(frappe.db.sql("""
+		SELECT IFNULL(SUM(total_leave_days), 0) FROM `tabLeave Application`
+		WHERE employee=%s AND leave_type='Nghỉ phép năm' AND docstatus=1
+		AND from_date > %s AND to_date <= %s
+	""", (employee, q1_end, current_alloc.to_date))[0][0])
+	
+	# Phân bổ: CF trước, rồi mới đến năm nay
+	cf_taken = min(total_taken, cf_allocated)
+	new_taken = max(0, total_taken - cf_allocated) + after_q1_taken
+	
+	cf_remaining = max(0, cf_allocated - cf_taken) if to_dt <= q1_end else 0
+	new_remaining = max(0, new_allocated - new_taken)
+	
+	return cf_remaining + new_remaining
+
+
+@frappe.whitelist()
 def get_leave_type(
 	from_date=None,
 	to_date=None,
@@ -705,24 +937,22 @@ def get_leave_type(
 	)
 
 	if not is_lwp(leave_type):
-		leave_balance_data = get_leave_balance_on(
-			employee,
-			leave_type,
-			from_date,
-			to_date,
-			consider_all_leaves_in_the_allocation_period=True,
-			for_consumption=True,
-		)
-		leave_balance = flt(max(0, leave_balance_data.get("leave_balance") or 0))
+		# Với Nghỉ phép năm: tính tổng phép cả năm trước (nếu còn hiệu lực) + năm nay
+		if leave_type == "Nghỉ phép năm":
+			leave_balance = _get_total_annual_leave_balance(employee, to_date)
+		else:
+			leave_balance_data = get_leave_balance_on(
+				employee, leave_type, from_date, to_date,
+				consider_all_leaves_in_the_allocation_period=True, for_consumption=True,
+			)
+			leave_balance = flt(max(0, leave_balance_data.get("leave_balance") or 0))
+		
 		extra_number = max(total_leave_days - leave_balance, 0)
-		leave_balance_for_consumption = leave_balance_data.get(
-			"leave_balance_for_consumption"
-		)
 
 		if (
 			status != "Rejected"
 			and leave_type == "Nghỉ phép năm"
-			and (not leave_balance_for_consumption or leave_balance_for_consumption < total_leave_days)
+			and extra_number > 0  # Chỉ split khi nghỉ vượt quá tổng phép
 		):
 			# np_to_date: last date covered by paid annual leave
 			np_to_date = from_date + relativedelta(days=math.ceil(leave_balance - 1))
