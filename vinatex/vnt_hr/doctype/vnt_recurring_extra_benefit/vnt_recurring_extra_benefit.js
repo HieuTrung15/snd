@@ -5,6 +5,9 @@ const VNT_RECURRING_TAX_RATE = 0.1;
 
 frappe.ui.form.on("VNT Recurring Extra Benefit", {
 	refresh(frm) {
+		// Không yêu cầu hủy VNT Salary Slip khi hủy phiếu này
+		frm.ignore_doctypes_on_cancel_all = ["VNT Salary Slip"];
+
 		if (!frm.doc.employee) {
 			frappe.db
 				.get_value("Employee", { user_id: frappe.session.user }, "name")

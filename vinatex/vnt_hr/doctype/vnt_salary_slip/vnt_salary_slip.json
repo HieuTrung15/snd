@@ -6,13 +6,14 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
- "section_break_izlu",
- "naming_series",
- "employee",
- "company",
- "column_break_lh3s",
- "month",
- "year",
+  "rendered_html",
+  "section_break_izlu",
+  "naming_series",
+  "employee",
+  "company",
+  "column_break_lh3s",
+  "month",
+  "year",
   "section_break_attj",
   "so_ngay_cong",
   "so_ngay_nghi_tinh_phep",
@@ -42,13 +43,13 @@
   "xh_yt_tn",
   "cong_doan",
   "column_break_zajn",
- "thue_tncn",
- "thue_tncn_nam_truoc",
- "thuc_linh",
- "tong_thu_nhap_encrypted",
- "thuc_linh_encrypted",
- "section_break_nyeq",
- "items",
+  "thue_tncn",
+  "thue_tncn_nam_truoc",
+  "thuc_linh",
+  "tong_thu_nhap_encrypted",
+  "thuc_linh_encrypted",
+  "section_break_nyeq",
+  "items",
   "section_break_aisw",
   "tong_phu_cap",
   "column_break_ejjw",
@@ -56,7 +57,6 @@
   "column_break_kxam",
   "tong_thuc_linh_phu_cap",
   "section_break_vpkl",
-  "rendered_html",
   "html",
   "amended_from"
  ],
@@ -68,6 +68,7 @@
   {
    "fieldname": "employee",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "M\u00e3 nh\u00e2n s\u1ef1",
    "options": "Employee"
   },
@@ -87,22 +88,23 @@
   {
    "fieldname": "month",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Th\u00e1ng l\u01b0\u01a1ng"
   },
   {
    "fieldname": "year",
    "fieldtype": "Int",
+   "hidden": 1,
    "label": "N\u0103m"
   },
   {
    "fieldname": "section_break_vpkl",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "hidden": 1
   },
   {
    "fieldname": "rendered_html",
    "fieldtype": "Long Text",
-   "hidden": 1,
-   "label": "Rendered HTML",
    "read_only": 1
   },
   {
@@ -113,12 +115,14 @@
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Naming Series",
    "options": "PL.-.MM..YY.-.#####"
   },
   {
    "fieldname": "section_break_attj",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "TH\u00d4NG TIN CHUNG"
   },
   {
@@ -193,6 +197,7 @@
   {
    "fieldname": "section_break_vadx",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "T\u1ed4NG THU NH\u1eacP"
   },
   {
@@ -262,6 +267,7 @@
   {
    "fieldname": "c\u00e1c_kho\u1ea3n_tr\u1eeb_v\u00e0o_l\u01b0\u01a1ng_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "C\u00c1C KHO\u1ea2N TR\u1eea V\u00c0O L\u01af\u01a0NG"
   },
   {
@@ -327,6 +333,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Danh s\u00e1ch ph\u1ee5 c\u1ea5p",
@@ -334,7 +341,8 @@
   },
   {
    "fieldname": "section_break_aisw",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "hidden": 1
   },
   {
    "depends_on": "eval: doc.items != \"\"",
@@ -373,7 +381,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-24 15:41:01.788447",
+ "modified": "2026-01-06 14:26:13.960165",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Salary Slip",
@@ -381,6 +389,7 @@
  "owner": "Administrator",
  "permissions": [
   {
+   "cancel": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -390,6 +399,7 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],

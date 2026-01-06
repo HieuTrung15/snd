@@ -19,6 +19,7 @@ class VNTRecurringExtraBenefit(Document):
 		self._sync_salary_slip_items(add_rows=True)
 
 	def on_cancel(self):
+		self.ignore_linked_doctypes = ("VNT Salary Slip",)
 		self._sync_salary_slip_items(add_rows=False)
 
 	@frappe.whitelist()
@@ -141,6 +142,12 @@ class VNTRecurringExtraBenefit(Document):
 				self._update_parent_item_links(row, slip_name, child_row.name)
 
 	def _remove_allowances_from_slips(self, employees: List[str], month: str, year: int):
+		if self._remove_allowances_by_reference():
+			if self._link_fields_available():
+				for row in (self.items or []):
+					self._clear_parent_item_links(row)
+			return
+
 		rows_with_links = []
 		if self._link_fields_available():
 			rows_with_links = [
@@ -160,6 +167,48 @@ class VNTRecurringExtraBenefit(Document):
 		)
 		if unlinked_employees:
 			self._remove_allowances_by_search(unlinked_employees, month, year)
+
+	def _remove_allowances_by_reference(self) -> bool:
+		target_rows = frappe.get_all(
+			"VNT Salary Slip Item",
+			filters={"recurring_extra_benefit": self.name},
+			fields=["name", "parent"],
+			limit_page_length=0,
+		)
+		if not target_rows:
+			return False
+
+		rows_by_slip: Dict[str, List[str]] = {}
+		for row in target_rows:
+			parent = row.get("parent")
+			item_name = row.get("name")
+			if not parent or not item_name:
+				continue
+			rows_by_slip.setdefault(parent, []).append(item_name)
+
+		if not rows_by_slip:
+			return False
+
+		for slip_name, item_names in rows_by_slip.items():
+			try:
+				slip_doc = frappe.get_doc("VNT Salary Slip", slip_name)
+			except frappe.DoesNotExistError:
+				continue
+
+			slip_doc.flags.ignore_permissions = True
+			slip_doc.flags.ignore_validate_update_after_submit = True
+
+			target_names = set(item_names)
+			original_items = slip_doc.items or []
+			filtered_items = [child for child in original_items if child.name not in target_names]
+
+			if len(filtered_items) == len(original_items):
+				continue
+
+			slip_doc.set("items", filtered_items)
+			slip_doc.save(ignore_permissions=True)
+
+		return True
 
 	def _remove_allowances_using_links(self, rows: List[Document]):
 		if not rows:
