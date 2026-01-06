@@ -333,6 +333,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Danh s\u00e1ch ph\u1ee5 c\u1ea5p",
@@ -380,7 +381,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-06 14:05:19.630339",
+ "modified": "2026-01-06 14:26:13.960165",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Salary Slip",
@@ -388,6 +389,7 @@
  "owner": "Administrator",
  "permissions": [
   {
+   "cancel": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -397,6 +399,7 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],
