@@ -60,9 +60,9 @@ class VNTMonthlyPayroll(Document):
             slip_fields = self._build_salary_slip_fields(item)
             for fieldname, value in slip_fields.items():
                 slip_doc.set(fieldname, value)
-            # rendered_html = self._render_salary_slip_html(item)
-            # slip_doc.rendered_html = rendered_html
-            # slip_doc.html = rendered_html
+            rendered_html = self._render_salary_slip_html(item)
+            slip_doc.rendered_html = rendered_html
+            slip_doc.html = rendered_html
 
             slip_doc.set_new_name(self._build_salary_slip_name(employee))
             slip_doc.insert(ignore_permissions=True)
