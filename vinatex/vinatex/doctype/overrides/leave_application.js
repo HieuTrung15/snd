@@ -11,6 +11,77 @@ frappe.ui.form.on("Leave Application", {
 			frm.set_value("status", "Approved");
 		}
 	},
+	
+	// Override make_dashboard để hiển thị phép năm trước và năm nay riêng biệt
+	make_dashboard(frm) {
+		let leave_details = {};
+		let lwps = [];
+
+		if (frm.doc.employee) {
+			frappe.call({
+				method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_details_with_year",
+				async: false,
+				args: {
+					employee: frm.doc.employee,
+					date: frm.doc.from_date || frm.doc.posting_date,
+					to_date: frm.doc.to_date || frm.doc.from_date || frm.doc.posting_date,
+				},
+				callback: function (r) {
+					if (!r.exc && r.message) {
+						if (r.message["leave_allocation"]) {
+							leave_details = r.message["leave_allocation"];
+						}
+						if (r.message["lwps"]) {
+							lwps = r.message["lwps"];
+						}
+					}
+				},
+				error: function(r) {
+					console.error("Error fetching leave details:", r);
+				}
+			});
+
+			$("div").remove(".form-dashboard-section.custom");
+
+			frm.dashboard.add_section(
+				frappe.render_template("leave_application_dashboard", {
+					data: leave_details,
+				}),
+				__("Allocated Leaves"),
+			);
+			frm.dashboard.show();
+
+			// Lấy danh sách leave types được phép (bao gồm cả tên gốc và tên có năm)
+			let allowed_leave_types = Object.keys(leave_details || {});
+			// Thêm tên gốc "Nghỉ phép năm" nếu có phép năm trước hoặc năm nay
+			const has_annual_leave = allowed_leave_types.some(t => t.startsWith("Nghỉ phép năm"));
+			if (has_annual_leave && !allowed_leave_types.includes("Nghỉ phép năm")) {
+				allowed_leave_types.push("Nghỉ phép năm");
+			}
+			// lwps should be allowed for selection as they don't have any allocation
+			allowed_leave_types = allowed_leave_types.concat(lwps || []);
+
+			frm.set_query("leave_type", function () {
+				return {
+					filters: [["leave_type_name", "in", allowed_leave_types]],
+				};
+			});
+		}
+	},
+	
+	// Cập nhật dashboard khi thay đổi from_date
+	from_date(frm) {
+		if (frm.doc.employee) {
+			frm.trigger("make_dashboard");
+		}
+	},
+	
+	// Cập nhật dashboard khi thay đổi to_date
+	to_date(frm) {
+		if (frm.doc.employee) {
+			frm.trigger("make_dashboard");
+		}
+	},
 
 	after_save (frm) {
 		if (frm.doc.workflow_state === "Mới tạo") {
@@ -34,8 +105,11 @@ frappe.ui.form.on("Leave Application", {
 			frm.set_value("to_date", frm.doc.from_date);
 		}
 	},
-	// lấy ra người duyệt cấp 2
+	// lấy ra người duyệt cấp 2 và cập nhật dashboard
 	employee (frm) {
+		// Cập nhật dashboard khi thay đổi employee
+		frm.trigger("make_dashboard");
+		
 		if (frm.doc.total_leave_days >= 3) {
 			frappe.call({
 			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver_level_2",
@@ -130,24 +204,10 @@ frappe.ui.form.on("Leave Application", {
 		frm.remove_custom_button(__('View Ledger'));
 		}, 0);
 
-		// Ẩn luôn trong menu More Actions nếu có
-		// frm.page.remove_menu_item(__('View Ledger'));
-		// if (frm.doc.docstatus === 1) {
-		// 	frm.add_custom_button(__("Cancel"), function () {
-		// 		let dialog = new frappe.ui.Dialog({
-		// 			title: __("Bạn chắc chắn muốn hủy?"),
-		// 			primary_action_label: __("Xác nhận"),
-		// 			primary_action() {
-		// 				frappe.call({
-		// 					method: "cancel",
-		// 					doc: cur_frm.doc,
-		// 				});
-		// 				dialog.hide();
-		// 			},
-		// 		});
-		// 		dialog.show();
-		// 	}).removeClass().addClass("btn btn-warning");
-		// }
+		// Hiển thị dashboard phép năm theo năm (override)
+		if (frm.doc.docstatus === 0) {
+			frm.trigger("make_dashboard");
+		}
 
 		// lọc leave_type theo custom_leave_group ngay khi mở form
     	set_leave_type_query(frm);
