@@ -128,7 +128,8 @@
   {
    "fieldname": "approver_name",
    "fieldtype": "Data",
-   "label": "T\u00ean ng\u01b0\u1eddi ph\u00ea duy\u1ec7t"
+   "label": "T\u00ean ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_w3lf",
@@ -145,7 +146,8 @@
   {
    "fieldname": "approver_lv2_name",
    "fieldtype": "Data",
-   "label": "L\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n"
+   "label": "L\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_kcvx",
@@ -162,7 +164,8 @@
   {
    "fieldname": "follower_name",
    "fieldtype": "Data",
-   "label": "Ng\u01b0\u1eddi theo d\u00f5i"
+   "label": "Ng\u01b0\u1eddi theo d\u00f5i",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_z6x6",
@@ -231,7 +234,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-16 15:30:11.862321",
+ "modified": "2026-01-07 14:55:09.911366",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT External Products",
