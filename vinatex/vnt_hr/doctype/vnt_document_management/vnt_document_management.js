@@ -1173,26 +1173,16 @@ frappe.ui.form.on("VNT Document Management", {
       addId(r.cv_xu_ly);
     });
 
-    const missing = [...ids].filter((id) => !nameCache[id]);
+    const missing = [...ids].filter((id) => id && !nameCache[id]);
     if (missing.length && !frm._empNameLoading) {
       frm._empNameLoading = true;
       frappe.call({
-        method: "frappe.client.get_list",
-        args: {
-          doctype: "Employee",
-          filters: [["name", "in", missing]],
-          fields: ["name", "employee_name"],
-          limit_page_length: missing.length
-        },
+        method: "vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.get_employee_display_names",
+        args: { employee_ids: missing },
         callback: (r) => {
-          const res = r?.message || [];
-          const found = new Set();
-          res.forEach((emp) => {
-            nameCache[emp.name] = emp.employee_name;
-            found.add(emp.name);
-          });
+          const mapping = r?.message || {};
           missing.forEach((id) => {
-            if (!found.has(id)) nameCache[id] = id;
+            nameCache[id] = mapping[id] || id;
           });
           frm._empNameLoading = false;
           frm._empNameCache = nameCache;

@@ -834,6 +834,43 @@ def get_level1_approvers():
 
 
 @frappe.whitelist()
+def get_employee_display_names(employee_ids):
+	ids = employee_ids
+	if isinstance(employee_ids, str):
+		ids = frappe.parse_json(employee_ids)
+	if not ids:
+		return {}
+	if not isinstance(ids, (list, tuple, set)):
+		ids = [ids]
+
+	cleaned = []
+	seen = set()
+	for emp_id in ids:
+		if not emp_id:
+			continue
+		emp_id = str(emp_id).strip()
+		if not emp_id or emp_id in seen:
+			continue
+		seen.add(emp_id)
+		cleaned.append(emp_id)
+
+	if not cleaned:
+		return {}
+
+	rows = frappe.get_all(
+		"Employee",
+		filters={"name": ["in", cleaned]},
+		fields=["name", "employee_name"],
+		ignore_permissions=True,
+	)
+
+	mapping = {row.name: (row.employee_name or row.name) for row in rows}
+	for emp_id in cleaned:
+		mapping.setdefault(emp_id, emp_id)
+	return mapping
+
+
+@frappe.whitelist()
 def trigger_handler_transfer(docname: str):
 	"""
 	Nút handler_status (Button) - thực hiện logic 'Chuyển văn bản' như trạng thái cũ.
