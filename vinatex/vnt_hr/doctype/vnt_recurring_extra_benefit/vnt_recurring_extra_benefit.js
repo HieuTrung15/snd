@@ -24,10 +24,17 @@ frappe.ui.form.on("VNT Recurring Extra Benefit", {
 		}
 
 		vntRecurringSyncMonthToRows(frm);
+		vntRecurringUpdateTotals(frm);
 	},
 
 	month(frm) {
 		vntRecurringSyncMonthToRows(frm);
+	},
+	items_add(frm) {
+		vntRecurringUpdateTotals(frm);
+	},
+	items_remove(frm) {
+		vntRecurringUpdateTotals(frm);
 	},
 
 	get_emp_list(frm) {
@@ -59,6 +66,7 @@ frappe.ui.form.on("VNT Recurring Extra Benefit", {
 				});
 				frm.refresh_field("items");
 				vntRecurringSyncMonthToRows(frm);
+				vntRecurringUpdateTotals(frm);
 
 				if (!rows.length) {
 					frappe.msgprint(
@@ -86,11 +94,39 @@ frappe.ui.form.on("VNT Recurring Extra Benefit Item", {
 	so_thang(frm, cdt, cdn) {
 		vntRecurringRecalculateRow(cdt, cdn);
 	},
+	tong(frm) {
+		vntRecurringUpdateTotals(frm);
+	},
+	thue_tncn(frm) {
+		vntRecurringUpdateTotals(frm);
+	},
+	thuc_linh(frm) {
+		vntRecurringUpdateTotals(frm);
+	},
 });
 
 function vntRecurringNumber(value) {
 	const num = parseFloat(value);
 	return Number.isFinite(num) ? num : 0;
+}
+
+function vntRecurringUpdateTotals(frm) {
+	if (!frm || !frm.doc) {
+		return;
+	}
+	let totalAllowance = 0;
+	let totalTax = 0;
+	let totalNet = 0;
+
+	(frm.doc.items || []).forEach((row) => {
+		totalAllowance += vntRecurringNumber(row.tong);
+		totalTax += vntRecurringNumber(row.thue_tncn);
+		totalNet += vntRecurringNumber(row.thuc_linh);
+	});
+
+	frm.set_value("tong_pc", totalAllowance || 0);
+	frm.set_value("tong_thue_tncn", totalTax || 0);
+	frm.set_value("tong_thuc_linh", totalNet || 0);
 }
 
 function vntRecurringSyncMonthToRows(frm) {
@@ -118,6 +154,10 @@ function vntRecurringRecalculateRow(cdt, cdn) {
 	frappe.model.set_value(cdt, cdn, "tong", total || 0);
 	frappe.model.set_value(cdt, cdn, "thue_tncn", tax || 0);
 	frappe.model.set_value(cdt, cdn, "thuc_linh", net || 0);
+
+	if (cur_frm) {
+		vntRecurringUpdateTotals(cur_frm);
+	}
 }
 
 function vntRecurringCountMonths(value) {
