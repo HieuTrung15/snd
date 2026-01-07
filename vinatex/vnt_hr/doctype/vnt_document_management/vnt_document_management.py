@@ -1744,6 +1744,10 @@ def get_document_block_data_v2(
 	want_start = (page - 1) * page_size
 	want_end = want_start + page_size + 1  # +1 để biết has_next
 
+	order_by = "document_date desc"
+	if type_doc == "Công văn đến":
+		order_by = "YEAR(document_date) desc, name desc"
+
 	matched = []
 	skipped = 0
 	db_offset = 0
@@ -1756,7 +1760,7 @@ def get_document_block_data_v2(
 			fields=fields,
 			limit_start=db_offset,
 			limit_page_length=batch,
-			order_by="document_date desc",
+			order_by=order_by,
 			ignore_permissions=False,
 		) or []
 
