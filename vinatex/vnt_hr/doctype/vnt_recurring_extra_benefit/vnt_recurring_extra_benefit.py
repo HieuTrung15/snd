@@ -15,6 +15,9 @@ from frappe.utils import cint, flt
 class VNTRecurringExtraBenefit(Document):
 	_link_fields_present: bool | None = None
 
+	def validate(self):
+		self._set_totals_from_items()
+
 	def on_submit(self):
 		self._sync_salary_slip_items(add_rows=True)
 
@@ -51,6 +54,19 @@ class VNTRecurringExtraBenefit(Document):
 			self._insert_allowances_into_slips(slip_map)
 		else:
 			self._remove_allowances_from_slips(employees, month, year)
+
+	def _set_totals_from_items(self):
+		total_allowance = 0.0
+		total_tax = 0.0
+		total_net = 0.0
+		for row in self.items or []:
+			total_allowance += flt(row.tong)
+			total_tax += flt(row.thue_tncn)
+			total_net += flt(row.thuc_linh)
+
+		self.tong_pc = total_allowance
+		self.tong_thue_tncn = total_tax
+		self.tong_thuc_linh = total_net
 
 	def _get_target_month(self) -> str:
 		raw_month = (self.month or "").strip()
