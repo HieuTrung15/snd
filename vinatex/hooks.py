@@ -75,6 +75,7 @@ override_doctype_class = {
     "Employee": "vinatex.vinatex.doctype.overrides.employee.VntEmployee",
     "User": "vinatex.vinatex.doctype.overrides.user.CustomUser",
     "Holiday List": "vinatex.vinatex.doctype.overrides.holiday_list.VntHolidayList",
+    "Item": "vinatex.vinatex.doctype.overrides.item.VntItem",
 }
 
 # include js in doctype views
