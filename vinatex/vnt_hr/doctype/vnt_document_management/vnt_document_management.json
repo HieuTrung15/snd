@@ -33,6 +33,9 @@
   "section_break_mugf",
   "attach",
   "html",
+  "section_break_tujj",
+  "l\u00e3nh_\u0111\u1ea1o_c\u1ea5p_cao_column",
+  "item2",
   "section_break_fsrf",
   "items",
   "th\u00f4ng_tin_ng\u01b0\u1eddi_x\u1eed_l\u00fd_section",
@@ -348,7 +351,8 @@
   },
   {
    "fieldname": "section_break_fsrf",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "L\u00e3nh \u0111\u1ea1o c\u1ea5p trung"
   },
   {
    "default": "0",
@@ -430,12 +434,30 @@
    "label": "N\u01a1i nh\u1eadn",
    "mandatory_depends_on": "eval: doc.type == \"Quy\u1ebft \u0111\u1ecbnh\" && (doc.phan_loai == \"N\u1ed9i b\u1ed9\" || doc.phan_loai == \"C\u1ea3 2\")",
    "options": "VNT Department Group Member"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_tujj",
+   "fieldtype": "Section Break",
+   "label": "L\u00e3nh \u0111\u1ea1o c\u1ea5p cao",
+   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\""
+  },
+  {
+   "fieldname": "l\u00e3nh_\u0111\u1ea1o_c\u1ea5p_cao_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "item2",
+   "fieldtype": "Table",
+   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
+   "no_copy": 1,
+   "options": "VNT Document Management Item2"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-31 16:05:46.020327",
+ "modified": "2026-01-08 14:46:39.032706",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",

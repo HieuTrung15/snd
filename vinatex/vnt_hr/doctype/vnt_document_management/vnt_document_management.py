@@ -43,7 +43,9 @@ class VNTDocumentManagement(Document):
 		if not handler_status:
 			return
 
-		rows = self.get("items") or []
+		rows = []
+		rows.extend(self.get("items") or [])
+		rows.extend(self.get("item2") or [])
 		picked = [row for row in rows if (row.chu_tri or row.phoi_hop or row.nhan_de_biet)]
 		if not picked:
 			frappe.throw("Vui lòng chọn ít nhất 1 dòng Chủ trì/Phối hợp/Nhận để biết trước khi cập nhật Trạng thái Lãnh đạo Tập Đoàn.")
@@ -234,7 +236,7 @@ class VNTDocumentManagement(Document):
 		if not user_id:
 			return
 
-		message = f"Bạn được giao xử lý CV đến số {self.name}"
+		message = f"Bạn được giao xử lý CV đến số {self.reference_number}"
 
 		frappe.get_doc(
 			{
@@ -433,6 +435,7 @@ class VNTDocumentManagement(Document):
 	def _notify_child_assignees(self):
 		"""Gửi noti/ToDo/Rocket.Chat cho các nhân sự ở bảng người xử lý chính."""
 		items = self.get("items") or []
+		items.extend(self.get("item2") or [])
 		if not items:
 			return
 
@@ -831,6 +834,52 @@ def get_level1_approvers():
 			}
 		)
 	return result
+
+
+def _resolve_company_for_leadership(company: str | None = None) -> str | None:
+	if company:
+		return company
+
+	default_company = frappe.defaults.get_user_default("Company")
+	if default_company:
+		return default_company
+
+	return frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "company")
+
+
+def _map_company_leadership_rows(rows: list | None) -> list[dict]:
+	result = []
+	for row in rows or []:
+		result.append(
+			{
+				"employee": row.employee,
+				"department": row.department,
+				"deadline": row.deadline,
+				"chu_tri": row.chu_tri,
+				"phoi_hop": row.phoi_hop,
+				"nhan_de_biet": row.nhan_de_biet,
+			}
+		)
+	return result
+
+
+@frappe.whitelist()
+def get_company_leadership(company: str | None = None):
+	"""Return leadership rows from Company custom tables for incoming documents."""
+	resolved_company = _resolve_company_for_leadership(company)
+	if not resolved_company:
+		return {"cap_cao": [], "cap_trung": []}
+
+	try:
+		company_doc = frappe.get_doc("Company", resolved_company)
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "VNT Document Management - Company leadership")
+		return {"cap_cao": [], "cap_trung": []}
+
+	return {
+		"cap_cao": _map_company_leadership_rows(company_doc.get("custom_ld_cap_cao")),
+		"cap_trung": _map_company_leadership_rows(company_doc.get("custom_ld_cap_trung")),
+	}
 
 
 @frappe.whitelist()
