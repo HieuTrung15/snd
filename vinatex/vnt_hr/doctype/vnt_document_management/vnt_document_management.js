@@ -1322,10 +1322,29 @@ frappe.ui.form.on("VNT Document Management", {
       if ((statusVal || "").trim() === "Hoàn thành") return false;
       return deadline < today;
     };
+    const parse_datetime_value = (val) => {
+      if (!val) return null;
+      if (val instanceof Date) return val;
+      try {
+        return frappe.datetime.str_to_obj(val);
+      } catch (err) {
+        return null;
+      }
+    };
+    const is_late_completion = (deadline, completedAt) => {
+      const deadlineVal = parse_datetime_value(deadline);
+      const completedVal = parse_datetime_value(completedAt);
+      if (!deadlineVal || !completedVal) return false;
+      return completedVal > deadlineVal;
+    };
 
     const colorForNode = (node) => {
       // Văn thư luôn xanh hoàn thành
       if (node.key === "employee") return "#22c55e";
+
+      if (node.deadlineAt && node.completedAt && is_late_completion(node.deadlineAt, node.completedAt)) {
+        return "#e85b5b";
+      }
 
       if (node.statusKey) {
         const currentStatus = (frm.doc[node.statusKey] || "").trim();
@@ -1355,6 +1374,7 @@ frappe.ui.form.on("VNT Document Management", {
         const completedAt = typeof opts.completedAt === "function"
           ? opts.completedAt(row, statusValue)
           : (is_done(statusValue) ? row.modified : "");
+        const deadlineAt = typeof opts.deadlineAt === "function" ? opts.deadlineAt(row) : opts.deadlineAt;
         const extra = typeof opts.extraForRow === "function" ? opts.extraForRow(row, idx) : null;
         roleNodes.push({
           key: `${roleKey}-${idx}`,
@@ -1365,6 +1385,7 @@ frappe.ui.form.on("VNT Document Management", {
           showStatus,
           receivedAt,
           completedAt,
+          deadlineAt,
           hideTimes: extra?.hideTimes,
           extraLines: extra?.extraLines || null,
           x,
@@ -1394,6 +1415,7 @@ frappe.ui.form.on("VNT Document Management", {
         },
         statusValue: () => frm.doc.chairperson_status,
         completedAt: (_row, statusValue) => (is_done(statusValue) ? frm.doc.modified : ""),
+        deadlineAt: () => frm.doc.deadline_chu_tri2 || "",
         showStatus: true,
         statusText: (row) => {
           const overdue = isOverdue(frm.doc.deadline_chu_tri2, frm.doc.chairperson_status);
@@ -1419,6 +1441,7 @@ frappe.ui.form.on("VNT Document Management", {
         },
         statusValue: (row) => row.trang_thai_nguoi_phoi_hop,
         completedAt: (row, statusValue) => (is_done(statusValue) ? row.modified : ""),
+        deadlineAt: (row) => row.deadline1 || "",
         showStatus: true,
         statusText: (row) => {
           const overdue = isOverdue(row.deadline1, row.trang_thai_nguoi_phoi_hop || row.trang_thai_cv_xu_ly);
@@ -1446,7 +1469,7 @@ frappe.ui.form.on("VNT Document Management", {
     // Giảm khoảng trống đáy để không dư quá nhiều
     baseSize.height = Math.max(420, lastStackEnd + 60);
 
-    const nodeSize = { width: 200, height: 96 };
+    const nodeSize = { width: 200, height: 112 };
     const docReceivedAt = frm.doc.received_date || frm.doc.creation || "";
     const handlerCompletedAt = is_handler_transferred(frm.doc.handler_status) || is_checked(frm.doc.is_handler_status)
       ? frm.doc.modified
@@ -1462,7 +1485,7 @@ frappe.ui.form.on("VNT Document Management", {
         statusKey: "employee_status",
         receivedAt: docReceivedAt,
         completedAt: handlerCompletedAt,
-        completedLabel: "Giao",
+        completedLabel: "Chuyển",
         x: 18,
         y: 108
       },
@@ -1486,17 +1509,19 @@ frappe.ui.form.on("VNT Document Management", {
     if (hasPrimarySpecialist) {
       const primaryOverdue = isOverdue(frm.doc.deadline_cv_xu_ly, frm.doc.trang_thai_chuyen_vien_xu_ly);
       const primaryCompletedAt = is_done(frm.doc.trang_thai_chuyen_vien_xu_ly) ? frm.doc.modified : "";
+      const primaryLate = is_late_completion(frm.doc.deadline_cv_xu_ly, primaryCompletedAt);
       nodes.push({
         key: "specialist_primary",
         label: "Chuyên viên xử lý",
         value: displayEmployee(frm.doc.cv_xu_ly),
-        stroke: primaryOverdue ? "#e85b5b" : statusColorValue(frm.doc.trang_thai_chuyen_vien_xu_ly || ""),
+        stroke: (primaryOverdue || primaryLate) ? "#e85b5b" : statusColorValue(frm.doc.trang_thai_chuyen_vien_xu_ly || ""),
         fill: primaryOverdue
           ? fillByStroke("#e85b5b")
           : fillByStroke(statusColorValue(frm.doc.trang_thai_chuyen_vien_xu_ly || "")),
         statusKey: "trang_thai_chuyen_vien_xu_ly",
         receivedAt: frm.doc.modified,
         completedAt: primaryCompletedAt,
+        deadlineAt: frm.doc.deadline_cv_xu_ly || "",
         x: specialistX,
         y: chairStart + ((chairCount - 1) * stackSpacing) / 2
       });
@@ -1509,17 +1534,19 @@ frappe.ui.form.on("VNT Document Management", {
       const overdue = isOverdue(row.deadline2, row.trang_thai_cv_xu_ly);
       const stroke = overdue ? "#e85b5b" : statusColorValue(row.trang_thai_cv_xu_ly);
       const completedAt = is_done(row.trang_thai_cv_xu_ly) ? row.modified : "";
+      const late = is_late_completion(row.deadline2, completedAt);
       nodes.push({
         key: specKey,
         label: "Chuyên viên xử lý",
         value: displayEmployee(row.cv_xu_ly),
-        stroke,
+        stroke: late ? "#e85b5b" : stroke,
         fill: fillByStroke(stroke),
         statusKey: null,
         statusLabel: overdue ? "Quá hạn" : row.trang_thai_cv_xu_ly || "",
         showStatus: true,
         receivedAt: row.modified || row.creation,
         completedAt,
+        deadlineAt: row.deadline2 || "",
         x: specialistX,
         y: baseY
       });
@@ -1583,10 +1610,13 @@ frappe.ui.form.on("VNT Document Management", {
 
       if (node.key.startsWith("chairperson")) {
         if (nodeByKey["specialist_primary"]) {
+          const primaryNode = nodeByKey["specialist_primary"];
+          const primaryLate = is_late_completion(primaryNode.deadlineAt, primaryNode.completedAt);
           connections.push({
             from: node.key,
             to: "specialist_primary",
-            statusKey: "trang_thai_chuyen_vien_xu_ly",
+            statusKey: primaryLate ? null : "trang_thai_chuyen_vien_xu_ly",
+            color: primaryLate ? "#e85b5b" : undefined,
             dashed: false
           });
         }
@@ -1596,11 +1626,14 @@ frappe.ui.form.on("VNT Document Management", {
         const specKey = `specialist_collab-${idx}`;
         const targetExists = nodes.find((n) => n.key === specKey);
         if (targetExists) {
+          const row = rowsCollab[idx] || {};
+          const completedAt = is_done(row.trang_thai_cv_xu_ly) ? row.modified : "";
+          const late = is_late_completion(row.deadline2, completedAt);
           connections.push({
             from: node.key,
             to: specKey,
             statusKey: null,
-            color: statusColorValue(rowsCollab[idx]?.trang_thai_cv_xu_ly),
+            color: late ? "#e85b5b" : statusColorValue(rowsCollab[idx]?.trang_thai_cv_xu_ly),
             dashed: false
           });
         }
@@ -1640,11 +1673,17 @@ frappe.ui.form.on("VNT Document Management", {
       const receivedText = `Nhận: ${formatTimeValue(node.receivedAt) || "-"}`;
       const completedLabel = node.completedLabel || "Hoàn thành";
       const completedText = `${completedLabel}: ${formatTimeValue(node.completedAt) || "-"}`;
+      const showDeadline = node.deadlineAt !== undefined;
+      const deadlineText = showDeadline
+        ? `Deadline: ${formatTimeValue(node.deadlineAt) || "-"}`
+        : "";
+      const completedY = showDeadline ? node.y + 94 : node.y + 78;
       const timeLines = node.hideTimes
         ? ""
         : `
           <text x="${node.x + 12}" y="${node.y + 62}" class="vnt-node-time">${receivedText}</text>
-          <text x="${node.x + 12}" y="${node.y + 78}" class="vnt-node-time">${completedText}</text>
+          ${showDeadline ? `<text x="${node.x + 12}" y="${node.y + 78}" class="vnt-node-time">${deadlineText}</text>` : ""}
+          <text x="${node.x + 12}" y="${completedY}" class="vnt-node-time">${completedText}</text>
         `;
       const extraLines = Array.isArray(node.extraLines) && node.extraLines.length && node.hideTimes
         ? node.extraLines.map((line, idx) => {
