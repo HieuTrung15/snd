@@ -107,8 +107,15 @@ const row_requires_deadline = (row) => {
   return is_checked(row.chu_tri) || is_checked(row.phoi_hop);
 };
 
+const get_role_rows = (frm) => {
+  const rows = [];
+  if (Array.isArray(frm.doc.items)) rows.push(...frm.doc.items);
+  if (Array.isArray(frm.doc.item2)) rows.push(...frm.doc.item2);
+  return rows;
+};
+
 const has_any_role_row = (frm) => {
-  const rows = Array.isArray(frm.doc.items) ? frm.doc.items : [];
+  const rows = get_role_rows(frm);
   return rows.some((r) => row_has_role(r));
 };
 
@@ -147,7 +154,7 @@ const all_specialists_done = (frm) => {
 };
 
 const validate_handler_status_preconditions = (frm) => {
-  const rows = Array.isArray(frm.doc.items) ? frm.doc.items : [];
+  const rows = get_role_rows(frm);
   const picked = rows.filter((r) => row_has_role(r));
 
   if (!picked.length) {
@@ -247,6 +254,13 @@ const set_handler_editable = (frm, enabled) => {
     grid.cannot_delete_rows = !enabled;
     grid.refresh();
   }
+  const grid2 = frm.fields_dict.item2?.grid;
+  frm.set_df_property("item2", "read_only", enabled ? 0 : 1);
+  if (grid2) {
+    grid2.cannot_add_rows = !enabled;
+    grid2.cannot_delete_rows = !enabled;
+    grid2.refresh();
+  }
 };
 
 const enforce_chair_scope = async (frm) => {
@@ -303,6 +317,7 @@ const enforce_chair_scope = async (frm) => {
     grid.refresh();
   };
   lockGrid(frm.fields_dict.items?.grid);
+  lockGrid(frm.fields_dict.item2?.grid);
   lockGrid(frm.fields_dict.items2?.grid);
   lockGrid(frm.fields_dict.item4?.grid);
 };
@@ -327,7 +342,7 @@ const enforce_handler_scope = async (frm) => {
 
   frm._is_handler_scope_active = true;
 
-  const allowed = new Set(["y_kien_ld_td", "handler_status", "is_handler_status", "items"]);
+  const allowed = new Set(["y_kien_ld_td", "handler_status", "is_handler_status", "items", "item2"]);
 
   Object.keys(frm.fields_dict || {}).forEach((fieldname) => {
     const field = frm.fields_dict[fieldname];
@@ -374,6 +389,7 @@ const enforce_handler_scope = async (frm) => {
   };
 
   lockGrid(frm.fields_dict.items?.grid, false); // items được phép sửa
+  lockGrid(frm.fields_dict.item2?.grid, false);
   lockGrid(frm.fields_dict.items2?.grid);
   lockGrid(frm.fields_dict.items3?.grid);
   lockGrid(frm.fields_dict.item4?.grid);
@@ -447,6 +463,7 @@ const enforce_specialist_scope = async (frm) => {
   };
 
   lockGrid(frm.fields_dict.items?.grid, false);
+  lockGrid(frm.fields_dict.item2?.grid, false);
   lockGrid(frm.fields_dict.items2?.grid, false);
   lockGrid(frm.fields_dict.items3?.grid, true); // items3 được phép sửa
   lockGrid(frm.fields_dict.item4?.grid, false);
@@ -513,6 +530,7 @@ const enforce_collab_scope = async (frm) => {
     grid.refresh();
   };
   lockGrid(frm.fields_dict.items?.grid);
+  lockGrid(frm.fields_dict.item2?.grid);
   lockGrid(frm.fields_dict.items3?.grid);
 
   // items4: cho phép sửa
@@ -648,7 +666,9 @@ const ensure_single_chair_row = (frm, cdt, cdn) => {
   const row = (locals[cdt] && locals[cdt][cdn]) || null;
   if (!row || !row.chu_tri) return;
 
-  const rows = Array.isArray(frm.doc.items) ? frm.doc.items : [];
+  const rows = [];
+  if (Array.isArray(frm.doc.items)) rows.push(...frm.doc.items);
+  if (Array.isArray(frm.doc.item2)) rows.push(...frm.doc.item2);
   rows.forEach((r) => {
     if (r.name !== row.name && r.chu_tri) {
       frappe.model.set_value(r.doctype || cdt, r.name, "chu_tri", 0);
@@ -700,7 +720,9 @@ const find_late_item_deadline = (frm) => {
 };
 
 const find_multiple_chair = (frm) => {
-  const rows = Array.isArray(frm.doc.items) ? frm.doc.items : [];
+  const rows = [];
+  if (Array.isArray(frm.doc.items)) rows.push(...frm.doc.items);
+  if (Array.isArray(frm.doc.item2)) rows.push(...frm.doc.item2);
   const picked = rows.filter((r) => r.chu_tri);
   if (picked.length <= 1) return null;
   return picked;
@@ -806,6 +828,9 @@ frappe.ui.form.on("VNT Document Management", {
     frm.trigger("enforce_creator_edit_permission");
     frm.trigger("enforce_chair_edit_permission");
     toggle_process_section(frm);
+    if ((frm.doc.type || "").trim() === "Công văn đến") {
+      frm.trigger("prefill_level1_approvers");
+    }
   },
 
   department(frm) {
@@ -1012,7 +1037,7 @@ frappe.ui.form.on("VNT Document Management", {
   },
 
   sync_chair_from_items(frm) {
-    const rows = Array.isArray(frm.doc.items) ? frm.doc.items : [];
+    const rows = get_role_rows(frm);
     const picked = rows.find(r => r.chu_tri);
     const updates = {};
 
@@ -1037,7 +1062,7 @@ frappe.ui.form.on("VNT Document Management", {
   },
 
   sync_collab_from_items(frm) {
-    const srcRows = (frm.doc.items || []).filter(r => r.phoi_hop);
+    const srcRows = get_role_rows(frm).filter(r => r.phoi_hop);
     const tgtRows = Array.isArray(frm.doc.items2) ? frm.doc.items2 : [];
 
     const srcByEmp = new Map();
@@ -1081,21 +1106,52 @@ frappe.ui.form.on("VNT Document Management", {
 
   prefill_level1_approvers(frm) {
     if (!frm.is_new()) return;
-    if (Array.isArray(frm.doc.items) && frm.doc.items.length) return; // avoid overriding manual rows
+    const docType = (frm.doc.type || "").trim();
+    if (docType !== "Công văn đến") return;
+
+    const hasCapCao = Array.isArray(frm.doc.item2) && frm.doc.item2.length;
+    const hasCapTrung = Array.isArray(frm.doc.items) && frm.doc.items.length;
+    if (hasCapCao && hasCapTrung) return;
 
     frappe.call({
-      method: "vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.get_level1_approvers",
+      method: "vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.get_company_leadership",
+      args: { company: frm.doc.company || null },
       freeze: false,
       callback: (r) => {
-        const rows = r?.message || [];
-        if (!rows.length) return;
-        frm.clear_table("items");
-        rows.forEach((item) => {
-          const row = frm.add_child("items");
-          row.employee = item.employee;
-          row.department = item.department;
-        });
-        frm.refresh_field("items");
+        const payload = r?.message || {};
+        const rowsCapCao = Array.isArray(payload.cap_cao) ? payload.cap_cao : [];
+        const rowsCapTrung = Array.isArray(payload.cap_trung) ? payload.cap_trung : [];
+
+        const hasCapCaoNow = Array.isArray(frm.doc.item2) && frm.doc.item2.length;
+        const hasCapTrungNow = Array.isArray(frm.doc.items) && frm.doc.items.length;
+
+        if (frm.get_field("item2") && !hasCapCaoNow && rowsCapCao.length) {
+          frm.clear_table("item2");
+          rowsCapCao.forEach((item) => {
+            const row = frm.add_child("item2");
+            row.employee = item.employee;
+            row.department = item.department;
+            row.deadline = item.deadline;
+            row.chu_tri = item.chu_tri;
+            row.phoi_hop = item.phoi_hop;
+            row.nhan_de_biet = item.nhan_de_biet;
+          });
+          frm.refresh_field("item2");
+        }
+
+        if (frm.get_field("items") && !hasCapTrungNow && rowsCapTrung.length) {
+          frm.clear_table("items");
+          rowsCapTrung.forEach((item) => {
+            const row = frm.add_child("items");
+            row.employee = item.employee;
+            row.department = item.department;
+            row.deadline = item.deadline;
+            row.chu_tri = item.chu_tri;
+            row.phoi_hop = item.phoi_hop;
+            row.nhan_de_biet = item.nhan_de_biet;
+          });
+          frm.refresh_field("items");
+        }
       }
     });
   },
@@ -1138,6 +1194,16 @@ frappe.ui.form.on("VNT Document Management", {
       grid._vnt_flow_bound = true;
     }
 
+    const gridItem2 = frm.fields_dict.item2?.grid;
+    if (gridItem2 && !gridItem2._vnt_flow_bound) {
+      gridItem2.wrapper.on("data-change", () => {
+        frm.trigger("sync_chair_from_items");
+        frm.trigger("sync_collab_from_items");
+        frm.trigger("render_process_flow");
+      });
+      gridItem2._vnt_flow_bound = true;
+    }
+
     const grid2 = frm.fields_dict.items2?.grid;
     if (grid2 && !grid2._vnt_flow_bound) {
       grid2.wrapper.on("data-change", () => {
@@ -1160,7 +1226,7 @@ frappe.ui.form.on("VNT Document Management", {
     addId(frm.doc.handler);
     addId(frm.doc.chairperson);
     addId(frm.doc.cv_xu_ly);
-    const rowsMain = Array.isArray(frm.doc.items) ? frm.doc.items : [];
+    const rowsMain = get_role_rows(frm);
     const rowsCollab = Array.isArray(frm.doc.items2) ? frm.doc.items2 : [];
     rowsMain.forEach((r) => {
       addId(r.employee || r.employee_id);
@@ -1197,9 +1263,18 @@ frappe.ui.form.on("VNT Document Management", {
       if (!id) return "Chưa chọn";
       return frappe.utils.escape_html(nameCache[id] || id);
     };
+    const formatTimeValue = (val) => {
+      if (!val) return "";
+      try {
+        const formatted = frappe.datetime.str_to_user(val);
+        return formatted.replace(/(\d{1,2}:\d{2}):\d{2}/, "$1");
+      } catch (err) {
+        return val;
+      }
+    };
 
     const SCALE = 0.85;
-    const stackSpacing = 120;
+    const stackSpacing = 150;
     const baseSize = { width: 1300, height: 700 };
 
     const noPlaceholderKeys = new Set(["employee_status", "handler_status"]);
@@ -1222,6 +1297,7 @@ frappe.ui.form.on("VNT Document Management", {
       label: statusLabel(key),
       color: statusColor(key)
     });
+    const is_handler_transferred = (val) => (val || "").trim() === "Chuyển văn bản";
     const statusColorValue = (val) => {
       const status = (val || "").trim();
       if (!status) return "#94a3b8";
@@ -1274,6 +1350,12 @@ frappe.ui.form.on("VNT Document Management", {
         const color = opts.colorForRow ? opts.colorForRow(row) : roleKey === "info_recipient" ? "#111827" : "#22c55e";
         const showStatus = opts.showStatus ?? false;
         const statusText = opts.statusText ? opts.statusText(row) : "";
+        const statusValue = typeof opts.statusValue === "function" ? opts.statusValue(row) : opts.statusValue;
+        const receivedAt = typeof opts.receivedAt === "function" ? opts.receivedAt(row) : row.creation;
+        const completedAt = typeof opts.completedAt === "function"
+          ? opts.completedAt(row, statusValue)
+          : (is_done(statusValue) ? row.modified : "");
+        const extra = typeof opts.extraForRow === "function" ? opts.extraForRow(row, idx) : null;
         roleNodes.push({
           key: `${roleKey}-${idx}`,
           label,
@@ -1281,6 +1363,10 @@ frappe.ui.form.on("VNT Document Management", {
           stroke: color,
           statusLabel: statusText,
           showStatus,
+          receivedAt,
+          completedAt,
+          hideTimes: extra?.hideTimes,
+          extraLines: extra?.extraLines || null,
           x,
           y: startY + count * stackSpacing
         });
@@ -1306,6 +1392,8 @@ frappe.ui.form.on("VNT Document Management", {
           if (overdue) return "#e85b5b";
           return chairColor;
         },
+        statusValue: () => frm.doc.chairperson_status,
+        completedAt: (_row, statusValue) => (is_done(statusValue) ? frm.doc.modified : ""),
         showStatus: true,
         statusText: (row) => {
           const overdue = isOverdue(frm.doc.deadline_chu_tri2, frm.doc.chairperson_status);
@@ -1329,6 +1417,8 @@ frappe.ui.form.on("VNT Document Management", {
           if (overdue) return "#e85b5b";
           return statusColorValue(row.trang_thai_nguoi_phoi_hop || row.trang_thai_cv_xu_ly);
         },
+        statusValue: (row) => row.trang_thai_nguoi_phoi_hop,
+        completedAt: (row, statusValue) => (is_done(statusValue) ? row.modified : ""),
         showStatus: true,
         statusText: (row) => {
           const overdue = isOverdue(row.deadline1, row.trang_thai_nguoi_phoi_hop || row.trang_thai_cv_xu_ly);
@@ -1347,7 +1437,8 @@ frappe.ui.form.on("VNT Document Management", {
       chairX,
       infoStart,
       {
-        colorForRow: (row) => (row.nhan_de_biet ? "#22c55e" : "#111827")
+        colorForRow: (row) => (row.nhan_de_biet ? "#22c55e" : "#111827"),
+        completedAt: () => ""
       }
     );
 
@@ -1355,7 +1446,11 @@ frappe.ui.form.on("VNT Document Management", {
     // Giảm khoảng trống đáy để không dư quá nhiều
     baseSize.height = Math.max(420, lastStackEnd + 60);
 
-    const nodeSize = { width: 180, height: 80 };
+    const nodeSize = { width: 200, height: 96 };
+    const docReceivedAt = frm.doc.received_date || frm.doc.creation || "";
+    const handlerCompletedAt = is_handler_transferred(frm.doc.handler_status) || is_checked(frm.doc.is_handler_status)
+      ? frm.doc.modified
+      : "";
 
     const nodes = [
       {
@@ -1365,6 +1460,9 @@ frappe.ui.form.on("VNT Document Management", {
         stroke: "#3b82f6",
         fill: "#e0ecff",
         statusKey: "employee_status",
+        receivedAt: docReceivedAt,
+        completedAt: handlerCompletedAt,
+        completedLabel: "Giao",
         x: 18,
         y: 108
       },
@@ -1376,6 +1474,9 @@ frappe.ui.form.on("VNT Document Management", {
         fill: "#fef3c7",
         statusKey: "handler_status",
         showStatus: false,
+        receivedAt: docReceivedAt,
+        completedAt: handlerCompletedAt,
+        completedLabel: "Giao",
         x: 320,
         y: 108
       }
@@ -1384,6 +1485,7 @@ frappe.ui.form.on("VNT Document Management", {
     const hasPrimarySpecialist = chairCount > 0 && (frm.doc.cv_xu_ly || "").trim();
     if (hasPrimarySpecialist) {
       const primaryOverdue = isOverdue(frm.doc.deadline_cv_xu_ly, frm.doc.trang_thai_chuyen_vien_xu_ly);
+      const primaryCompletedAt = is_done(frm.doc.trang_thai_chuyen_vien_xu_ly) ? frm.doc.modified : "";
       nodes.push({
         key: "specialist_primary",
         label: "Chuyên viên xử lý",
@@ -1393,6 +1495,8 @@ frappe.ui.form.on("VNT Document Management", {
           ? fillByStroke("#e85b5b")
           : fillByStroke(statusColorValue(frm.doc.trang_thai_chuyen_vien_xu_ly || "")),
         statusKey: "trang_thai_chuyen_vien_xu_ly",
+        receivedAt: frm.doc.modified,
+        completedAt: primaryCompletedAt,
         x: specialistX,
         y: chairStart + ((chairCount - 1) * stackSpacing) / 2
       });
@@ -1404,6 +1508,7 @@ frappe.ui.form.on("VNT Document Management", {
       const specKey = `specialist_collab-${idx}`;
       const overdue = isOverdue(row.deadline2, row.trang_thai_cv_xu_ly);
       const stroke = overdue ? "#e85b5b" : statusColorValue(row.trang_thai_cv_xu_ly);
+      const completedAt = is_done(row.trang_thai_cv_xu_ly) ? row.modified : "";
       nodes.push({
         key: specKey,
         label: "Chuyên viên xử lý",
@@ -1413,12 +1518,34 @@ frappe.ui.form.on("VNT Document Management", {
         statusKey: null,
         statusLabel: overdue ? "Quá hạn" : row.trang_thai_cv_xu_ly || "",
         showStatus: true,
+        receivedAt: row.modified || row.creation,
+        completedAt,
         x: specialistX,
         y: baseY
       });
     });
 
     nodes.push(...roleNodes);
+    let outgoingFromKey = null;
+    const outgoingDocName = (frm.doc.cong_van_di || "").trim();
+    if (outgoingDocName) {
+      const chairNodes = roleNodes.filter((node) => node.key.startsWith("chairperson"));
+      const lastChairNode = chairNodes.length ? chairNodes[chairNodes.length - 1] : null;
+      const baseNode = lastChairNode || nodes.find((node) => node.key === "handler") || null;
+      if (baseNode) {
+        nodes.push({
+          key: "outgoing_doc",
+          label: "Công văn đi",
+          value: frappe.utils.escape_html(outgoingDocName),
+          stroke: "#22c55e",
+          fill: fillByStroke("#22c55e"),
+          hideTimes: true,
+          x: baseNode.x + nodeSize.width + 240,
+          y: baseNode.y
+        });
+        outgoingFromKey = baseNode.key;
+      }
+    }
 
     // Tính chiều rộng bám sát nút xa nhất để tránh vùng trống dư
     const maxNodeRight = nodes.reduce((max, n) => Math.max(max, n.x + nodeSize.width), 0);
@@ -1441,7 +1568,9 @@ frappe.ui.form.on("VNT Document Management", {
     const connections = [
       { from: "employee", to: "handler", color: "#22c55e", dashed: false }
     ];
-
+    if (outgoingFromKey) {
+      connections.push({ from: outgoingFromKey, to: "outgoing_doc", color: "#22c55e", dashed: false });
+    }
     roleNodes.forEach((node) => {
       const isInfo = node.key.startsWith("info_recipient");
       const isCollab = node.key.startsWith("collaborator");
@@ -1506,30 +1635,33 @@ frappe.ui.form.on("VNT Document Management", {
     };
 
     const nodeTemplate = (node) => {
-      const statusPart = () => {
-        if (node.showStatus === false) return "";
-        if (node.statusLabel !== undefined) {
-          const color = statusColorValue(node.statusLabel);
-          return `<text x="${node.x + 12}" y="${node.y + 72}" class="vnt-node-status" fill="${color}">
-            ${node.statusLabel || ""}
-          </text>`;
-        }
-        const info = node.statusKey ? statusInfo(node.statusKey) : { label: "", color: "#94a3b8" };
-        return `<text x="${node.x + 12}" y="${node.y + 72}" class="vnt-node-status" fill="${info.color}">
-          ${info.label}
-        </text>`;
-      };
-
       const stroke = colorForNode(node);
       const fill = fillByStroke(stroke);
+      const receivedText = `Nhận: ${formatTimeValue(node.receivedAt) || "-"}`;
+      const completedLabel = node.completedLabel || "Hoàn thành";
+      const completedText = `${completedLabel}: ${formatTimeValue(node.completedAt) || "-"}`;
+      const timeLines = node.hideTimes
+        ? ""
+        : `
+          <text x="${node.x + 12}" y="${node.y + 62}" class="vnt-node-time">${receivedText}</text>
+          <text x="${node.x + 12}" y="${node.y + 78}" class="vnt-node-time">${completedText}</text>
+        `;
+      const extraLines = Array.isArray(node.extraLines) && node.extraLines.length && node.hideTimes
+        ? node.extraLines.map((line, idx) => {
+          const safeLine = frappe.utils.escape_html(line || "");
+          const y = node.y + 62 + idx * 16;
+          return `<text x="${node.x + 12}" y="${y}" class="vnt-node-extra">${safeLine}</text>`;
+        }).join("")
+        : "";
 
       return `
         <g class="vnt-node" data-role="${node.key}">
           <rect x="${node.x}" y="${node.y}" rx="10" ry="10" width="${nodeSize.width}" height="${nodeSize.height}"
             fill="${fill}" stroke="${stroke}" stroke-width="1.5" />
-          <text x="${node.x + 12}" y="${node.y + 24}" class="vnt-node-label">${node.label}</text>
-          <text x="${node.x + 12}" y="${node.y + 48}" class="vnt-node-value">${node.value}</text>
-          ${statusPart()}
+          <text x="${node.x + 12}" y="${node.y + 22}" class="vnt-node-label">${node.label}</text>
+          <text x="${node.x + 12}" y="${node.y + 42}" class="vnt-node-value">${node.value}</text>
+          ${timeLines}
+          ${extraLines}
         </g>
       `;
     };
@@ -1562,6 +1694,8 @@ frappe.ui.form.on("VNT Document Management", {
           .vnt-node-label { font-size: 12px; font-weight: 600; fill: #475569; }
           .vnt-node-value { font-size: 14px; font-weight: 700; fill: #0f172a; }
           .vnt-node-status { font-size: 12px; font-weight: 600; }
+          .vnt-node-time { font-size: 11px; fill: #64748b; }
+          .vnt-node-extra { font-size: 11px; fill: #334155; font-weight: 600; }
           .vnt-flow-note { margin-top: 6px; font-size: 12px; color: #64748b; }
         </style>
         <div class="vnt-flow-legend">
