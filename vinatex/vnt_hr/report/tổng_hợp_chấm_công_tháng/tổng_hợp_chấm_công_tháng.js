@@ -156,8 +156,10 @@ frappe.query_reports["Tổng hợp chấm công tháng"] = {
       "fieldname": "employee",
       "label": "Nhân viên",
       "fieldtype": "Link",
-      "options": "Employee"
+      "options": "Employee",
+      "default": frappe.defaults.get_user_default("Employee")
     },
+    
     {
       "fieldname": "month",
       "label": "Tháng",
@@ -198,6 +200,18 @@ frappe.query_reports["Tổng hợp chấm công tháng"] = {
       }
     },
     {
+      "fieldname": "show_detail_report",
+      "label": "Hiển thị dữ liệu máy chấm công",
+      "fieldtype": "Check",
+      "default": 0,
+      on_change: function () {
+        const r = frappe.query_report;
+        if (r) {
+          r.refresh();
+        }
+      }
+    },
+    {
       "fieldname": "from_date",
       "label": "Từ ngày",
       "fieldtype": "Date",
@@ -224,6 +238,18 @@ frappe.query_reports["Tổng hợp chấm công tháng"] = {
     }
     if (!report.get_values().month) {
       report.set_filter_value("month", mm);
+    }
+
+    // Set mặc định nhân viên theo user đang login
+    if (!report.get_values().employee) {
+      frappe.call({
+        method: "vinatex.vnt_hr.report.attendance_month_common.get_employee_for_user",
+        callback: function (r) {
+          if (r && r.message && r.message.employee) {
+            report.set_filter_value("employee", r.message.employee);
+          }
+        },
+      });
     }
 
     // Tính ngày đầu & cuối tháng theo tháng/năm đã chọn
@@ -264,6 +290,10 @@ frappe.query_reports["Tổng hợp chấm công tháng"] = {
           }
         },
       });
+    });
+
+    report.page.add_inner_button(__("Chấm công bất thường"), function () {
+      frappe.set_route("List", "VNT Attendance Confirm");
     });
 
     // Hiển thị ghi chú ký hiệu một lần trên đầu báo cáo
