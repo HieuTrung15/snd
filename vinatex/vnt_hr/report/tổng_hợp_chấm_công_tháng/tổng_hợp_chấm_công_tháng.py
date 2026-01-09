@@ -23,6 +23,12 @@ STATUS_CODE = {
 }
 
 def execute(filters):
+	filters = filters or {}
+	if cint(filters.get("show_detail_report")):
+		from vinatex.vnt_hr.report.danh_sách_chấm_công_theo_tháng.danh_sách_chấm_công_theo_tháng import (
+			execute as detail_execute,
+		)
+		return detail_execute(filters)
 	start_date = getdate(filters.get("from_date"))
 	end_date = getdate(filters.get("to_date"))
 	days = list(_daterange(start_date, end_date))

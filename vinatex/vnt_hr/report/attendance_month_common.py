@@ -20,6 +20,25 @@ from vinatex.vnt_hr.report.tổng_hợp_chấm_công_tháng.tổng_hợp_chấm_
 )
 
 
+@frappe.whitelist()
+def get_employee_for_user():
+	"""Return the Employee mapped to the current user, if any."""
+	user = frappe.session.user
+	if not user or user == "Guest":
+		return None
+
+	employee = frappe.get_value(
+		"Employee",
+		{"user_id": user, "status": "Active"},
+		"name",
+		ignore_permissions=True,
+	)
+	if not employee:
+		return None
+
+	return {"employee": employee}
+
+
 @dataclass(frozen=True)
 class DayDetail:
 	date: object

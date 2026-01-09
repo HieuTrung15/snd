@@ -45,15 +45,12 @@ def _get_employee_of_user():
 
 
 def _restrict_scope(filters):
-    """Nếu không có quyền HR/User Manager → chỉ thấy dữ liệu của Employee gắn user"""
-    if _is_privileged_user():
+    """Auto lọc theo Employee của user nếu có."""
+    if filters.get("employee"):
         return
     emp = _get_employee_of_user()
-    if not emp:
-        # không có employee nào gắn user hiện tại
-        filters["employee"] = "__NO_EMPLOYEE__"
-        return
-    filters["employee"] = emp
+    if emp:
+        filters["employee"] = emp
 
 def get_data(filters):
     start_dt, end_dt = _get_date_range(filters)
@@ -67,6 +64,9 @@ def get_data(filters):
     if filters.get("department"):
         conds.append("emp.department = %(department)s")
         params["department"] = filters["department"]
+    if filters.get("branch"):
+        conds.append("emp.branch = %(branch)s")
+        params["branch"] = filters["branch"]
     if filters.get("company"):
         conds.append("emp.company = %(company)s")
         params["company"] = filters["company"]
