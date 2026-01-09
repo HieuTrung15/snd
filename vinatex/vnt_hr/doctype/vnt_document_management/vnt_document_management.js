@@ -1617,6 +1617,7 @@ frappe.ui.form.on("VNT Document Management", {
       });
     });
 
+    
     nodes.push(...roleNodes);
     let incomingDocKey = null;
     const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
