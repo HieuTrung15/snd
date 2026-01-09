@@ -1621,14 +1621,14 @@ frappe.ui.form.on("VNT Document Management", {
     nodes.push(...roleNodes);
     let incomingDocKey = null;
     const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
-    const incomingDocValue = (frm.doc.reference_number).trim();
-    if (isIncoming && incomingDocValue) {
+    const outgoingDocValue = (frm.doc.cong_van_di || "").trim();
+    if (isIncoming && outgoingDocValue) {
       const employeeNode = nodes.find((node) => node.key === "employee") || null;
       if (employeeNode) {
         nodes.push({
           key: "incoming_doc",
           label: "Công văn đi tương ứng",
-          value: frappe.utils.escape_html(incomingDocValue),
+          value: frappe.utils.escape_html(outgoingDocValue),
           stroke: "#f9a8d4",
           fill: fillByStroke("#f9a8d4"),
           hideTimes: true,
