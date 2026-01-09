@@ -228,6 +228,27 @@ const is_collab_user = async (frm, currentEmp) => {
   return mainRows.some((row) => is_checked(row.phoi_hop) && row.employee === employee);
 };
 
+const patch_scroll_to_field = (frm) => {
+  if (frm._vntScrollToFieldPatched) return;
+  if (typeof frm.scroll_to_field !== "function") return;
+  const original = frm.scroll_to_field.bind(frm);
+  frm.scroll_to_field = (fieldname, focus = true) => {
+    const field = frm.get_field(fieldname);
+    const $wrapper = field?.$wrapper;
+    if (!$wrapper || typeof $wrapper.find !== "function" || typeof $wrapper.closest !== "function") {
+      return false;
+    }
+    try {
+      return original(fieldname, focus);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn("scroll_to_field failed", err);
+      return false;
+    }
+  };
+  frm._vntScrollToFieldPatched = true;
+};
+
 const can_view_handler_controls = async (frm) => {
   const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
   if (!isIncoming) return true;
@@ -739,6 +760,7 @@ const find_multiple_chair = (frm) => {
 
 frappe.ui.form.on("VNT Document Management", {
   setup(frm) {
+    patch_scroll_to_field(frm);
     frm.trigger("setup_cv_xu_ly_query");
     frm.trigger("setup_cv_xu_ly_query_items2");
   },
@@ -920,11 +942,15 @@ frappe.ui.form.on("VNT Document Management", {
     }
 
     // Đảm bảo có name trước khi gọi server
-    if (!frm.doc.name || frm.is_dirty()) {
+    const needsSave = !frm.doc.name || frm.is_dirty() || removed;
+    if (needsSave) {
+      if (!frappe.ui.form.check_mandatory(frm)) {
+        return;
+      }
       await frm.save();
-    } else if (removed) {
-      // Nếu đã có name nhưng doc không nhận dirty flag, vẫn cần lưu lại việc xoá dòng
-      await frm.save();
+      if (frm.is_dirty()) {
+        return;
+      }
     }
 
     frm._handlerStatusSaving = true;
