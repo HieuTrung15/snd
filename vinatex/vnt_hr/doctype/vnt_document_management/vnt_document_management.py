@@ -1109,7 +1109,6 @@ def get_document_overview(limit: int = 6):
 	)
 	doc_names.update(r.parent for r in collab_rows)
 	doc_names.update(r.parent for r in collab_spec_rows)
-
 	if not doc_names:
 		return {
 			"employee": emp,
