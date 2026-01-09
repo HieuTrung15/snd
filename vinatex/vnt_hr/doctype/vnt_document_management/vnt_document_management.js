@@ -219,6 +219,15 @@ const get_current_employee = async (frm) => {
   return frm._currentEmployee;
 };
 
+const is_collab_user = async (frm, currentEmp) => {
+  const employee = currentEmp || (await get_current_employee(frm));
+  if (!employee) return false;
+  const rows = Array.isArray(frm.doc.items2) ? frm.doc.items2 : [];
+  if (rows.some((row) => row.nguoi_phoi_hop === employee)) return true;
+  const mainRows = get_role_rows(frm);
+  return mainRows.some((row) => is_checked(row.phoi_hop) && row.employee === employee);
+};
+
 const can_view_handler_controls = async (frm) => {
   const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
   if (!isIncoming) return true;
