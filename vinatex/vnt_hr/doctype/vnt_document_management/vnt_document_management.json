@@ -42,19 +42,23 @@
   "y_kien_ld_td",
   "column_break_cjki",
   "handler_status",
+  "handler_transferred_at",
   "is_handler_status",
   "deadline_copy",
   "qu\u00e1_tr\u00ecnh_x\u1eed_l\u00fd_tab",
   "nguoi_chu_tri",
   "deadline_chu_tri2",
   "chairperson_status",
+  "chairperson_completed_at",
   "cong_van_di",
   "column_break_iblk",
   "y_kien_chu_tri",
   "section_break_manr",
   "cv_xu_ly",
+  "cv_xu_ly_assigned_at",
   "deadline_cv_xu_ly",
   "trang_thai_chuyen_vien_xu_ly",
+  "cv_xu_ly_completed_at",
   "column_break_mpyt",
   "y_kien_chuyen_vien_xu_ly",
   "section_break_bpgl",
@@ -174,6 +178,15 @@
    "no_copy": 1
   },
   {
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
+   "fieldname": "handler_transferred_at",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "label": "Th\u1eddi gian chuy\u1ec3n x\u1eed l\u00fd",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
    "fieldname": "th\u00f4ng_tin_ng\u01b0\u1eddi_x\u1eed_l\u00fd_section",
    "fieldtype": "Section Break"
   },
@@ -221,6 +234,15 @@
    "permlevel": 1
   },
   {
+   "fieldname": "chairperson_completed_at",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "label": "Th\u1eddi gian ho\u00e0n th\u00e0nh ng\u01b0\u1eddi ch\u1ee7 tr\u00ec",
+   "no_copy": 1,
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
    "fieldname": "column_break_iblk",
    "fieldtype": "Column Break"
   },
@@ -238,6 +260,16 @@
   },
   {
    "depends_on": "eval: doc.cv_xu_ly",
+   "fieldname": "cv_xu_ly_assigned_at",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "label": "Th\u1eddi gian giao chuy\u00ean vi\u00ean x\u1eed l\u00fd",
+   "no_copy": 1,
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.cv_xu_ly",
    "fieldname": "deadline_cv_xu_ly",
    "fieldtype": "Date",
    "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh chuy\u00ean vi\u00ean x\u1eed l\u00fd",
@@ -252,6 +284,16 @@
    "no_copy": 1,
    "options": "\n\u0110ang x\u1eed l\u00fd\nHo\u00e0n th\u00e0nh",
    "permlevel": 1
+  },
+  {
+   "depends_on": "eval: doc.cv_xu_ly",
+   "fieldname": "cv_xu_ly_completed_at",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "label": "Th\u1eddi gian ho\u00e0n th\u00e0nh chuy\u00ean vi\u00ean x\u1eed l\u00fd",
+   "no_copy": 1,
+   "permlevel": 1,
+   "read_only": 1
   },
   {
    "fieldname": "column_break_mpyt",

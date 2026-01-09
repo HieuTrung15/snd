@@ -895,6 +895,15 @@ frappe.ui.form.on("VNT Document Management", {
       return;
     }
 
+    if (!frm.doc.handler_transferred_at) {
+      const now = frappe.datetime.now_datetime();
+      if (frm.get_field("handler_transferred_at")) {
+        await frm.set_value("handler_transferred_at", now);
+      } else {
+        frm.doc.handler_transferred_at = now;
+      }
+    }
+
     const removed = prune_items_without_role(frm);
     if (removed) {
       frm.trigger("sync_chair_from_items");
@@ -951,6 +960,20 @@ frappe.ui.form.on("VNT Document Management", {
       return;
     }
 
+    if (is_done(frm.doc.chairperson_status) && !is_done(prev)) {
+      if (frm.get_field("chairperson_completed_at")) {
+        frm.set_value("chairperson_completed_at", frappe.datetime.now_datetime());
+      } else {
+        frm.doc.chairperson_completed_at = frappe.datetime.now_datetime();
+      }
+    } else if (!is_done(frm.doc.chairperson_status) && frm.doc.chairperson_completed_at) {
+      if (frm.get_field("chairperson_completed_at")) {
+        frm.set_value("chairperson_completed_at", null);
+      } else {
+        frm.doc.chairperson_completed_at = null;
+      }
+    }
+
     set_chair_status_prev(frm, frm.doc.chairperson_status || null);
     frm.trigger("render_process_flow");
   },
@@ -964,6 +987,20 @@ frappe.ui.form.on("VNT Document Management", {
   },
 
   cv_xu_ly(frm) {
+    if (frm.doc.cv_xu_ly && !frm.doc.cv_xu_ly_assigned_at) {
+      const now = frappe.datetime.now_datetime();
+      if (frm.get_field("cv_xu_ly_assigned_at")) {
+        frm.set_value("cv_xu_ly_assigned_at", now);
+      } else {
+        frm.doc.cv_xu_ly_assigned_at = now;
+      }
+    } else if (!frm.doc.cv_xu_ly && frm.doc.cv_xu_ly_assigned_at) {
+      if (frm.get_field("cv_xu_ly_assigned_at")) {
+        frm.set_value("cv_xu_ly_assigned_at", null);
+      } else {
+        frm.doc.cv_xu_ly_assigned_at = null;
+      }
+    }
     frm.trigger("render_process_flow");
     frm.trigger("enforce_chair_edit_permission");
     enforce_specialist_scope(frm);
@@ -971,6 +1008,19 @@ frappe.ui.form.on("VNT Document Management", {
   },
 
   trang_thai_chuyen_vien_xu_ly(frm) {
+    if (is_done(frm.doc.trang_thai_chuyen_vien_xu_ly) && !frm.doc.cv_xu_ly_completed_at) {
+      if (frm.get_field("cv_xu_ly_completed_at")) {
+        frm.set_value("cv_xu_ly_completed_at", frappe.datetime.now_datetime());
+      } else {
+        frm.doc.cv_xu_ly_completed_at = frappe.datetime.now_datetime();
+      }
+    } else if (!is_done(frm.doc.trang_thai_chuyen_vien_xu_ly) && frm.doc.cv_xu_ly_completed_at) {
+      if (frm.get_field("cv_xu_ly_completed_at")) {
+        frm.set_value("cv_xu_ly_completed_at", null);
+      } else {
+        frm.doc.cv_xu_ly_completed_at = null;
+      }
+    }
     frm.trigger("render_process_flow");
   },
 
@@ -1313,6 +1363,7 @@ frappe.ui.form.on("VNT Document Management", {
       if (color === "#3b82f6") return "#e0ecff"; // blue
       if (color === "#e85b5b") return "#fee2e2"; // red
       if (color === "#94a3b8") return "#e5e7eb"; // grey/empty
+      if (color === "#f9a8d4") return "#fce7f3"; // pink
       return "#f8fafc";
     };
 
@@ -1396,6 +1447,11 @@ frappe.ui.form.on("VNT Document Management", {
       return count;
     };
 
+    const docCreatedAt = frm.doc.creation || "";
+    const docReceivedAt = frm.doc.received_date || docCreatedAt || "";
+    const employeeCompletedAt = docCreatedAt;
+    const handlerCompletedAt = frm.doc.handler_transferred_at || "";
+
     const chairStart = 40;
     const chairX = 650;
     const specialistX = 1000;
@@ -1414,7 +1470,11 @@ frappe.ui.form.on("VNT Document Management", {
           return chairColor;
         },
         statusValue: () => frm.doc.chairperson_status,
-        completedAt: (_row, statusValue) => (is_done(statusValue) ? frm.doc.modified : ""),
+        receivedAt: () => handlerCompletedAt || "",
+        completedAt: (_row, statusValue) => {
+          if (!is_done(statusValue)) return "";
+          return frm.doc.chairperson_completed_at || frm.doc.modified || "";
+        },
         deadlineAt: () => frm.doc.deadline_chu_tri2 || "",
         showStatus: true,
         statusText: (row) => {
@@ -1440,7 +1500,11 @@ frappe.ui.form.on("VNT Document Management", {
           return statusColorValue(row.trang_thai_nguoi_phoi_hop || row.trang_thai_cv_xu_ly);
         },
         statusValue: (row) => row.trang_thai_nguoi_phoi_hop,
-        completedAt: (row, statusValue) => (is_done(statusValue) ? row.modified : ""),
+        receivedAt: () => handlerCompletedAt || "",
+        completedAt: (row, statusValue) => {
+          if (!is_done(statusValue)) return "";
+          return row.nguoi_phoi_hop_completed_at || row.modified || "";
+        },
         deadlineAt: (row) => row.deadline1 || "",
         showStatus: true,
         statusText: (row) => {
@@ -1461,6 +1525,7 @@ frappe.ui.form.on("VNT Document Management", {
       infoStart,
       {
         colorForRow: (row) => (row.nhan_de_biet ? "#22c55e" : "#111827"),
+        receivedAt: () => handlerCompletedAt || "",
         completedAt: () => ""
       }
     );
@@ -1470,10 +1535,6 @@ frappe.ui.form.on("VNT Document Management", {
     baseSize.height = Math.max(420, lastStackEnd + 60);
 
     const nodeSize = { width: 200, height: 112 };
-    const docReceivedAt = frm.doc.received_date || frm.doc.creation || "";
-    const handlerCompletedAt = is_handler_transferred(frm.doc.handler_status) || is_checked(frm.doc.is_handler_status)
-      ? frm.doc.modified
-      : "";
 
     const nodes = [
       {
@@ -1484,8 +1545,8 @@ frappe.ui.form.on("VNT Document Management", {
         fill: "#e0ecff",
         statusKey: "employee_status",
         receivedAt: docReceivedAt,
-        completedAt: handlerCompletedAt,
-        completedLabel: "Chuyển",
+        completedAt: employeeCompletedAt,
+        completedLabel: "Giao",
         x: 18,
         y: 108
       },
@@ -1497,7 +1558,7 @@ frappe.ui.form.on("VNT Document Management", {
         fill: "#fef3c7",
         statusKey: "handler_status",
         showStatus: false,
-        receivedAt: docReceivedAt,
+        receivedAt: employeeCompletedAt,
         completedAt: handlerCompletedAt,
         completedLabel: "Giao",
         x: 320,
@@ -1508,7 +1569,9 @@ frappe.ui.form.on("VNT Document Management", {
     const hasPrimarySpecialist = chairCount > 0 && (frm.doc.cv_xu_ly || "").trim();
     if (hasPrimarySpecialist) {
       const primaryOverdue = isOverdue(frm.doc.deadline_cv_xu_ly, frm.doc.trang_thai_chuyen_vien_xu_ly);
-      const primaryCompletedAt = is_done(frm.doc.trang_thai_chuyen_vien_xu_ly) ? frm.doc.modified : "";
+      const primaryCompletedAt = is_done(frm.doc.trang_thai_chuyen_vien_xu_ly)
+        ? (frm.doc.cv_xu_ly_completed_at || frm.doc.modified || "")
+        : "";
       const primaryLate = is_late_completion(frm.doc.deadline_cv_xu_ly, primaryCompletedAt);
       nodes.push({
         key: "specialist_primary",
@@ -1519,7 +1582,7 @@ frappe.ui.form.on("VNT Document Management", {
           ? fillByStroke("#e85b5b")
           : fillByStroke(statusColorValue(frm.doc.trang_thai_chuyen_vien_xu_ly || "")),
         statusKey: "trang_thai_chuyen_vien_xu_ly",
-        receivedAt: frm.doc.modified,
+        receivedAt: frm.doc.cv_xu_ly_assigned_at || (frm.doc.cv_xu_ly ? frm.doc.modified : ""),
         completedAt: primaryCompletedAt,
         deadlineAt: frm.doc.deadline_cv_xu_ly || "",
         x: specialistX,
@@ -1533,7 +1596,9 @@ frappe.ui.form.on("VNT Document Management", {
       const specKey = `specialist_collab-${idx}`;
       const overdue = isOverdue(row.deadline2, row.trang_thai_cv_xu_ly);
       const stroke = overdue ? "#e85b5b" : statusColorValue(row.trang_thai_cv_xu_ly);
-      const completedAt = is_done(row.trang_thai_cv_xu_ly) ? row.modified : "";
+      const completedAt = is_done(row.trang_thai_cv_xu_ly)
+        ? (row.cv_xu_ly_completed_at || row.modified || "")
+        : "";
       const late = is_late_completion(row.deadline2, completedAt);
       nodes.push({
         key: specKey,
@@ -1544,7 +1609,7 @@ frappe.ui.form.on("VNT Document Management", {
         statusKey: null,
         statusLabel: overdue ? "Quá hạn" : row.trang_thai_cv_xu_ly || "",
         showStatus: true,
-        receivedAt: row.modified || row.creation,
+        receivedAt: row.cv_xu_ly_assigned_at || (row.cv_xu_ly ? row.modified : ""),
         completedAt,
         deadlineAt: row.deadline2 || "",
         x: specialistX,
@@ -1553,30 +1618,31 @@ frappe.ui.form.on("VNT Document Management", {
     });
 
     nodes.push(...roleNodes);
-    let outgoingFromKey = null;
-    const outgoingDocName = (frm.doc.cong_van_di || "").trim();
-    if (outgoingDocName) {
-      const chairNodes = roleNodes.filter((node) => node.key.startsWith("chairperson"));
-      const lastChairNode = chairNodes.length ? chairNodes[chairNodes.length - 1] : null;
-      const baseNode = lastChairNode || nodes.find((node) => node.key === "handler") || null;
-      if (baseNode) {
+    let incomingDocKey = null;
+    const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
+    const incomingDocValue = (frm.doc.cong_van_di).trim();
+    if (isIncoming && incomingDocValue) {
+      const employeeNode = nodes.find((node) => node.key === "employee") || null;
+      if (employeeNode) {
         nodes.push({
-          key: "outgoing_doc",
-          label: "Công văn đi",
-          value: frappe.utils.escape_html(outgoingDocName),
-          stroke: "#22c55e",
-          fill: fillByStroke("#22c55e"),
+          key: "incoming_doc",
+          label: "Công văn đi tương ứng",
+          value: frappe.utils.escape_html(incomingDocValue),
+          stroke: "#f9a8d4",
+          fill: fillByStroke("#f9a8d4"),
           hideTimes: true,
-          x: baseNode.x + nodeSize.width + 240,
-          y: baseNode.y
+          x: employeeNode.x,
+          y: employeeNode.y + nodeSize.height + 60
         });
-        outgoingFromKey = baseNode.key;
+        incomingDocKey = "incoming_doc";
       }
     }
 
     // Tính chiều rộng bám sát nút xa nhất để tránh vùng trống dư
     const maxNodeRight = nodes.reduce((max, n) => Math.max(max, n.x + nodeSize.width), 0);
+    const maxNodeBottom = nodes.reduce((max, n) => Math.max(max, n.y + nodeSize.height), 0);
     baseSize.width = Math.max(maxNodeRight + 80, 480);
+    baseSize.height = Math.max(baseSize.height, maxNodeBottom + 60);
     const scaledSize = {
       width: Math.round(baseSize.width * SCALE),
       height: Math.round(baseSize.height * SCALE)
@@ -1595,8 +1661,8 @@ frappe.ui.form.on("VNT Document Management", {
     const connections = [
       { from: "employee", to: "handler", color: "#22c55e", dashed: false }
     ];
-    if (outgoingFromKey) {
-      connections.push({ from: outgoingFromKey, to: "outgoing_doc", color: "#22c55e", dashed: false });
+    if (incomingDocKey) {
+      connections.push({ from: "employee", to: incomingDocKey, color: "#f9a8d4", dashed: false });
     }
     roleNodes.forEach((node) => {
       const isInfo = node.key.startsWith("info_recipient");
@@ -1780,8 +1846,66 @@ frappe.ui.form.on("VNT Document Management Item2", {
 
 // Child table hooks: VNT Document Management Item (items2)
 frappe.ui.form.on("VNT Document Management Item", {
+  cv_xu_ly(frm, cdt, cdn) {
+    const row = (locals[cdt] && locals[cdt][cdn]) || null;
+    const hasAssignedField = !!frappe.get_meta(cdt)?.fields?.some((df) => df.fieldname === "cv_xu_ly_assigned_at");
+    if (!row) return;
+    if (row.cv_xu_ly) {
+      const now = frappe.datetime.now_datetime();
+      if (hasAssignedField) {
+        frappe.model.set_value(cdt, cdn, "cv_xu_ly_assigned_at", now);
+      } else {
+        row.cv_xu_ly_assigned_at = now;
+      }
+    } else if (row.cv_xu_ly_assigned_at) {
+      if (hasAssignedField) {
+        frappe.model.set_value(cdt, cdn, "cv_xu_ly_assigned_at", null);
+      } else {
+        row.cv_xu_ly_assigned_at = null;
+      }
+    }
+    frm.trigger("render_process_flow");
+  },
   trang_thai_nguoi_phoi_hop(frm, cdt, cdn) {
     ensure_collab_not_done_before_specialist(cdt, cdn);
+    const row = (locals[cdt] && locals[cdt][cdn]) || null;
+    const hasCompletedField = !!frappe.get_meta(cdt)?.fields?.some((df) => df.fieldname === "nguoi_phoi_hop_completed_at");
+    if (row) {
+      if (is_done(row.trang_thai_nguoi_phoi_hop) && !row.nguoi_phoi_hop_completed_at) {
+        if (hasCompletedField) {
+          frappe.model.set_value(cdt, cdn, "nguoi_phoi_hop_completed_at", frappe.datetime.now_datetime());
+        } else {
+          row.nguoi_phoi_hop_completed_at = frappe.datetime.now_datetime();
+        }
+      } else if (!is_done(row.trang_thai_nguoi_phoi_hop) && row.nguoi_phoi_hop_completed_at) {
+        if (hasCompletedField) {
+          frappe.model.set_value(cdt, cdn, "nguoi_phoi_hop_completed_at", null);
+        } else {
+          row.nguoi_phoi_hop_completed_at = null;
+        }
+      }
+    }
+    frm.trigger("render_process_flow");
+  },
+  trang_thai_cv_xu_ly(frm, cdt, cdn) {
+    const row = (locals[cdt] && locals[cdt][cdn]) || null;
+    const hasCompletedField = !!frappe.get_meta(cdt)?.fields?.some((df) => df.fieldname === "cv_xu_ly_completed_at");
+    if (row) {
+      if (is_done(row.trang_thai_cv_xu_ly) && !row.cv_xu_ly_completed_at) {
+        if (hasCompletedField) {
+          frappe.model.set_value(cdt, cdn, "cv_xu_ly_completed_at", frappe.datetime.now_datetime());
+        } else {
+          row.cv_xu_ly_completed_at = frappe.datetime.now_datetime();
+        }
+      } else if (!is_done(row.trang_thai_cv_xu_ly) && row.cv_xu_ly_completed_at) {
+        if (hasCompletedField) {
+          frappe.model.set_value(cdt, cdn, "cv_xu_ly_completed_at", null);
+        } else {
+          row.cv_xu_ly_completed_at = null;
+        }
+      }
+    }
+    frm.trigger("render_process_flow");
   },
   deadline2(frm, cdt, cdn) {
     ensure_spec_deadline_within_collab(cdt, cdn);

@@ -931,6 +931,8 @@ def trigger_handler_transfer(docname: str):
 
 	# Bypass fieldtype Button để chạy validate/hooks như khi đặt trạng thái
 	object.__setattr__(doc, "handler_status", "Chuyển văn bản")
+	if not getattr(doc, "handler_transferred_at", None):
+		object.__setattr__(doc, "handler_transferred_at", frappe.utils.now_datetime())
 	doc.save(ignore_permissions=True)
 
 	# Ghi lại xuống DB để các báo cáo/overview đọc được
