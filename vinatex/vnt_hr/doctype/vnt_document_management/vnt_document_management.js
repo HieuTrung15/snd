@@ -1620,7 +1620,7 @@ frappe.ui.form.on("VNT Document Management", {
     nodes.push(...roleNodes);
     let incomingDocKey = null;
     const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
-    const incomingDocValue = (frm.doc.cong_van_di).trim();
+    const incomingDocValue = (frm.doc.reference_number).trim();
     if (isIncoming && incomingDocValue) {
       const employeeNode = nodes.find((node) => node.key === "employee") || null;
       if (employeeNode) {
