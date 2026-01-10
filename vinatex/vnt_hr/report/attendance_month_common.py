@@ -31,7 +31,6 @@ def get_employee_for_user():
 		"Employee",
 		{"user_id": user, "status": "Active"},
 		"name",
-		ignore_permissions=True,
 	)
 	if not employee:
 		return None
