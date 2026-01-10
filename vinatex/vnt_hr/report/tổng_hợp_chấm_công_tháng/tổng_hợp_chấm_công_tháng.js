@@ -79,6 +79,15 @@ frappe.query_reports["Tổng hợp chấm công tháng"] = {
       }
     },
     {
+      "fieldname": "open_abnormal_attendance",
+      "label": "Chấm công bất thường",
+      "fieldtype": "Button",
+      "btn_size": "xs",
+      click: function () {
+        frappe.set_route("List", "VNT Attendance Confirm");
+      }
+    },
+    {
       "fieldname": "from_date",
       "label": "Từ ngày",
       "fieldtype": "Date",
@@ -143,17 +152,6 @@ frappe.query_reports["Tổng hợp chấm công tháng"] = {
       report.set_filter_value("company", default_company);
     }
 
-    add_report_buttons(report);
-
     // Hiển thị ghi chú ký hiệu một lần trên đầu báo cáo
   },
-  refresh: function (report) {
-    add_report_buttons(report);
-  },
 };
-
-function add_report_buttons(report) {
-  report.page.add_inner_button(__("Chấm công bất thường"), function () {
-    frappe.set_route("List", "VNT Attendance Confirm");
-  });
-}

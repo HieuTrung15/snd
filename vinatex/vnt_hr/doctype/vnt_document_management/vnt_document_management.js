@@ -1578,7 +1578,7 @@ frappe.ui.form.on("VNT Document Management", {
         statusKey: "employee_status",
         receivedAt: docReceivedAt,
         completedAt: employeeCompletedAt,
-        completedLabel: "Giao",
+        completedLabel: "Chuyển",
         x: 18,
         y: 108
       },
