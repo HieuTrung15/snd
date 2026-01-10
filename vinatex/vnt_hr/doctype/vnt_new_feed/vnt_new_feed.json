@@ -79,7 +79,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-08 14:05:24.415525",
+ "modified": "2026-01-10 16:30:49.509446",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT New Feed",
@@ -99,6 +99,7 @@
   },
   {
    "create": 1,
+   "delete": 1,
    "email": 1,
    "export": 1,
    "print": 1,
