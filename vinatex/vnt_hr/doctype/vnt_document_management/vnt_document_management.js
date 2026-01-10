@@ -944,9 +944,6 @@ frappe.ui.form.on("VNT Document Management", {
     // Đảm bảo có name trước khi gọi server
     const needsSave = !frm.doc.name || frm.is_dirty() || removed;
     if (needsSave) {
-      if (!frappe.ui.form.check_mandatory(frm)) {
-        return;
-      }
       await frm.save();
       if (frm.is_dirty()) {
         return;
