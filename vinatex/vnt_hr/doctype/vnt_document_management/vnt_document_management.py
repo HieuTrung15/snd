@@ -1832,8 +1832,19 @@ def get_document_block_data_v2(
 	want_end = want_start + page_size + 1  # +1 để biết has_next
 
 	order_by = "document_date desc"
-	if type_doc == "Công văn đến":
-		order_by = "YEAR(document_date) desc, name desc"
+	if type_doc in ("Công văn đến", "Công văn đi", "Quyết định"):
+		order_by = (
+			"CASE "
+			"WHEN name LIKE '%-%-%' THEN "
+			"CAST(2000 + RIGHT(SUBSTRING_INDEX(SUBSTRING_INDEX(name, '-', 2), '-', -1), 2) AS UNSIGNED) "
+			"WHEN name LIKE '%.%.%' THEN CAST(SUBSTRING_INDEX(name, '.', -1) AS UNSIGNED) "
+			"ELSE 0 END desc, "
+			"CASE "
+			"WHEN name LIKE '%-%-%' THEN CAST(SUBSTRING_INDEX(name, '-', -1) AS UNSIGNED) "
+			"WHEN name LIKE '%.%.%' THEN CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(name, '.', 2), '.', -1) AS UNSIGNED) "
+			"ELSE 0 END desc, "
+			"name desc"
+		)
 
 	matched = []
 	skipped = 0
