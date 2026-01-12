@@ -1832,63 +1832,129 @@ def get_document_block_data_v2(
 	want_end = want_start + page_size + 1  # +1 để biết has_next
 
 	order_by = "document_date desc"
-	if type_doc in ("Công văn đến", "Công văn đi", "Quyết định"):
-		order_by = (
-			"CASE "
-			"WHEN name LIKE '%-%-%' THEN "
-			"CAST(2000 + RIGHT(SUBSTRING_INDEX(SUBSTRING_INDEX(name, '-', 2), '-', -1), 2) AS UNSIGNED) "
-			"WHEN name LIKE '%.%.%' THEN CAST(SUBSTRING_INDEX(name, '.', -1) AS UNSIGNED) "
-			"ELSE 0 END desc, "
-			"CASE "
-			"WHEN name LIKE '%-%-%' THEN CAST(SUBSTRING_INDEX(name, '-', -1) AS UNSIGNED) "
-			"WHEN name LIKE '%.%.%' THEN CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(name, '.', 2), '.', -1) AS UNSIGNED) "
-			"ELSE 0 END desc, "
-			"name desc"
-		)
+	use_custom_sort = type_doc in ("Công văn đến", "Công văn đi", "Quyết định")
+	if use_custom_sort:
+		order_by = "name desc"
 
-	matched = []
-	skipped = 0
-	db_offset = 0
+	def _parse_doc_name_key(name: str) -> tuple[int, int, str]:
+		name = (name or "").strip()
+		year = 0
+		seq = 0
 
-	while len(matched) < want_end:
-		chunk = frappe.get_list(
-			DOCTYPE_NAME,
-			filters=base_filters,
-			or_filters=or_filters,
-			fields=fields,
-			limit_start=db_offset,
-			limit_page_length=batch,
-			order_by=order_by,
-			ignore_permissions=False,
-		) or []
+		if "-" in name:
+			parts = name.rsplit("-", 2)
+			if len(parts) == 3:
+				mmyy = parts[1].strip()
+				seq_str = parts[2].strip()
+				yy = mmyy[-2:] if len(mmyy) >= 2 else ""
+				if yy.isdigit():
+					year = 2000 + cint(yy)
+				if seq_str.isdigit():
+					seq = cint(seq_str)
+		elif "." in name:
+			parts = name.split(".")
+			if len(parts) >= 3:
+				seq_str = parts[-2].strip()
+				year_str = parts[-1].strip()
+				if year_str.isdigit():
+					year = cint(year_str)
+				if seq_str.isdigit():
+					seq = cint(seq_str)
 
-		if not chunk:
-			break
+		return (year, seq, name)
 
-		for d in chunk:
-			if post_filter and not post_filter(d):
-				continue
+	if use_custom_sort:
+		import heapq
 
-			st = _block_compute_status(d, today=today)
-			if status_filter and st != status_filter:
-				continue
+		matched_total = 0
+		top_rows = []
+		db_offset = 0
 
-			if skipped < want_start:
-				skipped += 1
-				continue
+		while True:
+			chunk = frappe.get_list(
+				DOCTYPE_NAME,
+				filters=base_filters,
+				or_filters=or_filters,
+				fields=fields,
+				limit_start=db_offset,
+				limit_page_length=batch,
+				order_by=order_by,
+				ignore_permissions=False,
+			) or []
 
-			d["computed_status"] = st
-			matched.append(d)
-
-			if len(matched) >= want_end:
+			if not chunk:
 				break
 
-		if len(chunk) < batch:
-			break
-		db_offset += batch
+			for d in chunk:
+				if post_filter and not post_filter(d):
+					continue
 
-	has_next = len(matched) > page_size
-	rows = matched[:page_size]
+				st = _block_compute_status(d, today=today)
+				if status_filter and st != status_filter:
+					continue
+
+				matched_total += 1
+				d["computed_status"] = st
+
+				key = _parse_doc_name_key(d.get("name"))
+				item = (key, d)
+				if len(top_rows) < want_end:
+					heapq.heappush(top_rows, item)
+				else:
+					if item > top_rows[0]:
+						heapq.heapreplace(top_rows, item)
+
+			if len(chunk) < batch:
+				break
+			db_offset += batch
+
+		sorted_rows = [item[1] for item in sorted(top_rows, key=lambda x: x[0], reverse=True)]
+		rows = sorted_rows[want_start:want_start + page_size]
+		has_next = matched_total > want_start + page_size
+	else:
+		matched = []
+		skipped = 0
+		db_offset = 0
+
+		while len(matched) < want_end:
+			chunk = frappe.get_list(
+				DOCTYPE_NAME,
+				filters=base_filters,
+				or_filters=or_filters,
+				fields=fields,
+				limit_start=db_offset,
+				limit_page_length=batch,
+				order_by=order_by,
+				ignore_permissions=False,
+			) or []
+
+			if not chunk:
+				break
+
+			for d in chunk:
+				if post_filter and not post_filter(d):
+					continue
+
+				st = _block_compute_status(d, today=today)
+				if status_filter and st != status_filter:
+					continue
+
+				if skipped < want_start:
+					skipped += 1
+					continue
+
+				d["computed_status"] = st
+				matched.append(d)
+
+				if len(matched) >= want_end:
+					break
+
+			if len(chunk) < batch:
+				break
+			db_offset += batch
+
+		has_next = len(matched) > page_size
+		rows = matched[:page_size]
 
 	# ===== 3) Enrich rows for incoming: chair_department =====
 	if type_doc == "Công văn đến" and rows:
