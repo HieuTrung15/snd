@@ -1,0 +1,143 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-12-31 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "company",
+  "template",
+  "book",
+  "column_break_qmwu",
+  "month",
+  "fiscal_year",
+  "amended_from",
+  "revision_no",
+  "status",
+  "section_break_lines",
+  "lines",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Chu\u1ed7i \u0111\u1eb7t t\u00ean",
+   "options": "FR-MON-.YYYY.-.####"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "C\u00f4ng ty",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "fiscal_year",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "N\u0103m t\u00e0i ch\u00ednh",
+   "options": "Fiscal Year",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "book.template",
+   "fieldname": "template",
+   "fieldtype": "Link",
+   "label": "M\u1eabu b\u00e1o c\u00e1o",
+   "options": "VNT Financial Report Template",
+   "reqd": 1
+  },
+  {
+   "fieldname": "book",
+   "fieldtype": "Link",
+   "label": "S\u1ed5 k\u1ebf ho\u1ea1ch",
+   "options": "VNT Financial Plan Book"
+  },
+  {
+   "fieldname": "column_break_qmwu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "month",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Th\u00e1ng",
+   "options": "01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "\u0110i\u1ec1u ch\u1ec9nh t\u1eeb",
+   "no_copy": 1,
+   "options": "VNT Financial Monthly Entry",
+   "print_hide": 1
+  },
+  {
+   "fieldname": "revision_no",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "S\u1ed1 phi\u00ean b\u1ea3n",
+   "read_only": 1
+  },
+  {
+   "default": "Nh\u00e1p",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Tr\u1ea1ng th\u00e1i",
+   "options": "Nh\u00e1p\n\u0110\u00e3 ghi nh\u1eadn\n\u0110\u00e3 h\u1ee7y"
+  },
+  {
+   "fieldname": "section_break_lines",
+   "fieldtype": "Section Break",
+   "label": "Danh s\u00e1ch kho\u1ea3n m\u1ee5c"
+  },
+  {
+   "fieldname": "lines",
+   "fieldtype": "Table",
+   "label": "Kho\u1ea3n m\u1ee5c",
+   "options": "VNT Financial Monthly Entry Line",
+   "reqd": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Ghi ch\u00fa"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-01-15 13:43:20.711417",
+ "modified_by": "Administrator",
+ "module": "VNT BCTC",
+ "name": "VNT Financial Monthly Entry",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

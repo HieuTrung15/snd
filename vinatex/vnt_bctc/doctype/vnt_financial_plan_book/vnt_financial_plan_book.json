@@ -1,0 +1,122 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-12-31 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "company",
+  "template",
+  "column_break_fo6k",
+  "version_no",
+  "status",
+  "fiscal_year",
+  "is_active",
+  "section_break_lines",
+  "lines",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Chu\u1ed7i \u0111\u1eb7t t\u00ean",
+   "options": "FR-BOOK-.YYYY.-.####"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "C\u00f4ng ty",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "fiscal_year",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "N\u0103m t\u00e0i ch\u00ednh",
+   "options": "Fiscal Year",
+   "reqd": 1
+  },
+  {
+   "fieldname": "template",
+   "fieldtype": "Link",
+   "label": "M\u1eabu b\u00e1o c\u00e1o",
+   "options": "VNT Financial Report Template",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_fo6k",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "version_no",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Phi\u00ean b\u1ea3n"
+  },
+  {
+   "default": "Nh\u00e1p",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Tr\u1ea1ng th\u00e1i",
+   "options": "Nh\u00e1p\n\u0110ang d\u00f9ng\n\u0110\u00e3 \u0111\u00f3ng"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "\u0110ang s\u1eed d\u1ee5ng"
+  },
+  {
+   "fieldname": "section_break_lines",
+   "fieldtype": "Section Break",
+   "label": "K\u1ebf ho\u1ea1ch n\u0103m"
+  },
+  {
+   "fieldname": "lines",
+   "fieldtype": "Table",
+   "label": "Danh s\u00e1ch kho\u1ea3n m\u1ee5c",
+   "options": "VNT Financial Plan Book Line",
+   "reqd": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Ghi ch\u00fa"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-01-15 13:40:50.530377",
+ "modified_by": "Administrator",
+ "module": "VNT BCTC",
+ "name": "VNT Financial Plan Book",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

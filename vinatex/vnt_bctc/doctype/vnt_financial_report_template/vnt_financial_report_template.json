@@ -1,0 +1,120 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:template_name",
+ "creation": "2025-12-31 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "template_name",
+  "company",
+  "currency",
+  "column_break_ynvw",
+  "is_active",
+  "description",
+  "section_break_items",
+  "items",
+  "nh\u00f3m_2_t\u1ea1o_\u0111\u1ed9ng_l\u1ef1c_m\u1edbi_trong_ng\u00e0nh_d\u1ec7t_may",
+  "nhom_3",
+  "nh\u00f3m_4_chi_ph\u00ed_t\u1ea1i_c\u00f4ng_ty_m\u1eb9"
+ ],
+ "fields": [
+  {
+   "fieldname": "template_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "T\u00ean m\u1eabu",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "C\u00f4ng ty",
+   "options": "Company"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Ti\u1ec1n t\u1ec7",
+   "options": "Currency"
+  },
+  {
+   "fieldname": "column_break_ynvw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "\u0110ang s\u1eed d\u1ee5ng"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "M\u00f4 t\u1ea3"
+  },
+  {
+   "fieldname": "section_break_items",
+   "fieldtype": "Section Break",
+   "label": "Danh s\u00e1ch kho\u1ea3n m\u1ee5c"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Nh\u00f3m 1: T\u1ea1o \u0111\u1ed9ng l\u1ef1c m\u1edbi ngo\u00e0i ng\u00e0nh D\u1ec7t may",
+   "options": "VNT Financial Report Template Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "nh\u00f3m_2_t\u1ea1o_\u0111\u1ed9ng_l\u1ef1c_m\u1edbi_trong_ng\u00e0nh_d\u1ec7t_may",
+   "fieldtype": "Table",
+   "label": "Nh\u00f3m 2: T\u1ea1o \u0111\u1ed9ng l\u1ef1c m\u1edbi trong ng\u00e0nh D\u1ec7t may ",
+   "options": "VNT Financial Report Template Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "nhom_3",
+   "fieldtype": "Table",
+   "label": "Nh\u00f3m 3: L\u00e0m m\u1edbi c\u00e1c \u0111\u1ed9ng l\u1ef1c t\u0103ng tr\u01b0\u1edfng c\u0169 trong ng\u00e0nh may v\u00e0 ng\u00e0nh s\u1ee3i",
+   "options": "VNT Financial Report Template Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "nh\u00f3m_4_chi_ph\u00ed_t\u1ea1i_c\u00f4ng_ty_m\u1eb9",
+   "fieldtype": "Table",
+   "label": "Nh\u00f3m 4: Chi ph\u00ed t\u1ea1i C\u00f4ng ty m\u1eb9",
+   "options": "VNT Financial Report Template Item",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-01-15 08:54:45.739941",
+ "modified_by": "Administrator",
+ "module": "VNT BCTC",
+ "name": "VNT Financial Report Template",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
