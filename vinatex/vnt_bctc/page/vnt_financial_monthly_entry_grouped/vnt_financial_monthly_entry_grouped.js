@@ -189,12 +189,6 @@ function open_create_dialog(page, state) {
 		title: __("Tạo phiếu tháng mới"),
 		fields: [
 			{
-				fieldname: "book",
-				label: __("Sổ kế hoạch"),
-				fieldtype: "Link",
-				options: "VNT Financial Plan Book",
-			},
-			{
 				fieldname: "company",
 				label: __("Công ty"),
 				fieldtype: "Link",
@@ -234,6 +228,12 @@ function open_create_dialog(page, state) {
 					"12",
 				].join("\n"),
 				reqd: 1,
+			},
+			{
+				fieldname: "book",
+				label: __("Sổ kế hoạch"),
+				fieldtype: "Link",
+				options: "VNT Financial Plan Book",
 			},
 		],
 		primary_action_label: __("Tạo phiếu"),
@@ -455,12 +455,26 @@ function render_groups(page, state) {
 function bind_input_events(page, state) {
 	$(page.main)
 		.off("input.vnt-bctc", "input[data-row-idx]")
+		.off("focus.vnt-bctc", "input[data-row-idx]")
+		.off("blur.vnt-bctc", "input[data-row-idx]")
 		.on("input.vnt-bctc", "input[data-row-idx]", (event) => {
 			const idx = parseInt(event.currentTarget.dataset.rowIdx, 10);
 			if (Number.isNaN(idx)) {
 				return;
 			}
-			state.rows[idx].gia_tri = parse_number(event.currentTarget.value);
+			const raw = normalize_integer(event.currentTarget.value);
+			if (event.currentTarget.value !== raw) {
+				event.currentTarget.value = raw;
+			}
+			state.rows[idx].gia_tri = raw === "" ? null : parse_number(raw);
+		})
+		.on("focus.vnt-bctc", "input[data-row-idx]", (event) => {
+			const raw = normalize_integer(event.currentTarget.value);
+			event.currentTarget.value = raw;
+		})
+		.on("blur.vnt-bctc", "input[data-row-idx]", (event) => {
+			const raw = normalize_integer(event.currentTarget.value);
+			event.currentTarget.value = raw ? format_number(raw) : "";
 		});
 }
 
@@ -500,7 +514,8 @@ function sync_values_from_dom(page, state) {
 			if (Number.isNaN(idx)) {
 				return;
 			}
-			state.rows[idx].gia_tri = parse_number(input.value);
+			const raw = normalize_integer(input.value);
+			state.rows[idx].gia_tri = raw === "" ? null : parse_number(raw);
 		});
 }
 
@@ -514,7 +529,7 @@ function parse_number(value) {
 	if (value === null || value === undefined) {
 		return null;
 	}
-	const text = String(value).replace(/,/g, "").trim();
+	const text = normalize_integer(value);
 	if (!text) {
 		return null;
 	}
@@ -526,25 +541,32 @@ function format_number(value) {
 	if (value === null || value === undefined || value === "") {
 		return "";
 	}
-	if (value === 0) {
-		return "";
-	}
-	if (typeof value === "number") {
-		return value;
-	}
-	const text = String(value).replace(/,/g, "").trim();
+	const text = normalize_integer(value);
 	if (!text) {
 		return "";
 	}
-	if (/^0+(\\.0+)?$/.test(text)) {
+	const number = parseFloat(text);
+	if (Number.isNaN(number)) {
 		return "";
 	}
-	const number = parseFloat(text);
-	return Number.isNaN(number) ? value : number;
+	if (typeof frappe.format_number === "function") {
+		return frappe.format_number(number, null, 0);
+	}
+	return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(number);
 }
 
 function escape_html(value) {
 	return frappe.utils.escape_html(value || "");
+}
+
+function normalize_integer(value) {
+	const text = String(value || "").replace(/[^\d-]/g, "");
+	if (!text || text === "-") {
+		return "";
+	}
+	const sign = text.startsWith("-") ? "-" : "";
+	const digits = text.replace(/-/g, "");
+	return sign + digits;
 }
 
 function get_default_fiscal_year() {

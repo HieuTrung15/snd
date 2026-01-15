@@ -52,7 +52,7 @@ function render_filters(page, state) {
 	const $actions = $(`
 		<div class="vnt-bctc-filter-actions">
 			<button class="btn btn-primary btn-sm vnt-bctc-create" type="button">${__(
-				"Tạo sổ mới"
+				"Tạo kế hoạch mới"
 			)}</button>
 		</div>
 	`);
@@ -101,7 +101,7 @@ function render_groups(page, state) {
 		<div><strong>${escape_html(state.doc.name)}</strong></div>
 		<div>Công ty: ${escape_html(state.doc.company || "-")}</div>
 		<div>Năm tài chính: ${escape_html(state.doc.fiscal_year || "-")}</div>
-		<div>Kịch bản: ${escape_html(state.doc.scenario || "-")}</div>
+		
 	`);
 
 	state.rows = [];
@@ -204,13 +204,27 @@ function render_groups(page, state) {
 function bind_input_events(page, state) {
 	$(page.main)
 		.off("input.vnt-bctc", "input[data-row-idx]")
+		.off("focus.vnt-bctc", "input[data-row-idx]")
+		.off("blur.vnt-bctc", "input[data-row-idx]")
 		.on("input.vnt-bctc", "input[data-row-idx]", (event) => {
 			const idx = parseInt(event.currentTarget.dataset.rowIdx, 10);
 			if (Number.isNaN(idx)) {
 				return;
 			}
 			const field = event.currentTarget.dataset.field;
-			state.rows[idx][field] = parse_number(event.currentTarget.value);
+			const raw = normalize_integer(event.currentTarget.value);
+			if (event.currentTarget.value !== raw) {
+				event.currentTarget.value = raw;
+			}
+			state.rows[idx][field] = raw === "" ? null : parse_number(raw);
+		})
+		.on("focus.vnt-bctc", "input[data-row-idx]", (event) => {
+			const raw = normalize_integer(event.currentTarget.value);
+			event.currentTarget.value = raw;
+		})
+		.on("blur.vnt-bctc", "input[data-row-idx]", (event) => {
+			const raw = normalize_integer(event.currentTarget.value);
+			event.currentTarget.value = raw ? format_number(raw) : "";
 		});
 }
 
@@ -247,7 +261,8 @@ function sync_values_from_dom(page, state) {
 				return;
 			}
 			const field = input.dataset.field;
-			state.rows[idx][field] = parse_number(input.value);
+			const raw = normalize_integer(input.value);
+			state.rows[idx][field] = raw === "" ? null : parse_number(raw);
 		});
 }
 
@@ -302,20 +317,20 @@ function open_create_dialog(page, state) {
 				options: "VNT Financial Report Template",
 				reqd: 1,
 			},
-			{
-				fieldname: "scenario",
-				label: __("Kịch bản"),
-				fieldtype: "Select",
-				options: ["Kế hoạch", "Dự báo", "Ngân sách"].join("\n"),
-				default: "Kế hoạch",
-			},
+			// {
+			// 	fieldname: "scenario",
+			// 	label: __("Kịch bản"),
+			// 	fieldtype: "Select",
+			// 	options: ["Kế hoạch", "Dự báo", "Ngân sách"].join("\n"),
+			// 	default: "Kế hoạch",
+			// },
 			{
 				fieldname: "version_no",
 				label: __("Phiên bản"),
 				fieldtype: "Data",
 			},
 		],
-		primary_action_label: __("Tạo sổ"),
+		primary_action_label: __("Tạo kế hoạch"),
 		primary_action(values) {
 			frappe.call({
 				method:
@@ -372,7 +387,7 @@ function inject_styles(page) {
 			}
 			.vnt-bctc-filters {
 				display: flex;
-				align-items: flex-end;
+				align-items: center;
 				gap: 12px;
 				flex-wrap: wrap;
 			}
@@ -437,7 +452,7 @@ function parse_number(value) {
 	if (value === null || value === undefined) {
 		return null;
 	}
-	const text = String(value).replace(/,/g, "").trim();
+	const text = normalize_integer(value);
 	if (!text) {
 		return null;
 	}
@@ -449,25 +464,32 @@ function format_number(value) {
 	if (value === null || value === undefined || value === "") {
 		return "";
 	}
-	if (value === 0) {
-		return "";
-	}
-	if (typeof value === "number") {
-		return value;
-	}
-	const text = String(value).replace(/,/g, "").trim();
+	const text = normalize_integer(value);
 	if (!text) {
 		return "";
 	}
-	if (/^0+(\\.0+)?$/.test(text)) {
+	const number = parseFloat(text);
+	if (Number.isNaN(number)) {
 		return "";
 	}
-	const number = parseFloat(text);
-	return Number.isNaN(number) ? value : number;
+	if (typeof frappe.format_number === "function") {
+		return frappe.format_number(number, null, 0);
+	}
+	return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(number);
 }
 
 function escape_html(value) {
 	return frappe.utils.escape_html(value || "");
+}
+
+function normalize_integer(value) {
+	const text = String(value || "").replace(/[^\d-]/g, "");
+	if (!text || text === "-") {
+		return "";
+	}
+	const sign = text.startsWith("-") ? "-" : "";
+	const digits = text.replace(/-/g, "");
+	return sign + digits;
 }
 
 function get_default_fiscal_year() {
