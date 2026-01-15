@@ -1,11 +1,13 @@
 # Copyright (c) 2025, vinatex and contributors
 # For license information, please see license.txt
 
+import json
 import unicodedata
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import flt
 from frappe.utils.xlsxutils import make_xlsx
 from frappe.utils import flt
 from frappe.utils.xlsxutils import read_xlsx_file_from_attached_file
@@ -56,6 +58,161 @@ def get_template_items(template):
 				}
 			)
 	return items
+
+
+@frappe.whitelist()
+def get_grouped_entry_data(docname=None):
+	if not docname:
+		frappe.throw(_("Thiếu phiếu tháng để tải dữ liệu."))
+
+	doc = frappe.get_doc("VNT Financial Monthly Entry", docname)
+	if not doc.template:
+		frappe.throw(_("Phiếu tháng chưa có Mẫu báo cáo."))
+
+	template = frappe.get_doc("VNT Financial Report Template", doc.template)
+	value_map = {}
+	for line in doc.lines:
+		key = _build_line_key(
+			line.doi_tuong,
+			line.ct_doi_tuong,
+			line.chi_tiet_doi_tuong_c2,
+			line.khoan_muc,
+			line.ct,
+		)
+		value_map[key] = line.gia_tri
+
+	groups = []
+	for field in template.meta.fields:
+		if field.fieldtype != "Table":
+			continue
+		if field.options != "VNT Financial Report Template Item":
+			continue
+		items = []
+		for row in template.get(field.fieldname) or []:
+			key = _build_line_key(
+				row.doi_tuong,
+				row.ct_doi_tuong,
+				row.chi_tiet_doi_tuong_c2,
+				row.khoan_muc,
+				row.ct,
+			)
+			items.append(
+				{
+					"doi_tuong": row.doi_tuong,
+					"ct_doi_tuong": row.ct_doi_tuong,
+					"chi_tiet_doi_tuong_c2": row.chi_tiet_doi_tuong_c2,
+					"khoan_muc": row.khoan_muc,
+					"ct": row.ct,
+					"gia_tri": value_map.get(key),
+				}
+			)
+		groups.append(
+			{
+				"label": field.label or field.fieldname,
+				"fieldname": field.fieldname,
+				"items": items,
+			}
+		)
+
+	return {
+		"doc": {
+			"name": doc.name,
+			"company": doc.company,
+			"fiscal_year": doc.fiscal_year,
+			"template": doc.template,
+			"book": doc.book,
+			"month": doc.month,
+			"docstatus": doc.docstatus,
+		},
+		"groups": groups,
+	}
+
+
+@frappe.whitelist()
+def create_monthly_entry(book=None, template=None, company=None, fiscal_year=None, month=None):
+	if book:
+		book_doc = frappe.get_doc("VNT Financial Plan Book", book)
+		company = book_doc.company
+		fiscal_year = book_doc.fiscal_year
+		template = book_doc.template
+
+	if not (company and fiscal_year and template and month):
+		frappe.throw(_("Thiếu thông tin để tạo phiếu tháng."))
+
+	template_doc = frappe.get_doc("VNT Financial Report Template", template)
+
+	doc = frappe.new_doc("VNT Financial Monthly Entry")
+	doc.company = company
+	doc.fiscal_year = fiscal_year
+	doc.template = template
+	doc.book = book
+	doc.month = month
+	doc.entry_type = "Thực tế"
+
+	lines = []
+	for field in template_doc.meta.fields:
+		if field.fieldtype != "Table":
+			continue
+		if field.options != "VNT Financial Report Template Item":
+			continue
+		for row in template_doc.get(field.fieldname) or []:
+			lines.append(
+				{
+					"doi_tuong": row.doi_tuong,
+					"ct_doi_tuong": row.ct_doi_tuong,
+					"chi_tiet_doi_tuong_c2": row.chi_tiet_doi_tuong_c2,
+					"khoan_muc": row.khoan_muc,
+					"ct": row.ct,
+					"gia_tri": None,
+				}
+			)
+	doc.set("lines", lines)
+	doc.insert()
+	return {"name": doc.name}
+
+
+@frappe.whitelist()
+def delete_monthly_entry(docname=None):
+	if not docname:
+		frappe.throw(_("Thiếu phiếu tháng để xóa."))
+
+	doc = frappe.get_doc("VNT Financial Monthly Entry", docname)
+	if doc.docstatus == 1:
+		frappe.throw(_("Phiếu đã ghi nhận, không thể xóa."))
+
+	doc.delete()
+	return {"deleted": docname}
+
+
+@frappe.whitelist()
+def save_grouped_entry(docname=None, lines=None):
+	if not docname:
+		frappe.throw(_("Thiếu phiếu tháng để lưu dữ liệu."))
+	if lines is None:
+		frappe.throw(_("Thiếu dữ liệu để lưu."))
+
+	if isinstance(lines, str):
+		lines = json.loads(lines)
+
+	doc = frappe.get_doc("VNT Financial Monthly Entry", docname)
+	if doc.docstatus == 1:
+		frappe.throw(_("Phiếu đã ghi nhận, vui lòng tạo điều chỉnh để cập nhật."))
+
+	doc.set("lines", [])
+	for line in lines:
+		doc.append(
+			"lines",
+			{
+				"doi_tuong": line.get("doi_tuong"),
+				"ct_doi_tuong": line.get("ct_doi_tuong"),
+				"chi_tiet_doi_tuong_c2": line.get("chi_tiet_doi_tuong_c2"),
+				"khoan_muc": line.get("khoan_muc"),
+				"ct": line.get("ct"),
+				"gia_tri": flt(line.get("gia_tri")) if line.get("gia_tri") not in (None, "") else None,
+			},
+		)
+	doc.save()
+	return {"name": doc.name}
 
 
 @frappe.whitelist()
@@ -213,6 +370,17 @@ def _normalize_select_value(value, mapping):
 		return None
 	key = str(value).strip()
 	return mapping.get(key, key)
+
+
+def _build_line_key(doi_tuong, ct_doi_tuong, chi_tiet_doi_tuong_c2, khoan_muc, ct):
+	parts = [
+		doi_tuong or "",
+		ct_doi_tuong or "",
+		chi_tiet_doi_tuong_c2 or "",
+		khoan_muc or "",
+		ct or "",
+	]
+	return "||".join(str(part).strip() for part in parts)
 
 
 _ROW_KIND_MAP = {
