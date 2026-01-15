@@ -1,0 +1,19 @@
+{
+ "content": null,
+ "creation": "2026-01-15 16:10:00.000000",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-01-15 16:10:00.000000",
+ "modified_by": "Administrator",
+ "module": "VNT BCTC",
+ "name": "vnt-financial-monthly-entry-grouped",
+ "owner": "Administrator",
+ "page_name": "vnt-financial-monthly-entry-grouped",
+ "roles": [],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Nhập liệu BCTC theo tháng"
+}

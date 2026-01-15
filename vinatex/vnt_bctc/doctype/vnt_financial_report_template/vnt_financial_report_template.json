@@ -8,10 +8,8 @@
  "field_order": [
   "template_name",
   "company",
-  "currency",
   "column_break_ynvw",
   "is_active",
-  "description",
   "section_break_items",
   "items",
   "nh\u00f3m_2_t\u1ea1o_\u0111\u1ed9ng_l\u1ef1c_m\u1edbi_trong_ng\u00e0nh_d\u1ec7t_may",
@@ -35,12 +33,6 @@
    "options": "Company"
   },
   {
-   "fieldname": "currency",
-   "fieldtype": "Link",
-   "label": "Ti\u1ec1n t\u1ec7",
-   "options": "Currency"
-  },
-  {
    "fieldname": "column_break_ynvw",
    "fieldtype": "Column Break"
   },
@@ -49,11 +41,6 @@
    "fieldname": "is_active",
    "fieldtype": "Check",
    "label": "\u0110ang s\u1eed d\u1ee5ng"
-  },
-  {
-   "fieldname": "description",
-   "fieldtype": "Small Text",
-   "label": "M\u00f4 t\u1ea3"
   },
   {
    "fieldname": "section_break_items",
@@ -92,7 +79,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-15 14:13:23.473944",
+ "modified": "2026-01-15 16:14:21.071687",
  "modified_by": "Administrator",
  "module": "VNT BCTC",
  "name": "VNT Financial Report Template",

@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import re
+import json
 import unicodedata
 from io import BytesIO
 
@@ -44,6 +45,152 @@ def get_template_items(template):
 				}
 			)
 	return items
+
+
+@frappe.whitelist()
+def get_grouped_plan_book_data(docname=None):
+	if not docname:
+		frappe.throw(_("Thiếu sổ kế hoạch để tải dữ liệu."))
+
+	doc = frappe.get_doc("VNT Financial Plan Book", docname)
+	if not doc.template:
+		frappe.throw(_("Sổ kế hoạch chưa có Mẫu báo cáo."))
+
+	template = frappe.get_doc("VNT Financial Report Template", doc.template)
+	value_map = {}
+	for line in doc.lines:
+		key = _build_line_key(
+			line.doi_tuong,
+			line.ct_doi_tuong,
+			line.chi_tiet_doi_tuong_c2,
+			line.khoan_muc,
+			line.ct,
+		)
+		value_map[key] = line
+
+	groups = []
+	for field in template.meta.fields:
+		if field.fieldtype != "Table":
+			continue
+		if field.options != "VNT Financial Report Template Item":
+			continue
+		items = []
+		for row in template.get(field.fieldname) or []:
+			key = _build_line_key(
+				row.doi_tuong,
+				row.ct_doi_tuong,
+				row.chi_tiet_doi_tuong_c2,
+				row.khoan_muc,
+				row.ct,
+			)
+			line = value_map.get(key)
+			items.append(
+				{
+					"doi_tuong": row.doi_tuong,
+					"ct_doi_tuong": row.ct_doi_tuong,
+					"chi_tiet_doi_tuong_c2": row.chi_tiet_doi_tuong_c2,
+					"khoan_muc": row.khoan_muc,
+					"ct": row.ct,
+					"annual_plan_value": line.annual_plan_value if line else None,
+					"plan_3t": line.plan_3t if line else None,
+					"plan_6t": line.plan_6t if line else None,
+					"plan_9t": line.plan_9t if line else None,
+					"plan_12t": line.plan_12t if line else None,
+				}
+			)
+		groups.append(
+			{
+				"label": field.label or field.fieldname,
+				"fieldname": field.fieldname,
+				"items": items,
+			}
+		)
+
+	return {
+		"doc": {
+			"name": doc.name,
+			"company": doc.company,
+			"fiscal_year": doc.fiscal_year,
+			"template": doc.template,
+			"scenario": doc.scenario,
+			"status": doc.status,
+		},
+		"groups": groups,
+	}
+
+
+@frappe.whitelist()
+def save_grouped_plan_book(docname=None, lines=None):
+	if not docname:
+		frappe.throw(_("Thiếu sổ kế hoạch để lưu dữ liệu."))
+	if lines is None:
+		frappe.throw(_("Thiếu dữ liệu để lưu."))
+
+	if isinstance(lines, str):
+		lines = json.loads(lines)
+
+	doc = frappe.get_doc("VNT Financial Plan Book", docname)
+	doc.set("lines", [])
+	for line in lines:
+		doc.append(
+			"lines",
+			{
+				"doi_tuong": line.get("doi_tuong"),
+				"ct_doi_tuong": line.get("ct_doi_tuong"),
+				"chi_tiet_doi_tuong_c2": line.get("chi_tiet_doi_tuong_c2"),
+				"khoan_muc": line.get("khoan_muc"),
+				"ct": line.get("ct"),
+				"annual_plan_value": _to_number(line.get("annual_plan_value")),
+				"plan_3t": _to_number(line.get("plan_3t")),
+				"plan_6t": _to_number(line.get("plan_6t")),
+				"plan_9t": _to_number(line.get("plan_9t")),
+				"plan_12t": _to_number(line.get("plan_12t")),
+			},
+		)
+	doc.save()
+	return {"name": doc.name}
+
+
+@frappe.whitelist()
+def create_plan_book(company=None, fiscal_year=None, template=None, scenario="Kế hoạch", version_no=None):
+	if not (company and fiscal_year and template):
+		frappe.throw(_("Thiếu thông tin để tạo sổ kế hoạch."))
+
+	template_doc = frappe.get_doc("VNT Financial Report Template", template)
+
+	doc = frappe.new_doc("VNT Financial Plan Book")
+	doc.company = company
+	doc.fiscal_year = fiscal_year
+	doc.template = template
+	doc.scenario = scenario or "Kế hoạch"
+	doc.version_no = version_no
+	doc.status = "Nháp"
+	doc.is_active = 1
+
+	lines = []
+	for field in template_doc.meta.fields:
+		if field.fieldtype != "Table":
+			continue
+		if field.options != "VNT Financial Report Template Item":
+			continue
+		for row in template_doc.get(field.fieldname) or []:
+			lines.append(
+				{
+					"doi_tuong": row.doi_tuong,
+					"ct_doi_tuong": row.ct_doi_tuong,
+					"chi_tiet_doi_tuong_c2": row.chi_tiet_doi_tuong_c2,
+					"khoan_muc": row.khoan_muc,
+					"ct": row.ct,
+					"annual_plan_value": None,
+					"plan_3t": None,
+					"plan_6t": None,
+					"plan_9t": None,
+					"plan_12t": None,
+				}
+			)
+	doc.set("lines", lines)
+	doc.insert()
+	return {"name": doc.name}
 
 
 @frappe.whitelist()
@@ -902,6 +1049,17 @@ def _safe_text(value):
 	if value is None:
 		return None
 	return str(value).strip()
+
+
+def _build_line_key(doi_tuong, ct_doi_tuong, chi_tiet_doi_tuong_c2, khoan_muc, ct):
+	parts = [
+		doi_tuong or "",
+		ct_doi_tuong or "",
+		chi_tiet_doi_tuong_c2 or "",
+		khoan_muc or "",
+		ct or "",
+	]
+	return "||".join(str(part).strip() for part in parts)
 
 
 _ROW_KIND_GROUP = "Tiêu đề nhóm"
