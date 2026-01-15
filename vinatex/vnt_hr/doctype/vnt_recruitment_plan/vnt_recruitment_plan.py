@@ -13,6 +13,8 @@ class VNTRecruitmentPlan(Document):
 		if self.status == "Đã phê duyệt":
 			#set docstatus to 1 (Submitted)
 			self.docstatus = 1
+		if self.status == "Từ chối":
+			self.docstatus = 2
 
 	def after_insert(self):
 		self.create_job_requisitions()

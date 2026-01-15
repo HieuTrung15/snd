@@ -106,13 +106,14 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Tr\u1ea1ng th\u00e1i",
-   "options": "M\u1edbi t\u1ea1o\nCh\u1edd ph\u00ea duy\u1ec7t\n\u0110\u00e3 ph\u00ea duy\u1ec7t\nT\u1eeb ch\u1ed1i"
+   "options": "M\u1edbi t\u1ea1o\nCh\u1edd ph\u00ea duy\u1ec7t\n\u0110\u00e3 ph\u00ea duy\u1ec7t\nT\u1eeb ch\u1ed1i",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-29 14:04:53.221241",
+ "modified": "2026-01-12 15:59:33.841889",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Recruitment Plan",
