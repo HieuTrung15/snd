@@ -1,0 +1,184 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-01-16 14:51:33.925838",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_fltb",
+  "lo\u1ea1i",
+  "employee",
+  "department",
+  "kpi_chuy\u00ean_vi\u00ean",
+  "naming_series",
+  "column_break_neyj",
+  "congviec",
+  "rating",
+  "percent",
+  "deadline",
+  "amended_from",
+  "timeline_section",
+  "exp_start_date",
+  "expected_time",
+  "column_break_pgpg",
+  "exp_end_date",
+  "progress",
+  "chi_ti\u1ebft_section",
+  "details"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_fltb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "congviec",
+   "fieldtype": "Data",
+   "label": "T\u00ean c\u00f4ng vi\u1ec7c"
+  },
+  {
+   "fieldname": "kpi_chuy\u00ean_vi\u00ean",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "KPI Chuy\u00ean vi\u00ean",
+   "options": "VNT Cong Viec Chi Tiet"
+  },
+  {
+   "fieldname": "lo\u1ea1i",
+   "fieldtype": "Select",
+   "label": "Lo\u1ea1i",
+   "options": "\nTheo k\u1ebf ho\u1ea1ch\n\u0110i\u1ec1u ch\u1ec9nh\nPh\u00e1t sinh\nN\u1ed9i b\u1ed9"
+  },
+  {
+   "fieldname": "rating",
+   "fieldtype": "Select",
+   "label": "\u0110i\u1ec3m s\u1ed1",
+   "options": "\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10"
+  },
+  {
+   "fieldname": "percent",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "% c\u00f4ng vi\u1ec7c",
+   "precision": "2"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Ng\u01b0\u1eddi ph\u1ee5 tr\u00e1ch",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Ph\u00f2ng/Ban",
+   "options": "Department"
+  },
+  {
+   "fieldname": "deadline",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VNT Task",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_neyj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "timeline_section",
+   "fieldtype": "Section Break",
+   "label": "Timeline"
+  },
+  {
+   "fieldname": "exp_start_date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y b\u1eaft \u0111\u1ea7u d\u1ef1 ki\u1ebfn"
+  },
+  {
+   "fieldname": "column_break_pgpg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "exp_end_date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y k\u1ebft th\u00fac d\u1ef1 ki\u1ebfn"
+  },
+  {
+   "fieldname": "expected_time",
+   "fieldtype": "Float",
+   "label": "Th\u1eddi gian d\u1ef1 ki\u1ebfn (gi\u1edd)"
+  },
+  {
+   "fieldname": "progress",
+   "fieldtype": "Percent",
+   "label": "% ho\u00e0n th\u00e0nh"
+  },
+  {
+   "fieldname": "chi_ti\u1ebft_section",
+   "fieldtype": "Section Break",
+   "label": "Chi ti\u1ebft"
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Text",
+   "label": "M\u00f4 t\u1ea3 chi ti\u1ebft c\u00f4ng vi\u1ec7c"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "naming_series",
+   "options": "CV.-.YYYY.-.#####"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-01-16 15:10:08.734240",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Task",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "congviec",
+ "translated_doctype": 1
+}
