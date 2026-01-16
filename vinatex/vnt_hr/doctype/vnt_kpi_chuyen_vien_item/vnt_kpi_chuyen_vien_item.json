@@ -1,0 +1,80 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-16 13:45:55.642541",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "kpi_details",
+  "cv_chi_tiet",
+  "rating",
+  "column_break_vdow",
+  "percent",
+  "date",
+  "note"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "rating",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "\u0110i\u1ec3m s\u1ed1",
+   "options": "\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Ghi ch\u00fa"
+  },
+  {
+   "columns": 3,
+   "fieldname": "kpi_details",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "KPI ban"
+  },
+  {
+   "columns": 3,
+   "fieldname": "cv_chi_tiet",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "C\u00f4ng vi\u1ec7c chi ti\u1ebft",
+   "options": "VNT Cong Viec Chi Tiet"
+  },
+  {
+   "columns": 1,
+   "fieldname": "percent",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "% c\u00f4ng vi\u1ec7c"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh"
+  },
+  {
+   "fieldname": "column_break_vdow",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-01-16 14:15:37.900319",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT KPI Chuyen Vien Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
