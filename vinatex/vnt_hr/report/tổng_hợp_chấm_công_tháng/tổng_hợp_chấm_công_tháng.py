@@ -46,10 +46,12 @@ def execute(filters):
 	# maps
 	if data_start:
 		holi_map = _holiday_map(emps, filters["company"], data_start, data_end)
+		weekend_map = _weekend_map(emps, filters["company"], data_start, data_end)
 		att_map  = _attendance_map(emps, data_start, data_end)
 		leave_map = _leave_map(emps, data_start, data_end)
 	else:
 		holi_map = {}
+		weekend_map = set()
 		att_map = {}
 		leave_map = {}
 	leave_type_groups = _leave_type_group_map()
@@ -94,7 +96,7 @@ def execute(filters):
 				continue
 
 			# 3) Cuối tuần
-			if _is_weekend(d_date):
+			if (emp_code, d_date) in weekend_map:
 				row[key] = STATUS_CODE["CUỐI TUẦN"]
 				row["tot_weekend"] += 1
 				continue
@@ -200,7 +202,7 @@ def _columns_pivot(days):
 	]
 	return base
 
-# ====== helpers giữ nguyên, chỉ bổ sung _attendance_map và chỉnh _holiday_map lọc weekend ======
+# ====== helpers giữ nguyên, chỉ bổ sung _attendance_map và lấy cuối tuần theo Holiday List ======
 def _month_bounds(year, month):
 	sd = date(year, month, 1)
 	if month == 12:
@@ -270,7 +272,7 @@ def _get_employees(filters, start_date, end_date):
 	return frappe.db.sql(sql, vals, as_dict=True)
 
 def _holiday_map(emps, company, start_date, end_date):
-	"""Trả LỄ, bỏ weekend (weekly_off=1) để weekend do _is_weekend quyết định."""
+	"""Trả LỄ, bỏ weekly_off=1 để cuối tuần lấy từ Holiday List."""
 	out = {}
 	comp_hl = frappe.db.get_value("Company", company, "default_holiday_list")
 	cache = {}
@@ -339,8 +341,33 @@ def _leave_map(emps, start_date, end_date):
 
 
 
-def _is_weekend(d: date) -> bool:
-	return d.weekday() >= 5
+def _weekend_map(emps, company, start_date, end_date):
+	"""Trả cuối tuần theo Holiday List (weekly_off=1)."""
+	out = set()
+	comp_hl = frappe.db.get_value("Company", company, "default_holiday_list")
+	cache = {}
+
+	def fetch_days(holiday_list):
+		if not holiday_list:
+			return []
+		if holiday_list in cache:
+			return cache[holiday_list]
+		rows = frappe.db.sql("""
+			SELECT holiday_date
+			FROM `tabHoliday`
+			WHERE parent=%s
+			  AND holiday_date BETWEEN %s AND %s
+			  AND COALESCE(weekly_off, 0) = 1
+		""", (holiday_list, start_date, end_date), as_dict=True)
+		cache[holiday_list] = rows
+		return rows
+
+	for e in emps:
+		hl = e.get("holiday_list") or comp_hl
+		for r in fetch_days(hl):
+			out.add((e["name"], getdate(r.holiday_date)))
+
+	return out
 
 
 def _leave_type_group_map():
@@ -434,7 +461,7 @@ def _add_category_units(metrics: dict, category: str, units: float):
 		metrics["paid"] += units
 
 
-def _compute_employee_metrics(emp, days, holi_map, att_map, leave_map, leave_type_groups):
+def _compute_employee_metrics(emp, days, holi_map, weekend_map, att_map, leave_map, leave_type_groups):
 	emp_code = emp["name"]
 	doj = getdate(emp.get("date_of_joining")) if emp.get("date_of_joining") else date.min
 	metrics = {
@@ -461,7 +488,7 @@ def _compute_employee_metrics(emp, days, holi_map, att_map, leave_map, leave_typ
 			metrics["paid"] += 1.0
 			continue
 
-		if _is_weekend(d):
+		if (emp_code, d) in weekend_map:
 			continue
 
 		weekday = d.weekday()
@@ -516,7 +543,7 @@ def _compute_employee_metrics(emp, days, holi_map, att_map, leave_map, leave_typ
 	return metrics, False, forget_dates
 
 
-def _build_summary_rows(employees, days, holi_map, att_map, leave_map, leave_type_groups):
+def _build_summary_rows(employees, days, holi_map, weekend_map, att_map, leave_map, leave_type_groups):
 	rows = []
 	totals = {
 		"paid_days": 0.0,
@@ -535,6 +562,7 @@ def _build_summary_rows(employees, days, holi_map, att_map, leave_map, leave_typ
 			emp,
 			days,
 			holi_map,
+			weekend_map,
 			att_map,
 			leave_map,
 			leave_type_groups,
@@ -609,15 +637,17 @@ def download_summary_xlsx(filters):
 	data_end = data_days[-1] if data_days else None
 	if data_start:
 		holi_map = _holiday_map(employees, company, data_start, data_end)
+		weekend_map = _weekend_map(employees, company, data_start, data_end)
 		att_map = _attendance_map(employees, data_start, data_end)
 		leave_map = _leave_map(employees, data_start, data_end)
 	else:
 		holi_map = {}
+		weekend_map = set()
 		att_map = {}
 		leave_map = {}
 
 	summary_rows, totals = _build_summary_rows(
-		employees, data_days, holi_map, att_map, leave_map, leave_type_groups
+		employees, data_days, holi_map, weekend_map, att_map, leave_map, leave_type_groups
 	)
 
 	output = io.BytesIO()

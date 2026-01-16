@@ -13,7 +13,7 @@ from vinatex.vnt_hr.report.tổng_hợp_chấm_công_tháng.tổng_hợp_chấm_
 	_attendance_map,
 	_holiday_map,
 	_is_attendance_business_trip,
-	_is_weekend,
+	_weekend_map,
 	_leave_map,
 	_leave_type_group_map,
 	_categorize_leave,
@@ -107,10 +107,12 @@ def compute_employee_month_context(
 			"designation": employee_doc.get("designation"),
 		}
 		holi_map = _holiday_map([emp_ref], company, data_days[0], data_days[-1])
+		weekend_map = _weekend_map([emp_ref], company, data_days[0], data_days[-1])
 		att_map = _attendance_map([emp_ref], data_days[0], data_days[-1])
 		leave_map = _leave_map([emp_ref], data_days[0], data_days[-1])
 	else:
 		holi_map = {}
+		weekend_map = set()
 		att_map = {}
 		leave_map = {}
 
@@ -162,7 +164,7 @@ def compute_employee_month_context(
 				status_key = "holiday"
 				source = "holiday"
 				totals["tot_holiday"] += 1
-			elif _is_weekend(day):
+			elif key in weekend_map:
 				status = STATUS_CODE["CUỐI TUẦN"]
 				status_key = "weekend"
 				source = "weekend"
