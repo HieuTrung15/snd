@@ -1,0 +1,64 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-16 15:40:44.081646",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "congviec",
+  "percent_cv",
+  "diem_cv_danh_gia",
+  "percent_ld",
+  "diem_ld_danh_gia"
+ ],
+ "fields": [
+  {
+   "fieldname": "congviec",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "C\u00f4ng vi\u1ec7c",
+   "options": "VNT Task"
+  },
+  {
+   "fieldname": "percent_cv",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "% ho\u00e0n th\u00e0nh CV"
+  },
+  {
+   "fieldname": "diem_cv_danh_gia",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "\u0110i\u1ec3m CV \u0111\u00e1nh gi\u00e1",
+   "precision": "2"
+  },
+  {
+   "fieldname": "percent_ld",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "% ho\u00e0n th\u00e0nh L\u0110 \u0111\u00e1nh gi\u00e1"
+  },
+  {
+   "fieldname": "diem_ld_danh_gia",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "\u0110i\u1ec3m L\u0110 \u0111\u00e1nh gi\u00e1"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-01-16 15:44:09.418962",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Review KPI Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

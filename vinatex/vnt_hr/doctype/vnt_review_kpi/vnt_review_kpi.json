@@ -1,0 +1,164 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-01-16 15:29:47.146198",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_lym9",
+  "employee",
+  "date",
+  "naming_series",
+  "column_break_rtte",
+  "chuky",
+  "chi_tiet_ky_review",
+  "amended_from",
+  "th\u00f4ng_tin_ng\u01b0\u1eddi_duy\u1ec7t_section",
+  "employee_c1",
+  "column_break_uapc",
+  "employee_c2",
+  "section_break_mhvi",
+  "items"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_lym9",
+   "fieldtype": "Section Break",
+   "label": "Th\u00f4ng tin chi ti\u1ebft"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Ng\u01b0\u1eddi t\u1ea1o",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Ng\u00e0y t\u1ea1o"
+  },
+  {
+   "fieldname": "column_break_rtte",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "chuky",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "K\u1ef3 review",
+   "options": "\nTh\u00e1ng\nQu\u00fd\nN\u0103m"
+  },
+  {
+   "fieldname": "chi_tiet_ky_review",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Chi ti\u1ebft k\u1ef3 review"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VNT Review KPI",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_break_mhvi",
+   "fieldtype": "Section Break",
+   "label": "Chi ti\u1ebft c\u00f4ng vi\u1ec7c th\u1ef1c hi\u1ec7n"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "options": "VNT Review KPI Item"
+  },
+  {
+   "fieldname": "th\u00f4ng_tin_ng\u01b0\u1eddi_duy\u1ec7t_section",
+   "fieldtype": "Section Break",
+   "label": "Th\u00f4ng tin ng\u01b0\u1eddi duy\u1ec7t"
+  },
+  {
+   "fetch_from": "employee.reports_to",
+   "fetch_if_empty": 1,
+   "fieldname": "employee_c1",
+   "fieldtype": "Link",
+   "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t c\u1ea5p 1",
+   "options": "Employee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_uapc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "employee_c2",
+   "fieldtype": "Link",
+   "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t c\u1ea5p 2",
+   "options": "Employee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "naming_series",
+   "options": "RV.-.{chuky}.-.{chi_tiet_ky_review}.-.####"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-01-16 15:59:52.927995",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Review KPI",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "employee",
+ "translated_doctype": 1
+}
