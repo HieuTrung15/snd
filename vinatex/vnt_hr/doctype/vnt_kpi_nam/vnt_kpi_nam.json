@@ -1,0 +1,144 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-01-16 10:12:08.801677",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_gl51",
+  "employee",
+  "date",
+  "kpi_name",
+  "department",
+  "naming_series",
+  "column_break_tipb",
+  "kpi_year",
+  "type",
+  "di\u1ec5n_gi\u1ea3i_chi_ti\u1ebft",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_gl51",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Ng\u01b0\u1eddi t\u1ea1o",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_tipb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y t\u1ea1o",
+   "reqd": 1
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Ph\u00f2ng/ban ch\u1ec9 \u0111\u1ecbnh",
+   "options": "Department"
+  },
+  {
+   "fieldname": "kpi_year",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "KPI n\u0103m",
+   "reqd": 1
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Ph\u00e2n lo\u1ea1i",
+   "options": "\nTheo k\u1ebf ho\u1ea1ch\n\u0110i\u1ec1u ch\u1ec9nh\nPh\u00e1t sinh",
+   "reqd": 1
+  },
+  {
+   "fieldname": "di\u1ec5n_gi\u1ea3i_chi_ti\u1ebft",
+   "fieldtype": "Small Text",
+   "label": "Di\u1ec5n gi\u1ea3i chi ti\u1ebft"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "naming_series",
+   "options": "KPI.-.{kpi_year}.-.####"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VNT KPI Nam",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "kpi_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "T\u00ean c\u00f4ng vi\u1ec7c",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-01-16 10:36:06.698669",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT KPI Nam",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "kpi_name"
+}
