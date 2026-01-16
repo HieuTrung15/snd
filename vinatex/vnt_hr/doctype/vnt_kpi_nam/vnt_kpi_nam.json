@@ -100,7 +100,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-16 10:36:06.698669",
+ "modified": "2026-01-16 13:37:02.544499",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT KPI Nam",
@@ -137,8 +137,10 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "title_field": "kpi_name"
+ "title_field": "kpi_name",
+ "translated_doctype": 1
 }
