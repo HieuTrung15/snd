@@ -7,8 +7,11 @@
  "engine": "InnoDB",
  "field_order": [
   "vnt_kpi_nam",
+  "kpi_details",
   "rating",
+  "column_break_gsgq",
   "percent",
+  "date",
   "note"
  ],
  "fields": [
@@ -16,33 +19,54 @@
    "fieldname": "vnt_kpi_nam",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "C\u00f4ng vi\u1ec7c",
+   "label": "KPI chung",
    "options": "VNT KPI Nam"
   },
   {
+   "columns": 1,
    "fieldname": "rating",
-   "fieldtype": "Rating",
+   "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "\u0110i\u1ec3m s\u1ed1"
+   "label": "\u0110i\u1ec3m s\u1ed1",
+   "options": "\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10"
   },
   {
+   "columns": 1,
    "fieldname": "percent",
    "fieldtype": "Percent",
    "in_list_view": 1,
    "label": "% c\u00f4ng vi\u1ec7c trong n\u0103m"
   },
   {
+   "columns": 2,
    "fieldname": "note",
    "fieldtype": "Small Text",
    "in_list_view": 1,
    "label": "Ghi ch\u00fa"
+  },
+  {
+   "columns": 3,
+   "fieldname": "kpi_details",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "KPI chi ti\u1ebft"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh"
+  },
+  {
+   "fieldname": "column_break_gsgq",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-16 13:19:59.955375",
+ "modified": "2026-01-16 14:10:34.702866",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT KPI Ban Item",
