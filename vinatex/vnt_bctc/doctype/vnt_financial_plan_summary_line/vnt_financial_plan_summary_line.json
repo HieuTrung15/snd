@@ -1,0 +1,286 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-01 00:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "stt",
+  "doi_tuong",
+  "ct_doi_tuong",
+  "chi_tiet_doi_tuong_c2",
+  "khoan_muc",
+  "ct",
+  "item_code",
+  "prev_plan",
+  "prev_3t",
+  "prev_6t",
+  "prev_9t",
+  "prev_12t",
+  "current_plan",
+  "current_3t",
+  "current_6t",
+  "current_9t",
+  "current_12t",
+  "prev_t01",
+  "prev_t02",
+  "prev_t03",
+  "prev_t04",
+  "prev_t05",
+  "prev_t06",
+  "prev_t07",
+  "prev_t08",
+  "prev_t09",
+  "prev_t10",
+  "prev_t11",
+  "prev_t12",
+  "current_t01",
+  "current_t02",
+  "current_t03",
+  "current_t04",
+  "current_t05",
+  "current_t06",
+  "current_t07",
+  "current_t08",
+  "current_t09",
+  "current_t10",
+  "current_t11",
+  "current_t12",
+  "luy_ke"
+ ],
+ "fields": [
+  {
+   "fieldname": "stt",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "STT"
+  },
+  {
+   "fieldname": "doi_tuong",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Nhóm"
+  },
+  {
+   "fieldname": "ct_doi_tuong",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Chi tiết đối tượng"
+  },
+  {
+   "fieldname": "chi_tiet_doi_tuong_c2",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Chi tiết đối tượng cấp 2"
+  },
+  {
+   "fieldname": "khoan_muc",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Khoản mục"
+  },
+  {
+   "fieldname": "ct",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Chi tiết khoản mục"
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Mã khoản mục"
+  },
+  {
+   "fieldname": "prev_plan",
+   "fieldtype": "Currency",
+   "label": "KH năm trước"
+  },
+  {
+   "fieldname": "prev_3t",
+   "fieldtype": "Currency",
+   "label": "3T năm trước"
+  },
+  {
+   "fieldname": "prev_6t",
+   "fieldtype": "Currency",
+   "label": "6T năm trước"
+  },
+  {
+   "fieldname": "prev_9t",
+   "fieldtype": "Currency",
+   "label": "9T năm trước"
+  },
+  {
+   "fieldname": "prev_12t",
+   "fieldtype": "Currency",
+   "label": "12T năm trước"
+  },
+  {
+   "fieldname": "current_plan",
+   "fieldtype": "Currency",
+   "label": "KH năm nay"
+  },
+  {
+   "fieldname": "current_3t",
+   "fieldtype": "Currency",
+   "label": "3T năm nay"
+  },
+  {
+   "fieldname": "current_6t",
+   "fieldtype": "Currency",
+   "label": "6T năm nay"
+  },
+  {
+   "fieldname": "current_9t",
+   "fieldtype": "Currency",
+   "label": "9T năm nay"
+  },
+  {
+   "fieldname": "current_12t",
+   "fieldtype": "Currency",
+   "label": "12T năm nay"
+  },
+  {
+   "fieldname": "prev_t01",
+   "fieldtype": "Currency",
+   "label": "T01 năm trước"
+  },
+  {
+   "fieldname": "prev_t02",
+   "fieldtype": "Currency",
+   "label": "T02 năm trước"
+  },
+  {
+   "fieldname": "prev_t03",
+   "fieldtype": "Currency",
+   "label": "T03 năm trước"
+  },
+  {
+   "fieldname": "prev_t04",
+   "fieldtype": "Currency",
+   "label": "T04 năm trước"
+  },
+  {
+   "fieldname": "prev_t05",
+   "fieldtype": "Currency",
+   "label": "T05 năm trước"
+  },
+  {
+   "fieldname": "prev_t06",
+   "fieldtype": "Currency",
+   "label": "T06 năm trước"
+  },
+  {
+   "fieldname": "prev_t07",
+   "fieldtype": "Currency",
+   "label": "T07 năm trước"
+  },
+  {
+   "fieldname": "prev_t08",
+   "fieldtype": "Currency",
+   "label": "T08 năm trước"
+  },
+  {
+   "fieldname": "prev_t09",
+   "fieldtype": "Currency",
+   "label": "T09 năm trước"
+  },
+  {
+   "fieldname": "prev_t10",
+   "fieldtype": "Currency",
+   "label": "T10 năm trước"
+  },
+  {
+   "fieldname": "prev_t11",
+   "fieldtype": "Currency",
+   "label": "T11 năm trước"
+  },
+  {
+   "fieldname": "prev_t12",
+   "fieldtype": "Currency",
+   "label": "T12 năm trước"
+  },
+  {
+   "fieldname": "current_t01",
+   "fieldtype": "Currency",
+   "label": "T01 năm nay"
+  },
+  {
+   "fieldname": "current_t02",
+   "fieldtype": "Currency",
+   "label": "T02 năm nay"
+  },
+  {
+   "fieldname": "current_t03",
+   "fieldtype": "Currency",
+   "label": "T03 năm nay"
+  },
+  {
+   "fieldname": "current_t04",
+   "fieldtype": "Currency",
+   "label": "T04 năm nay"
+  },
+  {
+   "fieldname": "current_t05",
+   "fieldtype": "Currency",
+   "label": "T05 năm nay"
+  },
+  {
+   "fieldname": "current_t06",
+   "fieldtype": "Currency",
+   "label": "T06 năm nay"
+  },
+  {
+   "fieldname": "current_t07",
+   "fieldtype": "Currency",
+   "label": "T07 năm nay"
+  },
+  {
+   "fieldname": "current_t08",
+   "fieldtype": "Currency",
+   "label": "T08 năm nay"
+  },
+  {
+   "fieldname": "current_t09",
+   "fieldtype": "Currency",
+   "label": "T09 năm nay"
+  },
+  {
+   "fieldname": "current_t10",
+   "fieldtype": "Currency",
+   "label": "T10 năm nay"
+  },
+  {
+   "fieldname": "current_t11",
+   "fieldtype": "Currency",
+   "label": "T11 năm nay"
+  },
+  {
+   "fieldname": "current_t12",
+   "fieldtype": "Currency",
+   "label": "T12 năm nay"
+  },
+  {
+   "fieldname": "luy_ke",
+   "fieldtype": "Currency",
+   "label": "Lũy kế"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-01-20 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "VNT BCTC",
+ "name": "VNT Financial Plan Summary Line",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
