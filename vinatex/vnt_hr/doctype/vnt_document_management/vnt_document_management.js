@@ -759,6 +759,80 @@ const find_multiple_chair = (frm) => {
 };
 
 frappe.ui.form.on("VNT Document Management", {
+  onload (frm) {
+    frm.set_query('lead_depart', () => {
+      return {
+        filters: {
+          status: 'Active',
+          custom_designation_group: "Lãnh đạo cấp trung",
+        }
+      }
+    })
+  },
+  lead_depart(frm) {
+    // 1. Lưu giá trị lead vào biến để so sánh
+    const lead_id = frm.doc.lead_depart;
+
+    frappe.call({
+        method: "vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.employee_in_department",
+        args: {
+            employee: lead_id
+        },
+        callback: (r) => {
+            if (r.message && r.message.length > 0) {
+              // 2. Làm sạch bảng trước khi chèn dữ liệu mới
+              frm.clear_table("items4");
+
+              // 3. Sử dụng .filter() để lọc danh sách theo 2 yêu cầu
+              const filtered_employees = r.message.filter(item => {
+                  return item.name !== lead_id && item.designation !== "Trưởng ban";
+              });
+
+              // 4. Duyệt qua danh sách đã lọc để thêm vào Child Table
+              filtered_employees.forEach((item) => {
+                  const row = frm.add_child("items4");
+                  row.employee = item.name;
+                  row.department = item.department;
+                  // Nếu bảng items4 có cột chức danh, bạn có thể gán thêm:
+                  // row.designation = item.designation; 
+              });
+
+              // 5. Cập nhật lại giao diện người dùng
+              frm.refresh_field("items4");
+
+              // trả về tên phòng ban
+              if (filtered_employees[0].department == 'Văn phòng HĐQT - VGT'){
+                frm.set_df_property("hdqt_opinion", "hidden", 0);
+                frm.refresh_field("hdqt_opinion");
+              }
+              else{
+                frm.set_df_property("hdqt_opinion", "hidden", 1);
+                frm.refresh_field("hdqt_opinion");
+              }  
+            }
+          }
+      });
+  },
+  hdqt_opinion (frm) {
+    frappe.call({
+        method: "vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.employee_in_hdqt",
+        args: {},
+        callback: (r) => {
+            if (r.message && r.message.length > 0) {
+              console.log("r.message", r.message)
+              // 2. Làm sạch bảng trước khi chèn dữ liệu mới
+              frm.clear_table("items6");
+              // 3. Duyệt qua danh sách đã lọc để thêm vào Child Table
+              r.message.forEach((item) => {
+                  const row = frm.add_child("items6");
+                  row.employee = item.name;
+              });
+              // 4. Cập nhật lại giao diện người dùng
+              frm.refresh_field("items6");
+            }
+          }
+      });
+  },
   setup(frm) {
     patch_scroll_to_field(frm);
     frm.trigger("setup_cv_xu_ly_query");

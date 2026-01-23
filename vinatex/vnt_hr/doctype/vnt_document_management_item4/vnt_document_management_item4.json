@@ -1,0 +1,58 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-22 16:57:54.830928",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "department",
+  "column_break_ak3d",
+  "opinion",
+  "detail"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Nh\u00e2n s\u1ef1",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "column_break_ak3d",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "opinion",
+   "fieldtype": "Select",
+   "label": "Quan \u0111i\u1ec3m",
+   "options": "\n\u0110\u1ed3ng \u00fd\nT\u1eeb ch\u1ed1i"
+  },
+  {
+   "fieldname": "detail",
+   "fieldtype": "Small Text",
+   "label": "\u00dd ki\u1ebfn ri\u00eang"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-01-22 17:10:20.082213",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Document Management Item4",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
