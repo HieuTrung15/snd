@@ -883,6 +883,20 @@ def get_company_leadership(company: str | None = None):
 
 
 @frappe.whitelist()
+def employee_in_department(employee: str | None = None):
+	department = frappe.get_value("Employee", {"name": employee}, "department")
+	infor = []
+	if department:
+		infor = frappe.get_all("Employee", filters={'department': department}, fields=['name', 'designation', 'custom_designation_group', 'department'])
+	return infor
+
+
+@frappe.whitelist()
+def employee_in_hdqt():
+	return frappe.get_all("Employee", filters={"department": "Hội đồng quản trị - VGT"}, fields=['name', 'employee_name'])
+
+
+@frappe.whitelist()
 def get_employee_display_names(employee_ids):
 	ids = employee_ids
 	if isinstance(employee_ids, str):
