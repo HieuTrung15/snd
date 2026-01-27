@@ -45,6 +45,72 @@ const is_checked = (val) => {
 };
 const is_done = (val) => (val || "").trim() === "Hoàn thành";
 
+const normalize_label = (val) => (val || "").toString().trim().toLowerCase();
+
+const get_section_fieldnames = (frm, sectionLabel) => {
+  const metaFields = frm?.meta?.fields || [];
+  const target = normalize_label(sectionLabel);
+  const result = [];
+  let inSection = false;
+
+  metaFields.forEach((df) => {
+    if (df.fieldtype === "Section Break") {
+      if (inSection) {
+        inSection = false;
+        return;
+      }
+      inSection = normalize_label(df.label) === target;
+      return;
+    }
+    if (!inSection) return;
+    if (df.fieldtype === "Tab Break") {
+      inSection = false;
+      return;
+    }
+    if (["Column Break", "Section Break"].includes(df.fieldtype)) return;
+    if (df.fieldname) result.push(df.fieldname);
+  });
+
+  return result;
+};
+
+const HDQT_MEMBER_FIELDS = [
+  "thanh_vien_1",
+  "thanh_vien_2",
+  "thanh_vien_3",
+  "thanh_vien_4",
+  "thanh_vien_5",
+  "thanh_vien_6",
+  "thanh_vien_7",
+  "deadline1",
+  "deadline2",
+  "deadline3",
+  "deadline4",
+  "deadline5",
+  "deadline6",
+  "deadline7",
+  "y_kien_1",
+  "y_kien_2",
+  "y_kien_3",
+  "y_kien_4",
+  "y_kien_5",
+  "y_kien_6",
+  "y_kien_7",
+  "y_kien_khac_1",
+  "y_kien_khac_2",
+  "y_kien_khac_3",
+  "y_kien_khac_4",
+  "y_kien_khac_5",
+  "y_kien_khac_6",
+  "y_kien_khac_7"
+];
+
+const get_handler_owner = (frm) => {
+  const isInternal = is_checked(frm.doc.internal);
+  const target = isInternal ? frm.doc.lead_depart : frm.doc.handler;
+  return (target || "").trim();
+};
+
 const get_employee_department = async (employee) => {
   if (!employee) return null;
   try {
@@ -166,25 +232,33 @@ const has_any_role_row = (frm) => {
   return rows.some((r) => row_has_role(r));
 };
 
-const prune_items_without_role = (frm) => {
-  const rows = Array.isArray(frm.doc.items) ? frm.doc.items : [];
-  let removed = false;
+const prune_items_without_role = (frm, tables = ["items"]) => {
+  if (!Array.isArray(tables) || !tables.length) return false;
+  let removedAny = false;
 
-  for (let i = rows.length - 1; i >= 0; i -= 1) {
-    const row = rows[i] || {};
-    if (!row_has_role(row)) {
-      rows.splice(i, 1);
-      removed = true;
+  tables.forEach((tableName) => {
+    const rows = Array.isArray(frm.doc[tableName]) ? frm.doc[tableName] : [];
+    let removed = false;
+    for (let i = rows.length - 1; i >= 0; i -= 1) {
+      const row = rows[i] || {};
+      if (!row_has_role(row)) {
+        rows.splice(i, 1);
+        removed = true;
+      }
     }
-  }
-  if (removed) {
-    frm.refresh_field("items");
+    if (removed) {
+      removedAny = true;
+      frm.refresh_field(tableName);
+    }
+  });
+
+  if (removedAny) {
     frm.doc.__unsaved = true;
     if (typeof frm.dirty === "function") {
       frm.dirty();
     }
   }
-  return removed;
+  return removedAny;
 };
 
 const all_specialists_done = (frm) => {
@@ -300,7 +374,7 @@ const can_view_handler_controls = async (frm) => {
   const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
   if (!isIncoming) return true;
 
-  const handler = (frm.doc.handler || "").trim();
+  const handler = get_handler_owner(frm);
   if (!handler) return true; // chưa giao lãnh đạo -> cho xem để hiểu cần giao
 
   if (frappe.user.has_role("Administrator") || frappe.user.has_role("System Manager")) {
@@ -318,25 +392,45 @@ const refresh_handler_controls_visibility = async (frm) => {
   });
 };
 
-const set_handler_editable = (frm, enabled) => {
+const set_handler_editable = (frm, enabled, opts = {}) => {
   if (frm._is_chair_scope_active || frm._is_handler_scope_active || frm._is_specialist_scope_active || frm._is_collab_scope_active) return; // Đang khóa form, bỏ qua
+  const allowItems = opts.allowItems !== undefined ? opts.allowItems : enabled;
+  const allowItem2 = opts.allowItem2 !== undefined ? opts.allowItem2 : enabled;
+  const allowItems4 = opts.allowItems4 !== undefined ? opts.allowItems4 : false;
+  const allowItems5 = opts.allowItems5 !== undefined ? opts.allowItems5 : false;
+  const allowHdqtOpinion = opts.allowHdqtOpinion !== undefined ? opts.allowHdqtOpinion : enabled;
   frm.toggle_enable("y_kien_ld_td", enabled);
   frm.toggle_enable("handler_status", enabled);
   frm.toggle_enable("y_kien_ld_td", enabled);
   frm.toggle_enable("is_handler_status", enabled);
+  frm.toggle_enable("hdqt_opinion", allowHdqtOpinion);
   const grid = frm.fields_dict.items?.grid;
-  frm.set_df_property("items", "read_only", enabled ? 0 : 1);
+  frm.set_df_property("items", "read_only", allowItems ? 0 : 1);
   if (grid) {
-    grid.cannot_add_rows = !enabled;
-    grid.cannot_delete_rows = !enabled;
+    grid.cannot_add_rows = !allowItems;
+    grid.cannot_delete_rows = !allowItems;
     grid.refresh();
   }
   const grid2 = frm.fields_dict.item2?.grid;
-  frm.set_df_property("item2", "read_only", enabled ? 0 : 1);
+  frm.set_df_property("item2", "read_only", allowItem2 ? 0 : 1);
   if (grid2) {
-    grid2.cannot_add_rows = !enabled;
-    grid2.cannot_delete_rows = !enabled;
+    grid2.cannot_add_rows = !allowItem2;
+    grid2.cannot_delete_rows = !allowItem2;
     grid2.refresh();
+  }
+  const gridItems4 = frm.fields_dict.items4?.grid;
+  frm.set_df_property("items4", "read_only", allowItems4 ? 0 : 1);
+  if (gridItems4) {
+    gridItems4.cannot_add_rows = !allowItems4;
+    gridItems4.cannot_delete_rows = !allowItems4;
+    gridItems4.refresh();
+  }
+  const gridItems5 = frm.fields_dict.items5?.grid;
+  frm.set_df_property("items5", "read_only", allowItems5 ? 0 : 1);
+  if (gridItems5) {
+    gridItems5.cannot_add_rows = !allowItems5;
+    gridItems5.cannot_delete_rows = !allowItems5;
+    gridItems5.refresh();
   }
 };
 
@@ -412,14 +506,31 @@ const enforce_handler_scope = async (frm) => {
   }
 
   const currentEmp = frm._currentEmployee || (await get_current_employee(frm));
-  if (!currentEmp || frm.doc.handler !== currentEmp) {
+  const handlerOwner = get_handler_owner(frm);
+  if (!currentEmp || handlerOwner !== currentEmp) {
     frm._is_handler_scope_active = false;
     return;
   }
 
   frm._is_handler_scope_active = true;
 
-  const allowed = new Set(["y_kien_ld_td", "handler_status", "is_handler_status", "items", "item2"]);
+  const isInternal = is_checked(frm.doc.internal);
+  const trinhDuyetFields = get_section_fieldnames(frm, "Trình duyệt");
+  const allowed = new Set([
+    "y_kien_ld_td",
+    "handler_status",
+    "is_handler_status",
+    "hdqt_opinion",
+    ...HDQT_MEMBER_FIELDS,
+    ...trinhDuyetFields,
+    ...(isInternal ? ["lead_depart", "send_boss", "items4", "items5"] : ["items", "item2"])
+  ]);
+  const leaderOwner = (frm.doc.lanh_dao_tap_doan || "").trim();
+  const canEditLeaderFields = !!(currentEmp && leaderOwner && currentEmp === leaderOwner);
+  if (!canEditLeaderFields) {
+    allowed.delete("y_kien_lanh_dao_tap_doan");
+    allowed.delete("trang_thai_lanh_dao_tap_doan");
+  }
 
   Object.keys(frm.fields_dict || {}).forEach((fieldname) => {
     const field = frm.fields_dict[fieldname];
@@ -465,8 +576,10 @@ const enforce_handler_scope = async (frm) => {
     grid.refresh();
   };
 
-  lockGrid(frm.fields_dict.items?.grid, false); // items được phép sửa
+  lockGrid(frm.fields_dict.items?.grid, false); // items được phép sửa khi không nội bộ
   lockGrid(frm.fields_dict.item2?.grid, false);
+  lockGrid(frm.fields_dict.items4?.grid, false);
+  lockGrid(frm.fields_dict.items5?.grid, false);
   lockGrid(frm.fields_dict.items2?.grid);
   lockGrid(frm.fields_dict.items3?.grid);
   lockGrid(frm.fields_dict.item4?.grid);
@@ -660,9 +773,14 @@ const apply_handler_edit_lock = async (frm) => {
   }
 
   const currentEmp = await get_current_employee(frm);
-  const hasHandler = !!frm.doc.handler;
-  const canEdit = !hasHandler || (currentEmp && frm.doc.handler === currentEmp);
-  set_handler_editable(frm, !!canEdit);
+  const isInternal = is_checked(frm.doc.internal);
+  const handlerOwner = get_handler_owner(frm);
+  const canEdit = isInternal
+    ? !!(currentEmp && handlerOwner && handlerOwner === currentEmp)
+    : (!handlerOwner || (currentEmp && handlerOwner === currentEmp));
+  const allowItems4 = isInternal && !!canEdit;
+  const allowItems5 = isInternal && !!canEdit;
+  set_handler_editable(frm, !!canEdit, { allowItems: !isInternal && !!canEdit, allowItem2: !isInternal && !!canEdit, allowItems4, allowItems5, allowHdqtOpinion: !!canEdit });
   await enforce_handler_scope(frm);
 };
 
@@ -816,7 +934,13 @@ frappe.ui.form.on("VNT Document Management", {
           custom_designation_group: "Lãnh đạo cấp trung",
         }
       }
-    })
+    });
+    frm.set_df_property("lanh_dao_tap_doan", "ignore_user_permissions", 1);
+    frm.set_query("lanh_dao_tap_doan", () => {
+      return {
+        query: "vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.employee_query_all"
+      };
+    });
   },
   async lead_depart(frm) {
     // 1. Lưu giá trị lead vào biến để so sánh
@@ -864,16 +988,20 @@ frappe.ui.form.on("VNT Document Management", {
         args: {},
         callback: (r) => {
             if (r.message && r.message.length > 0) {
-              console.log("r.message", r.message)
-              // 2. Làm sạch bảng trước khi chèn dữ liệu mới
-              frm.clear_table("items6");
-              // 3. Duyệt qua danh sách đã lọc để thêm vào Child Table
-              r.message.forEach((item) => {
-                  const row = frm.add_child("items6");
-                  row.employee = item.name;
+              const fields = [
+                "thanh_vien_1",
+                "thanh_vien_2",
+                "thanh_vien_3",
+                "thanh_vien_4",
+                "thanh_vien_5",
+                "thanh_vien_6",
+                "thanh_vien_7"
+              ];
+              const updates = {};
+              fields.forEach((fieldname, idx) => {
+                updates[fieldname] = r.message[idx]?.name || null;
               });
-              // 4. Cập nhật lại giao diện người dùng
-              frm.refresh_field("items6");
+              frm.set_value(updates);
             }
           }
       });
@@ -1029,11 +1157,18 @@ frappe.ui.form.on("VNT Document Management", {
   },
 
   async handler_status(frm) {
-    if ((frm.doc.type || "").trim() === "Công văn đến" && frm.doc.handler) {
+    if ((frm.doc.type || "").trim() === "Công văn đến") {
       const currentEmp = await get_current_employee(frm);
-      if (!currentEmp || frm.doc.handler !== currentEmp) {
-        frappe.msgprint("Chỉ Lãnh đạo Tập đoàn được chỉ định mới có thể Chuyển xử lý.");
-        return;
+      const isInternal = is_checked(frm.doc.internal);
+      const handlerOwner = get_handler_owner(frm);
+      if (handlerOwner) {
+        const isAllowed = currentEmp && handlerOwner === currentEmp;
+        if (!isAllowed) {
+          frappe.msgprint(isInternal
+            ? "Chỉ Lãnh đạo Ban được chỉ định mới có thể Chuyển xử lý."
+            : "Chỉ Lãnh đạo Tập đoàn được chỉ định mới có thể Chuyển xử lý.");
+          return;
+        }
       }
     }
 
@@ -1058,7 +1193,8 @@ frappe.ui.form.on("VNT Document Management", {
       }
     }
 
-    const removed = prune_items_without_role(frm);
+    const isInternal = is_checked(frm.doc.internal);
+    const removed = prune_items_without_role(frm, isInternal ? ["items4"] : ["items"]);
     if (removed) {
       frm.trigger("sync_chair_from_items");
       frm.trigger("sync_collab_from_items");

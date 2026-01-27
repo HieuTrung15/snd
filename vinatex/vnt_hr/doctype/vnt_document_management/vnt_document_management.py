@@ -33,6 +33,7 @@ class VNTDocumentManagement(Document):
 		doc_type = (self.type or "").strip()
 		if doc_type == "Công văn đến":
 			self._notify_incoming_to_handler()
+			self._notify_incoming_to_lead_depart()
 			self._notify_office_group()
 		elif doc_type == "Công văn đi":
 			self._notify_outgoing_department_members()
@@ -123,7 +124,7 @@ class VNTDocumentManagement(Document):
 	def _maybe_close_handler_todo_on_transfer(self):
 		"""
 		Khi lãnh đạo bấm 'Chuyển văn bản' và đã tick 'Đã chuyển xử lý',
-		đóng ToDo được tạo lúc nhận công văn đến cho Lãnh đạo Tập đoàn.
+		đóng ToDo được tạo lúc nhận công văn đến cho Lãnh đạo (Tập đoàn hoặc Ban nội bộ).
 		"""
 		if (self.type or "").strip() != "Công văn đến":
 			return
@@ -132,10 +133,12 @@ class VNTDocumentManagement(Document):
 		if current_status != "Chuyển văn bản":
 			return
 
-		if not self.name or not self.handler:
+		is_internal = cint(self.internal)
+		target_emp = self.lead_depart if is_internal else self.handler
+		if not self.name or not target_emp:
 			return
 
-		user_id = frappe.db.get_value("Employee", self.handler, "user_id")
+		user_id = frappe.db.get_value("Employee", target_emp, "user_id")
 		if not user_id:
 			return
 		self._close_todos_for_user(user_id)
@@ -566,6 +569,53 @@ class VNTDocumentManagement(Document):
 			link=get_url_to_form(self.doctype, self.name),
 		)
 
+	def _notify_incoming_to_lead_depart(self):
+		"""Gửi notification + tạo ToDo cho Lãnh đạo ban khi công văn đến nội bộ."""
+		if (self.type or "").strip() != "Công văn đến":
+			return
+		if not cint(self.internal):
+			return
+		if not self.lead_depart:
+			return
+
+		user_id = frappe.db.get_value("Employee", self.lead_depart, "user_id")
+		if not user_id:
+			return
+
+		content = f"{self.sender or ''} {self.summary or ''}".strip(" /")
+		if not content:
+			content = "Văn bản mới"
+
+		frappe.get_doc(
+			{
+				"doctype": "Notification Log",
+				"for_user": user_id,
+				"subject": content,
+				"type": "Alert",
+				"document_type": self.doctype,
+				"document_name": self.name,
+			}
+		).insert(ignore_permissions=True)
+
+		frappe.get_doc(
+			{
+				"doctype": "ToDo",
+				"status": "Open",
+				"allocated_to": user_id,
+				"reference_type": self.doctype,
+				"reference_name": self.name,
+				"description": content,
+				"priority": "Medium",
+			}
+		).insert(ignore_permissions=True)
+
+		send_rocket_message(
+			to_users=user_id,
+			title=":bell: Thông báo Công văn đến",
+			message=content,
+			link=get_url_to_form(self.doctype, self.name),
+		)
+
 	def _notify_office_group(self):
 		"""Gửi thông báo tới User Group 'Chánh VP nhận thông báo CV đến'."""
 		group_name = "Chánh VP nhận thông báo CV đến"
@@ -895,6 +945,53 @@ def employee_in_department(employee: str | None = None):
 @frappe.whitelist()
 def employee_in_hdqt():
 	return frappe.get_all("Employee", filters={"department": "Hội đồng quản trị - VGT"}, fields=['name', 'employee_name'])
+
+
+def has_permission(doc, ptype="read", user=None):
+	"""Cho phép Lãnh đạo Tập đoàn mở phiếu nếu trùng trường lanh_dao_tap_doan."""
+	user = user or frappe.session.user
+	if user == "Administrator":
+		return True
+	if ptype not in ("read", "write", "submit", "print", "email", "export", "share"):
+		return None
+	if not doc:
+		return None
+	emp = frappe.db.get_value("Employee", {"user_id": user}, "name")
+	if emp and (doc.get("lanh_dao_tap_doan") or "").strip() == emp:
+		return True
+	return None
+
+
+def get_permission_query_conditions(user=None):
+	"""Cho phép Lãnh đạo Tập đoàn nhìn thấy bản ghi trong List View."""
+	user = user or frappe.session.user
+	if user == "Administrator":
+		return ""
+	emp = frappe.db.get_value("Employee", {"user_id": user}, "name")
+	if not emp:
+		return ""
+	return f"`tabVNT Document Management`.lanh_dao_tap_doan = {frappe.db.escape(emp)}"
+
+
+@frappe.whitelist()
+def employee_query_all(doctype, txt, searchfield, start, page_len, filters):
+	txt = (txt or "").strip()
+	or_filters = None
+	if txt:
+		or_filters = [
+			["name", "like", f"%{txt}%"],
+			["employee_name", "like", f"%{txt}%"],
+		]
+	return frappe.get_all(
+		"Employee",
+		fields=["name", "employee_name"],
+		or_filters=or_filters,
+		limit_start=start,
+		limit_page_length=page_len,
+		order_by="modified desc",
+		ignore_permissions=True,
+		as_list=True,
+	)
 
 
 @frappe.whitelist()
