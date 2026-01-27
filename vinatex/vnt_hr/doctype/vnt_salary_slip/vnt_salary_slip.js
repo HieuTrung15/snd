@@ -4,12 +4,10 @@
 frappe.ui.form.on("VNT Salary Slip", {
 	onload(frm) {
 		vntSetRenderedHtml(frm);
-		vntTriggerBackfillAll(frm);
 		vntUpdateAllowanceTotals(frm);
 	},
 	refresh(frm) {
 		vntSetRenderedHtml(frm);
-		vntTriggerBackfillAll(frm);
 		vntUpdateAllowanceTotals(frm);
 	},
 	items_add(frm) {
@@ -72,18 +70,6 @@ function vntSetRenderedHtml(frm) {
 	});
 }
 
-function vntTriggerBackfillAll(frm) {
-	if (!frm || !frm.doc?.name) return;
-	if (typeof window === "undefined" || !window.sessionStorage) return;
-	const key = "vnt_salary_slip_backfill_triggered";
-	if (window.sessionStorage.getItem(key)) return;
-	window.sessionStorage.setItem(key, "1");
-
-	frappe.call({
-		method: "vinatex.vnt_hr.doctype.vnt_salary_slip.vnt_salary_slip.enqueue_backfill_rendered_html_all",
-		args: { batch_size: 200 },
-	});
-}
 
 function vntUpdateAllowanceTotals(frm) {
 	if (!frm || !frm.doc || frm.doc.docstatus > 0) {
