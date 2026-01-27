@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt, get_bench_path
+from frappe.utils import escape_html, flt, get_bench_path
 
 
 class VNTSalarySlip(Document):
@@ -216,6 +216,234 @@ class VNTSalarySlip(Document):
 		if row.thuc_linh not in (None, ""):
 			return flt(row.thuc_linh)
 		return row_total - row_tax
+
+
+def _get_monthly_payroll_name(slip: VNTSalarySlip) -> Optional[str]:
+	if not slip or not slip.employee or not slip.month or not slip.year:
+		return None
+
+	month_str = str(slip.month).zfill(2)
+	year_val = slip.year
+	sql = """
+		SELECT parent.name
+		FROM `tabVNT Monthly Payroll Item` item
+		INNER JOIN `tabVNT Monthly Payroll` parent ON parent.name = item.parent
+		WHERE item.employee = %(employee)s
+		  AND parent.month = %(month)s
+		  AND parent.year = %(year)s
+		ORDER BY parent.creation DESC
+		LIMIT 1
+	"""
+	rows = frappe.db.sql(sql, {"employee": slip.employee, "month": month_str, "year": year_val}, as_dict=True)
+	return rows[0]["name"] if rows else None
+
+
+def _render_salary_slip_html(slip: VNTSalarySlip) -> str:
+	def fmt_number(value, decimals=0, blank_for_zero=False):
+		if value is None:
+			return ""
+		number = flt(value, decimals)
+		if blank_for_zero and abs(number) < 0.0001:
+			return ""
+		if decimals:
+			formatted = f"{number:,.{decimals}f}".rstrip("0").rstrip(".")
+		else:
+			formatted = f"{int(round(number)):,}"
+		return formatted
+
+	def fmt_currency(value, blank_for_zero=True):
+		if value is None:
+			return ""
+		amount = flt(value, 2)
+		if blank_for_zero and abs(amount) < 0.0001:
+			return ""
+		formatted = f"{amount:,.0f}"
+		if formatted == "0" and blank_for_zero:
+			return ""
+		return formatted
+
+	def section_row(title):
+		return f'<tr class="section-row"><td colspan="4">{escape_html(title)}</td></tr>'
+
+	def value_row(idx, label, value, indent=False):
+		label_html = escape_html(label)
+		value_html = escape_html(value) if value else ""
+		index_html = escape_html(idx) if idx else ""
+		indent_class = " indent" if indent else ""
+		return (
+			f"<tr>"
+			f'<td class="index">{index_html}</td>'
+			f'<td class="label{indent_class}">{label_html}</td>'
+			f'<td class="colon">:</td>'
+			f'<td class="value">{value_html}</td>'
+			f"</tr>"
+		)
+
+	thue_nam_truoc = slip.thue_tncn_nam_truoc
+	if thue_nam_truoc in (None, ""):
+		thue_nam_truoc = flt(slip.get("truy_thu")) - flt(slip.get("duoc_hoan_lai"))
+
+	rows = [
+		section_row("I. THÔNG TIN CHUNG"),
+		value_row("1", "Số ngày công", fmt_number(slip.so_ngay_cong, 1)),
+		value_row("2", "Số ngày nghỉ tính phép", fmt_number(slip.so_ngay_nghi_tinh_phep, 0)),
+		value_row(
+			"3",
+			"Số ngày nghỉ việc riêng có hưởng lương",
+			fmt_number(slip.so_ngay_nghi_viec_rieng_co_huong_luong, 0),
+		),
+		value_row(
+			"4",
+			"Số ngày nghỉ không lương/ Nghỉ ốm/ TS nam",
+			fmt_number(slip.so_ngay_nghi_khong_luong, 0, blank_for_zero=True),
+		),
+		value_row("5", "Hệ số lương cơ bản", fmt_number(slip.he_so_luong_co_ban, 2, blank_for_zero=True)),
+		value_row("6", "Hệ số phụ cấp", ""),
+		value_row("", "a. Trách nhiệm Đảng", fmt_number(slip.hs_pc_dang, 2, blank_for_zero=True), indent=True),
+		value_row(
+			"",
+			"b. Kiêm nhiệm Đoàn thể",
+			fmt_number(slip.hs_pc_kiem_nhiem, 2, blank_for_zero=True),
+			indent=True,
+		),
+		value_row("7", "Tiền lương tính BHXH", ""),
+		value_row("", "a. Lương cơ bản", fmt_currency(slip.luong_co_ban), indent=True),
+		value_row("", "b. PC trách nhiệm Đảng", fmt_currency(slip.pc_dang), indent=True),
+		value_row("", "c. PC kiêm nhiệm Đoàn thể", fmt_currency(slip.pc_kiem_nhiem), indent=True),
+		value_row("8", "Số người phụ thuộc", fmt_number(slip.so_nguoi_phu_thuoc, 0, blank_for_zero=True)),
+		section_row("II. TỔNG THU NHẬP"),
+		value_row("1", "Hệ số lương CBCV", fmt_number(slip.he_so_luong_cbcv, 2, blank_for_zero=True)),
+		value_row("2", "Lương CBCV", fmt_currency(slip.luong_cbcv)),
+		value_row("3", "Phụ cấp", ""),
+		value_row("", "a. Trách nhiệm Đảng", fmt_currency(slip.pc_dang2), indent=True),
+		value_row("", "b. Kiêm nhiệm Đoàn thể", fmt_currency(slip.pc_kiem_nhiem2), indent=True),
+		value_row("4", "Thù lao (HĐQT, Ban KS)", fmt_currency(slip.get("thu_lao_hdqt"))),
+		value_row("5", "Tiền lương CQĐH, KTT", fmt_currency(slip.get("tien_luong_hqcv_cu"))),
+		value_row("6", "Lương ngày phép", fmt_currency(slip.luong_ngay_phep)),
+		value_row(
+			"7",
+			"Lương ngày nghỉ VR có hưởng lương",
+			fmt_currency(slip.luong_ngay_nghi_co_huong_luong),
+		),
+		value_row("8", "Truy lĩnh", fmt_currency(slip.truy_linh, blank_for_zero=False)),
+		value_row("9", "Tiền ăn ca", fmt_currency(slip.tien_an_ca)),
+		value_row("10", "Khoản công tác phí", fmt_currency(slip.cong_tac_phi)),
+		value_row("", "Tổng thu nhập", fmt_currency(slip.tong_thu_nhap, blank_for_zero=False), indent=True),
+		section_row("III. CÁC KHOẢN TRỪ VÀO LƯƠNG"),
+		value_row("1", "BHXH, BHYT, BHTN (10,5%)", fmt_currency(slip.xh_yt_tn, blank_for_zero=False)),
+		value_row("2", "Công đoàn phí (1%)", fmt_currency(slip.cong_doan, blank_for_zero=False)),
+		value_row("3", "Thuế TNCN tạm thu", fmt_currency(slip.thue_tncn, blank_for_zero=False)),
+		value_row(
+			"4",
+			"Thuế TNCN năm 2024",
+			fmt_currency(thue_nam_truoc, blank_for_zero=True),
+		),
+	]
+
+	if flt(slip.get("khac")):
+		rows.append(value_row("5", "Các khoản khác", fmt_currency(slip.get("khac"), blank_for_zero=False)))
+
+	rows.extend(
+		[
+			section_row("IV. THỰC LĨNH (II - III)"),
+			value_row("", "Thực lĩnh", fmt_currency(slip.thuc_linh, blank_for_zero=False)),
+		]
+	)
+
+	payroll_name = _get_monthly_payroll_name(slip) or slip.name
+	header = (
+		f'<div class="salary-slip-header">'
+		f'<div><strong>Nhân sự:</strong> {escape_html(slip.employee_name or "")} ({escape_html(slip.employee or "")})</div>'
+		f'<div><strong>Kỳ lương:</strong> Tháng {escape_html(slip.month or "")} / {escape_html(str(slip.year or ""))}</div>'
+		f'<div><strong>Bảng lương:</strong> {escape_html(payroll_name)}</div>'
+		f"</div>"
+	)
+
+	style = (
+		"<style>"
+		".salary-slip-wrapper{font-size:12px;font-family:var(--font-family,'Inter','Helvetica','Arial',sans-serif);}"  # noqa: E501
+		".salary-slip-header{margin-bottom:8px;}"
+		".salary-slip-header div{margin-bottom:2px;}"
+		".salary-slip-table{width:100%;border-collapse:collapse;}"
+		".salary-slip-table td{border:1px solid #444;padding:4px 6px;vertical-align:top;}"
+		".salary-slip-table .section-row td{background:#f4f4f4;font-weight:600;text-transform:uppercase;text-align:left;}"
+		".salary-slip-table .index{width:42px;text-align:center;font-weight:600;}"
+		".salary-slip-table .label{width:55%;}"
+		".salary-slip-table .label.indent{padding-left:18px;}"
+		".salary-slip-table .colon{width:18px;text-align:center;font-weight:600;}"
+		".salary-slip-table .value{width:25%;text-align:right;font-weight:600;}"
+		"</style>"
+	)
+
+	table_html = "".join(rows)
+	return f'<div class="salary-slip-wrapper">{style}{header}<table class="salary-slip-table">{table_html}</table></div>'
+
+
+@frappe.whitelist()
+def get_rendered_html(name: str) -> str:
+	if not name:
+		return ""
+	slip: VNTSalarySlip = frappe.get_doc("VNT Salary Slip", name)
+	if slip.rendered_html:
+		return slip.rendered_html
+	slip._inject_decrypted_salary_fields()
+	html = _render_salary_slip_html(slip)
+	if html:
+		frappe.db.set_value("VNT Salary Slip", slip.name, {"rendered_html": html, "html": html})
+		slip.rendered_html = html
+	return html
+
+
+@frappe.whitelist()
+def backfill_rendered_html(name: Optional[str] = None, month: Optional[str] = None, year: Optional[int] = None,
+	employee: Optional[str] = None, limit: int = 200) -> Dict[str, int]:
+	limit = int(limit or 0)
+	if limit <= 0:
+		limit = 200
+
+	params = {"limit": limit}
+	conditions = ["docstatus != 2"]
+
+	if name:
+		conditions.append("name = %(name)s")
+		params["name"] = name
+	if employee:
+		conditions.append("employee = %(employee)s")
+		params["employee"] = employee
+	if month:
+		conditions.append("month = %(month)s")
+		params["month"] = str(month).zfill(2)
+	if year:
+		conditions.append("year = %(year)s")
+		params["year"] = int(year)
+
+	if not name:
+		conditions.append("(rendered_html IS NULL OR rendered_html = '')")
+
+	where_clause = " AND ".join(conditions)
+	sql = f"""
+		SELECT name
+		FROM `tabVNT Salary Slip`
+		WHERE {where_clause}
+		ORDER BY modified DESC
+		LIMIT %(limit)s
+	"""
+	rows = frappe.db.sql(sql, params, as_dict=True)
+	names = [row["name"] for row in rows if row.get("name")]
+
+	updated = 0
+	for slip_name in names:
+		slip: VNTSalarySlip = frappe.get_doc("VNT Salary Slip", slip_name)
+		if slip.rendered_html:
+			continue
+		slip._inject_decrypted_salary_fields()
+		html = _render_salary_slip_html(slip)
+		if not html:
+			continue
+		frappe.db.set_value("VNT Salary Slip", slip.name, {"rendered_html": html, "html": html})
+		updated += 1
+
+	return {"processed": len(names), "updated": updated}
 
 
 @frappe.whitelist()
