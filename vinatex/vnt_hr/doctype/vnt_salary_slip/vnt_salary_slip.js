@@ -44,7 +44,30 @@ function vntSetRenderedHtml(frm) {
 	const target = frm.fields_dict.html.$wrapper;
 	if (!target || !target.length) return;
 	const content = frm.doc.rendered_html || "";
-	target.html(content);
+	if (content) {
+		target.html(content);
+		return;
+	}
+
+	if (!frm.doc?.name || frm._vnt_html_loading) {
+		return;
+	}
+
+	frm._vnt_html_loading = true;
+	frappe.call({
+		method: "vinatex.vnt_hr.doctype.vnt_salary_slip.vnt_salary_slip.get_rendered_html",
+		args: { name: frm.doc.name },
+		callback(r) {
+			frm._vnt_html_loading = false;
+			const html = r?.message || "";
+			if (!html) return;
+			frm.doc.rendered_html = html;
+			target.html(html);
+		},
+		error() {
+			frm._vnt_html_loading = false;
+		},
+	});
 }
 
 function vntUpdateAllowanceTotals(frm) {
