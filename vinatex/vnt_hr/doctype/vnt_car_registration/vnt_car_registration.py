@@ -713,20 +713,24 @@ def get_reports_to(user):
 	if not employee_doc:
 		return ""
 
-	approver = frappe.get_value(
+	approver_users = frappe.get_all(
 		"Department Approver",
-		{"parent": employee_doc.department, "custom_level_1": True},
-		"approver",
-		as_dict=True,
-	)
-	if approver:
+		filters={"parent": employee_doc.department, "custom_level_1": True},
+		pluck="approver",
+	) or []
+
+	# Nếu người dùng hiện tại nằm trong danh sách approver thì trả đúng người đó
+	matched_user = next((a for a in approver_users if a == user), None)
+	target_user = matched_user or (approver_users[0] if approver_users else None)
+	if target_user:
 		approver_emp = frappe.get_value(
 			"Employee",
-			{"user_id": approver.approver},
+			{"user_id": target_user},
 			["name", "employee_name"],
+			as_dict=True,
 		)
 		if approver_emp:
-			return approver_emp
+			return [approver_emp.get("name"), approver_emp.get("employee_name")]
 
 	return employee_doc.name, employee_doc.employee_name
 

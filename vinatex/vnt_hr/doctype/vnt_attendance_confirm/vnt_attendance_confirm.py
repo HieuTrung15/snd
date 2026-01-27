@@ -137,12 +137,12 @@ def _send_notification(doc: Document, user: str | list[str] | tuple[str, ...], s
 		"document_name": doc.name,
 		"message": message,
 	}, recipients)
-	send_rocket_message(
-		to_users=recipients,
-		title=":bell: Thông báo",
-		message=f"*{subject}*\n{message}" if message else subject,
-		link=get_url_to_form(doc.doctype, doc.name),
-	)
+	# send_rocket_message(
+	# 	to_users=recipients,
+	# 	title=":bell: Thông báo",
+	# 	message=f"*{subject}*\n{message}" if message else subject,
+	# 	link=get_url_to_form(doc.doctype, doc.name),
+	# )
 
 
 def _normalize_confirmation_dates(dates: list[date] | None = None) -> list[date]:
