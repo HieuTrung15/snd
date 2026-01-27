@@ -389,7 +389,7 @@ def get_rendered_html(name: str) -> str:
 	slip._inject_decrypted_salary_fields()
 	html = _render_salary_slip_html(slip)
 	if html:
-		frappe.db.set_value("VNT Salary Slip", slip.name, {"rendered_html": html, "html": html})
+		frappe.db.set_value("VNT Salary Slip", slip.name, {"rendered_html": html})
 		slip.rendered_html = html
 	return html
 
@@ -440,7 +440,7 @@ def backfill_rendered_html(name: Optional[str] = None, month: Optional[str] = No
 		html = _render_salary_slip_html(slip)
 		if not html:
 			continue
-		frappe.db.set_value("VNT Salary Slip", slip.name, {"rendered_html": html, "html": html})
+		frappe.db.set_value("VNT Salary Slip", slip.name, {"rendered_html": html})
 		updated += 1
 
 	return {"processed": len(names), "updated": updated}
