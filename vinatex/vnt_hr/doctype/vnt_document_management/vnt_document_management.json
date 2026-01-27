@@ -181,7 +181,7 @@
    "options": "\nCV\u0110I.-.MM..YY.-.####\nCV\u0110EN.-.MM..YY.-.####\nQ\u0110.-.MM..YY.-.####"
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" && doc.internal == 0",
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "handler_status",
    "fieldtype": "Button",
    "label": "Chuy\u1ec3n x\u1eed l\u00fd",
@@ -201,10 +201,10 @@
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" && doc.internal == 0",
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "y_kien_ld_td",
    "fieldtype": "Small Text",
-   "label": "\u00dd ki\u1ebfn L\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n",
+   "label": "\u00dd ki\u1ebfn L\u00e3nh \u0111\u1ea1o",
    "max_height": "120px"
   },
   {
@@ -395,7 +395,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" && doc.internal == 0",
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "deadline_copy",
    "fieldtype": "Date",
    "label": "Th\u1eddi h\u1ea1n",
@@ -409,7 +409,7 @@
   },
   {
    "default": "0",
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" && doc.internal == 0",
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "is_handler_status",
    "fieldtype": "Check",
    "label": "\u0110\u00e3 chuy\u1ec3n x\u1eed l\u00fd",
@@ -524,7 +524,7 @@
    "label": "N\u1ed9i b\u1ed9"
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" && doc.internal == 1 && doc.hdqt_opinion == 0",
+   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" && doc.internal == 1",
    "fieldname": "danh_s\u00e1ch_nh\u00e2n_vi\u00ean_section",
    "fieldtype": "Section Break",
    "label": "Danh s\u00e1ch nh\u00e2n vi\u00ean"
@@ -555,25 +555,24 @@
    "default": "0",
    "fieldname": "hdqt_opinion",
    "fieldtype": "Check",
-   "hidden": 1,
    "label": "L\u1ea5y \u00fd ki\u1ebfn H\u0110QT"
   },
   {
    "fieldname": "section_break_mva2",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Th\u00e0nh vi\u00ean H\u1ed9i \u0111\u1ed3ng qu\u1ea3n tr\u1ecb"
   },
   {
    "depends_on": "eval: doc.hdqt_opinion == 1",
    "fieldname": "items6",
    "fieldtype": "Table",
-   "label": "Th\u00e0nh vi\u00ean H\u1ed9i \u0111\u1ed3ng qu\u1ea3n tr\u1ecb",
    "options": "VNT Document Management Item5"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-23 14:33:30.761691",
+ "modified": "2026-01-27 09:25:40.229378",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",

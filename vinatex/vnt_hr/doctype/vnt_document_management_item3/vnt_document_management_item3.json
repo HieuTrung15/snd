@@ -8,8 +8,8 @@
  "field_order": [
   "file_name",
   "attach",
-  "note",
-  "user"
+  "user",
+  "note"
  ],
  "fields": [
   {
@@ -44,7 +44,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-12-08 08:34:11.657740",
+ "modified": "2026-01-27 09:30:41.828515",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management Item3",
