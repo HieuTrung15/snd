@@ -3,6 +3,16 @@
 	const DOC = "VNT Salary Slip";
 
 	frappe.listview_settings[DOC] = Object.assign({}, frappe.listview_settings[DOC] || {}, {
+		onload(listview) {
+			if (listview.__submitted_filter_applied) return;
+			listview.__submitted_filter_applied = true;
+
+			const existing = (listview.filter_area?.filters || []).some((f) => f[1] === "docstatus");
+			if (existing) return;
+
+			listview.filter_area.add([[DOC, "docstatus", "=", 1]]);
+			listview.refresh();
+		},
 		add_fields: ["tong_thu_nhap", "thuc_linh", "tong_thu_nhap_encrypted", "thuc_linh_encrypted"],
 		refresh(listview) {
 			const rows = listview?.data || [];

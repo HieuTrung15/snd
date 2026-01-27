@@ -10,6 +10,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import escape_html, flt, get_bench_path
+from vinatex.vnt_hr.permissions import is_hr_salary_user
 
 
 class VNTSalarySlip(Document):
@@ -397,6 +398,8 @@ def get_rendered_html(name: str) -> str:
 @frappe.whitelist()
 def backfill_rendered_html(name: Optional[str] = None, month: Optional[str] = None, year: Optional[int] = None,
 	employee: Optional[str] = None, limit: int = 200) -> Dict[str, int]:
+	if not is_hr_salary_user(frappe.session.user) and "System Manager" not in frappe.get_roles(frappe.session.user):
+		frappe.throw(_("Bạn không có quyền cập nhật HTML hàng loạt."))
 	limit = int(limit or 0)
 	if limit <= 0:
 		limit = 200
@@ -440,10 +443,67 @@ def backfill_rendered_html(name: Optional[str] = None, month: Optional[str] = No
 		html = _render_salary_slip_html(slip)
 		if not html:
 			continue
-		frappe.db.set_value("VNT Salary Slip", slip.name, {"rendered_html": html})
+		frappe.db.set_value("VNT Salary Slip", slip.name, {"rendered_html": html}, update_modified=False)
 		updated += 1
 
 	return {"processed": len(names), "updated": updated}
+
+
+def _backfill_rendered_html_job(batch_size: int = 200) -> Dict[str, int]:
+	batch_size = int(batch_size or 0)
+	if batch_size <= 0:
+		batch_size = 200
+
+	total_processed = 0
+	total_updated = 0
+
+	while True:
+		rows = frappe.db.sql(
+			"""
+			SELECT name
+			FROM `tabVNT Salary Slip`
+			WHERE docstatus != 2
+			  AND (rendered_html IS NULL OR rendered_html = '')
+			ORDER BY modified DESC
+			LIMIT %(limit)s
+			""",
+			{"limit": batch_size},
+			as_dict=True,
+		)
+		names = [row["name"] for row in rows if row.get("name")]
+		if not names:
+			break
+
+		total_processed += len(names)
+		for slip_name in names:
+			slip: VNTSalarySlip = frappe.get_doc("VNT Salary Slip", slip_name)
+			if slip.rendered_html:
+				continue
+			slip._inject_decrypted_salary_fields()
+			html = _render_salary_slip_html(slip)
+			if not html:
+				continue
+			frappe.db.set_value("VNT Salary Slip", slip.name, {"rendered_html": html}, update_modified=False)
+			total_updated += 1
+
+		frappe.db.commit()
+
+	return {"processed": total_processed, "updated": total_updated}
+
+
+@frappe.whitelist()
+def enqueue_backfill_rendered_html_all(batch_size: int = 200) -> Dict[str, str]:
+	if not is_hr_salary_user(frappe.session.user) and "System Manager" not in frappe.get_roles(frappe.session.user):
+		frappe.throw(_("Bạn không có quyền cập nhật HTML hàng loạt."))
+
+	frappe.enqueue(
+		"vinatex.vnt_hr.doctype.vnt_salary_slip.vnt_salary_slip._backfill_rendered_html_job",
+		queue="long",
+		timeout=600,
+		is_async=True,
+		batch_size=batch_size,
+	)
+	return {"status": "queued"}
 
 
 @frappe.whitelist()
