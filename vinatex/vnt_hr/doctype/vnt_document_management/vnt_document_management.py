@@ -46,6 +46,7 @@ class VNTDocumentManagement(Document):
 		rows = []
 		rows.extend(self.get("items") or [])
 		rows.extend(self.get("item2") or [])
+		rows.extend(self.get("items4") or [])
 		picked = [row for row in rows if (row.chu_tri or row.phoi_hop or row.nhan_de_biet)]
 		if not picked:
 			frappe.throw("Vui lòng chọn ít nhất 1 dòng Chủ trì/Phối hợp/Nhận để biết trước khi cập nhật Trạng thái Lãnh đạo Tập Đoàn.")
