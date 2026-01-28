@@ -130,7 +130,6 @@ def _send_notification(doc: Document, user: str | list[str] | tuple[str, ...], s
 		return
 
 	recipients = list(target_users)
-	# frappe.throw(f"abc={recipients}")
 	url = get_url_to_form(doc.doctype, doc.name)
 	link_label = _("Xem chi tiết")
 	message_with_link = message or ""
