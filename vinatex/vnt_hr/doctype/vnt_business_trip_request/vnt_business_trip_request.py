@@ -748,7 +748,7 @@ def _notify_to_office_manager(doc: Document):
 def create_vehicle_request_for_business_trip(doc: Document, transportation_rows: list):
 	if not transportation_rows:
 		return
-
+	url = get_url_to_form(doc.doctype, doc.name)
 	existing_name = frappe.db.get_value(
 		"VNT Car Registration",
 		{"business_trip": doc.name, "docstatus": ["!=", 2]},
@@ -847,12 +847,29 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
 
 	make_notification_logs({
 		"type": "Alert",
-		"subject": _("Vui lòng điều xe cho phiếu đăng ký xe của {0}.").format(doc.employee_name or _("(không rõ)")),
+		"subject": _("Điều xe cho phiếu đăng ký xe của {0} ban {1}.").format(doc.employee_name or _("(không rõ)"), doc.department or _("(không rõ)")),
 		"document_type": 'VNT Vehicle Control',
 		"document_name": vehicle_control.name,
 	}, user_list)
+	frappe.enqueue(
+		"vinatex.integrations.teams_graph.notify_user",
+		queue="short",
+		timeout=30,
+		is_async=True,
+		upn_or_email=user_list,
+		content_type="html",
+		linkify=False,
+		message=_(
+			"🔔 Điều xe cho phiếu đăng ký xe của {0} ban {1}.<br>"
+			"<a href=\"{2}\">Xem chi tiết</a>"
+		).format(
+			doc.employee_name or _("(không rõ)"),
+			doc.department or _("(không rõ)"),
+			url
+		),
+	)
 	# tạo todo cho người điều xe
-	description = _("Vui lòng điều xe cho phiếu đăng ký xe của {0}.").format(doc.employee_name or _("(không rõ)"))
+	description = _("Điều xe cho phiếu đăng ký xe của {0} ban {1}.").format(doc.employee_name or _("(không rõ)"), doc.department or _("(không rõ)"))
 	new_todo =  frappe.new_doc('ToDo')
 	new_todo.description = description
 	new_todo.allocated_to = user_list[0]
@@ -921,24 +938,24 @@ def _notify_employees_rejected(doc: Document):
 		"document_name": doc.name,
 	}, users)
 	url = get_url_to_form(doc.doctype, doc.name)
-	# frappe.enqueue(
-	# 	"vinatex.integrations.teams_graph.notify_user",
-	# 	queue="short",
-	# 	timeout=30,
-	# 	is_async=True,
-	# 	upn_or_email=users,
-	# 	content_type="html",
-	# 	linkify=False,
-	# 	message=_(
-	# 		"🔔 Phiếu công tác tại {0} từ ngày {1} đến ngày {2} đã bị từ chối.<br>"
-	# 		"<a href=\"{3}\">Xem chi tiết</a>"
-	# 	).format(
-	# 		doc.destination, 
-	# 		formatdate(doc.from_date, "dd-MM-yyyy"), 
-	# 		formatdate(doc.to_date, "dd-MM-yyyy"), 
-	# 		url
-	# 	),
-	# )
+	frappe.enqueue(
+		"vinatex.integrations.teams_graph.notify_user",
+		queue="short",
+		timeout=30,
+		is_async=True,
+		upn_or_email=users,
+		content_type="html",
+		linkify=False,
+		message=_(
+			"🔔 Phiếu công tác tại {0} từ ngày {1} đến ngày {2} đã bị từ chối.<br>"
+			"<a href=\"{3}\">Xem chi tiết</a>"
+		).format(
+			doc.destination, 
+			formatdate(doc.from_date, "dd-MM-yyyy"), 
+			formatdate(doc.to_date, "dd-MM-yyyy"), 
+			url
+		),
+	)
 
 
 def _notify_employees_cancelled(doc: Document):
