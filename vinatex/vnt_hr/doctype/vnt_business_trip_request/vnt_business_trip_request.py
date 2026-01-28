@@ -748,7 +748,6 @@ def _notify_to_office_manager(doc: Document):
 def create_vehicle_request_for_business_trip(doc: Document, transportation_rows: list):
 	if not transportation_rows:
 		return
-	url = get_url_to_form(doc.doctype, doc.name)
 	existing_name = frappe.db.get_value(
 		"VNT Car Registration",
 		{"business_trip": doc.name, "docstatus": ["!=", 2]},
@@ -844,7 +843,7 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
 		vehicle_control.save(ignore_permissions=True)
 	else:
 		vehicle_control.insert(ignore_permissions=True)
-
+	url = get_url_to_form("VNT Vehicle Control", vehicle_control.name)
 	make_notification_logs({
 		"type": "Alert",
 		"subject": _("Điều xe cho phiếu đăng ký xe của {0} ban {1}.").format(doc.employee_name or _("(không rõ)"), doc.department or _("(không rõ)")),

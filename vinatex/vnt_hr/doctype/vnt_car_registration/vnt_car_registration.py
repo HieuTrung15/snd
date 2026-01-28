@@ -303,7 +303,6 @@ def _notify_to_user_receive(doc: Document):
 	"""
 	# tạo bản ghi mới trong vnt vehicle control
 	user_group_name = "Nhận thông báo điều xe"
-	url = get_url_to_form(doc.doctype, doc.name)
 	user_list = frappe.get_all(
 		"User Group Member",
 		filters={"parent": user_group_name},
@@ -332,18 +331,19 @@ def _notify_to_user_receive(doc: Document):
 			)
 		vehicle_control.insert(ignore_permissions=True)
 		if vehicle_control:
+			url = get_url_to_form("VNT Vehicle Control", vehicle_control.name)
 			make_notification_logs({
 				"type": "Alert",
 				"subject": _("Điều xe cho phiếu đăng ký xe của {0} ban {1}.").format(doc.employee_name or _("(không rõ)"), doc.department or _("(không rõ)")),
 				"document_type": 'VNT Vehicle Control',
 				"document_name": vehicle_control.name,
 			}, user_list)
-			send_rocket_message(
-				to_users=user_list,
-				title=":bell: Thông báo",
-				message=_("Điều xe cho phiếu đăng ký xe của {0}.").format(doc.employee_name or _("(không rõ)")),
-				link=get_url_to_form(doc.doctype, doc.name)
-			)
+			# send_rocket_message(
+			# 	to_users=user_list,
+			# 	title=":bell: Thông báo",
+			# 	message=_("Điều xe cho phiếu đăng ký xe của {0}.").format(doc.employee_name or _("(không rõ)")),
+			# 	link=get_url_to_form(doc.doctype, doc.name)
+			# )
 			frappe.enqueue(
 				"vinatex.integrations.teams_graph.notify_user",
 				queue="short",
