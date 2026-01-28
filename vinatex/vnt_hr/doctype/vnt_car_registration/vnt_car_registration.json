@@ -74,10 +74,12 @@
    "reqd": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Danh s\u00e1ch chuy\u1ebfn \u0111i",
-   "options": "VNT Car Registration Item"
+   "options": "VNT Car Registration Item",
+   "reqd": 1
   },
   {
    "fieldname": "section_break_xwlf",
@@ -264,7 +266,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-30 10:30:46.347446",
+ "modified": "2026-01-28 16:59:33.243311",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Car Registration",

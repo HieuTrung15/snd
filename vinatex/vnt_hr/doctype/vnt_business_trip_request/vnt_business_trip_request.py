@@ -304,13 +304,11 @@ def _apply_state_effects(doc: Document):
 	if prev_state == "Mới tạo" and curr_state == "Đã duyệt":
 		replace_attendance_for_business_trip(doc)
 		return
-
-	if prev_state == "Đã duyệt" and curr_state == "Hủy":
+	if prev_state == "Đã duyệt" and curr_state == "Đã hủy":
 		# delete_todos_for_doc(doc)
 		cancel_attendance_for_trip(doc)
 		cancel_vehicle_requests_for_trip(doc)
 		_notify_employees_cancelled(doc)
-		return
 
 
 def _notify_to_general_manager(doc: Document):
@@ -352,7 +350,7 @@ def _notify_to_general_manager(doc: Document):
 				),
 				link=get_url_to_form(doc.doctype, doc.name)
 			)
-			# url = get_url_to_form(doc.doctype, doc.name)
+			url = get_url_to_form(doc.doctype, doc.name)
 			# frappe.enqueue(
 			# 	"vinatex.integrations.teams_graph.notify_user",
 			# 	queue="short",
@@ -427,7 +425,7 @@ def _notify_if_pending(doc: Document):
 		return
 	make_notification_logs({
 		"type": "Alert",
-		"subject": _("Phiếu đăng ký đi công tác của {0} đang chờ duyệt").format(doc.employee_name),
+		"subject": _("Phiếu đăng ký đi công tác của {0} đang chờ duyệt.").format(doc.employee_name),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, [approver_user])
@@ -437,22 +435,22 @@ def _notify_if_pending(doc: Document):
         message=_("Phiếu đăng ký đi công tác của {0} đang chờ duyệt").format(doc.employee_name),
         link=get_url_to_form(doc.doctype, doc.name)
     )
-	# url = get_url_to_form(doc.doctype, doc.name)
-	# frappe.enqueue(
-	# 	"vinatex.integrations.teams_graph.notify_user",
-	# 	queue="short",
-	# 	timeout=30,
-	# 	is_async=True,
-	# 	upn_or_email=approver,
-	# 	content_type="html",
-	# 	linkify=False,
-	# 	message=_("🔔 Phiếu đăng ký đi công tác của {0} đang chờ duyệt <br>"
-	# 		"<a href=\"{1}\">Xem chi tiết</a>"
-	# 	).format(
-	# 		doc.employee_name or _("(không rõ)"),
-	# 		url
-	# 	),
-	# )
+	url = get_url_to_form(doc.doctype, doc.name)
+	frappe.enqueue(
+		"vinatex.integrations.teams_graph.notify_user",
+		queue="short",
+		timeout=30,
+		is_async=True,
+		upn_or_email=[approver_user],
+		content_type="html",
+		linkify=False,
+		message=_("🔔 Phiếu đăng ký đi công tác của {0} đang chờ duyệt.<br>"
+			"<a href=\"{1}\">Xem chi tiết</a>"
+		).format(
+			doc.employee_name or _("(không rõ)"),
+			url
+		),
+	)
 	ensure_todo(doc, approver_user)
 
 
@@ -465,29 +463,30 @@ def _notify_if_pending_lv2(doc: Document):
 	approver_user = get_employee_user_id(approver)
 	make_notification_logs({
 		"type": "Alert",
-		"subject": _("Phiếu đăng ký đi công tác của {0} đang chờ duyệt.").format(doc.employee_name),
+		"subject": _("Phiếu đăng ký đi công tác của {0} ban {1} đang chờ duyệt.").format(doc.employee_name, doc.department or _("(không rõ)")),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, [approver_user])
 	send_rocket_message(
         to_users=approver_user,
         title=":bell: Thông báo",
-        message=_("Phiếu đăng ký đi công tác của {0} đang chờ duyệt.").format(doc.employee_name),
+        message=_("Phiếu đăng ký đi công tác của {0} ban {1} đang chờ duyệt.").format(doc.employee_name, doc.department or _("(không rõ)")),
         link=get_url_to_form(doc.doctype, doc.name)
     )
-	# url = get_url_to_form(doc.doctype, doc.name)
+	url = get_url_to_form(doc.doctype, doc.name)
 	# frappe.enqueue(
 	# 	"vinatex.integrations.teams_graph.notify_user",
 	# 	queue="short",
 	# 	timeout=30,
 	# 	is_async=True,
-	# 	upn_or_email=approver,
+	# 	upn_or_email=[approver_user],
 	# 	content_type="html",
 	# 	linkify=False,
-	# 	message=_("🔔 Phiếu đăng ký đi công tác của {0} đang chờ duyệt. <br>"
-	# 		"<a href=\"{1}\">Xem chi tiết</a>"
+	# 	message=_("🔔 Phiếu đăng ký đi công tác của {0} ban {1} đang chờ duyệt.<br>"
+	# 		"<a href=\"{2}\">Xem chi tiết</a>"
 	# 	).format(
 	# 		doc.employee_name or _("(không rõ)"),
+	# 		doc.department or _("(không rõ)"),
 	# 		url
 	# 	),
 	# )
@@ -552,11 +551,11 @@ def _send_trip_notification(doc: Document, subject: str):
 
 	if not users:
 		return
-	# url = get_url_to_form(doc.doctype, doc.name)
-	# html_message = _("🔔 {0}<br><a href=\"{1}\">Xem chi tiết</a>").format(
-	# 	subject,
-	# 	url,
-	# )
+	url = get_url_to_form(doc.doctype, doc.name)
+	html_message = _("🔔 {0}<br><a href=\"{1}\">Xem chi tiết</a>").format(
+		subject,
+		url,
+	)
 	make_notification_logs({
 		"type": "Alert",
 		"subject": subject,
@@ -569,16 +568,16 @@ def _send_trip_notification(doc: Document, subject: str):
         message=subject,
         link=get_url_to_form(doc.doctype, doc.name)
     )
-	# frappe.enqueue(
-	# 	"vinatex.integrations.teams_graph.notify_user",
-	# 	queue="short",
-	# 	timeout=30,
-	# 	is_async=True,
-	# 	upn_or_email=list(users),
-	# 	content_type="html",
-	# 	linkify=False,
-	# 	message=html_message,
-	# )
+	frappe.enqueue(
+		"vinatex.integrations.teams_graph.notify_user",
+		queue="short",
+		timeout=30,
+		is_async=True,
+		upn_or_email=list(users),
+		content_type="html",
+		linkify=False,
+		message=html_message,
+	)
 	
 
 
@@ -594,7 +593,7 @@ def _get_employee_user_ids(doc: Document) -> list[str]:
 	users = set()
 	for emp in employees:
 		uid = frappe.db.get_value("Employee", emp, "user_id")
-		if uid and uid != doc.owner:
+		if uid:
 			users.add(uid)
 	return list(users)
 
@@ -712,33 +711,38 @@ def _notify_to_office_manager(doc: Document):
 		return
 	make_notification_logs({
 		"type": "Alert",
-		"subject": _("Công tác tại {0} của {1} từ {2} đến {3} cần vé máy bay.").format(doc.destination or _("(không rõ)"), doc.employee_name or _("(không rõ)"), formatdate(doc.from_date, "dd-MM-yyyy"), formatdate(doc.to_date, "dd-MM-yyyy")),
+		"subject": _("Chuyến công tác tại {0} của {1} từ {2} đến {3} đi máy bay. Hãy chuẩn bị vé máy bay.").format(
+			doc.destination or _("(không rõ)"), doc.employee_name or _("(không rõ)"), 
+			formatdate(doc.from_date, "dd-MM-yyyy"), formatdate(doc.to_date, "dd-MM-yyyy")),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, user_list)
 	send_rocket_message(
         to_users=user_list,
         title=":bell: Thông báo",
-        message=_("Công tác của {0} cần vé máy bay.").format(doc.employee_name or _("(không rõ)")),
+        message=_("Chuyến công tác tại {0} của {1} từ ngày {2} đến ngày {3} đi máy bay. Hãy chuẩn bị vé máy bay.").format(
+			doc.destination or _("(không rõ)"), doc.employee_name or _("(không rõ)"), 
+			formatdate(doc.from_date, "dd-MM-yyyy"), formatdate(doc.to_date, "dd-MM-yyyy")),
         link=get_url_to_form(doc.doctype, doc.name)
     )
-	# url = get_url_to_form(doc.doctype, doc.name)
-	# frappe.enqueue(
-	# 	"vinatex.integrations.teams_graph.notify_user",
-	# 	queue="short",
-	# 	timeout=30,
-	# 	is_async=True,
-	# 	upn_or_email=user_list,
-	# 	content_type="html",
-	# 	linkify=False,
-	# 	message=_(
-	# 		"🔔 Công tác của {0} cần vé máy bay. Vui lòng kiểm tra.<br>"
-	# 		"<a href=\"{1}\">Xem chi tiết</a>"
-	# 	).format(
-	# 		doc.employee_name or _("(không rõ)"),
-	# 		url
-	# 	),
-	# )
+	frappe.enqueue(
+		"vinatex.integrations.teams_graph.notify_user",
+		queue="short",
+		timeout=30,
+		is_async=True,
+		upn_or_email=user_list,
+		content_type="html",
+		linkify=False,
+		message=_(
+			"🔔 Chuyến công tác tại {0} của {1} ban {2} từ ngày {3} đến ngày {4} đi máy bay. Hãy chuẩn bị vé máy bay.<br>"
+		).format(
+			doc.destination or _("(không rõ)"), 
+			doc.employee_name or _("(không rõ)"), 
+			doc.department or _("(không rõ)"),
+			formatdate(doc.from_date, "dd-MM-yyyy"), 
+			formatdate(doc.to_date, "dd-MM-yyyy")
+		),
+	)
 
 
 def create_vehicle_request_for_business_trip(doc: Document, transportation_rows: list):
@@ -908,17 +912,15 @@ def _notify_employees_rejected(doc: Document):
 		return
 	make_notification_logs({
 		"type": "Alert",
-		"subject": _("Phiếu công tác đã bị từ chối."),
+		"subject": _("Phiếu công tác tại {0} từ ngày {1} đến ngày {2} đã bị từ chối.").format(
+			doc.destination,
+			formatdate(doc.from_date, "dd-MM-yyyy"), 
+			formatdate(doc.to_date, "dd-MM-yyyy")
+		),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, users)
-	send_rocket_message(
-        to_users=users,
-        title=":bell: Thông báo",
-        message=_("Phiếu công tác đã bị từ chối."),
-        link=get_url_to_form(doc.doctype, doc.name)
-    )
-	# url = get_url_to_form(doc.doctype, doc.name)
+	url = get_url_to_form(doc.doctype, doc.name)
 	# frappe.enqueue(
 	# 	"vinatex.integrations.teams_graph.notify_user",
 	# 	queue="short",
@@ -928,9 +930,12 @@ def _notify_employees_rejected(doc: Document):
 	# 	content_type="html",
 	# 	linkify=False,
 	# 	message=_(
-	# 		"🔔 Phiếu công tác đã bị từ chối.<br>"
-	# 		"<a href=\"{0}\">Xem chi tiết</a>"
+	# 		"🔔 Phiếu công tác tại {0} từ ngày {1} đến ngày {2} đã bị từ chối.<br>"
+	# 		"<a href=\"{3}\">Xem chi tiết</a>"
 	# 	).format(
+	# 		doc.destination, 
+	# 		formatdate(doc.from_date, "dd-MM-yyyy"), 
+	# 		formatdate(doc.to_date, "dd-MM-yyyy"), 
 	# 		url
 	# 	),
 	# )
@@ -943,32 +948,33 @@ def _notify_employees_cancelled(doc: Document):
 		return
 	make_notification_logs({
 		"type": "Alert",
-		"subject": _("Phiếu công tác đã bị hủy."),
+		"subject": _("Phiếu công tác tại {0} từ ngày {1} đến ngày {2} đã bị hủy.").format(
+			doc.destination, 
+			formatdate(doc.from_date, "dd-MM-yyyy"), 
+			formatdate(doc.to_date, "dd-MM-yyyy")
+		),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, users)
-	send_rocket_message(
-        to_users=users,
-        title=":bell: Thông báo",
-        message=_("Phiếu công tác đã bị hủy."),
-        link=get_url_to_form(doc.doctype, doc.name)
-    )
-	# url = get_url_to_form(doc.doctype, doc.name)
-	# frappe.enqueue(
-	# 	"vinatex.integrations.teams_graph.notify_user",
-	# 	queue="short",
-	# 	timeout=30,
-	# 	is_async=True,
-	# 	upn_or_email=users,
-	# 	content_type="html",
-	# 	linkify=False,
-	# 	message=_(
-	# 		"🔔 Phiếu công tác đã bị hủy.<br>"
-	# 		"<a href=\"{0}\">Xem chi tiết</a>"
-	# 	).format(
-	# 		url
-	# 	),
-	# )
+	url = get_url_to_form(doc.doctype, doc.name)
+	frappe.enqueue(
+		"vinatex.integrations.teams_graph.notify_user",
+		queue="short",
+		timeout=30,
+		is_async=True,
+		upn_or_email=users,
+		content_type="html",
+		linkify=False,
+		message=_(
+			"🔔 Phiếu công tác tại {0} từ ngày {1} đến ngày {2} đã bị hủy.<br>"
+			"<a href=\"{3}\">Xem chi tiết</a>"
+		).format(
+			doc.destination, 
+			formatdate(doc.from_date, "dd-MM-yyyy"), 
+			formatdate(doc.to_date, "dd-MM-yyyy"), 
+			url
+		),
+	)
 
 
 @frappe.whitelist()
