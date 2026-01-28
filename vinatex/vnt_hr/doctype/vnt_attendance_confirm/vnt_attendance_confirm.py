@@ -130,18 +130,39 @@ def _send_notification(doc: Document, user: str | list[str] | tuple[str, ...], s
 		return
 
 	recipients = list(target_users)
+	# frappe.throw(f"abc={recipients}")
+	url = get_url_to_form(doc.doctype, doc.name)
+	link_label = _("Xem chi tiết")
+	message_with_link = message or ""
+	if url:
+		if message_with_link:
+			message_with_link = f'{message_with_link}<br><a href="{url}">{link_label}</a>'
+		else:
+			message_with_link = f'<a href="{url}">{link_label}</a>'
+
 	make_notification_logs({
 		"type": "Alert",
 		"subject": subject,
 		"document_type": doc.doctype,
 		"document_name": doc.name,
-		"message": message,
+		"message": message_with_link,
+		"link": url,
 	}, recipients)
+	frappe.enqueue(
+		"vinatex.integrations.teams_graph.notify_user",
+		queue="short",
+		timeout=30,
+		is_async=True,
+		upn_or_email=recipients,
+		content_type="html",
+		linkify=False,
+		message=message_with_link,
+	)
 	# send_rocket_message(
 	# 	to_users=recipients,
 	# 	title=":bell: Thông báo",
-	# 	message=f"*{subject}*\n{message}" if message else subject,
-	# 	link=get_url_to_form(doc.doctype, doc.name),
+	# 	message=f"*{subject}*\n{message_with_link}" if message_with_link else subject,
+	# 	link=url,
 	# )
 
 
@@ -469,6 +490,8 @@ def make_attendance_confirm():
 	month_from, month_to = min_max_date(working_days)
 	# Lấy NV áp dụng
 	emps = _pick_employees(None)
+	# emps = [{'name': 'VGT00065', 'employee_name': 'Trần Trung Hiếu', 'department': 'Ban CNTT và Chuyển đổi số - VGT', 
+	# 	'user_id': 'hieutt@vinatex.com.vn', 'leave_approver': 'hungbt@vinatex.com.vn', 'reports_to': 'VGT00110'}]
 
 	# Chuẩn bị dữ liệu chấm công/leaves trong khoảng đầu tháng -> hôm nay
 	t0, _ = _day_bounds(month_from)
