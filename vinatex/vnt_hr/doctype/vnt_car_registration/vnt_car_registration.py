@@ -55,9 +55,11 @@ def _handle_state_transition(doc: Document):
 		_notify_to_approver_2(doc, user=approver_user_lv2)
 		# _notify_to_approver_2(doc)
 	if prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Đã duyệt':
-		_notify_to_employee(doc, "duyệt")
+		# _notify_to_employee(doc, "duyệt")
+		pass
 	if (prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Từ chối'):
-		_notify_to_employee(doc, "từ chối")
+		# _notify_to_employee(doc, "từ chối")
+		pass
 
 	if prev_state == "Mới tạo" and curr_state == "Đã duyệt":
 		_notify_to_user_receive(doc)
@@ -150,22 +152,22 @@ def _handle_state_transition(doc: Document):
 			message=_("Phiếu đăng ký xe của {0} đã được lãnh đạo tập đoàn phê duyệt").format(doc.employee_name or _("(không rõ)")),
 			link=get_url_to_form(doc.doctype, doc.name)
 		)
-		# frappe.enqueue(
-		# 	"vinatex.integrations.teams_graph.notify_user",
-		# 	queue="short",
-		# 	timeout=30,
-		# 	is_async=True,
-		# 	upn_or_email=[approver_user],
-		# 	content_type="html",
-		# 	linkify=False,
-		# 	message=_(
-		# 		"🔔 Phiếu đăng ký xe của {0} đã được lãnh đạo tập đoàn phê duyệt<br>"
-		# 		"<a href=\"{1}\">Xem chi tiết</a>"
-		# 	).format(
-		# 		doc.employee_name or _("(không rõ)"),
-		# 		url
-		# 	),
-		# )
+		frappe.enqueue(
+			"vinatex.integrations.teams_graph.notify_user",
+			queue="short",
+			timeout=30,
+			is_async=True,
+			upn_or_email=[approver_user],
+			content_type="html",
+			linkify=False,
+			message=_(
+				"🔔 Phiếu đăng ký xe của {0} đã được lãnh đạo tập đoàn phê duyệt<br>"
+				"<a href=\"{1}\">Xem chi tiết</a>"
+			).format(
+				doc.employee_name or _("(không rõ)"),
+				url
+			),
+		)
 
 
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Từ chối':
@@ -181,22 +183,22 @@ def _handle_state_transition(doc: Document):
 			message=_("Phiếu đăng ký xe của {0} đã bị lãnh đạo từ chối").format(doc.employee_name or _("(không rõ)")),
 			link=get_url_to_form(doc.doctype, doc.name)
 		)
-		# frappe.enqueue(
-		# 	"vinatex.integrations.teams_graph.notify_user",
-		# 	queue="short",
-		# 	timeout=30,
-		# 	is_async=True,
-		# 	upn_or_email=[approver_user],
-		# 	content_type="html",
-		# 	linkify=False,
-		# 	message=_(
-		# 		"🔔 Phiếu đăng ký xe của {0} đã bị lãnh đạo từ chối<br>"
-		# 		"<a href=\"{1}\">Xem chi tiết</a>"
-		# 	).format(
-		# 		doc.employee_name or _("(không rõ)"),
-		# 		url
-		# 	),
-		# )
+		frappe.enqueue(
+			"vinatex.integrations.teams_graph.notify_user",
+			queue="short",
+			timeout=30,
+			is_async=True,
+			upn_or_email=[approver_user],
+			content_type="html",
+			linkify=False,
+			message=_(
+				"🔔 Phiếu đăng ký xe của {0} đã bị lãnh đạo từ chối<br>"
+				"<a href=\"{1}\">Xem chi tiết</a>"
+			).format(
+				doc.employee_name or _("(không rõ)"),
+				url
+			),
+		)
 
 	if prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Từ chối':
 		make_notification_logs({
@@ -211,22 +213,22 @@ def _handle_state_transition(doc: Document):
 			message=_("Phiếu đăng ký xe của {0} đã bị lãnh đạo tập đoàn từ chối.").format(doc.employee_name or _("(không rõ)")),
 			link=get_url_to_form(doc.doctype, doc.name)
 		)
-		# frappe.enqueue(
-		# 	"vinatex.integrations.teams_graph.notify_user",
-		# 	queue="short",
-		# 	timeout=30,
-		# 	is_async=True,
-		# 	upn_or_email=[approver_user],
-		# 	content_type="html",
-		# 	linkify=False,
-		# 	message=_(
-		# 		"🔔 Phiếu đăng ký xe của {0} đã bị lãnh đạo tập đoàn từ chối<br>"
-		# 		"<a href=\"{1}\">Xem chi tiết</a>"
-		# 	).format(
-		# 		doc.employee_name or _("(không rõ)"),
-		# 		url
-		# 	),
-		# )
+		frappe.enqueue(
+			"vinatex.integrations.teams_graph.notify_user",
+			queue="short",
+			timeout=30,
+			is_async=True,
+			upn_or_email=[approver_user],
+			content_type="html",
+			linkify=False,
+			message=_(
+				"🔔 Phiếu đăng ký xe của {0} đã bị lãnh đạo tập đoàn từ chối<br>"
+				"<a href=\"{1}\">Xem chi tiết</a>"
+			).format(
+				doc.employee_name or _("(không rõ)"),
+				url
+			),
+		)
 
 
 # gửi thông báo đến người quản lý văn phòng
@@ -254,21 +256,21 @@ def _notify_to_office_manager(doc: Document):
 		link=get_url_to_form(doc.doctype, doc.name)
 	)
 	# frappe.enqueue(
-	# 		"vinatex.integrations.teams_graph.notify_user",
-	# 		queue="short",
-	# 		timeout=30,
-	# 		is_async=True,
-	# 		upn_or_email=user_list,
-	# 		content_type="html",
-	# 		linkify=False,
-	# 		message=_(
-	# 			"🔔 Phiếu đăng ký xe của {0} đã được duyệt. Vui lòng kiểm tra.<br>"
-	# 			"<a href=\"{1}\">Xem chi tiết</a>"
-	# 		).format(
-	# 			doc.employee_name or _("(không rõ)"),
-	# 			url
-	# 		),
-	# 	)
+	# 	"vinatex.integrations.teams_graph.notify_user",
+	# 	queue="short",
+	# 	timeout=30,
+	# 	is_async=True,
+	# 	upn_or_email=user_list,
+	# 	content_type="html",
+	# 	linkify=False,
+	# 	message=_(
+	# 		"🔔 Phiếu đăng ký xe của {0} đã được duyệt. Vui lòng kiểm tra.<br>"
+	# 		"<a href=\"{1}\">Xem chi tiết</a>"
+	# 	).format(
+	# 		doc.employee_name or _("(không rõ)"),
+	# 		url
+	# 	),
+	# )
 
 
 # gửi thông báo đến emp tham gia chuyến xe
@@ -343,22 +345,22 @@ def _notify_to_user_receive(doc: Document):
 				message=_("Điều xe cho phiếu đăng ký xe của {0}.").format(doc.employee_name or _("(không rõ)")),
 				link=get_url_to_form(doc.doctype, doc.name)
 			)
-			# frappe.enqueue(
-			# 	"vinatex.integrations.teams_graph.notify_user",
-			# 	queue="short",
-			# 	timeout=30,
-			# 	is_async=True,
-			# 	upn_or_email=user_list,
-			# 	content_type="html",
-			# 	linkify=False,
-			# 	message=_(
-			# 		"🔔 Điều xe cho phiếu đăng ký xe của {0}.<br>"
-			# 		"<a href=\"{1}\">Xem chi tiết</a>"
-			# 	).format(
-			# 		doc.employee_name or _("(không rõ)"),
-			# 		url
-			# 	),
-			# )
+			frappe.enqueue(
+				"vinatex.integrations.teams_graph.notify_user",
+				queue="short",
+				timeout=30,
+				is_async=True,
+				upn_or_email=user_list,
+				content_type="html",
+				linkify=False,
+				message=_(
+					"🔔 Điều xe cho phiếu đăng ký xe của {0}.<br>"
+					"<a href=\"{1}\">Xem chi tiết</a>"
+				).format(
+					doc.employee_name or _("(không rõ)"),
+					url
+				),
+			)
 			new_todo =  frappe.new_doc("ToDo")
 			new_todo.description = _("Điều xe cho phiếu đăng ký xe của {0}.").format(doc.employee_name or _("(không rõ)"))
 			new_todo.allocated_to = user_list[0]
@@ -493,6 +495,7 @@ def _set_people_count(doc: Document):
 
 def _notify_to_approver(doc: Document, user: str | None):
 	"""Gửi thông báo đến người duyệt khi đơn được chuyển sang trạng thái 'Chờ lãnh đạo duyệt'."""
+	url = get_url_to_form(doc.doctype, doc.name)
 	make_notification_logs({
 		"type": "Alert",
 		"subject": _("Phiếu đăng ký xe của {0} đang chờ lãnh đạo duyệt.").format(doc.employee_name or _("(không rõ)")),
@@ -505,22 +508,22 @@ def _notify_to_approver(doc: Document, user: str | None):
 		message= _("Phiếu đăng ký xe của {0} đang chờ lãnh đạo duyệt.").format(doc.employee_name or _("(không rõ)")),
 		link=get_url_to_form(doc.doctype, doc.name)
 	)
-	# frappe.enqueue(
-			# 	"vinatex.integrations.teams_graph.notify_user",
-			# 	queue="short",
-			# 	timeout=30,
-			# 	is_async=True,
-			# 	upn_or_email=user_list,
-			# 	content_type="html",
-			# 	linkify=False,
-			# 	message=_(
-			# 		"🔔 Điều xe cho phiếu đăng ký xe của {0}.<br>"
-			# 		"<a href=\"{1}\">Xem chi tiết</a>"
-			# 	).format(
-			# 		doc.employee_name or _("(không rõ)"),
-			# 		url
-			# 	),
-			# )
+	frappe.enqueue(
+		"vinatex.integrations.teams_graph.notify_user",
+		queue="short",
+		timeout=30,
+		is_async=True,
+		upn_or_email=user,
+		content_type="html",
+		linkify=False,
+		message=_(
+			"🔔 Phiếu đăng ký xe của {0} đang chờ lãnh đạo duyệt.<br>"
+			"<a href=\"{1}\">Xem chi tiết</a>"
+		).format(
+			doc.employee_name or _("(không rõ)"),
+			url
+		),
+	)
 	# tạo todo cho người duyệt
 	ensure_todo(doc, user)
 
