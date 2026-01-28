@@ -10,6 +10,7 @@ from urllib.parse import urlencode, urlparse, unquote
 
 import frappe
 import requests
+from frappe.utils import get_url
 from frappe.utils.password import set_encrypted_password
 from frappe.utils.data import escape_html
 
@@ -657,6 +658,29 @@ def notify_user(
     recipients = _normalize_recipients(upn_or_email)
     if not recipients:
         frappe.throw("Chưa cung cấp user Teams để gửi tin nhắn.")
+
+    # chỉ gửi thông báo nếu là domain cho phép
+    ALLOWED_URL = "https://ihrm.vinatex.com.vn"
+    site_url = ""
+    try:
+        site_url = get_url()
+    except Exception:
+        pass
+    normalized_site = site_url.rstrip("/") if site_url else ""
+    if normalized_site != ALLOWED_URL:
+        frappe.logger("vnt_teams_graph").info(
+            "Skipping Teams notify_user because site URL is not allowed: %s", site_url
+        )
+        skipped_payloads = [
+            {
+                "status": "skipped",
+                "reason": "site_url_not_allowed",
+                "site_url": site_url,
+                "recipient": recipient,
+            }
+            for recipient in recipients
+        ]
+        return skipped_payloads[0] if len(skipped_payloads) == 1 else skipped_payloads
 
     settings = get_settings(settings_docname)
 
