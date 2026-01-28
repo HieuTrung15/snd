@@ -498,7 +498,7 @@ def _notify_to_employee_list(doc):
 	"""Gửi thông báo đến nhân viên tạo phiếu và danh sách nhân sự trong items khi đơn được lãnh đạo duyệt."""
 	_send_trip_notification(
 		doc,
-		_("Đơn đi công tác của {0} từ ngày {1} đến ngày {2} đã được lãnh đạo duyệt").format(
+		_("Đăng ký đi công tác của {0} từ ngày {1} đến ngày {2} đã được phê duyệt.").format(
 			doc.employee_name or _("(không rõ)"), formatdate(doc.from_date, "dd-MM-yyyy"), formatdate(doc.to_date, "dd-MM-yyyy")
 		),
 	)
@@ -508,7 +508,7 @@ def _notify_to_employee_list_2(doc):
 	"""Gửi thông báo đến nhân viên tạo phiếu và danh sách nhân sự trong items khi đơn được lãnh đạo tập đoàn duyệt."""
 	_send_trip_notification(
 		doc,
-		_("Đơn đi công tác của {0} từ ngày {1} đến ngày {2} đã được lãnh đạo tập đoàn duyệt.").format(
+		_("Đăng ký đi công tác của {0} từ ngày {1} đến ngày {2} đã được phê duyệt.").format(
 			doc.employee_name or _("(không rõ)"), formatdate(doc.from_date, "dd-MM-yyyy"), formatdate(doc.to_date, "dd-MM-yyyy")
 		),
 	)

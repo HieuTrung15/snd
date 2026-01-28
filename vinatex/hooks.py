@@ -211,7 +211,7 @@ scheduler_events = {
             "vinatex.vinatex.doctype.overrides.allocate_leave.allocate_leave"
         ],
 		# Chạy chấm công 10p/lân từ 8h đến 9h30 sáng hàng ngày
-		"0-30/10 8,9 * * *": [
+		"*/30 8-9 * * *": [
 			"vinatex.vinatex.doctype.overrides.timekeeping.get_timekeeping_data_morning",
 		],
 		# Chạy chấm công lúc 22h tối hàng ngày

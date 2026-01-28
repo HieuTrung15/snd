@@ -532,7 +532,9 @@ def _notify_to_approver_2(doc: Document, user: str | None):
 	"""Gửi thông báo đến người duyệt khi đơn được chuyển sang trạng thái 'Chờ lãnh đạo tập đoàn duyệt'."""
 	make_notification_logs({
 		"type": "Alert",
-		"subject": _("Phiếu đăng ký xe của {0} đang chờ lãnh đạo tập đoàn duyệt.").format(doc.employee_name or _("(không rõ)")),
+		"subject": _("Phiếu đăng ký xe của {0} ban {1} đang chờ lãnh đạo tập đoàn duyệt.").format(
+			doc.employee_name or _("(không rõ)"), 
+			doc.department or _("(không rõ)")),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, [user])
@@ -552,10 +554,11 @@ def _notify_to_approver_2(doc: Document, user: str | None):
 		content_type="html",
 		linkify=False,
 		message=_(
-			"🔔 Phiếu đăng ký xe của {0} đang chờ lãnh đạo tập đoàn duyệt.<br>"
-			"<a href=\"{1}\">Xem chi tiết</a>"
+			"🔔 Phiếu đăng ký xe của {0} ban {1} đang chờ lãnh đạo tập đoàn duyệt.<br>"
+			"<a href=\"{2}\">Xem chi tiết</a>"
 		).format(
 			doc.employee_name or _("(không rõ)"),
+			doc.department or _("(không rõ)"),
 			url
 		),
 	)
