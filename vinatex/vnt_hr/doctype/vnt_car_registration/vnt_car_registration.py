@@ -81,14 +81,14 @@ def _handle_state_transition(doc: Document):
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Đã duyệt':
 		make_notification_logs({
 			"type": "Alert",
-			"subject": _("Phiếu đăng ký xe của {0} đã được lãnh đạo phê duyệt").format(doc.employee_name or _("(không rõ)")),
+			"subject": _("Phiếu đăng ký xe của {0} đã được lãnh đạo phê duyệt.").format(doc.employee_name or _("(không rõ)")),
 			"document_type": doc.doctype,
 			"document_name": doc.name,
 		}, [approver_user])
 		send_rocket_message(
 			to_users=approver_user,
 			title=":bell: Thông báo",
-			message=_("Phiếu đăng ký xe của {0} đã được lãnh đạo phê duyệt").format(doc.employee_name or _("(không rõ)")),
+			message=_("Phiếu đăng ký xe của {0} đã được lãnh đạo phê duyệt.").format(doc.employee_name or _("(không rõ)")),
 			link=get_url_to_form(doc.doctype, doc.name)
 		)
 		frappe.enqueue(
@@ -100,7 +100,7 @@ def _handle_state_transition(doc: Document):
 			content_type="html",
 			linkify=False,
 			message=_(
-				"🔔 Phiếu đăng ký xe của {0} đã được lãnh đạo phê duyệt<br>"
+				"🔔 Phiếu đăng ký xe của {0} đã được lãnh đạo phê duyệt.<br>"
 				"<a href=\"{1}\">Xem chi tiết</a>"
 			).format(
 				doc.employee_name or _("(không rõ)"),
@@ -112,14 +112,14 @@ def _handle_state_transition(doc: Document):
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Chờ lãnh đạo tập đoàn duyệt':
 		make_notification_logs({
 			"type": "Alert",
-			"subject": _("Phiếu đăng ký xe của {0} đang chờ lãnh đạo tập đoàn phê duyệt").format(doc.employee_name or _("(không rõ)")),
+			"subject": _("Phiếu đăng ký xe của {0} đang chờ lãnh đạo tập đoàn phê duyệt.").format(doc.employee_name or _("(không rõ)")),
 			"document_type": doc.doctype,
 			"document_name": doc.name,
 		}, [approver_user])
 		send_rocket_message(
 			to_users=approver_user,
 			title=":bell: Thông báo",
-			message=_("Phiếu đăng ký xe của {0} đang chờ lãnh đạo tập đoàn phê duyệt").format(doc.employee_name or _("(không rõ)")),
+			message=_("Phiếu đăng ký xe của {0} đang chờ lãnh đạo tập đoàn phê duyệt.").format(doc.employee_name or _("(không rõ)")),
 			link=get_url_to_form(doc.doctype, doc.name)
 		)
 		frappe.enqueue(
@@ -131,7 +131,7 @@ def _handle_state_transition(doc: Document):
 			content_type="html",
 			linkify=False,
 			message=_(
-				"🔔 Phiếu đăng ký xe của {0} đang chờ lãnh đạo tập đoàn phê duyệt<br>"
+				"🔔 Phiếu đăng ký xe của {0} đang chờ lãnh đạo tập đoàn phê duyệt.<br>"
 				"<a href=\"{1}\">Xem chi tiết</a>"
 			).format(
 				doc.employee_name or _("(không rõ)"),
@@ -149,7 +149,7 @@ def _handle_state_transition(doc: Document):
 		send_rocket_message(
 			to_users=approver_user,
 			title=":bell: Thông báo",
-			message=_("Phiếu đăng ký xe của {0} đã được lãnh đạo tập đoàn phê duyệt").format(doc.employee_name or _("(không rõ)")),
+			message=_("Phiếu đăng ký xe của {0} đã được lãnh đạo tập đoàn phê duyệt.").format(doc.employee_name or _("(không rõ)")),
 			link=get_url_to_form(doc.doctype, doc.name)
 		)
 		frappe.enqueue(
@@ -334,7 +334,7 @@ def _notify_to_user_receive(doc: Document):
 		if vehicle_control:
 			make_notification_logs({
 				"type": "Alert",
-				"subject": _("Điều xe cho phiếu đăng ký xe của {0}.").format(doc.employee_name or _("(không rõ)")),
+				"subject": _("Điều xe cho phiếu đăng ký xe của {0} ban {1}.").format(doc.employee_name or _("(không rõ)"), doc.department or _("(không rõ)")),
 				"document_type": 'VNT Vehicle Control',
 				"document_name": vehicle_control.name,
 			}, user_list)
@@ -353,15 +353,16 @@ def _notify_to_user_receive(doc: Document):
 				content_type="html",
 				linkify=False,
 				message=_(
-					"🔔 Điều xe cho phiếu đăng ký xe của {0}.<br>"
-					"<a href=\"{1}\">Xem chi tiết</a>"
+					"🔔 Điều xe cho phiếu đăng ký xe của {0} ban {1}.<br>"
+					"<a href=\"{2}\">Xem chi tiết</a>"
 				).format(
 					doc.employee_name or _("(không rõ)"),
+					doc.department or _("(không rõ)"),
 					url
 				),
 			)
 			new_todo =  frappe.new_doc("ToDo")
-			new_todo.description = _("Điều xe cho phiếu đăng ký xe của {0}.").format(doc.employee_name or _("(không rõ)"))
+			new_todo.description = _("Điều xe cho phiếu đăng ký xe của {0} ban {1}.").format(doc.employee_name or _("(không rõ)"), doc.department or _("(không rõ)"))
 			new_todo.allocated_to = user_list[0]
 			new_todo.reference_type = 'VNT Vehicle Control'
 			new_todo.reference_name = vehicle_control.name
