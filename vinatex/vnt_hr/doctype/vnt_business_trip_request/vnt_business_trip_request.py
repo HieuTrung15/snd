@@ -332,8 +332,9 @@ def _notify_to_general_manager(doc: Document):
 		if approver:
 			make_notification_logs({
 				"type": "Alert",
-				"subject": _("{0} đã được duyệt đi công tác từ {1} đến {2}").format(
+				"subject": _("{0} ban {1} đã được duyệt đi công tác từ {2} đến {3}").format(
 					doc.employee_name,
+					doc.department or _("(không rõ)"),
 					formatdate(doc.from_date, "dd-MM-yyyy"),
 					formatdate(doc.to_date, "dd-MM-yyyy"),
 				),
@@ -343,31 +344,33 @@ def _notify_to_general_manager(doc: Document):
 			send_rocket_message(
 				to_users=approver,
 				title=":bell: Thông báo",
-				message=_("{0} đã được duyệt đi công tác từ {1} đến {2}").format(
+				message=_("{0} ban {1} đã được duyệt đi công tác từ {2} đến {3}").format(
 					doc.employee_name,
+					doc.department or _("(không rõ)"),
 					formatdate(doc.from_date, "dd-MM-yyyy"),
 					formatdate(doc.to_date, "dd-MM-yyyy"),
 				),
 				link=get_url_to_form(doc.doctype, doc.name)
 			)
 			url = get_url_to_form(doc.doctype, doc.name)
-			# frappe.enqueue(
-			# 	"vinatex.integrations.teams_graph.notify_user",
-			# 	queue="short",
-			# 	timeout=30,
-			# 	is_async=True,
-			# 	upn_or_email=approver,
-			# 	content_type="html",
-			# 	linkify=False,
-			# 	message=_("🔔 {0} đã được duyệt đi công tác từ {1} đến {2} <br>"
-			#   		"<a href=\"{3}\">Xem chi tiết</a>"
-			# 	).format(
-			# 		doc.employee_name or _("(không rõ)"),
-			# 		formatdate(doc.from_date, "dd-MM-yyyy"),
-			# 		formatdate(doc.to_date, "dd-MM-yyyy"),
-			# 		url
-			# 	),
-			# )
+			frappe.enqueue(
+				"vinatex.integrations.teams_graph.notify_user",
+				queue="short",
+				timeout=30,
+				is_async=True,
+				upn_or_email=approver,
+				content_type="html",
+				linkify=False,
+				message=_("🔔 {0} ban {1} đã được duyệt đi công tác từ {2} đến {3} <br>"
+			  		"<a href=\"{4}\">Xem chi tiết</a>"
+				).format(
+					doc.employee_name or _("(không rõ)"),
+					doc.department or _("(không rõ)"),
+					formatdate(doc.from_date, "dd-MM-yyyy"),
+					formatdate(doc.to_date, "dd-MM-yyyy"),
+					url
+				),
+			)
 
 
 # ---------------- ToDo ----------------
@@ -474,22 +477,22 @@ def _notify_if_pending_lv2(doc: Document):
         link=get_url_to_form(doc.doctype, doc.name)
     )
 	url = get_url_to_form(doc.doctype, doc.name)
-	# frappe.enqueue(
-	# 	"vinatex.integrations.teams_graph.notify_user",
-	# 	queue="short",
-	# 	timeout=30,
-	# 	is_async=True,
-	# 	upn_or_email=[approver_user],
-	# 	content_type="html",
-	# 	linkify=False,
-	# 	message=_("🔔 Phiếu đăng ký đi công tác của {0} ban {1} đang chờ duyệt.<br>"
-	# 		"<a href=\"{2}\">Xem chi tiết</a>"
-	# 	).format(
-	# 		doc.employee_name or _("(không rõ)"),
-	# 		doc.department or _("(không rõ)"),
-	# 		url
-	# 	),
-	# )
+	frappe.enqueue(
+		"vinatex.integrations.teams_graph.notify_user",
+		queue="short",
+		timeout=30,
+		is_async=True,
+		upn_or_email=[approver_user],
+		content_type="html",
+		linkify=False,
+		message=_("🔔 Phiếu đăng ký đi công tác của {0} ban {1} đang chờ duyệt.<br>"
+			"<a href=\"{2}\">Xem chi tiết</a>"
+		).format(
+			doc.employee_name or _("(không rõ)"),
+			doc.department or _("(không rõ)"),
+			url
+		),
+	)
 	ensure_todo(doc, approver_user)
 
 
