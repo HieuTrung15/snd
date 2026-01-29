@@ -145,6 +145,20 @@ class VNTVehicleControl(Document):
 			"document_type": target_doctype,
 			"document_name": target_docname,
 		}, list(recipients))
+		frappe.enqueue(
+			"vinatex.integrations.teams_graph.notify_user",
+			queue="short",
+			timeout=50,
+			is_async=True,
+			upn_or_email=list(recipients),
+			content_type="html",
+			linkify=False,
+			message=_(
+			"🔔 Bạn đã được điều xe cho chuyến đi. {0}.<br>"
+			).format(
+				driver_text
+			),
+		)
 		send_rocket_message(
 			to_users=list(recipients),
 			title=":bell: Thông báo",
