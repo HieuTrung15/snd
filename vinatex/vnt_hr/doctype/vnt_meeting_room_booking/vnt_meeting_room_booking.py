@@ -8,16 +8,21 @@ from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.desk.form.assign_to import close_all_assignments as frappe_close_assignments
 from frappe.model.document import Document
-from frappe.utils import get_url_to_form
+from frappe.utils import formatdate, get_url_to_form
 from frappe.utils.data import escape_html
 from vinatex.patches.utils.rocket_chat import send_rocket_message
+from vinatex.vnt_hr.doctype.vnt_office_settings.vnt_office_settings import (
+	get_office_manager_employee,
+	get_room_follower,
+)
 
 
-MEETING_ROOM_NOTIFICATION_USER_GROUP = "Nhận thông báo phân phòng họp"
+MEETING_ROOM_NOTIFICATION_USER_GROUP = "Office Manager"
 
 
 class VNTMeetingRoomBooking(Document):
 	def validate(self):
+		_sync_follower_from_settings(self)
 		self._validate_time_fields()
 		self._validate_room_availability()
 
@@ -32,6 +37,10 @@ class VNTMeetingRoomBooking(Document):
 		self._validate_room_availability()
 		if self.workflow_state == "Đã duyệt" and self.has_value_changed("room_name"):
 			_handle_room_assignment_update(self)
+
+	def on_cancel(self):
+		_close_all_todos_for_doc(self)
+		_close_all_assignments(self)
 
 
 	def _validate_time_fields(self):
@@ -98,7 +107,7 @@ def _handle_state_transition(doc):
 	if prev_state == 'Chờ duyệt' and curr_state == 'Đã duyệt':
 		subject = _("Phiếu đăng ký phòng họp của {0} đã được duyệt").format(doc.employee_name or _("(không rõ)"))
 		message = _("Phiếu ngày {0} từ {1} đến {2} đã được duyệt.").format(
-			doc.date or _("(không rõ ngày đăng ký)"),
+			_format_date_value(doc.date, _("(không rõ ngày đăng ký)")),
 			doc.start_time or _("(không rõ thời gian bắt đầu)"),
 			doc.end_time or _("(không rõ thời gian kết thúc)"),
 		)
@@ -106,23 +115,31 @@ def _handle_state_transition(doc):
 
 
 	if prev_state == 'Chờ duyệt' and curr_state == 'Từ chối':
+		date_label = _format_date_value(doc.date, _("(không rõ ngày đăng ký)"))
 		subject = _("Phiếu đăng ký phòng họp của {0} ngày {1} từ {2} đến {3} đã bị từ chối").format(
 			doc.employee_name or _("(không rõ)"),
-			doc.date or _("(không rõ ngày đăng ký)"),
+			date_label,
 			doc.start_time or _("(không rõ thời gian bắt đầu)"),
 			doc.end_time or _("(không rõ thời gian kết thúc)"),
 		)
 		_notify_users(doc, [employee_user], subject, subject)
+	if curr_state == 'Từ chối' and prev_state != 'Từ chối':
+		_close_all_todos_for_doc(doc)
+		_close_all_assignments(doc)
 
 
 	if prev_state == 'Đã duyệt' and curr_state == 'Hủy':
+		date_label = _format_date_value(doc.date, _("(không rõ ngày đăng ký)"))
 		subject = _("Phiếu đăng ký phòng họp của {0} ngày {1} từ {2} đến {3} đã bị hủy").format(
 			doc.employee_name or _("(không rõ)"),
-			doc.date or _("(không rõ ngày đăng ký)"),
+			date_label,
 			doc.start_time or _("(không rõ thời gian bắt đầu)"),
 			doc.end_time or _("(không rõ thời gian kết thúc)"),
 		)
 		_notify_users(doc, [employee_user], subject, subject)
+	if curr_state == 'Hủy' and prev_state != 'Hủy':
+		_close_all_todos_for_doc(doc)
+		_close_all_assignments(doc)
 
 	# thông báo cho danh sách nhân sự
 	if (prev_state == 'Chờ duyệt' and curr_state == 'Từ chối'):
@@ -131,13 +148,14 @@ def _handle_state_transition(doc):
 
 def _notify_to_approver(doc: Document, user: str | None):
 	"""Gửi thông báo đến người duyệt khi đơn được chuyển sang trạng thái 'Chờ duyệt'."""
+	date_label = _format_date_value(doc.date, _("(không rõ ngày đăng ký)"))
 	subject = _('Duyệt đăng ký phòng họp của {0} ngày {1}').format(
 		doc.employee_name or _("(không rõ)"),
-		doc.date or _("(không rõ ngày đăng ký)"),
+		date_label,
 	)
 	message = _('Phiếu đăng ký phòng họp của {0} ngày {1} đang chờ duyệt.').format(
 		doc.employee_name or _("(không rõ)"),
-		doc.date or _("(không rõ ngày đăng ký)"),
+		date_label,
 	)
 	_notify_users(doc, [user], subject, message)
 	# tạo todo cho người duyệt
@@ -160,9 +178,10 @@ def ensure_todo(doc: Document, user: str):
 		"status": ["!=", "Cancelled"],
 	}):
 		return
+	date_label = _format_date_value(doc.date, _("(không rõ ngày đăng ký)"))
 	description = _('Duyệt đăng ký phòng họp của {0} ngày {1} từ {2} đến {3}').format(
 		doc.employee_name or _("(không rõ)"),
-		doc.date or _("(không rõ ngày đăng ký)"),
+		date_label,
 		doc.start_time or _("(không rõ thời gian bắt đầu)"),
 		doc.end_time or _("(không rõ thời gian kết thúc)")
 	)
@@ -265,18 +284,19 @@ def _handle_room_assignment_update(doc: Document):
 
 
 def _notify_office_manager_for_missing_room(doc: Document):
-	users = _get_enabled_users_in_user_group(MEETING_ROOM_NOTIFICATION_USER_GROUP)
+	users = _get_office_manager_users()
 	if not users:
 		return
+	date_label = _format_date_value(doc.date, _("(không rõ ngày đăng ký)"))
 	description = _('Cấp phòng họp cho phiếu đăng ký của {0} ngày {1} từ {2} đến {3}').format(
 		doc.employee_name or _("(không rõ)"),
-		doc.date or _("(không rõ ngày đăng ký)"),
+		date_label,
 		doc.start_time or _("(không rõ thời gian bắt đầu)"),
 		doc.end_time or _("(không rõ thời gian kết thúc)"),
 	)
 	subject =  _('Cấp phòng họp cho phiếu đăng ký của {0} ngày {1} từ {2} đến {3}').format(
 		doc.employee_name or _("(không rõ)"),
-		doc.date or _("(không rõ ngày đăng ký)"),
+		date_label,
 		doc.start_time or _("(không rõ thời gian bắt đầu)"),
 		doc.end_time or _("(không rõ thời gian kết thúc)"),
 	)
@@ -290,10 +310,11 @@ def _create_follower_follow_up(doc: Document):
 	follower_user = get_employee_user_id(follower_employee)
 	if not follower_user:
 		return
+	date_label = _format_date_value(doc.date, _("(không rõ ngày đăng ký)"))
 	description = _('Chuẩn bị phòng {0} cho cuộc họp của {1} ngày {2} từ {3} đến {4}').format(
 		doc.room_name or _("(không rõ phòng)"),
 		doc.employee_name or _("(không rõ)"),
-		doc.date or _("(không rõ ngày đăng ký)"),
+		date_label,
 		doc.start_time or _("(không rõ thời gian bắt đầu)"),
 		doc.end_time or _("(không rõ thời gian kết thúc)"),
 	)
@@ -303,7 +324,7 @@ def _create_follower_follow_up(doc: Document):
 
 
 def _close_office_manager_todos(doc: Document):
-	users = _get_enabled_users_in_user_group(MEETING_ROOM_NOTIFICATION_USER_GROUP)
+	users = _get_office_manager_users()
 	if not users:
 		return
 	_close_todos_for_users(doc, users)
@@ -328,6 +349,20 @@ def _close_todos_for_users(doc: Document, users: list[str]):
 			"reference_type": doc.doctype,
 			"reference_name": doc.name,
 			"allocated_to": ["in", users],
+			"status": ["in", ["Open", "Overdue"]],
+		},
+		pluck="name",
+	)
+	for name in names:
+		frappe.db.set_value("ToDo", name, "status", "Closed", update_modified=False)
+
+
+def _close_all_todos_for_doc(doc: Document):
+	names = frappe.get_all(
+		"ToDo",
+		filters={
+			"reference_type": doc.doctype,
+			"reference_name": doc.name,
 			"status": ["in", ["Open", "Overdue"]],
 		},
 		pluck="name",
@@ -386,6 +421,26 @@ def _get_enabled_users_in_user_group(user_group_name: str) -> list[str]:
 	)
 
 
+def _get_office_manager_users() -> list[str]:
+	office_manager = get_office_manager_employee()
+	if office_manager:
+		user = get_employee_user_id(office_manager)
+		return [user] if user else []
+	return _get_enabled_users_in_user_group(MEETING_ROOM_NOTIFICATION_USER_GROUP)
+
+
+def _sync_follower_from_settings(doc: Document):
+	if not (doc and doc.room_name):
+		return
+	follower, follower_name = get_room_follower(doc.room_name)
+	if not follower:
+		return
+	if doc.follower != follower:
+		doc.follower = follower
+	if follower_name and doc.follower_name != follower_name:
+		doc.follower_name = follower_name
+
+
 def _get_prev_and_curr_workflow_state(doc: Document) -> tuple[str | None, str]:
 	"""Trả về (previous_state, current_state) an toàn.
 	- Ưu tiên lấy previous từ get_doc_before_save() nếu có.
@@ -422,7 +477,7 @@ def _notify_to_employee(doc: Document, status: str):
 			status,
 		)
 		message = _("Ngày {0} từ {1} đến {2}.").format(
-			doc.date or _("(không rõ ngày đăng ký)"),
+			_format_date_value(doc.date, _("(không rõ ngày đăng ký)")),
 			doc.start_time or _("(không rõ thời gian bắt đầu)"),
 			doc.end_time or _("(không rõ thời gian kết thúc)"),
 		)
@@ -453,11 +508,20 @@ def _notify_room_assignment_to_requester(doc: Document):
 		doc.room_name,
 	)
 	message = _("Ngày {0} từ {1} đến {2}.").format(
-		doc.date or _("(không rõ ngày đăng ký)"),
+		_format_date_value(doc.date, _("(không rõ ngày đăng ký)")),
 		doc.start_time or _("(không rõ thời gian bắt đầu)"),
 		doc.end_time or _("(không rõ thời gian kết thúc)"),
 	)
 	_notify_users(doc, target_users, subject, message)
+
+
+def _format_date_value(value: str | None, fallback: str) -> str:
+	if not value:
+		return fallback
+	try:
+		return formatdate(value, "dd/MM/yyyy")
+	except Exception:
+		return value or fallback
 
 # fomat: HH:MM AM/PM sang HH:MM:SS or HH:MM
 def _parse_time(value: str | None):

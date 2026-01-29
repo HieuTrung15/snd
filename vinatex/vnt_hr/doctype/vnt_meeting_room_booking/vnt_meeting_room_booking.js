@@ -49,17 +49,37 @@ frappe.ui.form.on("VNT Meeting Room Booking", {
 		loadTakenRooms(frm);
 	},
 });
-// nếu tầng 8 thì người theo dõi là Đỗ Thị Hiền 163
+// lấy người theo dõi theo cấu hình phòng họp
 const setFollowerByRoom = (frm) => {
 	if (!frm.doc) {
 		return;
 	}
 
-	const follower = frm.doc.room_name === "Phòng họp tầng 8" ? "VGT00163":"";
-
-	if (frm.doc.follower !== follower) {
-		frm.set_value("follower", follower);
+	const roomName = frm.doc.room_name;
+	if (!roomName) {
+		if (frm.doc.follower || frm.doc.follower_name) {
+			frm.set_value("follower", "");
+			frm.set_value("follower_name", "");
+		}
+		return;
 	}
+
+	frappe.call({
+		method: "vinatex.vnt_hr.doctype.vnt_office_settings.vnt_office_settings.get_room_follower_info",
+		args: {
+			room_name: roomName,
+		},
+		callback(res) {
+			const follower = res && res.message ? res.message.follower : "";
+			const followerName = res && res.message ? res.message.follower_name : "";
+			if (frm.doc.follower !== follower) {
+				frm.set_value("follower", follower || "");
+			}
+			if (frm.doc.follower_name !== followerName) {
+				frm.set_value("follower_name", followerName || "");
+			}
+		},
+	});
 };
 
 const loadTakenRooms = (frm) => {

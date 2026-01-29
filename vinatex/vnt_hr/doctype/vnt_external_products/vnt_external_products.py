@@ -8,11 +8,14 @@ from frappe import _
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.model.document import Document
 from frappe.model.workflow import apply_workflow
-from frappe.utils import cint, cstr, flt, get_url_to_form
+from frappe.utils import cint, cstr, flt, formatdate, get_url_to_form
 from frappe.utils.data import escape_html
 from vinatex.patches.utils.rocket_chat import send_rocket_message
+from vinatex.vnt_hr.doctype.vnt_office_settings.vnt_office_settings import (
+	get_approver_lv2_employee,
+	get_gift_handler_employee,
+)
 
-_FOLLOWER_EMPLOYEE = "VGT00175"
 
 
 class VNTExternalProducts(Document):
@@ -20,11 +23,13 @@ class VNTExternalProducts(Document):
 
 	def before_insert(self):
 		_set_default_follower(self)
+		_set_default_approver_lv2(self)
 		_set_default_list_item_type(self)
 		_apply_is_all_flag(self)
 
 	def validate(self):
 		_set_default_follower(self)
+		_set_default_approver_lv2(self)
 		_set_default_list_item_type(self)
 		_apply_is_all_flag(self)
 		_sync_inventory_export_flags(self)
@@ -65,7 +70,7 @@ def _handle_state_transition(doc: Document):
 			_notify_follower(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã được lãnh đạo duyệt."))
 		_record_inventory_movements(doc)
 
-	if curr_state == "Đã duyệt" and prev_state == "Chờ Lãnh đạo Tập đoàn duyệt":
+	if curr_state == "Đã duyệt" and prev_state == "Chờ lãnh đạo tập đoàn duyệt":
 		_check_state_to_close_todo(doc, approver_lv2_user)
 		_notify_requester(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã được Lãnh đạo Tập đoàn duyệt."))
 		_notify_follower_prepare_gift(doc)
@@ -76,7 +81,7 @@ def _handle_state_transition(doc: Document):
 		_notify_requester(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã bị lãnh đạo từ chối."))
 		_notify_follower(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã bị lãnh đạo từ chối."))
 
-	if prev_state == "Chờ Lãnh đạo Tập đoàn duyệt" and curr_state == "Từ chối":
+	if prev_state == "Chờ lãnh đạo tập đoàn duyệt" and curr_state == "Từ chối":
 		_check_state_to_close_todo(doc, approver_lv2_user)
 		_notify_requester(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã bị Lãnh đạo Tập đoàn từ chối."))
 		_notify_follower(doc, _("Phiếu đăng ký sản phẩm đối ngoại của {0} đã bị Lãnh đạo Tập đoàn từ chối."))
@@ -86,12 +91,28 @@ def _handle_state_transition(doc: Document):
 		_check_state_to_close_todo(doc, approver_lv2_user)
 
 
+def _format_date_value(value: str | None) -> str:
+	if not value:
+		return ""
+	try:
+		return formatdate(value, "dd/MM/yyyy")
+	except Exception:
+		return value
+
+
+def _append_date(subject: str, doc: Document) -> str:
+	date_str = _format_date_value(doc.get("date"))
+	if not date_str:
+		return subject
+	return f"{subject} (Ngày {date_str})"
+
+
 def _notify_to_approver(doc: Document, user: str | None):
 	"""Nhắc lãnh đạo cấp 1 duyệt và tạo ToDo."""
 	if not user:
 		return
 	subject = _("Phiếu đăng ký sản phẩm đối ngoại của {0} đang chờ duyệt.").format(doc.employee_name or _("(không rõ)"))
-	_notify_users(doc, [user], subject)
+	_notify_users(doc, [user], _append_date(subject, doc))
 	ensure_todo(doc, user)
 
 
@@ -100,7 +121,7 @@ def _notify_to_approver_lv2(doc: Document, user: str | None):
 	if not user:
 		return
 	subject = _("Phiếu đăng ký sản phẩm đối ngoại của {0} đang chờ lãnh đạo tập đoàn duyệt.").format(doc.employee_name or _("(không rõ)"))
-	_notify_users(doc, [user], subject)
+	_notify_users(doc, [user], _append_date(subject, doc))
 	ensure_todo(doc, user)
 
 
@@ -110,7 +131,7 @@ def _notify_requester(doc: Document, template: str):
 	if not users:
 		return
 	subject = template.format(doc.employee_name or _("(không rõ)"))
-	_notify_users(doc, users, subject)
+	_notify_users(doc, users, _append_date(subject, doc))
 
 
 def _notify_follower(doc: Document, template: str):
@@ -119,7 +140,7 @@ def _notify_follower(doc: Document, template: str):
 	if not user:
 		return
 	subject = template.format(doc.employee_name or _("(không rõ)"))
-	_notify_users(doc, [user], subject)
+	_notify_users(doc, [user], _append_date(subject, doc))
 
 
 def _notify_follower_prepare_gift(doc: Document):
@@ -132,7 +153,7 @@ def _notify_follower_prepare_gift(doc: Document):
 		doc.employee_name or _("(không rõ)"),
 		item_summary,
 	)
-	_notify_users(doc, [user], subject)
+	_notify_users(doc, [user], _append_date(subject, doc))
 
 
 def _notify_users(doc: Document, users: list[str] | set[str], subject: str):
@@ -244,9 +265,23 @@ def _get_prev_and_curr_workflow_state(doc: Document) -> tuple[str | None, str]:
 
 def _set_default_follower(doc: Document):
 	"""Gán cố định người theo dõi là nhân sự phụ trách quà tặng."""
-	doc.follower = _FOLLOWER_EMPLOYEE
-	emp_name = frappe.db.get_value("Employee", _FOLLOWER_EMPLOYEE, "employee_name") or ""
+	follower = get_gift_handler_employee() or (doc.get("follower") or "").strip()
+	if not follower:
+		return
+	doc.follower = follower
+	emp_name = frappe.db.get_value("Employee", follower, "employee_name") or ""
 	doc.follower_name = emp_name
+
+
+def _set_default_approver_lv2(doc: Document):
+	if (doc.get("approver_lv2") or "").strip():
+		return
+	approver = get_approver_lv2_employee()
+	if not approver:
+		return
+	doc.approver_lv2 = approver
+	approver_name = frappe.db.get_value("Employee", approver, "employee_name") or ""
+	doc.approver_lv2_name = approver_name
 
 
 def _set_default_list_item_type(doc: Document):

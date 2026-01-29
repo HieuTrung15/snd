@@ -84,7 +84,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-01-29 16:41:34.873701",
+ "modified": "2026-01-29 18:32:33.196608",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Office Settings",
@@ -97,6 +97,15 @@
    "print": 1,
    "read": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Infomation Technology",
    "share": 1,
    "write": 1
   }

@@ -17,18 +17,32 @@ frappe.ui.form.on("VNT External Products", {
             });
         }
     },
-    // VGT0175 - Quý
+    // Lấy người theo dõi từ cấu hình
 	refresh(frm) {
         frm.set_df_property("follower_name", "read_only", 1);
         frm.set_df_property("follower", "read_only", 1);
         if (frm.is_new()) {
-            frm.set_value("approver_lv2", "VGT00083");
-            frm.set_value("approver_lv2_name", "Nguyễn Thị Thu Hiền");
-            frm.set_value("follower", "VGT00175");
-            frappe.db.get_value("Employee", "VGT00175", ["employee_name"]).then(r => {
-                if (r && r.message) {
-                    frm.set_value("follower_name", r.message.employee_name || "");
-                }
+            frappe.call({
+                method: "vinatex.vnt_hr.doctype.vnt_office_settings.vnt_office_settings.get_approver_lv2_info",
+                callback(res) {
+                    const approver = res && res.message ? res.message.approver_lv2 : "";
+                    const approverName = res && res.message ? res.message.approver_lv2_name : "";
+                    if (approver) {
+                        frm.set_value("approver_lv2", approver);
+                        frm.set_value("approver_lv2_name", approverName || "");
+                    }
+                },
+            });
+            frappe.call({
+                method: "vinatex.vnt_hr.doctype.vnt_office_settings.vnt_office_settings.get_gift_handler_info",
+                callback(res) {
+                    const follower = res && res.message ? res.message.follower : "";
+                    const followerName = res && res.message ? res.message.follower_name : "";
+                    if (follower) {
+                        frm.set_value("follower", follower);
+                        frm.set_value("follower_name", followerName || "");
+                    }
+                },
             });
             frappe.call({
                 method: "vinatex.vnt_hr.doctype.vnt_external_products.vnt_external_products.get_employee_name",
