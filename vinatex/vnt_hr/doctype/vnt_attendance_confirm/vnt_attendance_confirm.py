@@ -14,6 +14,12 @@ from vinatex.patches.utils.rocket_chat import send_rocket_message
 
 
 class VNTAttendanceConfirm(Document):
+	def onload(self):
+		# Khi form được mở, tính trạng thái tổng thể theo các dòng items
+		try:
+			self.status = _compute_status(self)
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), "Lỗi khi tính status onload VNT Attendance Confirm")
 	def on_submit(self):
 		# Nếu người đang đăng nhập là Leave Approver thì bỏ qua logic server-side
 		user_id = frappe.db.get_value("Employee", self.employee, "user_id")
@@ -65,6 +71,10 @@ class VNTAttendanceConfirm(Document):
 		# Nếu người đang đăng nhập là Leave Approver thì bỏ qua logic server-side
 		user_id = frappe.db.get_value("Employee", self.employee, "user_id")
 		roles = frappe.get_roles(user_id)
+		# frappe.throw(F"{self.employee}")
+		# Nếu user đang đăng nhập chính là employee và có role Leave Approver L1
+		if frappe.session.user == user_id and "Leave Approver L1" in frappe.get_roles(frappe.session.user):
+			self.status = "Đã phê duyệt"
 		if "Leave Approver" in roles:
 			return
 		# Kiểm tra nếu có dòng items chưa điền `type` thì cảnh báo (như client alert)
@@ -81,6 +91,13 @@ class VNTAttendanceConfirm(Document):
 			)
 		# Reset trường confirm giống behavior client-side
 		# self.confirm = ''
+
+		# Cập nhật trạng thái theo items trước khi lưu
+		try:
+			self.status = _compute_status(self)
+		except Exception:
+			# Không làm vỡ luồng lưu nếu có lỗi tính toán status
+			frappe.log_error(frappe.get_traceback(), "Lỗi khi cập nhật status VNT Attendance Confirm")
 
 
 @frappe.whitelist()
@@ -147,16 +164,16 @@ def _send_notification(doc: Document, user: str | list[str] | tuple[str, ...], s
 		"message": message_with_link,
 		"link": url,
 	}, recipients)
-	frappe.enqueue(
-		"vinatex.integrations.teams_graph.notify_user",
-		queue="long",
-		timeout=3600,
-		is_async=True,
-		upn_or_email=recipients,
-		content_type="html",
-		linkify=False,
-		message=message_with_link,
-	)
+	# frappe.enqueue(
+	# 	"vinatex.integrations.teams_graph.notify_user",
+	# 	queue="long",
+	# 	timeout=3600,
+	# 	is_async=True,
+	# 	upn_or_email=recipients,
+	# 	content_type="html",
+	# 	linkify=False,
+	# 	message=message_with_link,
+	# )
 	# send_rocket_message(
 	# 	to_users=recipients,
 	# 	title=":bell: Thông báo",
@@ -180,6 +197,24 @@ def _format_date_value(value: date | None) -> str:
 	if not value:
 		return _("(chưa rõ)")
 	return frappe.format_value(value, {"fieldtype": "Date"})
+
+
+def _compute_status(doc: Document) -> str:
+	"""Compute parent status based on items:
+	- If all items have confirm -> 'Đã phê duyệt'
+	- Else if all items have type -> 'Đã giải trình'
+	- Else -> 'Chờ giải trình'
+	"""
+	items = doc.get("items") or []
+	if not items:
+		return "Chờ giải trình"
+	all_type = all(bool(r.get("type")) for r in items)
+	all_confirm = all(bool(r.get("confirm")) for r in items)
+	if all_confirm:
+		return "Đã phê duyệt"
+	if all_type:
+		return "Đã giải trình"
+	return "Chờ giải trình"
 
 
 def _ensure_todo_for_confirmation(doc: Document, user: str, dates: list[date] | None = None):

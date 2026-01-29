@@ -13,16 +13,17 @@
   "column_break_qvgh",
   "from_date",
   "to_date",
+  "status",
   "section_break_kkv3",
   "employee",
   "employee_name",
   "column_break_l43u",
+  "approver",
   "email",
   "section_break_tuyt",
-  "approver",
+  "confirm",
   "approver_name",
   "column_break_wijp",
-  "confirm",
   "chi_ti\u1ebft_section",
   "items"
  ],
@@ -91,7 +92,6 @@
    "read_only": 1
   },
   {
-   "fetch_from": "employee.employee_name",
    "fieldname": "employee_name",
    "fieldtype": "Data",
    "hidden": 1,
@@ -104,6 +104,7 @@
   {
    "fieldname": "email",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Email",
    "read_only": 1
   },
@@ -118,13 +119,13 @@
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
-   "options": "User",
+   "options": "Employee",
    "read_only": 1
   },
   {
-   "fetch_from": "approver.full_name",
    "fieldname": "approver_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "ignore_user_permissions": 1,
    "label": "T\u00ean ng\u01b0\u1eddi ph\u00ea duy\u1ec7t"
   },
@@ -150,13 +151,19 @@
    "label": "Ph\u00ea duy\u1ec7t/T\u1eeb ch\u1ed1i t\u1ea5t c\u1ea3",
    "options": "\n\u0110\u1ed3ng \u00fd\nT\u1eeb ch\u1ed1i",
    "permlevel": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Status",
+   "options": "Ch\u1edd gi\u1ea3i tr\u00ecnh\n\u0110\u00e3 gi\u1ea3i tr\u00ecnh\n\u0110\u00e3 ph\u00ea duy\u1ec7t"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
- "is_submittable": 1,
  "links": [],
- "modified": "2025-12-31 15:05:51.709951",
+ "modified": "2026-01-29 22:53:26.385479",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Attendance Confirm",
