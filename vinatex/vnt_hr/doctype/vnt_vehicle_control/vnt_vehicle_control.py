@@ -168,6 +168,65 @@ class VNTVehicleControl(Document):
 			),
 			link=get_url_to_form(target_doctype, target_docname)
     	)
+		# Gửi thông báo tới các driver (nếu có)
+		driver_sent = set()
+		for row in self.items:
+			if not (row.id_parent and row.id_child and row.driver):
+				continue
+			# lấy thông tin vehicle (nếu có)
+			vehicle = frappe.db.get_value(
+				"VNT Vehicle",
+				row.driver,
+				["driver_name", "phone", "car_id", "driver"],
+				as_dict=True,
+			)
+			driver_user = None
+			if vehicle and vehicle.get("driver"):
+				driver_user = get_employee_user_id(vehicle.get("driver"))
+			# fallback: nếu row.driver chứa user/employee
+			if not driver_user:
+				driver_user = get_employee_user_id(row.driver)
+			if not driver_user:
+				continue
+			if driver_user in driver_sent:
+				continue
+			driver_sent.add(driver_user)
+			driver_label = (vehicle.get("driver_name") if vehicle else None) or row.driver
+			car_plate = row.car_id or (vehicle.get("car_id") if vehicle else "")
+			driver_msg = _(
+				"Phân xe: {0} xin xe của {1}. Cho anh {2} /BKS: {3}. Thời gian đi: {4} - ngày {5}. Đón tại: {6} - điểm đến: {7}."
+			).format(
+				car.department or _("(không rõ)"),
+				car.employee_name or _("(không rõ)"),
+				driver_label,
+				car_plate or _("(không rõ)"),
+				row.time or _("(không rõ)"),
+				formatdate(row.date, "dd-MM-yyyy") if row.date else _("(không rõ)"),
+				row.start or _("(không rõ)"),
+				row.end or _("(không rõ)"),
+			)
+			make_notification_logs({
+				"type": "Alert",
+				"subject": driver_msg,
+				"document_type": target_doctype,
+				"document_name": target_docname,
+			}, [driver_user])
+			frappe.enqueue(
+				"vinatex.integrations.teams_graph.notify_user",
+				queue="short",
+				timeout=50,
+				is_async=True,
+				upn_or_email=[driver_user],
+				content_type="html",
+				linkify=False,
+				message=driver_msg
+			)
+			send_rocket_message(
+				to_users=[driver_user],
+				title=":bell: Thông báo",
+				message=driver_msg,
+				link=get_url_to_form(target_doctype, target_docname),
+			)
 		# close todo của người điều xe
 		user_group_name = "Nhận thông báo điều xe"
 		user_list = frappe.get_all(
