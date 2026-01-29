@@ -106,7 +106,8 @@
    "ignore_user_permissions": 1,
    "in_list_view": 1,
    "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t c\u1ea5p 1",
-   "options": "Employee"
+   "options": "Employee",
+   "read_only": 1
   },
   {
    "fieldname": "approver_name",
@@ -266,7 +267,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-28 16:59:33.243311",
+ "modified": "2026-01-28 18:21:20.078978",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Car Registration",

@@ -149,8 +149,8 @@ def _send_notification(doc: Document, user: str | list[str] | tuple[str, ...], s
 	}, recipients)
 	frappe.enqueue(
 		"vinatex.integrations.teams_graph.notify_user",
-		queue="short",
-		timeout=30,
+		queue="long",
+		timeout=3600,
 		is_async=True,
 		upn_or_email=recipients,
 		content_type="html",
