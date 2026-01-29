@@ -1,0 +1,209 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "hash",
+ "creation": "2025-12-30 14:06:38.836297",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_source_info",
+  "source_code",
+  "enabled",
+  "priority",
+  "col_source_api",
+  "api_base_url",
+  "auth_type",
+  "api_key",
+  "sb_sync",
+  "sync_mode",
+  "max_per_run",
+  "rate_limit_policy",
+  "sb_status",
+  "last_successful_sync_at",
+  "watermark_source_ts",
+  "watermark_cursor",
+  "sb_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "source_code",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Mã nguồn",
+   "options": "NVD | NVD\nCVELISTV5 | CVELISTV5\nOSV | OSV\nCVE_ORG | CVE_ORG\nGLOBALCVE | GLOBALCVE",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Bật"
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Ưu tiên"
+  },
+  {
+   "fieldname": "api_base_url",
+   "fieldtype": "Data",
+   "label": "API Base URL"
+  },
+  {
+   "fieldname": "auth_type",
+   "fieldtype": "Select",
+   "label": "Kiểu xác thực",
+   "options": "None | None\nApiKey | ApiKey\nToken | Token"
+  },
+  {
+   "fieldname": "api_key",
+   "fieldtype": "Password",
+   "label": "API Key"
+  },
+  {
+   "fieldname": "last_successful_sync_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Lần đồng bộ thành công gần nhất"
+  },
+  {
+   "fieldname": "watermark_source_ts",
+   "fieldtype": "Datetime",
+   "label": "Mốc thời gian (nguồn)"
+  },
+  {
+   "fieldname": "watermark_cursor",
+   "fieldtype": "Data",
+   "label": "Con trỏ mốc"
+  },
+  {
+   "fieldname": "sync_mode",
+   "fieldtype": "Select",
+   "label": "Chế độ đồng bộ",
+   "options": "FULL | FULL\nINCREMENTAL | INCREMENTAL"
+  },
+  {
+   "fieldname": "max_per_run",
+   "fieldtype": "Int",
+   "label": "Giới hạn mỗi lần"
+  },
+  {
+   "fieldname": "rate_limit_policy",
+   "fieldtype": "Data",
+   "label": "Chính sách giới hạn"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Ghi chú"
+  },
+  {
+   "fieldname": "sb_source_info",
+   "fieldtype": "Section Break",
+   "label": "Thông tin nguồn"
+  },
+  {
+   "fieldname": "col_source_api",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sb_sync",
+   "fieldtype": "Section Break",
+   "label": "Cài đặt đồng bộ"
+  },
+  {
+   "fieldname": "sb_status",
+   "fieldtype": "Section Break",
+   "label": "Trạng thái"
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Ghi chú"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-01-19 14:57:08.934107",
+ "modified_by": "Administrator",
+ "module": "VNT IT Security",
+ "name": "VNT CVE Source",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VNT_ITSEC_ADMIN",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VNT_ITSEC_ANALYST",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VNT_UNIT_IT_ADMIN",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VNT_UNIT_IT_EDITOR",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VNT_UNIT_VIEWER",
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,67 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "hash",
+ "creation": "2025-12-30 14:06:39.030722",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "cpe_name",
+  "version_start_including",
+  "version_start_excluding",
+  "version_end_including",
+  "version_end_excluding",
+  "vulnerable"
+ ],
+ "fields": [
+  {
+   "fieldname": "cpe_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tên CPE",
+   "reqd": 1
+  },
+  {
+   "fieldname": "version_start_including",
+   "fieldtype": "Data",
+   "label": "Phiên bản bắt đầu (bao gồm)"
+  },
+  {
+   "fieldname": "version_start_excluding",
+   "fieldtype": "Data",
+   "label": "Phiên bản bắt đầu (loại trừ)"
+  },
+  {
+   "fieldname": "version_end_including",
+   "fieldtype": "Data",
+   "label": "Phiên bản kết thúc (bao gồm)"
+  },
+  {
+   "fieldname": "version_end_excluding",
+   "fieldtype": "Data",
+   "label": "Phiên bản kết thúc (loại trừ)"
+  },
+  {
+   "default": "0",
+   "fieldname": "vulnerable",
+   "fieldtype": "Check",
+   "label": "Bị ảnh hưởng"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-12-31 08:42:28.963943",
+ "modified_by": "Administrator",
+ "module": "VNT IT Security",
+ "name": "VNT CVE Affected CPE",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
