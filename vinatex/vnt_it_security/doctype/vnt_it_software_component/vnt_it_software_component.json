@@ -1,0 +1,107 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "hash",
+ "creation": "2025-12-30 14:06:39.204615",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "component_type",
+  "vendor",
+  "product",
+  "version",
+  "build",
+  "edition",
+  "cpe_name",
+  "cpe_confidence",
+  "eol_date",
+  "last_seen_at",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "component_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Loại thành phần",
+   "options": "OS | OS\nFirmware | Firmware\nApplication | Application\nLibrary | Library\nService | Service",
+   "reqd": 1
+  },
+  {
+   "fieldname": "vendor",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Nhà cung cấp",
+   "options": "VNT IT Vendor"
+  },
+  {
+   "fieldname": "product",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Sản phẩm",
+   "options": "VNT IT Product",
+   "reqd": 1
+  },
+  {
+   "fieldname": "version",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Phiên bản",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cpe_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "CPE 2.3"
+  },
+  {
+   "default": "Medium",
+   "fieldname": "cpe_confidence",
+   "fieldtype": "Select",
+   "label": "Độ tin cậy CPE",
+   "options": "High | High\nMedium | Medium\nLow | Low"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Ghi chú"
+  },
+  {
+   "fieldname": "build",
+   "fieldtype": "Data",
+   "label": "Bản build/phát hành"
+  },
+  {
+   "fieldname": "edition",
+   "fieldtype": "Data",
+   "label": "Phiên bản"
+  },
+  {
+   "fieldname": "eol_date",
+   "fieldtype": "Date",
+   "label": "Ngày EOL"
+  },
+  {
+   "fieldname": "last_seen_at",
+   "fieldtype": "Datetime",
+   "label": "Lần thấy cuối"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-01-19 14:57:09.254510",
+ "modified_by": "Administrator",
+ "module": "VNT IT Security",
+ "name": "VNT IT Software Component",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

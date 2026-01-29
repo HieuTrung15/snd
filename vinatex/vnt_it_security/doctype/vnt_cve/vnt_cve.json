@@ -1,0 +1,222 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:cve_id",
+ "creation": "2025-12-30 14:06:39.097609",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "cve_id",
+  "published_date",
+  "last_modified_date",
+  "severity",
+  "cvss_version",
+  "cvss_base_score",
+  "vector_string",
+  "cisa_kev",
+  "kev_due_date",
+  "epss_score",
+  "epss_percentile",
+  "description",
+  "references_json",
+  "source_primary",
+  "source_ids_json",
+  "source_payloads_json",
+  "raw_json",
+  "first_seen_at",
+  "affected_cpes"
+ ],
+ "fields": [
+  {
+   "fieldname": "cve_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Mã CVE",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "published_date",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Ngày công bố (nguồn)"
+  },
+  {
+   "fieldname": "last_modified_date",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Cập nhật cuối (nguồn)"
+  },
+  {
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Mức độ",
+   "options": "Critical | Critical\nHigh | High\nMedium | Medium\nLow | Low\nUnknown | Unknown"
+  },
+  {
+   "fieldname": "cvss_base_score",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Điểm CVSS cơ bản"
+  },
+  {
+   "fieldname": "vector_string",
+   "fieldtype": "Data",
+   "label": "Vector"
+  },
+  {
+   "default": "0",
+   "fieldname": "cisa_kev",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Trong KEV"
+  },
+  {
+   "fieldname": "kev_due_date",
+   "fieldtype": "Date",
+   "label": "Hạn KEV"
+  },
+  {
+   "fieldname": "epss_score",
+   "fieldtype": "Float",
+   "label": "Điểm EPSS"
+  },
+  {
+   "fieldname": "epss_percentile",
+   "fieldtype": "Float",
+   "label": "Bách phân vị EPSS"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Long Text",
+   "label": "Mô tả"
+  },
+  {
+   "fieldname": "references_json",
+   "fieldtype": "Code",
+   "label": "Tham chiếu (JSON)"
+  },
+  {
+   "fieldname": "source_primary",
+   "fieldtype": "Select",
+   "label": "Nguồn chính",
+   "options": "CVELISTV5 | CVELISTV5\nNVD | NVD\nOSV | OSV\nCVE_ORG | CVE_ORG\nGLOBALCVE | GLOBALCVE"
+  },
+  {
+   "fieldname": "source_ids_json",
+   "fieldtype": "Code",
+   "label": "ID nguồn (JSON)"
+  },
+  {
+   "fieldname": "source_payloads_json",
+   "fieldtype": "Code",
+   "label": "Dữ liệu nguồn (JSON)"
+  },
+  {
+   "fieldname": "raw_json",
+   "fieldtype": "Code",
+   "label": "JSON gốc"
+  },
+  {
+   "fieldname": "first_seen_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Thời điểm ghi nhận đầu"
+  },
+  {
+   "fieldname": "affected_cpes",
+   "fieldtype": "Table",
+   "label": "CPE bị ảnh hưởng",
+   "options": "VNT CVE Affected CPE"
+  },
+  {
+   "fieldname": "cvss_version",
+   "fieldtype": "Select",
+   "label": "Phiên bản CVSS",
+   "options": "2.0 | 2.0\n3.0 | 3.0\n3.1 | 3.1\n4.0 | 4.0"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-01-19 14:57:09.093816",
+ "modified_by": "Administrator",
+ "module": "VNT IT Security",
+ "name": "VNT CVE",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VNT_ITSEC_ADMIN",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VNT_ITSEC_ANALYST",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VNT_UNIT_IT_ADMIN",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VNT_UNIT_IT_EDITOR",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VNT_UNIT_VIEWER",
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

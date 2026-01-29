@@ -1,0 +1,211 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "hash",
+ "creation": "2025-12-30 14:06:39.541635",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_match_context",
+  "advisory",
+  "cve",
+  "company",
+  "asset",
+  "col_match_context_right",
+  "component_row_id",
+  "match_type",
+  "match_confidence",
+  "risk_score",
+  "status",
+  "due_date",
+  "last_update",
+  "sb_evidence",
+  "evidence",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "advisory",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Khuyến cáo",
+   "options": "VNT Vulnerability Advisory",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cve",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "CVE",
+   "options": "VNT CVE",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Công ty",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "asset",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tài sản",
+   "options": "VNT IT Asset",
+   "reqd": 1
+  },
+  {
+   "fieldname": "match_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Loại ghép",
+   "options": "CPE | CPE\nManual | Manual\nText | Text",
+   "reqd": 1
+  },
+  {
+   "fieldname": "match_confidence",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Độ tin cậy",
+   "options": "High | High\nMedium | Medium\nLow | Low",
+   "reqd": 1
+  },
+  {
+   "fieldname": "risk_score",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Điểm rủi ro"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Trạng thái",
+   "options": "Open | Open\nIn Progress | In Progress\nMitigated | Mitigated\nPatched | Patched\nNot Applicable | Not Applicable\nAccepted Risk | Accepted Risk",
+   "reqd": 1
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Hạn xử lý"
+  },
+  {
+   "fieldname": "last_update",
+   "fieldtype": "Datetime",
+   "label": "Cập nhật cuối"
+  },
+  {
+   "fieldname": "evidence",
+   "fieldtype": "Attach",
+   "label": "Bằng chứng"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Ghi chú"
+  },
+  {
+   "fieldname": "component_row_id",
+   "fieldtype": "Data",
+   "label": "ID dòng thành phần"
+  },
+  {
+   "fieldname": "sb_match_context",
+   "fieldtype": "Section Break",
+   "label": "Ngữ cảnh ghép"
+  },
+  {
+   "fieldname": "col_match_context_right",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sb_evidence",
+   "fieldtype": "Section Break",
+   "label": "Bằng chứng & ghi chú"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-01-19 14:57:09.778811",
+ "modified_by": "Administrator",
+ "module": "VNT IT Security",
+ "name": "VNT Affected Asset",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VNT_ITSEC_ADMIN",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VNT_ITSEC_ANALYST",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VNT_UNIT_IT_ADMIN",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VNT_UNIT_IT_EDITOR",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VNT_UNIT_VIEWER",
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

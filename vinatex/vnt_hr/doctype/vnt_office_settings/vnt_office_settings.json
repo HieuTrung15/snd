@@ -1,0 +1,108 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-29 09:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_general",
+  "office_manager",
+  "office_manager_name",
+  "column_break_office",
+  "gift_handler",
+  "gift_handler_name",
+  "approver_lv2",
+  "approver_lv2_name",
+  "section_break_rooms",
+  "meeting_room_followers"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_general",
+   "fieldtype": "Section Break",
+   "label": "Thi\u1ebft l\u1eadp chung"
+  },
+  {
+   "fieldname": "office_manager",
+   "fieldtype": "Link",
+   "label": "Qu\u1ea3n l\u00fd chung v\u0103n ph\u00f2ng",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "office_manager.employee_name",
+   "fieldname": "office_manager_name",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "T\u00ean qu\u1ea3n l\u00fd chung v\u0103n ph\u00f2ng",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_office",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gift_handler",
+   "fieldtype": "Link",
+   "label": "Nh\u00e2n s\u1ef1 x\u1eed l\u00fd qu\u00e0",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "gift_handler.employee_name",
+   "fieldname": "gift_handler_name",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "T\u00ean nh\u00e2n s\u1ef1 x\u1eed l\u00fd qu\u00e0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approver_lv2",
+   "fieldtype": "Link",
+   "label": "L\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "approver_lv2.employee_name",
+   "fieldname": "approver_lv2_name",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "T\u00ean l\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_rooms",
+   "fieldtype": "Section Break",
+   "label": "Nh\u00e2n s\u1ef1 ph\u00f2ng h\u1ecdp"
+  },
+  {
+   "fieldname": "meeting_room_followers",
+   "fieldtype": "Table",
+   "label": "Nh\u00e2n s\u1ef1 ph\u00f2ng h\u1ecdp",
+   "options": "VNT Office Room Follower"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-01-29 16:41:34.873701",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Office Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

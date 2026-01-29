@@ -1,0 +1,89 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"itsec-header\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">IT Security</span>\", \"col\": 12}}, {\"id\": \"itsec-shortcut-1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"ITSEC Dashboard\", \"col\": 3}}, {\"id\": \"itsec-shortcut-2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"CVE Sources\", \"col\": 3}}, {\"id\": \"itsec-shortcut-3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"CVE Database\", \"col\": 3}}, {\"id\": \"itsec-shortcut-4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"IT Assets\", \"col\": 3}}, {\"id\": \"itsec-shortcut-5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Asset Types\", \"col\": 3}}, {\"id\": \"itsec-shortcut-6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Vendors\", \"col\": 3}}, {\"id\": \"itsec-shortcut-7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Products\", \"col\": 3}}, {\"id\": \"itsec-shortcut-8\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Advisories\", \"col\": 3}}, {\"id\": \"itsec-shortcut-9\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Affected Assets\", \"col\": 3}}, {\"id\": \"itsec-shortcut-10\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Remediation Tickets\", \"col\": 3}}]",
+ "creation": "2025-12-30 14:35:33.124603",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "shield",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "VNT IT Security",
+ "links": [],
+ "modified": "2026-01-05 13:45:36.440345",
+ "modified_by": "Administrator",
+ "module": "VNT IT Security",
+ "name": "VNT IT Security",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 1.0,
+ "shortcuts": [
+  {
+   "doc_view": "",
+   "label": "ITSEC Dashboard",
+   "link_to": "itsec-dashboard",
+   "type": "Page"
+  },
+  {
+   "doc_view": "",
+   "label": "CVE Sources",
+   "link_to": "VNT CVE Source",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "",
+   "label": "CVE Database",
+   "link_to": "VNT CVE",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "",
+   "label": "IT Assets",
+   "link_to": "VNT IT Asset",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "",
+   "label": "Asset Types",
+   "link_to": "VNT IT Asset Type",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "",
+   "label": "Vendors",
+   "link_to": "VNT IT Vendor",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "",
+   "label": "Products",
+   "link_to": "VNT IT Product",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "",
+   "label": "Advisories",
+   "link_to": "VNT Vulnerability Advisory",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "",
+   "label": "Affected Assets",
+   "link_to": "VNT Affected Asset",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "",
+   "label": "Remediation Tickets",
+   "link_to": "VNT Remediation Ticket",
+   "type": "DocType"
+  }
+ ],
+ "title": "VNT IT Security"
+}
