@@ -17,6 +17,7 @@ frappe.ui.form.on("VNT External Products", {
             });
         }
     },
+    // VGT0175 - Quý
 	refresh(frm) {
         frm.set_df_property("follower_name", "read_only", 1);
         frm.set_df_property("follower", "read_only", 1);

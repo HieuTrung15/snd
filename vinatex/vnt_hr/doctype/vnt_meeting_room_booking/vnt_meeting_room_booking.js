@@ -55,7 +55,7 @@ const setFollowerByRoom = (frm) => {
 		return;
 	}
 
-	const follower = frm.doc.room_name === "Phòng họp tầng 8" ? "VGT00163" : "VGT00175";
+	const follower = frm.doc.room_name === "Phòng họp tầng 8" ? "VGT00163":"";
 
 	if (frm.doc.follower !== follower) {
 		frm.set_value("follower", follower);

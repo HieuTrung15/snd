@@ -12,7 +12,7 @@ from frappe.utils import cint, cstr, flt, get_url_to_form
 from frappe.utils.data import escape_html
 from vinatex.patches.utils.rocket_chat import send_rocket_message
 
-_FOLLOWER_EMPLOYEE = "VGT00083"
+_FOLLOWER_EMPLOYEE = "VGT00175"
 
 
 class VNTExternalProducts(Document):

@@ -125,8 +125,6 @@ def _handle_state_transition(doc):
 		_notify_users(doc, [employee_user], subject, subject)
 
 	# thông báo cho danh sách nhân sự
-	if prev_state == 'Chờ duyệt' and curr_state == 'Đã duyệt':
-		_notify_to_employee(doc, "duyệt")
 	if (prev_state == 'Chờ duyệt' and curr_state == 'Từ chối'):
 		_notify_to_employee(doc, "từ chối")
 
