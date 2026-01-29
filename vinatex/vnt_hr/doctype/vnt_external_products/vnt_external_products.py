@@ -9,6 +9,7 @@ from frappe.desk.doctype.notification_log.notification_log import make_notificat
 from frappe.model.document import Document
 from frappe.model.workflow import apply_workflow
 from frappe.utils import cint, cstr, flt, get_url_to_form
+from frappe.utils.data import escape_html
 from vinatex.patches.utils.rocket_chat import send_rocket_message
 
 _FOLLOWER_EMPLOYEE = "VGT00083"
@@ -145,11 +146,27 @@ def _notify_users(doc: Document, users: list[str] | set[str], subject: str):
 		"document_type": doc.doctype,
 		"document_name": doc.name,
 	}, list(unique_users))
+	url = get_url_to_form(doc.doctype, doc.name)
+	teams_message = "<br>".join([
+		"<b>🔔 Thông báo</b>",
+		f"<b>{escape_html(subject)}</b>",
+		f'<a href="{escape_html(url)}">Xem chi tiết</a>',
+	])
+	frappe.enqueue(
+		"vinatex.integrations.teams_graph.notify_user",
+		queue="short",
+		timeout=30,
+		is_async=True,
+		upn_or_email=list(unique_users),
+		content_type="html",
+		linkify=False,
+		message=teams_message,
+	)
 	send_rocket_message(
 		to_users=list(unique_users),
 		title=":bell: Thông báo",
 		message=subject,
-		link=get_url_to_form(doc.doctype, doc.name),
+		link=url,
 	)
 
 

@@ -6,6 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "nhom_to",
   "doi_tuong",
   "ct_doi_tuong",
   "chi_tiet_doi_tuong_c2",
@@ -17,6 +18,12 @@
   {
    "fieldname": "column_break_lens",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "nhom_to",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Nhóm to"
   },
   {
    "fieldname": "doi_tuong",

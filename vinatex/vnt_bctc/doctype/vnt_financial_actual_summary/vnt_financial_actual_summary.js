@@ -124,6 +124,7 @@ function load_template_items(frm) {
 			frm.clear_table("lines");
 			items.forEach((item) => {
 				const row = frm.add_child("lines");
+				row.nhom_to = item.nhom_to;
 				row.doi_tuong = item.doi_tuong;
 				row.ct_doi_tuong = item.ct_doi_tuong;
 				row.chi_tiet_doi_tuong_c2 = item.chi_tiet_doi_tuong_c2;
@@ -297,6 +298,7 @@ function find_source_line(map, line) {
 
 function build_line_key(line) {
 	const parts = [
+		normalize_text(line.nhom_to),
 		normalize_text(line.doi_tuong),
 		normalize_text(line.ct_doi_tuong),
 		normalize_text(line.chi_tiet_doi_tuong_c2),

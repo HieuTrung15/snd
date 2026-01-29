@@ -23,8 +23,8 @@ frappe.ui.form.on("VNT External Products", {
         if (frm.is_new()) {
             frm.set_value("approver_lv2", "VGT00083");
             frm.set_value("approver_lv2_name", "Nguyễn Thị Thu Hiền");
-            frm.set_value("follower", "VGT00164");
-            frappe.db.get_value("Employee", "VGT00164", ["employee_name"]).then(r => {
+            frm.set_value("follower", "VGT00175");
+            frappe.db.get_value("Employee", "VGT00175", ["employee_name"]).then(r => {
                 if (r && r.message) {
                     frm.set_value("follower_name", r.message.employee_name || "");
                 }

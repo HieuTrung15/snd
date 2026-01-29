@@ -212,6 +212,7 @@ function build_headers(prev_year, current_year) {
 	const prev_suffix = String(prev_year).slice(-2);
 	const current_suffix = String(current_year).slice(-2);
 	const headers = [
+		"Nhóm to",
 		"Nhóm",
 		"Chi tiết đối tượng",
 		"Chi tiết đối tượng cấp 2",
@@ -241,6 +242,7 @@ function build_headers(prev_year, current_year) {
 
 function build_row_cells(line, index) {
 	const cells = [
+		escape_html(line.nhom_to || ""),
 		escape_html(line.doi_tuong || ""),
 		escape_html(line.ct_doi_tuong || ""),
 		escape_html(line.chi_tiet_doi_tuong_c2 || ""),

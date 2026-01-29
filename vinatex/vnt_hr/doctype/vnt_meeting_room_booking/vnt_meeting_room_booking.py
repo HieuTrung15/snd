@@ -9,6 +9,7 @@ from frappe.desk.doctype.notification_log.notification_log import make_notificat
 from frappe.desk.form.assign_to import close_all_assignments as frappe_close_assignments
 from frappe.model.document import Document
 from frappe.utils import get_url_to_form
+from frappe.utils.data import escape_html
 from vinatex.patches.utils.rocket_chat import send_rocket_message
 
 
@@ -200,11 +201,30 @@ def _notify_users(doc: Document, users, subject: str, message: str | None = None
 		payload["message"] = message
 
 	make_notification_logs(payload, recipients)
+	url = get_url_to_form(doc.doctype, doc.name)
+	teams_lines = [
+		"<b>🔔 Thông báo</b>",
+		f"<b>{escape_html(subject)}</b>",
+	]
+	if message:
+		teams_lines.append(escape_html(message).replace("\n", "<br>"))
+	teams_lines.append(f'<a href="{escape_html(url)}">Xem chi tiết</a>')
+	teams_message = "<br>".join(teams_lines)
+	frappe.enqueue(
+		"vinatex.integrations.teams_graph.notify_user",
+		queue="short",
+		timeout=30,
+		is_async=True,
+		upn_or_email=recipients,
+		content_type="html",
+		linkify=False,
+		message=teams_message,
+	)
 	send_rocket_message(
 		to_users=recipients,
 		title=":bell: Thông báo",
 		message=f"*{subject}*\n{message}" if message else subject,
-		link=get_url_to_form(doc.doctype, doc.name),
+		link=url,
 	)
 
 

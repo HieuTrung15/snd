@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "stt",
+  "nhom_to",
   "doi_tuong",
   "ct_doi_tuong",
   "chi_tiet_doi_tuong_c2",
@@ -50,16 +51,22 @@
   "luy_ke"
  ],
  "fields": [
-  {
-   "fieldname": "stt",
-   "fieldtype": "Int",
-   "in_list_view": 1,
-   "label": "STT"
-  },
-  {
-   "fieldname": "doi_tuong",
-   "fieldtype": "Data",
-   "in_list_view": 1,
+ {
+  "fieldname": "stt",
+  "fieldtype": "Int",
+  "in_list_view": 1,
+  "label": "STT"
+ },
+ {
+  "fieldname": "nhom_to",
+  "fieldtype": "Data",
+  "in_list_view": 1,
+  "label": "Nhóm to"
+ },
+ {
+  "fieldname": "doi_tuong",
+  "fieldtype": "Data",
+  "in_list_view": 1,
    "label": "Nhóm"
   },
   {

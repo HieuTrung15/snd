@@ -52,6 +52,7 @@ def get_previous_actual_summary_values(company=None, template=None, fiscal_year=
 	for line in doc.lines:
 		lines.append(
 			{
+				"nhom_to": line.nhom_to,
 				"item_code": line.item_code,
 				"doi_tuong": line.doi_tuong,
 				"ct_doi_tuong": line.ct_doi_tuong,
@@ -92,9 +93,11 @@ def get_template_items(template):
 			continue
 		if field.options != "VNT Financial Report Template Item":
 			continue
+		group_label = _extract_group_label(field.label)
 		for row in doc.get(field.fieldname) or []:
 			items.append(
 				{
+					"nhom_to": row.nhom_to or group_label,
 					"doi_tuong": row.doi_tuong,
 					"ct_doi_tuong": row.ct_doi_tuong,
 					"chi_tiet_doi_tuong_c2": row.chi_tiet_doi_tuong_c2,
@@ -118,8 +121,8 @@ def download_actual_summary_excel(docname=None):
 	fy_doc, current_year = _get_fiscal_year_info(doc.fiscal_year)
 	_, prev_year = _get_previous_fiscal_year(fy_doc)
 	headers = _build_matrix_headers(prev_year, current_year)
-	rows, group_values = _build_summary_rows(doc.lines or [])
-	xlsx_file = _build_summary_workbook(headers, rows, group_values)
+	rows, parent_group_values, group_values = _build_summary_rows(doc.lines or [])
+	xlsx_file = _build_summary_workbook(headers, rows, parent_group_values, group_values)
 	frappe.response["filename"] = f"Thuc-te-{docname}.xlsx"
 	frappe.response["filecontent"] = xlsx_file.getvalue()
 	frappe.response["type"] = "binary"
@@ -197,6 +200,7 @@ def import_actual_summary_excel(docname=None, file_url=None):
 		if stt_value is not None:
 			line.stt = stt_value
 
+		_assign_text_field(line, "nhom_to", row, header_map, "nhom_to")
 		_assign_text_field(line, "doi_tuong", row, header_map, "doi_tuong")
 		_assign_text_field(line, "ct_doi_tuong", row, header_map, "ct_doi_tuong")
 		_assign_text_field(line, "chi_tiet_doi_tuong_c2", row, header_map, "chi_tiet_doi_tuong_c2")
@@ -265,10 +269,20 @@ def _get_previous_fiscal_year(fy_doc):
 	return prev_name, prev_year
 
 
+def _extract_group_label(label):
+	if not label:
+		return None
+	match = re.search(r"Nhóm\s*\d+", label, flags=re.IGNORECASE)
+	if match:
+		return match.group(0)
+	return label
+
+
 def _build_matrix_headers(prev_year, current_year):
 	prev_suffix = str(prev_year)[-2:]
 	current_suffix = str(current_year)[-2:]
 	headers = [
+		"Nhóm to",
 		"Nhóm",
 		"Chi tiết đối tượng",
 		"Chi tiết đối tượng cấp 2",
@@ -298,6 +312,7 @@ def _build_header_map(headers, prev_year, current_year):
 	prev_suffix = str(prev_year)[-2:]
 	current_suffix = str(current_year)[-2:]
 	expected = {
+		_normalize_header("Nhóm to"): "nhom_to",
 		_normalize_header("Nhóm"): "doi_tuong",
 		_normalize_header("Chi tiết đối tượng"): "ct_doi_tuong",
 		_normalize_header("Chi tiết đối tượng cấp 2"): "chi_tiet_doi_tuong_c2",
@@ -316,6 +331,7 @@ def _build_header_map(headers, prev_year, current_year):
 		_normalize_header(f"12T.{current_suffix}"): "current_12t",
 		_normalize_header("Lũy kế"): "luy_ke",
 	}
+	expected[_normalize_header("Nhóm lớn")] = "nhom_to"
 	expected[_normalize_header("Đối tượng")] = "doi_tuong"
 	expected[_normalize_header("Chi tiết đối tượng c2")] = "chi_tiet_doi_tuong_c2"
 	expected[_normalize_header("Chi tiết đối tượng cấp2")] = "chi_tiet_doi_tuong_c2"
@@ -492,11 +508,14 @@ def _apply_profit_lines(lines):
 
 def _build_summary_rows(lines):
 	rows = []
+	parent_group_values = []
 	group_values = []
 	for idx, line in enumerate(lines, start=1):
+		parent_group_values.append(_safe_text(getattr(line, "nhom_to", None)) or "")
 		group_values.append(_safe_text(getattr(line, "doi_tuong", None)) or "")
 		rows.append(
 			[
+				line.nhom_to,
 				line.doi_tuong,
 				line.ct_doi_tuong,
 				line.chi_tiet_doi_tuong_c2,
@@ -540,12 +559,12 @@ def _build_summary_rows(lines):
 				_export_value(line.luy_ke),
 			]
 		)
-	return rows, group_values
+	return rows, parent_group_values, group_values
 
 
 
 
-def _build_summary_workbook(headers, rows, group_values):
+def _build_summary_workbook(headers, rows, parent_group_values, group_values):
 	wb = Workbook()
 	ws = wb.active
 	ws.title = "Tong hop"
@@ -557,17 +576,17 @@ def _build_summary_workbook(headers, rows, group_values):
 	for row in rows:
 		ws.append(row)
 
-	_merge_group_cells(ws, 2, group_values)
+	_merge_group_cells(ws, 2, parent_group_values, 1)
+	_merge_group_cells(ws, 2, group_values, 2)
 
 	xlsx_file = BytesIO()
 	wb.save(xlsx_file)
 	return xlsx_file
 
 
-def _merge_group_cells(ws, start_row, group_values):
+def _merge_group_cells(ws, start_row, group_values, column_index):
 	if not group_values:
 		return
-	column_index = 1
 	group_start = 0
 	current_value = group_values[0]
 	for idx in range(1, len(group_values) + 1):
