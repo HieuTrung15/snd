@@ -45,7 +45,6 @@
   {
    "fieldname": "company",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "C\u00f4ng ty",
    "options": "Company",
    "read_only": 1
@@ -66,6 +65,7 @@
   {
    "fieldname": "from_date",
    "fieldtype": "Date",
+   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "T\u1eeb ng\u00e0y",
    "read_only": 1
@@ -74,6 +74,7 @@
    "allow_on_submit": 1,
    "fieldname": "to_date",
    "fieldtype": "Date",
+   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "\u0110\u1ebfn ng\u00e0y",
    "read_only": 1
@@ -156,14 +157,15 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "hidden": 1,
-   "label": "Status",
+   "in_list_view": 1,
+   "label": "Tr\u1ea1ng th\u00e1i",
    "options": "Ch\u1edd gi\u1ea3i tr\u00ecnh\n\u0110\u00e3 gi\u1ea3i tr\u00ecnh\n\u0110\u00e3 ph\u00ea duy\u1ec7t"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-29 22:53:26.385479",
+ "modified": "2026-01-30 08:49:02.646559",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Attendance Confirm",
@@ -220,6 +222,19 @@
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
+ "states": [
+  {
+   "color": "Red",
+   "title": "Ch\u1edd gi\u1ea3i tr\u00ecnh"
+  },
+  {
+   "color": "Blue",
+   "title": "Ch\u1edd ph\u00ea duy\u1ec7t"
+  },
+  {
+   "color": "Green",
+   "title": "\u0110\u00e3 ph\u00ea duy\u1ec7t"
+  }
+ ],
  "title_field": "employee"
 }
