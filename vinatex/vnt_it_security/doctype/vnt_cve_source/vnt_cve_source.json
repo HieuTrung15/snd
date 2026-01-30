@@ -31,7 +31,7 @@
    "fieldname": "source_code",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Mã nguồn",
+   "label": "M\u00e3 ngu\u1ed3n",
    "options": "NVD | NVD\nCVELISTV5 | CVELISTV5\nOSV | OSV\nCVE_ORG | CVE_ORG\nGLOBALCVE | GLOBALCVE",
    "reqd": 1
   },
@@ -40,13 +40,13 @@
    "fieldname": "enabled",
    "fieldtype": "Check",
    "in_list_view": 1,
-   "label": "Bật"
+   "label": "B\u1eadt"
   },
   {
    "fieldname": "priority",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Ưu tiên"
+   "label": "\u01afu ti\u00ean"
   },
   {
    "fieldname": "api_base_url",
@@ -56,7 +56,7 @@
   {
    "fieldname": "auth_type",
    "fieldtype": "Select",
-   "label": "Kiểu xác thực",
+   "label": "Ki\u1ec3u x\u00e1c th\u1ef1c",
    "options": "None | None\nApiKey | ApiKey\nToken | Token"
   },
   {
@@ -68,43 +68,43 @@
    "fieldname": "last_successful_sync_at",
    "fieldtype": "Datetime",
    "in_list_view": 1,
-   "label": "Lần đồng bộ thành công gần nhất"
+   "label": "L\u1ea7n \u0111\u1ed3ng b\u1ed9 th\u00e0nh c\u00f4ng g\u1ea7n nh\u1ea5t"
   },
   {
    "fieldname": "watermark_source_ts",
    "fieldtype": "Datetime",
-   "label": "Mốc thời gian (nguồn)"
+   "label": "M\u1ed1c th\u1eddi gian (ngu\u1ed3n)"
   },
   {
    "fieldname": "watermark_cursor",
    "fieldtype": "Data",
-   "label": "Con trỏ mốc"
+   "label": "Con tr\u1ecf m\u1ed1c"
   },
   {
    "fieldname": "sync_mode",
    "fieldtype": "Select",
-   "label": "Chế độ đồng bộ",
+   "label": "Ch\u1ebf \u0111\u1ed9 \u0111\u1ed3ng b\u1ed9",
    "options": "FULL | FULL\nINCREMENTAL | INCREMENTAL"
   },
   {
    "fieldname": "max_per_run",
    "fieldtype": "Int",
-   "label": "Giới hạn mỗi lần"
+   "label": "Gi\u1edbi h\u1ea1n m\u1ed7i l\u1ea7n"
   },
   {
    "fieldname": "rate_limit_policy",
    "fieldtype": "Data",
-   "label": "Chính sách giới hạn"
+   "label": "Ch\u00ednh s\u00e1ch gi\u1edbi h\u1ea1n"
   },
   {
    "fieldname": "notes",
    "fieldtype": "Small Text",
-   "label": "Ghi chú"
+   "label": "Ghi ch\u00fa"
   },
   {
    "fieldname": "sb_source_info",
    "fieldtype": "Section Break",
-   "label": "Thông tin nguồn"
+   "label": "Th\u00f4ng tin ngu\u1ed3n"
   },
   {
    "fieldname": "col_source_api",
@@ -113,23 +113,23 @@
   {
    "fieldname": "sb_sync",
    "fieldtype": "Section Break",
-   "label": "Cài đặt đồng bộ"
+   "label": "C\u00e0i \u0111\u1eb7t \u0111\u1ed3ng b\u1ed9"
   },
   {
    "fieldname": "sb_status",
    "fieldtype": "Section Break",
-   "label": "Trạng thái"
+   "label": "Tr\u1ea1ng th\u00e1i"
   },
   {
    "fieldname": "sb_notes",
    "fieldtype": "Section Break",
-   "label": "Ghi chú"
+   "label": "Ghi ch\u00fa"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-19 14:57:08.934107",
+ "modified": "2026-01-30 10:45:30.231875",
  "modified_by": "Administrator",
  "module": "VNT IT Security",
  "name": "VNT CVE Source",
@@ -155,50 +155,9 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "VNT_ITSEC_ADMIN",
+   "role": "Infomation Technology",
    "share": 1,
    "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_ITSEC_ANALYST",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_UNIT_IT_ADMIN",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_UNIT_IT_EDITOR",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_UNIT_VIEWER",
-   "share": 1
   }
  ],
  "row_format": "Dynamic",

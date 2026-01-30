@@ -32,7 +32,7 @@
    "fieldname": "cve_id",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Mã CVE",
+   "label": "M\u00e3 CVE",
    "reqd": 1,
    "unique": 1
   },
@@ -40,26 +40,26 @@
    "fieldname": "published_date",
    "fieldtype": "Datetime",
    "in_list_view": 1,
-   "label": "Ngày công bố (nguồn)"
+   "label": "Ng\u00e0y c\u00f4ng b\u1ed1 (ngu\u1ed3n)"
   },
   {
    "fieldname": "last_modified_date",
    "fieldtype": "Datetime",
    "in_list_view": 1,
-   "label": "Cập nhật cuối (nguồn)"
+   "label": "C\u1eadp nh\u1eadt cu\u1ed1i (ngu\u1ed3n)"
   },
   {
    "fieldname": "severity",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Mức độ",
+   "label": "M\u1ee9c \u0111\u1ed9",
    "options": "Critical | Critical\nHigh | High\nMedium | Medium\nLow | Low\nUnknown | Unknown"
   },
   {
    "fieldname": "cvss_base_score",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Điểm CVSS cơ bản"
+   "label": "\u0110i\u1ec3m CVSS c\u01a1 b\u1ea3n"
   },
   {
    "fieldname": "vector_string",
@@ -76,72 +76,72 @@
   {
    "fieldname": "kev_due_date",
    "fieldtype": "Date",
-   "label": "Hạn KEV"
+   "label": "H\u1ea1n KEV"
   },
   {
    "fieldname": "epss_score",
    "fieldtype": "Float",
-   "label": "Điểm EPSS"
+   "label": "\u0110i\u1ec3m EPSS"
   },
   {
    "fieldname": "epss_percentile",
    "fieldtype": "Float",
-   "label": "Bách phân vị EPSS"
+   "label": "B\u00e1ch ph\u00e2n v\u1ecb EPSS"
   },
   {
    "fieldname": "description",
    "fieldtype": "Long Text",
-   "label": "Mô tả"
+   "label": "M\u00f4 t\u1ea3"
   },
   {
    "fieldname": "references_json",
    "fieldtype": "Code",
-   "label": "Tham chiếu (JSON)"
+   "label": "Tham chi\u1ebfu (JSON)"
   },
   {
    "fieldname": "source_primary",
    "fieldtype": "Select",
-   "label": "Nguồn chính",
+   "label": "Ngu\u1ed3n ch\u00ednh",
    "options": "CVELISTV5 | CVELISTV5\nNVD | NVD\nOSV | OSV\nCVE_ORG | CVE_ORG\nGLOBALCVE | GLOBALCVE"
   },
   {
    "fieldname": "source_ids_json",
    "fieldtype": "Code",
-   "label": "ID nguồn (JSON)"
+   "label": "ID ngu\u1ed3n (JSON)"
   },
   {
    "fieldname": "source_payloads_json",
    "fieldtype": "Code",
-   "label": "Dữ liệu nguồn (JSON)"
+   "label": "D\u1eef li\u1ec7u ngu\u1ed3n (JSON)"
   },
   {
    "fieldname": "raw_json",
    "fieldtype": "Code",
-   "label": "JSON gốc"
+   "label": "JSON g\u1ed1c"
   },
   {
    "fieldname": "first_seen_at",
    "fieldtype": "Datetime",
    "in_list_view": 1,
-   "label": "Thời điểm ghi nhận đầu"
+   "label": "Th\u1eddi \u0111i\u1ec3m ghi nh\u1eadn \u0111\u1ea7u"
   },
   {
    "fieldname": "affected_cpes",
    "fieldtype": "Table",
-   "label": "CPE bị ảnh hưởng",
+   "label": "CPE b\u1ecb \u1ea3nh h\u01b0\u1edfng",
    "options": "VNT CVE Affected CPE"
   },
   {
    "fieldname": "cvss_version",
    "fieldtype": "Select",
-   "label": "Phiên bản CVSS",
+   "label": "Phi\u00ean b\u1ea3n CVSS",
    "options": "2.0 | 2.0\n3.0 | 3.0\n3.1 | 3.1\n4.0 | 4.0"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-19 14:57:09.093816",
+ "modified": "2026-01-30 10:45:07.430512",
  "modified_by": "Administrator",
  "module": "VNT IT Security",
  "name": "VNT CVE",
@@ -168,50 +168,9 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "VNT_ITSEC_ADMIN",
+   "role": "Infomation Technology",
    "share": 1,
    "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_ITSEC_ANALYST",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_UNIT_IT_ADMIN",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_UNIT_IT_EDITOR",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_UNIT_VIEWER",
-   "share": 1
   }
  ],
  "row_format": "Dynamic",
