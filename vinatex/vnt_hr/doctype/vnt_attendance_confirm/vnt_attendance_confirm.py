@@ -157,6 +157,13 @@ def _is_self_l1_employee(doc: Document) -> bool:
 	return "Leave Approver L1" in frappe.get_roles(frappe.session.user)
 
 
+def _is_leave_approver_user(user: str | None) -> bool:
+	if not user:
+		return False
+	roles = frappe.get_roles(user)
+	return ("Leave Approver" in roles) or ("Leave Approver L1" in roles)
+
+
 def _send_notification(doc: Document, user: str | list[str] | tuple[str, ...], subject: str, message: str):
 	if isinstance(user, (list, tuple, set)):
 		target_users = {u for u in user if u}
@@ -186,22 +193,22 @@ def _send_notification(doc: Document, user: str | list[str] | tuple[str, ...], s
 		"message": message_with_link,
 		"link": url,
 	}, recipients)
-	# frappe.enqueue(
-	# 	"vinatex.integrations.teams_graph.notify_user",
-	# 	queue="long",
-	# 	timeout=3600,
-	# 	is_async=True,
-	# 	upn_or_email=recipients,
-	# 	content_type="html",
-	# 	linkify=False,
-	# 	message=message_with_link,
-	# )
-	# send_rocket_message(
-	# 	to_users=recipients,
-	# 	title=":bell: Thông báo",
-	# 	message=f"*{subject}*\n{message_with_link}" if message_with_link else subject,
-	# 	link=url,
-	# )
+	frappe.enqueue(
+		"vinatex.integrations.teams_graph.notify_user",
+		queue="long",
+		timeout=900,
+		is_async=True,
+		upn_or_email=recipients,
+		content_type="html",
+		linkify=False,
+		message=message_with_link,
+	)
+	send_rocket_message(
+		to_users=recipients,
+		title=":bell: Thông báo",
+		message=f"*{subject}*\n{message_with_link}" if message_with_link else subject,
+		link=url,
+	)
 
 
 def _normalize_confirmation_dates(dates: list[date] | None = None) -> list[date]:
@@ -378,7 +385,8 @@ def _make_attendance_from_confirmation(doc: Document, ignore_type: bool = False)
 
 def _notify_employee_result(doc: Document):
 	user = _resolve_employee_user(doc)
-	if not user:
+	# nếu là user Leave Approver L1 thì không gửi thông báo sau khi phê duyệt
+	if not user or _is_leave_approver_user(user):
 		return
 
 	subject = _("Bảng xác nhận chấm công đã được duyệt.")
