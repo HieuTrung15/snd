@@ -148,7 +148,7 @@ class GrowthDashboard {
 				<section class="growth-section">
 					<header>
 						<h2>Nhóm I - Động lực mới Ngoài ngành</h2>
-						<p>Drill-down 6 mục con và điểm nóng tài chính.</p>
+						<p>Điểm nóng tài chính.</p>
 					</header>
 					<div class="growth-grid growth-grid-3">
 						<div class="growth-panel">
