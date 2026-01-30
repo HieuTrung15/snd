@@ -11,7 +11,17 @@ frappe.ui.form.on("VNT Vehicle Control", {
                 }
             });
         }
-    }
+    },
+	onload (frm) {
+		frm.set_query("driver", "items", function (doc, cdt, cdn) {
+			let d = locals[cdt][cdn];
+			return {
+				filters: {
+					status: 1
+				},
+			};
+		});
+	}
 });
 
 function loadTakenVehicle(frm) {

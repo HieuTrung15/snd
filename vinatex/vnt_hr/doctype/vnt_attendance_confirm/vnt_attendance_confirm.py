@@ -55,10 +55,14 @@ class VNTAttendanceConfirm(Document):
 			_notify_approver_pending(self)
 			_close_employee_todos(self)
 
-		type_confirm = [row.get("type") for row in (self.get("items") or []) if row.get("confirm")]
-		if type_confirm:
-			_make_attendance_from_confirmation(self)
-			_reject_attendance_from_confirmation(self)
+		type_confirm = [row.get("type") for row in items if row.get("confirm")]
+		self_l1 = _is_self_l1_employee(self)
+		all_confirm = bool(items) and all(row.get("confirm") for row in items)
+		should_process = bool(type_confirm) or (self_l1 and all_confirm)
+		if should_process:
+			ignore_type = self_l1 and all_confirm
+			_make_attendance_from_confirmation(self, ignore_type=ignore_type)
+			_reject_attendance_from_confirmation(self, ignore_type=ignore_type)
 			if not pending:
 				_close_approver_todos(self)
 
@@ -109,6 +113,15 @@ def is_employee_leave_approver(employee: str | None = None) -> bool:
 	return "Leave Approver" in frappe.get_roles(user_id)
 
 
+@frappe.whitelist()
+def is_employee_leave_approver_l1(employee: str | None = None) -> bool:
+	"""Return True if the employee's mapped user has the Leave Approver L1 role."""
+	user_id = _employee_user_id(employee)
+	if not user_id:
+		return False
+	return "Leave Approver L1" in frappe.get_roles(user_id)
+
+
 def _employee_user_id(employee: str | None) -> str | None:
 	if not employee:
 		return None
@@ -133,6 +146,15 @@ def _resolve_approver_user(doc: Document) -> str | None:
 	if raw and frappe.db.get_value("Employee", {"user_id": raw}, "name") == doc.approver:
 		return raw
 	return None
+
+
+def _is_self_l1_employee(doc: Document) -> bool:
+	employee_user = _resolve_employee_user(doc)
+	if not employee_user:
+		return False
+	if frappe.session.user != employee_user:
+		return False
+	return "Leave Approver L1" in frappe.get_roles(frappe.session.user)
 
 
 def _send_notification(doc: Document, user: str | list[str] | tuple[str, ...], subject: str, message: str):
@@ -202,7 +224,7 @@ def _format_date_value(value: date | None) -> str:
 def _compute_status(doc: Document) -> str:
 	"""Compute parent status based on items:
 	- If all items have confirm -> 'Đã phê duyệt'
-	- Else if all items have type -> 'Đã giải trình'
+	- Else if all items have type -> 'Chờ phê duyệt'
 	- Else -> 'Chờ giải trình'
 	"""
 	items = doc.get("items") or []
@@ -213,7 +235,7 @@ def _compute_status(doc: Document) -> str:
 	if all_confirm:
 		return "Đã phê duyệt"
 	if all_type:
-		return "Đã giải trình"
+		return "Chờ phê duyệt"
 	return "Chờ giải trình"
 
 
@@ -299,11 +321,11 @@ def _notify_confirmation(doc: Document, user: str, dates: list[date] | None = No
 	_send_notification(doc, user, subject, message)
  
 
-def _reject_attendance_from_confirmation(doc: Document):
+def _reject_attendance_from_confirmation(doc: Document, ignore_type: bool = False):
 	# Từ chối tạo Attendance cho các ngày trong items
 	att_check = False
 	for row in doc.get("items") or []:
-		att_check = row.get("type") and row.get("confirm") == "Từ chối"
+		att_check = (ignore_type or row.get("type")) and row.get("confirm") == "Từ chối"
 	if att_check:
 		_notify_reject_employee_result(doc)
 
@@ -323,11 +345,11 @@ def _notify_reject_employee_result(doc: Document):
 
 
 
-def _make_attendance_from_confirmation(doc: Document):
+def _make_attendance_from_confirmation(doc: Document, ignore_type: bool = False):
 	# Tạo Attendance cho các ngày trong items
 	created = False
 	for row in doc.get("items") or []:
-		att_check = row.get("type") and row.get("confirm") == "Đồng ý"
+		att_check = (ignore_type or row.get("type")) and row.get("confirm") == "Đồng ý"
 		if not att_check:
 			continue
 		existing_att = frappe.db.exists("Attendance", {
@@ -561,8 +583,9 @@ def make_attendance_confirm():
 			att.department = emp.get("department")
 			att.email = emp.get("user_id")
 			att.from_date = month_from
-			att.approver = emp.get("reports_to") or None
-			att.approver_name = approver_emp or None
+			is_self_approver = emp.get("user_id") and "Leave Approver L1" in frappe.get_roles(emp.get("user_id"))
+			att.approver = emp_name if is_self_approver else (emp.get("reports_to") or None)
+			att.approver_name = emp.get("employee_name") if is_self_approver else (approver_emp or None)
 			# att.docstatus = 1
 			is_new = True
 

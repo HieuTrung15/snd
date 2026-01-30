@@ -6,6 +6,7 @@ frappe.ui.form.on("VNT Attendance Confirm", {
 		if (frm.doc.items && frm.doc.items.length == 0) {
 			frappe.msgprint(__('Không có dữ liệu để xác nhận.'));
 		}
+		set_self_approver(frm);
 		_update_parent_status(frm);
 	},
 	before_save (frm) {
@@ -14,9 +15,19 @@ frappe.ui.form.on("VNT Attendance Confirm", {
 	refresh(frm) {
 		frm.set_df_property("items", "cannot_delete_rows", true);
 		frm.set_df_property("items", "cannot_add_rows", true);
+		if (frm.doc && frm.doc.employee) {
+			frappe.call({
+				method: "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.is_employee_leave_approver_l1",
+				args: { employee: frm.doc.employee },
+				callback(res) {
+					frm.set_df_property("approver", "hidden", Boolean(res && res.message));
+				},
+			});
+		}
+		const isSelfL1 = frm.doc && frm.doc.email && frappe.session.user === frm.doc.email && frappe.user.has_role('Leave Approver L1');
 		// If current session user is the employee's mapped user and has role Leave Approver L1,
 		// auto-set status to 'Đã phê duyệt' so Save will proceed even with no other changes.
-		if (frm.doc && frm.doc.email && frappe.session.user === frm.doc.email && frappe.user.has_role('Leave Approver L1')) {
+		if (isSelfL1) {
 			frm.doc.status = 'Đã phê duyệt';
 			refresh_field('status');
 		}
@@ -85,7 +96,7 @@ function _update_parent_status(frm) {
 		return;
 	}
 	if (allType) {
-		frm.doc.status = 'Đã giải trình';
+		frm.doc.status = 'Chờ phê duyệt';
 		refresh_field('status');
 		return;
 	}
@@ -112,6 +123,24 @@ function _toggle_save_button(frm) {
 	} else {
 		frm.enable_save();
 	}
+}
+
+// Nếu user hiện tại có role Leave Approver L1 thì tự gán họ làm người duyệt
+function set_self_approver(frm) {
+	// if (frm.doc.docstatus !== 0) return;
+	if (!frappe.user.has_role("Leave Approver L1")) return;
+
+	frappe.db
+		.get_value("Employee", { user_id: frappe.session.user }, ["name", "employee_name"])
+		.then(r => {
+			const emp = r && r.message;
+			if (!emp || !emp.name) return;
+			if (frm.doc.approver === emp.name) return;
+			frm.set_value("approver", emp.name);
+			if (emp.employee_name) {
+				frm.set_value("approver_name", emp.employee_name);
+			}
+		});
 }
 
 frappe.ui.form.on('VNT Attendance Confirm Item', {

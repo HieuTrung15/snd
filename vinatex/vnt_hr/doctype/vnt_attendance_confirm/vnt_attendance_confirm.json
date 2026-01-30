@@ -88,7 +88,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Nh\u00e2n vi\u00ean",
+   "label": "Chuy\u00ean vi\u00ean",
    "options": "Employee",
    "read_only": 1
   },
@@ -114,7 +114,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "fetch_from": "employee.reports_to",
    "fetch_if_empty": 1,
    "fieldname": "approver",
    "fieldtype": "Link",
@@ -159,13 +158,13 @@
    "hidden": 1,
    "in_list_view": 1,
    "label": "Tr\u1ea1ng th\u00e1i",
-   "options": "Ch\u1edd gi\u1ea3i tr\u00ecnh\n\u0110\u00e3 gi\u1ea3i tr\u00ecnh\n\u0110\u00e3 ph\u00ea duy\u1ec7t"
+   "options": "Ch\u1edd gi\u1ea3i tr\u00ecnh\nCh\u1edd ph\u00ea duy\u1ec7t\n\u0110\u00e3 ph\u00ea duy\u1ec7t"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-30 08:49:02.646559",
+ "modified": "2026-01-30 09:11:28.285393",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Attendance Confirm",
