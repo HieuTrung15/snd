@@ -49,7 +49,7 @@ def get_approver_by_department(department):
 @frappe.whitelist()
 def get_retirement_date(dob: str, gender: str | None = None, extra_months: int = 0) -> str:
     """
-    Tính NGÀY nghỉ hưu theo lộ trình VN, KHÓA THEO NĂM NGHỈ HƯU (không dựa năm hiện tại).
+    Tính NGÀY nghỉ hưu theo lộ trình VN, KHÓA THEO NĂM ĐỦ TUỔI (không dựa năm hiện tại).
     - Nam: 60y3m (2021) +3m/năm, trần 62y (>=2028).
     - Nữ: 55y4m (2021) +4m/năm, trần 60y (>=2035).
     Trả về NGÀY ĐẦU TIÊN CỦA THÁNG KẾ TIẾP SAU KHI ĐỦ TUỔI (YYYY-MM-DD).
@@ -74,19 +74,20 @@ def get_retirement_date(dob: str, gender: str | None = None, extra_months: int =
         # Ví dụ: 2025-10-15 -> 2025-11-01
         return dt.replace(day=1) + relativedelta(months=+1)
 
-    # Ước lượng ban đầu bằng trần và lấy "ngày hiệu lực" (đầu tháng sau khi đủ tuổi)
-    retired_effective = first_day_next_month(d + relativedelta(months=+cap + extra_months))
+    # Chọn năm sớm nhất mà NGÀY ĐỦ TUỔI rơi đúng năm đó theo lộ trình
+    earliest_anniv = d + relativedelta(months=+(base_2021 + extra_months))
+    latest_anniv = d + relativedelta(months=+(cap + extra_months))
+    start_year = max(2021, earliest_anniv.year - 1)
+    end_year = max(start_year, latest_anniv.year + 2)
 
-    # Lặp để hội tụ theo năm NGHỈ HƯU (năm của ngày hiệu lực)
-    for _ in range(10):
-        m = months_for_year(retired_effective.year)  # khóa theo NĂM NGHỈ HƯU
-        anniv = d + relativedelta(months=+(m + extra_months))  # ngày đủ tuổi
-        new_effective = first_day_next_month(anniv)  # ngày nghỉ hưu (đầu tháng kế tiếp)
-        if new_effective == retired_effective:
-            break
-        retired_effective = new_effective
+    for year in range(start_year, end_year + 1):
+        m = months_for_year(year)
+        anniv = d + relativedelta(months=+(m + extra_months))
+        if anniv.year == year:
+            return first_day_next_month(anniv).isoformat()
 
-    return retired_effective.isoformat()
+    # Fallback: nếu không khớp năm (trường hợp đã quá tuổi trước 2021)
+    return first_day_next_month(earliest_anniv).isoformat()
 
 
 @frappe.whitelist()
