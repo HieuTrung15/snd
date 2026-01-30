@@ -369,14 +369,61 @@ def _safe_text(value):
 	return str(value).strip()
 
 
+NUMBER_PRECISION = 6
+
+
+def _normalize_numeric_text(value):
+	text = (value or "").strip()
+	if not text:
+		return ""
+	if text.startswith("(") and text.endswith(")"):
+		text = f"-{text[1:-1]}"
+	text = text.replace("\u00a0", "").replace(" ", "")
+	text = re.sub(r"[^0-9,.\-]", "", text)
+	if text in {"", "-", ".", ",", "-.", "-,"}:
+		return ""
+	sign = "-" if text.startswith("-") else ""
+	text = text.lstrip("-").replace("-", "")
+	has_dot = "." in text
+	has_comma = "," in text
+	decimal_sep = None
+	if has_dot and has_comma:
+		decimal_sep = "." if text.rfind(".") > text.rfind(",") else ","
+	elif has_comma:
+		parts = text.split(",")
+		decimal_sep = "," if len(parts[-1]) != 3 else None
+	elif has_dot:
+		parts = text.split(".")
+		decimal_sep = "." if len(parts[-1]) != 3 else None
+
+	if decimal_sep:
+		parts = text.split(decimal_sep)
+		int_part = re.sub(r"[.,]", "", parts[0])
+		frac_part = re.sub(r"[.,]", "", "".join(parts[1:]))
+		normalized = int_part if int_part else "0"
+		if frac_part:
+			normalized = f"{normalized}.{frac_part}"
+	else:
+		normalized = re.sub(r"[.,]", "", text)
+
+	return f"{sign}{normalized}" if normalized else ""
+
+
+def _to_precision(value):
+	return flt(value, precision=NUMBER_PRECISION)
+
+
 def _to_number(value):
 	if value in (None, ""):
 		return None
 	if isinstance(value, str):
-		value = value.replace(",", "").strip()
+		value = _normalize_numeric_text(value)
 		if value == "":
 			return None
-	return flt(value)
+	try:
+		return _to_precision(value)
+	except (TypeError, ValueError):
+		return None
 
 
 def _coerce_int(value):
@@ -437,8 +484,8 @@ def _apply_quarter_months(line, prefix):
 			value = months.get(month)
 			if value in (None, ""):
 				continue
-			total += flt(value)
-		months[end_month] = flt(quarter_value) - total
+			total += _to_precision(value)
+		months[end_month] = _to_precision(quarter_value) - total
 
 	for month, field in month_fields.items():
 		if getattr(line, field) in (None, "") and months.get(month) is not None:
@@ -487,7 +534,7 @@ def _apply_profit_lines(lines):
 			value = getattr(line, field, None)
 			if value in (None, ""):
 				continue
-			target[field] = (target.get(field) or 0) + flt(value)
+			target[field] = (target.get(field) or 0) + _to_precision(value)
 
 	for line in lines:
 		if _normalize_value(getattr(line, "khoan_muc", None)) != "loi nhuan":
@@ -503,7 +550,7 @@ def _apply_profit_lines(lines):
 			cost_value = cost.get(field)
 			if rev_value is None and cost_value is None:
 				continue
-			setattr(line, field, flt(rev_value or 0) - flt(cost_value or 0))
+			setattr(line, field, _to_precision(rev_value or 0) - _to_precision(cost_value or 0))
 
 
 def _build_summary_rows(lines):
@@ -606,6 +653,6 @@ def _merge_group_cells(ws, start_row, group_values, column_index):
 def _export_value(value):
 	if value in (None, ""):
 		return None
-	if flt(value) == 0:
+	if _to_precision(value) == 0:
 		return None
 	return value

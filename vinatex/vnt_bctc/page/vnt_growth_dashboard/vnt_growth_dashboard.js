@@ -5,44 +5,11 @@ frappe.pages["vnt-growth-dashboard"].on_page_load = function (wrapper) {
 		single_column: true,
 	});
 
-	page.add_field({
-		fieldname: "company",
-		label: __("Công ty"),
-		fieldtype: "Link",
-		options: "Company",
-		change: () => dashboard && dashboard.refresh(),
-	});
-
-	page.add_field({
-		fieldname: "fiscal_year",
-		label: __("Năm tài chính"),
-		fieldtype: "Link",
-		options: "Fiscal Year",
-		change: () => dashboard && dashboard.refresh(),
-	});
-
-	page.add_field({
-		fieldname: "month",
-		label: __("Tháng"),
-		fieldtype: "Select",
-		options: Array.from({ length: 12 }, (_, i) => `${i + 1}`),
-		default: `${new Date().getMonth() + 1}`,
-		change: () => dashboard && dashboard.refresh(),
-	});
-
-	page.add_field({
-		fieldname: "data_type",
-		label: __("Loại dữ liệu"),
-		fieldtype: "Select",
-		options: ["Actual", "Plan"],
-		default: "Actual",
-		change: () => dashboard && dashboard.refresh(),
-	});
-
 	let dashboard = null;
 
 	loadGrowthAssets(() => {
 		dashboard = new GrowthDashboard(page);
+		dashboard.initFilters();
 	});
 };
 
@@ -55,15 +22,18 @@ function loadGrowthAssets(done) {
 		"/assets/vinatex/js/vendor/highcharts/modules/waterfall.js",
 		"/assets/vinatex/js/vendor/highcharts/modules/solid-gauge.js",
 	];
-	let loaded = 0;
+	let chain = Promise.resolve();
 	scripts.forEach((src) => {
-		frappe.require(src, () => {
-			loaded += 1;
-			if (loaded === scripts.length) {
-				setGrowthTheme();
-				done();
-			}
-		});
+		chain = chain.then(
+			() =>
+				new Promise((resolve) => {
+					frappe.require(src, () => resolve());
+				})
+		);
+	});
+	chain.then(() => {
+		setGrowthTheme();
+		done();
 	});
 }
 
@@ -122,25 +92,23 @@ class GrowthDashboard {
 						<h1>Phân tích bốn trụ cột kinh doanh</h1>
 						<p>Tổng quan hiệu suất, xác định động lực tăng trưởng và rủi ro trọng yếu.</p>
 					</div>
-					<div class="growth-meta">
-						<div class="growth-meta-item">
-							<span>Dữ liệu</span>
-							<strong data-key="data_type">Actual</strong>
-						</div>
-						<div class="growth-meta-item">
-							<span>Tháng</span>
-							<strong data-key="month_label">-</strong>
-						</div>
-						<div class="growth-meta-item">
-							<span>Năm tài chính</span>
-							<strong data-key="fiscal_year">-</strong>
-						</div>
+					
+				</section>
+				<section class="growth-filters">
+					<div class="growth-filter-title">Bộ lọc</div>
+					<div class="growth-filter-grid">
+						<div class="growth-filter" data-field="actual_doc"></div>
+						<div class="growth-filter" data-field="plan_doc"></div>
+						<div class="growth-filter" data-field="company"></div>
+						<div class="growth-filter" data-field="month"></div>
+						<div class="growth-filter" data-field="year_scope"></div>
+						<div class="growth-filter" data-field="data_type"></div>
 					</div>
 				</section>
 
 				<section class="growth-kpis">
 					<div class="growth-card">
-						<p>Tổng Doanh thu tháng</p>
+						<p>Tổng Doanh thu</p>
 						<h3 data-key="revenue_month">0</h3>
 						<span data-key="revenue_month_delta"></span>
 					</div>
@@ -150,7 +118,7 @@ class GrowthDashboard {
 						<span data-key="revenue_ytd_delta"></span>
 					</div>
 					<div class="growth-card">
-						<p>Tổng LNTT tháng</p>
+						<p>Tổng LNTT</p>
 						<h3 data-key="profit_month">0</h3>
 						<span data-key="profit_month_delta"></span>
 					</div>
@@ -234,7 +202,7 @@ class GrowthDashboard {
 							<div id="growth-cost-gauge" class="growth-chart-sm"></div>
 						</div>
 						<div class="growth-panel">
-							<div class="growth-panel-title">Dự kiến Chi phí 2025</div>
+							<div class="growth-panel-title">Dự kiến Chi phí <span data-key="cost_forecast_year">-</span></div>
 							<div class="growth-forecast" data-key="cost_forecast"></div>
 						</div>
 					</div>
@@ -243,12 +211,144 @@ class GrowthDashboard {
 		`);
 	}
 
+	initFilters() {
+		const defaultActualDoc = "FR-ACT-2026-0002";
+		this.controls = {};
+		const fields = [
+			{
+				fieldname: "actual_doc",
+				label: "Bảng thực tế",
+				fieldtype: "Link",
+				options: "VNT Financial Actual Summary",
+				default: defaultActualDoc,
+				change: () => this.syncFromActualDoc(),
+			},
+			{
+				fieldname: "plan_doc",
+				label: "Bảng kế hoạch",
+				fieldtype: "Link",
+				options: "VNT Financial Plan Summary",
+				change: () => this.refresh(),
+			},
+			{
+				fieldname: "company",
+				label: "Công ty",
+				fieldtype: "Link",
+				options: "Company",
+				change: () => this.refresh(),
+			},
+			{
+				fieldname: "month",
+				label: "Tháng",
+				fieldtype: "Select",
+				options: ["Cả năm", ...Array.from({ length: 12 }, (_, i) => `${i + 1}`)],
+				default: `Cả năm`,
+				change: () => this.refresh(),
+			},
+			{
+				fieldname: "year_scope",
+				label: "Năm hiển thị",
+				fieldtype: "Select",
+				options: [
+					`${new Date().getFullYear()}`,
+					`${new Date().getFullYear() - 1}`,
+				],
+				change: () => this.refresh(),
+			},
+			{
+				fieldname: "data_type",
+				label: "Loại dữ liệu",
+				fieldtype: "Select",
+				options: ["Actual", "Plan"],
+				default: "Actual",
+				change: () => this.refresh(),
+			},
+		];
+
+		fields.forEach((field) => {
+			const wrapper = this.$wrapper.find(`.growth-filter[data-field="${field.fieldname}"]`)[0];
+			if (!wrapper) {
+				return;
+			}
+			const control = frappe.ui.form.make_control({
+				df: field,
+				parent: wrapper,
+				render_input: true,
+			});
+			control.make();
+			this.controls[field.fieldname] = control;
+			if (field.default) {
+				control.set_value(field.default);
+			}
+		});
+
+		if (this.controls.actual_doc && !this.controls.actual_doc.get_value()) {
+			this.controls.actual_doc.set_value(defaultActualDoc);
+		}
+		this.syncFromActualDoc();
+	}
+
+	syncFromActualDoc() {
+		const control = this.controls && this.controls.actual_doc;
+		const docname = control ? control.get_value() : null;
+		if (!docname) {
+			this.currentFiscalYear = null;
+			this.refresh();
+			return;
+		}
+		frappe.db
+			.get_value("VNT Financial Actual Summary", docname, ["company", "fiscal_year"])
+			.then((r) => {
+				let updatePromise = Promise.resolve();
+					if (r && r.message) {
+						if (this.controls.company && r.message.company) {
+							this.controls.company.set_value(r.message.company);
+						}
+						if (r.message.fiscal_year) {
+							this.currentFiscalYear = r.message.fiscal_year;
+							updatePromise = this.updateYearScopeOptions(r.message.fiscal_year);
+						}
+					}
+				return updatePromise;
+			})
+			.then(() => this.refresh());
+	}
+
+	updateYearScopeOptions(fiscalYearName) {
+		const control = this.controls && this.controls.year_scope;
+		if (!control || !fiscalYearName) {
+			return Promise.resolve();
+		}
+		return frappe.db.get_value("Fiscal Year", fiscalYearName, "year_start_date").then((r) => {
+			const startDate = r && r.message ? r.message.year_start_date : null;
+			if (!startDate) {
+				return;
+			}
+			const baseYear = new Date(startDate).getFullYear();
+			if (!baseYear || Number.isNaN(baseYear)) {
+				return;
+			}
+			const options = [`${baseYear}`, `${baseYear - 1}`];
+			control.df.options = options;
+			control.refresh();
+			if (!options.includes(control.get_value())) {
+				control.set_value(`${baseYear}`);
+			}
+		});
+	}
+
 	refresh() {
+		if (!this.controls) {
+			return;
+		}
 		const filters = {
-			company: this.page.fields_dict.company.get_value(),
-			fiscal_year: this.page.fields_dict.fiscal_year.get_value(),
-			month: this.page.fields_dict.month.get_value(),
-			data_type: this.page.fields_dict.data_type.get_value(),
+			company: this.controls.company.get_value(),
+			fiscal_year: this.currentFiscalYear || null,
+			month: this.controls.month.get_value() === "Cả năm" ? "all" : this.controls.month.get_value(),
+			data_type: this.controls.data_type.get_value(),
+			year_scope: this.controls.year_scope.get_value(),
+			actual_doc: this.controls.actual_doc.get_value(),
+			plan_doc: this.controls.plan_doc.get_value(),
 		};
 
 		frappe.call({
@@ -266,6 +366,7 @@ class GrowthDashboard {
 
 	renderData(payload, filters) {
 		const meta = payload.meta || {};
+		const yearScope = payload.year_scope || filters.year_scope;
 		const actual = payload.actual || payload.plan;
 		const plan = payload.plan;
 		if (!actual) {
@@ -274,9 +375,15 @@ class GrowthDashboard {
 
 		this.$wrapper.find('[data-key="data_type"]').text(filters.data_type || "Actual");
 		this.$wrapper.find('[data-key="month_label"]').text(meta.month_label || "-");
-		this.$wrapper.find('[data-key="fiscal_year"]').text(meta.fiscal_year || "-");
+		const displayYear = meta.display_year || meta.fiscal_year || "-";
+		this.$wrapper.find('[data-key="fiscal_year"]').text(displayYear);
+		this.$wrapper.find('[data-key="cost_forecast_year"]').text(displayYear);
+		if (yearScope === "prev") {
+			this.$wrapper.find('[data-key="month_label"]').text(`${meta.month_label || "-"} (Năm trước)`);
+		}
 
-		this.renderKpis(actual.totals, plan ? plan.totals : null);
+		const isFullYear = filters.month === "all";
+		this.renderKpis(actual.totals, plan ? plan.totals : null, isFullYear);
 		this.renderAlerts(actual, plan);
 		this.renderTrend(actual.trends);
 		this.renderWaterfall(actual.groups);
@@ -287,7 +394,7 @@ class GrowthDashboard {
 		this.renderCost(actual.cost_trend, actual.groups, plan ? plan.groups : null);
 	}
 
-	renderKpis(totals, planTotals) {
+	renderKpis(totals, planTotals, isFullYear) {
 		const $root = this.$wrapper;
 		const revenueMonth = totals?.revenue_month || 0;
 		const revenueYtd = totals?.revenue_ytd || 0;
@@ -299,14 +406,18 @@ class GrowthDashboard {
 		$root.find('[data-key="profit_month"]').text(formatNumber(profitMonth));
 		$root.find('[data-key="profit_ytd"]').text(formatNumber(profitYtd));
 
+		const monthCompareLabel = isFullYear ? "So với cùng kỳ" : "So với tháng trước";
+		const revenueMonthCompare = isFullYear ? totals?.revenue_prev_ytd : totals?.revenue_prev_month;
+		const profitMonthCompare = isFullYear ? totals?.profit_prev_ytd : totals?.profit_prev_month;
+
 		$root.find('[data-key="revenue_month_delta"]').text(
-			renderDelta(revenueMonth, totals?.revenue_prev_month, "So với tháng trước")
+			renderDelta(revenueMonth, revenueMonthCompare, monthCompareLabel)
 		);
 		$root.find('[data-key="revenue_ytd_delta"]').text(
 			renderDelta(revenueYtd, totals?.revenue_prev_ytd, "So với cùng kỳ")
 		);
 		$root.find('[data-key="profit_month_delta"]').text(
-			renderDelta(profitMonth, totals?.profit_prev_month, "So với tháng trước")
+			renderDelta(profitMonth, profitMonthCompare, monthCompareLabel)
 		);
 		$root.find('[data-key="profit_ytd_delta"]').text(
 			renderDelta(profitYtd, totals?.profit_prev_ytd, "So với cùng kỳ")
@@ -407,6 +518,7 @@ class GrowthDashboard {
 		this.charts.waterfall = Highcharts.chart("growth-waterfall-chart", {
 			chart: { type: "waterfall" },
 			title: { text: "" },
+			legend: { enabled: false },
 			xAxis: { type: "category" },
 			yAxis: { title: { text: "LNTT" } },
 			series: [
@@ -421,22 +533,39 @@ class GrowthDashboard {
 	}
 
 	renderGroup1(items, planItems) {
+		if (!window.Highcharts) {
+			setChartPlaceholder("growth-group1-treemap", "Chưa tải Highcharts.");
+			setChartPlaceholder("growth-group1-bar", "Chưa tải Highcharts.");
+			setChartPlaceholder("growth-group1-donut", "Chưa tải Highcharts.");
+			return;
+		}
 		const data = (items || []).map((item) => ({
 			name: item.name,
 			value: item.revenue_ytd || 0,
 			colorValue: item.profit_ytd || 0,
 		}));
-		this.charts.group1Treemap = Highcharts.chart("growth-group1-treemap", {
-			series: [
-				{
-					type: "treemap",
-					layoutAlgorithm: "squarified",
-					dataLabels: { enabled: true, format: "{point.name}" },
-					data,
-				},
-			],
-			title: { text: "" },
-		});
+		if (!data.length) {
+			setChartPlaceholder("growth-group1-treemap", "Chưa có dữ liệu Nhóm I.");
+		} else if (!Highcharts.seriesTypes.treemap) {
+			setChartPlaceholder("growth-group1-treemap", "Thiếu module Treemap.");
+		} else {
+			try {
+				this.charts.group1Treemap = Highcharts.chart("growth-group1-treemap", {
+					series: [
+						{
+							type: "treemap",
+							layoutAlgorithm: "squarified",
+							colorByPoint: true,
+							dataLabels: { enabled: true, format: "{point.name}" },
+							data,
+						},
+					],
+					title: { text: "" },
+				});
+			} catch (err) {
+				setChartPlaceholder("growth-group1-treemap", "Không thể hiển thị Treemap.");
+			}
+		}
 
 		const categories = (items || []).map((item) => item.name);
 		const actualValues = (items || []).map((item) => item.profit_ytd || 0);
@@ -454,24 +583,40 @@ class GrowthDashboard {
 			});
 		}
 
-		this.charts.group1Bar = Highcharts.chart("growth-group1-bar", {
-			chart: { type: "bar" },
-			title: { text: "" },
-			xAxis: { categories },
-			yAxis: { title: { text: "LNTT lũy kế" } },
-			series,
-		});
+		if (!categories.length) {
+			setChartPlaceholder("growth-group1-bar", "Chưa có dữ liệu Nhóm I.");
+		} else {
+			try {
+				this.charts.group1Bar = Highcharts.chart("growth-group1-bar", {
+					chart: { type: "bar" },
+					title: { text: "" },
+					xAxis: { categories },
+					yAxis: { title: { text: "LNTT lũy kế" } },
+					series,
+				});
+			} catch (err) {
+				setChartPlaceholder("growth-group1-bar", "Không thể hiển thị biểu đồ.");
+			}
+		}
 
 		const donutData = (items || []).slice(0, 4).map((item) => ({
 			name: item.name,
 			y: item.profit_ytd || 0,
 		}));
-		this.charts.group1Donut = Highcharts.chart("growth-group1-donut", {
-			chart: { type: "pie" },
-			title: { text: "" },
-			plotOptions: { pie: { innerSize: "65%", dataLabels: { enabled: true, format: "{point.name}" } } },
-			series: [{ name: "LNTT", data: donutData }],
-		});
+		if (!donutData.length) {
+			setChartPlaceholder("growth-group1-donut", "Chưa có dữ liệu Nhóm I.");
+		} else {
+			try {
+				this.charts.group1Donut = Highcharts.chart("growth-group1-donut", {
+					chart: { type: "pie" },
+					title: { text: "" },
+					plotOptions: { pie: { innerSize: "65%", dataLabels: { enabled: true, format: "{point.name}" } } },
+					series: [{ name: "LNTT", data: donutData }],
+				});
+			} catch (err) {
+				setChartPlaceholder("growth-group1-donut", "Không thể hiển thị Donut.");
+			}
+		}
 	}
 
 	renderGroup2(items) {
@@ -488,39 +633,65 @@ class GrowthDashboard {
 	}
 
 	renderGroup3(items) {
+		if (!window.Highcharts) {
+			setChartPlaceholder("growth-group3-bar", "Chưa tải Highcharts.");
+			return;
+		}
 		const categories = (items || []).map((item) => item.name);
 		const values = (items || []).map((item) => item.profit_ytd || 0);
-		this.charts.group3Bar = Highcharts.chart("growth-group3-bar", {
-			chart: { type: "column" },
-			title: { text: "" },
-			xAxis: { categories },
-			yAxis: { title: { text: "LNTT" } },
-			series: [{ name: "LNTT", data: values }],
-		});
+		if (!categories.length) {
+			setChartPlaceholder("growth-group3-bar", "Chưa có dữ liệu Nhóm III.");
+			return;
+		}
+		try {
+			this.charts.group3Bar = Highcharts.chart("growth-group3-bar", {
+				chart: { type: "column" },
+				title: { text: "" },
+				xAxis: { categories },
+				yAxis: { title: { text: "LNTT" } },
+				series: [{ name: "LNTT", data: values }],
+			});
+		} catch (err) {
+			setChartPlaceholder("growth-group3-bar", "Không thể hiển thị biểu đồ.");
+		}
 	}
 
 	renderInvestment(items) {
+		if (!window.Highcharts) {
+			setChartPlaceholder("growth-investment-waterfall", "Chưa tải Highcharts.");
+			return;
+		}
 		const data = (items || []).map((item) => ({
 			name: item.name,
 			y: item.profit_ytd || 0,
 		}));
 		if (!data.length) {
+			setChartPlaceholder("growth-investment-waterfall", "Chưa có dữ liệu đầu tư.");
+			return;
+		}
+		if (!Highcharts.seriesTypes.waterfall) {
+			setChartPlaceholder("growth-investment-waterfall", "Thiếu module Waterfall.");
 			return;
 		}
 		data.push({ name: "Tổng LNTT", isSum: true });
-		this.charts.investment = Highcharts.chart("growth-investment-waterfall", {
-			chart: { type: "waterfall" },
-			title: { text: "" },
-			xAxis: { type: "category" },
-			series: [
-				{
-					upColor: "#22C55E",
-					color: "#EF4444",
-					data,
-					dataLabels: { enabled: true, format: "{point.y:,.0f}" },
-				},
-			],
-		});
+		try {
+			this.charts.investment = Highcharts.chart("growth-investment-waterfall", {
+				chart: { type: "waterfall" },
+				title: { text: "" },
+				legend: { enabled: false },
+				xAxis: { type: "category" },
+				series: [
+					{
+						upColor: "#22C55E",
+						color: "#EF4444",
+						data,
+						dataLabels: { enabled: true, format: "{point.y:,.0f}" },
+					},
+				],
+			});
+		} catch (err) {
+			setChartPlaceholder("growth-investment-waterfall", "Không thể hiển thị Waterfall.");
+		}
 	}
 
 	renderCost(costTrend, groups, planGroups) {
@@ -607,4 +778,12 @@ function formatPercent(value) {
 
 function escape(value) {
 	return frappe.utils.escape_html(value || "");
+}
+
+function setChartPlaceholder(containerId, message) {
+	const container = document.getElementById(containerId);
+	if (!container) {
+		return;
+	}
+	container.innerHTML = `<div class="growth-chart-placeholder">${message}</div>`;
 }

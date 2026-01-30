@@ -4,19 +4,40 @@ from collections import defaultdict
 
 import frappe
 from frappe import _
-from frappe.utils import cint, flt
+from frappe.utils import cint, flt, getdate
 
 
 @frappe.whitelist()
-def get_growth_dashboard_data(company=None, fiscal_year=None, month=None, data_type=None, docname=None):
-	month_value = cint(month) or cint(frappe.utils.now_datetime().month)
-	month_value = max(1, min(12, month_value))
+def get_growth_dashboard_data(
+	company=None,
+	fiscal_year=None,
+	month=None,
+	data_type=None,
+	docname=None,
+	actual_doc=None,
+	plan_doc=None,
+	year_scope=None,
+):
+	month_mode_raw = str(month) if month is not None else ""
+	month_mode = _normalize(month_mode_raw).replace(" ", "")
+	if month_mode in ("all", "canam"):
+		month_value = 12
+		month_label = "Cả năm"
+	else:
+		month_value = cint(month) or cint(frappe.utils.now_datetime().month)
+		month_value = max(1, min(12, month_value))
+		month_label = calendar.month_name[month_value]
 	data_type = (data_type or "Actual").strip().lower()
+	year_scope_raw = (year_scope or "current").strip().lower()
 
 	actual_doc = None
 	plan_doc = None
 
-	if docname:
+	if actual_doc:
+		actual_doc = frappe.get_doc("VNT Financial Actual Summary", actual_doc)
+	if plan_doc:
+		plan_doc = frappe.get_doc("VNT Financial Plan Summary", plan_doc)
+	if docname and not (actual_doc or plan_doc):
 		if data_type == "plan":
 			plan_doc = frappe.get_doc("VNT Financial Plan Summary", docname)
 		else:
@@ -31,20 +52,24 @@ def get_growth_dashboard_data(company=None, fiscal_year=None, month=None, data_t
 		return _sample_payload(month_value)
 
 	base_doc = actual_doc or plan_doc
+	base_year = _get_fiscal_year_year(getattr(base_doc, "fiscal_year", None)) if base_doc else None
+	resolved_scope, display_year = _resolve_year_scope(year_scope_raw, base_year)
 	meta = {
 		"month": month_value,
-		"month_label": calendar.month_name[month_value],
+		"month_label": month_label,
 		"company": getattr(base_doc, "company", None),
 		"fiscal_year": getattr(base_doc, "fiscal_year", None),
+		"display_year": display_year,
 		"actual_doc": getattr(actual_doc, "name", None) if actual_doc else None,
 		"plan_doc": getattr(plan_doc, "name", None) if plan_doc else None,
 	}
 
-	actual_metrics = _build_metrics(actual_doc.lines, month_value) if actual_doc else None
-	plan_metrics = _build_metrics(plan_doc.lines, month_value) if plan_doc else None
+	actual_metrics = _build_metrics(actual_doc.lines, month_value, resolved_scope) if actual_doc else None
+	plan_metrics = _build_metrics(plan_doc.lines, month_value, resolved_scope) if plan_doc else None
 
 	return {
 		"meta": meta,
+		"year_scope": resolved_scope,
 		"actual": actual_metrics,
 		"plan": plan_metrics,
 	}
@@ -62,7 +87,33 @@ def _find_summary_doc(doctype, company, fiscal_year):
 	return frappe.get_doc(doctype, name)
 
 
-def _build_metrics(lines, month):
+def _get_fiscal_year_year(fiscal_year_name):
+	if not fiscal_year_name:
+		return None
+	year_start = frappe.get_value("Fiscal Year", fiscal_year_name, "year_start_date")
+	if not year_start:
+		return None
+	return getdate(year_start).year
+
+
+def _resolve_year_scope(year_scope_raw, base_year):
+	if year_scope_raw and year_scope_raw.isdigit():
+		year_value = cint(year_scope_raw)
+		if base_year:
+			if year_value == base_year - 1:
+				return "prev", year_value
+			if year_value == base_year:
+				return "current", year_value
+		return "current", year_value
+	scope = "prev" if year_scope_raw == "prev" else "current"
+	if base_year:
+		display_year = base_year - 1 if scope == "prev" else base_year
+	else:
+		display_year = None
+	return scope, display_year
+
+
+def _build_metrics(lines, month, year_scope):
 	metrics = {
 		"totals": {},
 		"trends": {},
@@ -81,14 +132,16 @@ def _build_metrics(lines, month):
 	month = max(1, min(12, cint(month)))
 	months = list(range(1, month + 1))
 	metrics["trends"]["months"] = [f"T{m:02d}" for m in months]
+	prefix = "prev" if year_scope == "prev" else "current"
+	compare_prefix = "prev" if prefix == "current" else None
 
 	revenue_series = []
 	profit_series = []
 	cost_series = []
 	for m in months:
-		revenue_series.append(_sum_by_kind(lines, "doanh thu", m))
-		profit_series.append(_sum_by_kind(lines, "loi nhuan", m))
-		cost_series.append(_sum_by_kind(lines, "chi phi", m, group_key="nhom 4"))
+		revenue_series.append(_sum_by_kind(lines, "doanh thu", m, prefix))
+		profit_series.append(_sum_by_kind(lines, "loi nhuan", m, prefix))
+		cost_series.append(_sum_by_kind(lines, "chi phi", m, prefix, group_key="nhom 4"))
 	metrics["trends"]["revenue"] = revenue_series
 	metrics["trends"]["profit"] = profit_series
 	metrics["cost_trend"] = cost_series
@@ -97,15 +150,15 @@ def _build_metrics(lines, month):
 	total_profit_month = profit_series[-1] if profit_series else 0
 	total_revenue_ytd = sum(revenue_series)
 	total_profit_ytd = sum(profit_series)
-	total_revenue_prev = _sum_by_kind(lines, "doanh thu", month, prefix="prev")
-	total_profit_prev = _sum_by_kind(lines, "loi nhuan", month, prefix="prev")
+	total_revenue_prev = _sum_by_kind(lines, "doanh thu", month, prefix=compare_prefix) if compare_prefix else 0
+	total_profit_prev = _sum_by_kind(lines, "loi nhuan", month, prefix=compare_prefix) if compare_prefix else 0
 	metrics["totals"] = {
 		"revenue_month": total_revenue_month,
 		"profit_month": total_profit_month,
 		"revenue_ytd": total_revenue_ytd,
 		"profit_ytd": total_profit_ytd,
-		"revenue_prev_month": _sum_by_kind(lines, "doanh thu", month - 1) if month > 1 else 0,
-		"profit_prev_month": _sum_by_kind(lines, "loi nhuan", month - 1) if month > 1 else 0,
+		"revenue_prev_month": _sum_by_kind(lines, "doanh thu", month - 1, prefix) if month > 1 else 0,
+		"profit_prev_month": _sum_by_kind(lines, "loi nhuan", month - 1, prefix) if month > 1 else 0,
 		"revenue_prev_ytd": total_revenue_prev,
 		"profit_prev_ytd": total_profit_prev,
 	}
@@ -114,24 +167,25 @@ def _build_metrics(lines, month):
 	group_details = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
 
 	for line in lines:
-		group = _normalize_group(getattr(line, "nhom_to", None))
+		group = _resolve_group(line)
 		if not group:
 			continue
 		kind = _normalize(getattr(line, "khoan_muc", None))
 		if kind not in ("doanh thu", "chi phi", "loi nhuan"):
 			continue
-		group_totals[group][f"{kind}_month"] += _value_for_month(line, "current", month)
-		group_totals[group][f"{kind}_prev_month"] += _value_for_month(line, "current", month - 1)
-		group_totals[group][f"{kind}_ytd"] += _sum_months(line, "current", month)
-		group_totals[group][f"{kind}_prev_ytd"] += _sum_months(line, "prev", month)
+		group_totals[group][f"{kind}_month"] += _value_for_month(line, prefix, month)
+		group_totals[group][f"{kind}_prev_month"] += _value_for_month(line, prefix, month - 1)
+		group_totals[group][f"{kind}_ytd"] += _sum_months(line, prefix, month)
+		if compare_prefix:
+			group_totals[group][f"{kind}_prev_ytd"] += _sum_months(line, compare_prefix, month)
 
 		detail = _safe_text(getattr(line, "doi_tuong", None))
-		group_details[group][detail][f"{kind}_ytd"] += _sum_months(line, "current", month)
+		group_details[group][detail][f"{kind}_ytd"] += _sum_months(line, prefix, month)
 
 	for group, values in group_totals.items():
 		metrics["groups"].append(
 			{
-				"name": group.title(),
+				"name": _display_group(group),
 				"revenue_month": values.get("doanh thu_month", 0),
 				"revenue_prev_month": values.get("doanh thu_prev_month", 0),
 				"revenue_ytd": values.get("doanh thu_ytd", 0),
@@ -195,10 +249,12 @@ def _filter_items(items, keywords):
 	return result or items[:4]
 
 
-def _sum_by_kind(lines, kind, month, prefix="current", group_key=None):
+def _sum_by_kind(lines, kind, month, prefix=None, group_key=None):
+	if not prefix:
+		return 0.0
 	total = 0.0
 	for line in lines:
-		if group_key and _normalize_group(getattr(line, "nhom_to", None)) != group_key:
+		if group_key and _resolve_group(line) != group_key:
 			continue
 		if _normalize(getattr(line, "khoan_muc", None)) != kind:
 			continue
@@ -220,8 +276,28 @@ def _sum_months(line, prefix, month):
 	return total
 
 
-def _normalize_group(value):
-	text = _normalize(value)
+def _resolve_group(line):
+	nhom_to = _normalize(getattr(line, "nhom_to", None))
+	if nhom_to:
+		mapped = _match_group_key(nhom_to)
+		if mapped:
+			return mapped
+	item_code = _normalize(getattr(line, "item_code", None))
+	if item_code:
+		if "nhom_1" in item_code or "nhom1" in item_code:
+			return "nhom 1"
+		if "nhom_2" in item_code or "nhom2" in item_code:
+			return "nhom 2"
+		if "nhom_3" in item_code or "nhom3" in item_code:
+			return "nhom 3"
+		if "nhom_4" in item_code or "nhom4" in item_code:
+			return "nhom 4"
+	return _match_group_key(_normalize(getattr(line, "doi_tuong", None)))
+
+
+def _match_group_key(text):
+	if not text:
+		return None
 	if "nhom 1" in text:
 		return "nhom 1"
 	if "nhom 2" in text:
@@ -230,7 +306,17 @@ def _normalize_group(value):
 		return "nhom 3"
 	if "nhom 4" in text:
 		return "nhom 4"
-	return text or None
+	return None
+
+
+def _display_group(group_key):
+	mapping = {
+		"nhom 1": "Nhóm 1",
+		"nhom 2": "Nhóm 2",
+		"nhom 3": "Nhóm 3",
+		"nhom 4": "Nhóm 4",
+	}
+	return mapping.get(group_key, group_key.title() if group_key else "")
 
 
 def _normalize(value):
@@ -251,8 +337,9 @@ def _sample_payload(month):
 	revenue = [120 + m * 5 for m in months]
 	profit = [32 + m * 2 for m in months]
 	cost = [80 + m * 4 for m in months]
+	current_year = frappe.utils.now_datetime().year
 	return {
-		"meta": {"month": month, "month_label": calendar.month_name[month]},
+		"meta": {"month": month, "month_label": calendar.month_name[month], "display_year": current_year},
 		"actual": {
 			"totals": {
 				"revenue_month": revenue[-1],

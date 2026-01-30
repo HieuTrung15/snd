@@ -281,9 +281,9 @@ function format_number(value) {
 		return "";
 	}
 	if (typeof frappe.format_number === "function") {
-		return frappe.format_number(number, null, 0);
+		return frappe.format_number(number, null, NUMBER_PRECISION);
 	}
-	return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(number);
+	return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: NUMBER_PRECISION }).format(number);
 }
 
 function escape_html(value) {
@@ -488,6 +488,7 @@ const NUMERIC_FIELDS = [
 	...Array.from({ length: 12 }, (_, i) => `current_t${String(i + 1).padStart(2, "0")}`),
 	"luy_ke",
 ];
+const NUMBER_PRECISION = 6;
 
 function bind_input_events(page, state) {
 	$(page.main)
@@ -524,13 +525,51 @@ function bind_input_events(page, state) {
 }
 
 function normalize_number(value) {
-	const text = String(value || "").replace(/[^\d-]/g, "");
-	if (!text || text === "-") {
+	const raw = String(value ?? "").trim();
+	if (!raw) {
 		return "";
 	}
-	const sign = text.startsWith("-") ? "-" : "";
-	const digits = text.replace(/-/g, "");
-	return sign + digits;
+	let text = raw.replace(/\s+/g, "");
+	text = text.replace(/[^\d,.\-]/g, "");
+	if (!text || text === "-" || text === "." || text === ",") {
+		return "";
+	}
+	let sign = "";
+	if (text.startsWith("-")) {
+		sign = "-";
+		text = text.slice(1);
+	}
+	text = text.replace(/-/g, "");
+	const hasDot = text.includes(".");
+	const hasComma = text.includes(",");
+	let decimalSep = null;
+	if (hasDot && hasComma) {
+		decimalSep = text.lastIndexOf(".") > text.lastIndexOf(",") ? "." : ",";
+	} else if (hasComma) {
+		const parts = text.split(",");
+		decimalSep = parts.length > 1 && parts[parts.length - 1].length !== 3 ? "," : null;
+	} else if (hasDot) {
+		const parts = text.split(".");
+		decimalSep = parts.length > 1 && parts[parts.length - 1].length !== 3 ? "." : null;
+	}
+
+	let normalized = "";
+	if (decimalSep) {
+		const parts = text.split(decimalSep);
+		const intPart = parts[0].replace(/[.,]/g, "");
+		const fracPart = parts
+			.slice(1)
+			.join("")
+			.replace(/[.,]/g, "");
+		normalized = intPart || "0";
+		if (fracPart) {
+			normalized += `.${fracPart}`;
+		}
+	} else {
+		normalized = text.replace(/[.,]/g, "");
+	}
+
+	return normalized ? `${sign}${normalized}` : "";
 }
 
 function parse_number(value) {

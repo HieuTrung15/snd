@@ -102,176 +102,211 @@
   {
    "fieldname": "prev_plan",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "KH năm trước"
   },
   {
    "fieldname": "prev_3t",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "3T năm trước"
   },
   {
    "fieldname": "prev_6t",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "6T năm trước"
   },
   {
    "fieldname": "prev_9t",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "9T năm trước"
   },
   {
    "fieldname": "prev_12t",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "12T năm trước"
   },
   {
    "fieldname": "current_plan",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "KH năm nay"
   },
   {
    "fieldname": "current_3t",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "3T năm nay"
   },
   {
    "fieldname": "current_6t",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "6T năm nay"
   },
   {
    "fieldname": "current_9t",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "9T năm nay"
   },
   {
    "fieldname": "current_12t",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "12T năm nay"
   },
   {
    "fieldname": "prev_t01",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T01 năm trước"
   },
   {
    "fieldname": "prev_t02",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T02 năm trước"
   },
   {
    "fieldname": "prev_t03",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T03 năm trước"
   },
   {
    "fieldname": "prev_t04",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T04 năm trước"
   },
   {
    "fieldname": "prev_t05",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T05 năm trước"
   },
   {
    "fieldname": "prev_t06",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T06 năm trước"
   },
   {
    "fieldname": "prev_t07",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T07 năm trước"
   },
   {
    "fieldname": "prev_t08",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T08 năm trước"
   },
   {
    "fieldname": "prev_t09",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T09 năm trước"
   },
   {
    "fieldname": "prev_t10",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T10 năm trước"
   },
   {
    "fieldname": "prev_t11",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T11 năm trước"
   },
   {
    "fieldname": "prev_t12",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T12 năm trước"
   },
   {
    "fieldname": "current_t01",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T01 năm nay"
   },
   {
    "fieldname": "current_t02",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T02 năm nay"
   },
   {
    "fieldname": "current_t03",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T03 năm nay"
   },
   {
    "fieldname": "current_t04",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T04 năm nay"
   },
   {
    "fieldname": "current_t05",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T05 năm nay"
   },
   {
    "fieldname": "current_t06",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T06 năm nay"
   },
   {
    "fieldname": "current_t07",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T07 năm nay"
   },
   {
    "fieldname": "current_t08",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T08 năm nay"
   },
   {
    "fieldname": "current_t09",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T09 năm nay"
   },
   {
    "fieldname": "current_t10",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T10 năm nay"
   },
   {
    "fieldname": "current_t11",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T11 năm nay"
   },
   {
    "fieldname": "current_t12",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "T12 năm nay"
   },
   {
    "fieldname": "luy_ke",
    "fieldtype": "Currency",
+   "precision": 6,
    "label": "Lũy kế"
   }
  ],
