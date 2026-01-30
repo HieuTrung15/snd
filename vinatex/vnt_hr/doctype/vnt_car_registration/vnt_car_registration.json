@@ -56,6 +56,7 @@
    "fetch_from": "employee.department",
    "fieldname": "department",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "in_standard_filter": 1,
    "label": "Ph\u00f2ng ban",
    "options": "Department"
@@ -190,6 +191,7 @@
    "fetch_from": "employee.branch",
    "fieldname": "branch",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "V\u0103n ph\u00f2ng",
    "options": "Branch"
   },
@@ -237,6 +239,7 @@
    "fieldname": "emp_list_name",
    "fieldtype": "Small Text",
    "hidden": 1,
+   "ignore_user_permissions": 1,
    "label": "Nh\u00e2n s\u1ef1 \u0111i xe",
    "max_height": "50px"
   },
@@ -245,6 +248,7 @@
    "depends_on": "eval: doc.distance == 'T\u1eeb 40 km tr\u1edf l\u00ean' && doc.leave_approver_2 !=1",
    "fieldname": "approver_lv2",
    "fieldtype": "Data",
+   "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t c\u1ea5p 2",
    "read_only": 1
   },
@@ -267,7 +271,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-28 18:21:20.078978",
+ "modified": "2026-01-30 09:46:26.015188",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Car Registration",

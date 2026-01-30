@@ -63,6 +63,7 @@
    "fieldname": "employee",
    "fieldtype": "Data",
    "hidden": 1,
+   "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi \u0111\u1ec1 xu\u1ea5t"
   },
   {
@@ -88,7 +89,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-26 09:21:24.678976",
+ "modified": "2026-01-30 09:47:34.885364",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Vehicle Control",
