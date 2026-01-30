@@ -17,7 +17,7 @@
    "fieldname": "vendor",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Nhà cung cấp",
+   "label": "Nh\u00e0 cung c\u1ea5p",
    "options": "VNT IT Vendor",
    "reqd": 1
   },
@@ -25,25 +25,25 @@
    "fieldname": "product_name",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Sản phẩm",
+   "label": "S\u1ea3n ph\u1ea9m",
    "reqd": 1,
    "unique": 1
   },
   {
    "fieldname": "product_family",
    "fieldtype": "Data",
-   "label": "Nhóm sản phẩm"
+   "label": "Nh\u00f3m s\u1ea3n ph\u1ea9m"
   },
   {
    "fieldname": "default_cpe_prefix",
    "fieldtype": "Data",
-   "label": "CPE Prefix mặc định"
+   "label": "CPE Prefix m\u1eb7c \u0111\u1ecbnh"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-19 14:57:08.806578",
+ "modified": "2026-01-30 10:45:49.245068",
  "modified_by": "Administrator",
  "module": "VNT IT Security",
  "name": "VNT IT Product",
@@ -69,50 +69,9 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "VNT_ITSEC_ADMIN",
+   "role": "Infomation Technology",
    "share": 1,
    "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_ITSEC_ANALYST",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_UNIT_IT_ADMIN",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_UNIT_IT_EDITOR",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_UNIT_VIEWER",
-   "share": 1
   }
  ],
  "row_format": "Dynamic",

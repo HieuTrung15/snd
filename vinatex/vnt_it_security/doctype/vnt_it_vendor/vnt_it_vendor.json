@@ -15,7 +15,7 @@
    "fieldname": "vendor_name",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Nhà cung cấp",
+   "label": "Nh\u00e0 cung c\u1ea5p",
    "reqd": 1,
    "unique": 1
   },
@@ -28,7 +28,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-31 08:42:05.611992",
+ "modified": "2026-01-30 10:46:18.640380",
  "modified_by": "Administrator",
  "module": "VNT IT Security",
  "name": "VNT IT Vendor",
@@ -54,50 +54,9 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "VNT_ITSEC_ADMIN",
+   "role": "Infomation Technology",
    "share": 1,
    "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_ITSEC_ANALYST",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_UNIT_IT_ADMIN",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_UNIT_IT_EDITOR",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_UNIT_VIEWER",
-   "share": 1
   }
  ],
  "row_format": "Dynamic",

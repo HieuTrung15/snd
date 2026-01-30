@@ -86,6 +86,9 @@ doctype_js = {
 	"ToDo": "vinatex/doctype/overrides/todo.js",
     "User": "vinatex/doctype/overrides/user.js",
     "Job Requisition": "vinatex/doctype/overrides/job_requisition.js",
+    "VNT CVE Source": "vinatex/public/js/vnt_itsec/vnt_cve_source.js",
+    "VNT Vulnerability Advisory": "vinatex/public/js/vnt_itsec/vnt_vulnerability_advisory.js",
+    "VNT CVE": "vinatex/public/js/vnt_itsec/vnt_cve.js",
 }
 doctype_list_js = {
     "VNT Salary Slip": "vinatex/vnt_hr/doctype/vnt_salary_slip/vnt_salary_slip_list.js",
@@ -133,7 +136,7 @@ jinja = {
 # ------------
 
 # before_install = "vinatex.install.before_install"
-# after_install = "vinatex.install.after_install"
+after_install = "vinatex.vnt_itsec.install.bootstrap"
 
 # Uninstallation
 # ------------
@@ -207,11 +210,17 @@ has_permission = {
 
 scheduler_events = {
     "cron": {
+        "30 1 * * *": [
+            "vinatex.vnt_itsec.sync.run.run_nightly",
+        ],
+        "15 2 * * *": [
+            "vinatex.vnt_itsec.cleanup.cleanup_cves",
+        ],
         "0 4 1 1 *": [
             "vinatex.vinatex.doctype.overrides.allocate_leave.allocate_leave"
         ],
 		# Chạy chấm công 10p/lân từ 8h đến 9h30 sáng hàng ngày
-		"*/30 8-9 * * *": [
+		"*/30 9-10 * * *": [
 			"vinatex.vinatex.doctype.overrides.timekeeping.get_timekeeping_data_morning",
 		],
 		# Chạy chấm công lúc 22h tối hàng ngày

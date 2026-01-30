@@ -7,6 +7,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "column_break_xbwv",
   "naming_series",
   "sb_ticket_details",
   "company",
@@ -29,7 +30,7 @@
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
-   "label": "Chuỗi đặt tên",
+   "label": "Chu\u1ed7i \u0111\u1eb7t t\u00ean",
    "options": "RMD-.YYYY.-.MM.-.#### | RMD-.YYYY.-.MM.-.####",
    "reqd": 1
   },
@@ -37,7 +38,7 @@
    "fieldname": "company",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Công ty",
+   "label": "C\u00f4ng ty",
    "options": "Company",
    "reqd": 1
   },
@@ -45,7 +46,7 @@
    "fieldname": "advisory",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Khuyến cáo",
+   "label": "Khuy\u1ebfn c\u00e1o",
    "options": "VNT Vulnerability Advisory"
   },
   {
@@ -59,14 +60,14 @@
    "fieldname": "asset",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Tài sản",
+   "label": "T\u00e0i s\u1ea3n",
    "options": "VNT IT Asset"
   },
   {
    "fieldname": "priority",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Ưu tiên",
+   "label": "\u01afu ti\u00ean",
    "options": "P1 | P1\nP2 | P2\nP3 | P3\nP4 | P4",
    "reqd": 1
   },
@@ -74,7 +75,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Trạng thái",
+   "label": "Tr\u1ea1ng th\u00e1i",
    "options": "Open | Open\nAssigned | Assigned\nIn Progress | In Progress\nWaiting | Waiting\nDone | Done\nRejected | Rejected",
    "reqd": 1
   },
@@ -82,7 +83,7 @@
    "fieldname": "assignee",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Người xử lý",
+   "label": "Ng\u01b0\u1eddi x\u1eed l\u00fd",
    "options": "User",
    "reqd": 1
   },
@@ -90,33 +91,33 @@
    "fieldname": "sla_due_date",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "label": "Hạn SLA",
+   "label": "H\u1ea1n SLA",
    "reqd": 1
   },
   {
    "fieldname": "action_plan",
    "fieldtype": "Long Text",
-   "label": "Kế hoạch hành động"
+   "label": "K\u1ebf ho\u1ea1ch h\u00e0nh \u0111\u1ed9ng"
   },
   {
    "fieldname": "resolution",
    "fieldtype": "Long Text",
-   "label": "Kết quả xử lý"
+   "label": "K\u1ebft qu\u1ea3 x\u1eed l\u00fd"
   },
   {
    "fieldname": "evidence",
    "fieldtype": "Attach",
-   "label": "Bằng chứng"
+   "label": "B\u1eb1ng ch\u1ee9ng"
   },
   {
    "fieldname": "closed_at",
    "fieldtype": "Datetime",
-   "label": "Đóng lúc"
+   "label": "\u0110\u00f3ng l\u00fac"
   },
   {
    "fieldname": "sb_ticket_details",
    "fieldtype": "Section Break",
-   "label": "Thông tin phiếu"
+   "label": "Th\u00f4ng tin phi\u1ebfu"
   },
   {
    "fieldname": "col_ticket_status",
@@ -125,21 +126,27 @@
   {
    "fieldname": "sb_plan",
    "fieldtype": "Section Break",
-   "label": "Kế hoạch & xử lý"
+   "label": "K\u1ebf ho\u1ea1ch & x\u1eed l\u00fd"
   },
   {
    "fieldname": "sb_evidence",
    "fieldtype": "Section Break",
-   "label": "Bằng chứng & đóng"
+   "label": "B\u1eb1ng ch\u1ee9ng & \u0111\u00f3ng"
+  },
+  {
+   "fieldname": "column_break_xbwv",
+   "fieldtype": "Column Break",
+   "hidden": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-19 14:57:09.933793",
+ "modified": "2026-01-30 10:43:56.812190",
  "modified_by": "Administrator",
  "module": "VNT IT Security",
  "name": "VNT Remediation Ticket",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -162,50 +169,9 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "VNT_ITSEC_ADMIN",
+   "role": "Infomation Technology",
    "share": 1,
    "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_ITSEC_ANALYST",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_UNIT_IT_ADMIN",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_UNIT_IT_EDITOR",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_UNIT_VIEWER",
-   "share": 1
   }
  ],
  "row_format": "Dynamic",
