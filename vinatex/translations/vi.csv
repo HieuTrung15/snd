@@ -559,3 +559,11 @@ VNT KPI Chuyen Vien, KPI chuyên viên
 VNT Cong Viec Chi Tiet, Công việc chi tiết
 VNT Task, Công việc cần thực hiện
 Total Leave Days, Tổng số ngày nghỉ
+Your assignment on {0} {1} has been removed by {2},Công việc của bạn trên {0} {1} đã bị xóa bởi {2}
+Assignment Update on {0},Cập nhật công việc trên {0},
+"Configure notifications for mentions, assignments, energy points and more.","Cấu hình thông báo cho đề cập, công việc, điểm năng lượng và nhiều hơn nữa.",
+Assignments,Công việc,
+Set up rules for user assignments.,Thiết lập quy tắc cho công việc của người dùng.,
+Assignment for {0} {1},Công việc cho {0} {1},
+Assign to the one who has the least assignments,Chỉ định cho người có ít công việc nhất,
+VNT Courier Registration, Chuyển phát nhanh
