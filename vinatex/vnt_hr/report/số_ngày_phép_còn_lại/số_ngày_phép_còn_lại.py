@@ -21,59 +21,71 @@ def execute(filters=None):
     emp_name = emp_info.employee_name
     credit = debit = 0.0
 
-    # Lấy toàn bộ bản ghi Leave Ledger Entry cho nhân viên đó (không lọc ngày)
-    rows = frappe.db.sql("""
-        SELECT leaves
-        FROM `tabLeave Ledger Entry`
-        WHERE employee = %s
-          AND leave_type = %s
-    """, (emp, leave_type), as_dict=True)
+    today = getdate(nowdate())
+    year_start = f"{today.year}-01-01"
+    year_end = f"{today.year}-12-31"
 
-    for r in rows:
-        leaves = float(r.leaves or 0)
-        if leaves > 0:
-            credit += leaves
-        else:
-            debit += abs(leaves)
+    # Số được cấp = Leave Allocation năm nay (docstatus=1)
+    credit = float(
+        frappe.db.sql(
+            """
+            SELECT SUM(total_leaves_allocated) AS allocated
+            FROM `tabLeave Allocation`
+            WHERE employee = %s
+              AND leave_type = %s
+              AND docstatus = 1
+              AND from_date >= %s
+              AND to_date <= %s
+            """,
+            (emp, leave_type, year_start, year_end),
+            as_dict=True,
+        )[0].allocated
+        or 0
+    )
+
+    # Q1: cộng thêm Leave Allocation của năm trước
+    if leave_type == "Nghỉ phép năm" and today.month <= 3:
+        prev_year = today.year - 1
+        prev_year_start = f"{prev_year}-01-01"
+        prev_year_end = f"{prev_year}-12-31"
+        prev_alloc = float(
+            frappe.db.sql(
+                """
+                SELECT SUM(total_leaves_allocated) AS allocated
+                FROM `tabLeave Allocation`
+                WHERE employee = %s
+                  AND leave_type = %s
+                  AND docstatus = 1
+                  AND from_date >= %s
+                  AND to_date <= %s
+                """,
+                (emp, leave_type, prev_year_start, prev_year_end),
+                as_dict=True,
+            )[0].allocated
+            or 0
+        )
+        credit += prev_alloc
+
+    # Số đã dùng = Leave Application trong năm hiện tại
+    debit = float(
+        frappe.db.sql(
+            """
+            SELECT SUM(ABS(leaves)) AS used
+            FROM `tabLeave Ledger Entry`
+            WHERE employee = %s
+              AND leave_type = %s
+              AND transaction_type = 'Leave Application'
+              AND docstatus = 1
+              AND from_date >= %s
+              AND to_date <= %s
+            """,
+            (emp, leave_type, year_start, year_end),
+            as_dict=True,
+        )[0].used
+        or 0
+    )
 
     remaining = credit - debit
-
-    # Q1: cộng lại phép năm trước còn dư nếu allocation năm trước đã submit
-    if leave_type == "Nghỉ phép năm":
-        today = getdate(nowdate())
-        if today.month <= 3:
-            prev_year = today.year - 1
-            prev_allocations = frappe.get_all(
-                "Leave Allocation",
-                filters={
-                    "employee": emp,
-                    "leave_type": leave_type,
-                    "docstatus": 1,
-                    "from_date": (">=", f"{prev_year}-01-01"),
-                    "to_date": ("<=", f"{prev_year}-12-31"),
-                },
-                pluck="name",
-            )
-            if prev_allocations:
-                placeholders = ", ".join(["%s"] * len(prev_allocations))
-                expired = frappe.db.sql(
-                    f"""
-                    SELECT SUM(ABS(leaves)) AS expired
-                    FROM `tabLeave Ledger Entry`
-                    WHERE employee = %s
-                      AND leave_type = %s
-                      AND transaction_type = 'Leave Allocation'
-                      AND is_expired = 1
-                      AND docstatus = 1
-                      AND transaction_name IN ({placeholders})
-                    """,
-                    [emp, leave_type, *prev_allocations],
-                    as_dict=True,
-                )
-                extra_credit = float(expired[0].expired or 0)
-                if extra_credit:
-                    credit += extra_credit
-                    remaining += extra_credit
 
     data = [{
         "employee_name": emp_name,
