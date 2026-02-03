@@ -245,6 +245,7 @@ class VNTVehicleControl(Document):
 				["driver_name", "phone", "car_id", "driver"],
 				as_dict=True,
 			)
+			car = registrations.get(row.id_parent)
 			driver_user = None
 			if vehicle and vehicle.get("driver"):
 				driver_user = get_employee_user_id(vehicle.get("driver"))
@@ -258,11 +259,27 @@ class VNTVehicleControl(Document):
 			driver_sent.add(driver_user)
 			driver_label = (vehicle.get("driver_name") if vehicle else None) or row.driver
 			car_plate = row.car_id or (vehicle.get("car_id") if vehicle else "")
+			# danh sách nhân sự đi cùng cho dòng này (không liệt kê `car.employee`)
+			passengers = (car.get("list_emp") if car else []) or []
+			passenger_names = []
+			car_employee = car.get("employee") if car else None
+			for p in passengers:
+				emp_name = getattr(p, "employee_name", None) if hasattr(p, "employee_name") else (p.get("employee_name") if isinstance(p, dict) else None)
+				emp = getattr(p, "employee", None) if hasattr(p, "employee") else (p.get("employee") if isinstance(p, dict) else None)
+				# bỏ qua nếu employee của car nằm trong list_emp
+				if emp and car_employee and emp == car_employee:
+					continue
+				if not emp_name and emp:
+					emp_name = frappe.db.get_value("Employee", emp, "employee_name")
+				if emp_name:
+					passenger_names.append(emp_name)
+			passenger_text = ", ".join(passenger_names) if passenger_names else _("(không rõ)")
 			driver_msg = _(
-				"Phân xe: {0} xin xe của {1}. Cho anh {2} /BKS: {3}. Thời gian đi: {4} - ngày {5}. Đón tại: {6} - điểm đến: {7}."
+				"Phân xe: {0} xin xe của {1}. Nhân sự đi cùng: {2}. Cho anh {3} /BKS: {4}. Thời gian đi: {5} - ngày {6}. Đón tại: {7} - điểm đến: {8}."
 			).format(
-				car.department or _("(không rõ)"),
-				car.employee_name or _("(không rõ)"),
+				(car.department if car and getattr(car, 'department', None) else _("(không rõ)")),
+				(car.employee_name if car and getattr(car, 'employee_name', None) else _("(không rõ)")),
+				passenger_text,
 				driver_label,
 				car_plate or _("(không rõ)"),
 				row.time or _("(không rõ)"),
