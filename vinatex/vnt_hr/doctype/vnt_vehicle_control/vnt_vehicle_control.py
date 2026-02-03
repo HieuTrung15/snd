@@ -28,6 +28,7 @@ class VNTVehicleControl(Document):
 		registrations: dict[str, Document | None] = {}
 		trip_mappings: dict[str, dict | None] = {}
 		recipients: set[str] = set()
+		creator: set[str] = set()
 		trip_dates: set[str] = set()
 
 		for row in self.items:
@@ -58,7 +59,7 @@ class VNTVehicleControl(Document):
 				create_user = get_employee_user_id(car.get("employee"))
 				if user:
 					recipients.add(user)
-					recipients.add(create_user)
+					creator.add(create_user)
 
 			trip_name = car.get("business_trip")
 			if not trip_name or not car_item:
@@ -94,14 +95,18 @@ class VNTVehicleControl(Document):
 		if not recipients:
 			return
 
-		date_text_list = sorted({formatdate(d, "dd-MM-yyyy") for d in trip_dates if d})
-		date_text = ", ".join(date_text_list) if date_text_list else _("(không rõ)")
+		# Nếu người tạo (creator) nằm trong recipients thì loại bỏ họ
+		recipients.difference_update(creator)
 
-		driver_by_date: dict[str, list[str]] = {}
+		driver_by_date: dict[str, list[dict[str, str]]] = {}
+		driver_segments = []
 		for row in self.items:
 			if not row.driver:
 				continue
-			date_key = formatdate(row.date) if row.date else _("(không rõ)")
+
+			date_text = str(row.date) if row.date else _("(không rõ)")
+			date_key = date_text
+
 			vehicle = frappe.db.get_value(
 				"VNT Vehicle",
 				row.driver,
@@ -111,63 +116,123 @@ class VNTVehicleControl(Document):
 			driver_name = vehicle.driver_name if (vehicle and vehicle.driver_name) else row.driver
 			phone = row.phone or (vehicle.phone if vehicle else "")
 			car_id = row.car_id or (vehicle.car_id if vehicle else "")
-			parts = [driver_name]
-			if phone:
-				parts.append(phone)
-			if car_id:
-				parts.append(car_id)
-			driver_by_date.setdefault(date_key, []).append(" - ".join(parts))
+			end_point = row.end or _("(không rõ)")
+			start_point = row.start or _("(không rõ)")
 
-		if driver_by_date:
-			driver_segments = []
-			for date_key in sorted(driver_by_date.keys()):
-				driver_lines = [
-					_("Lái xe - {0}").format(driver_info)
-					for driver_info in driver_by_date[date_key]
-				]
-				drivers = ";\n".join(driver_lines)
-				driver_segments.append(_("Ngày {0}: {1}").format(date_key, drivers))
-			driver_text = "\n".join(driver_segments)
-		else:
-			driver_text = _("(không rõ)")
+			driver_by_date.setdefault(date_key, []).append({
+				"date": date_text,
+				"driver": driver_name,
+				"phone": phone,
+				"car_id": car_id,
+				"start": start_point,
+				"end": end_point,
+			})
+
+			car = registrations.get(row.id_parent)
+			content = (car.note if car and car.note else None) or _("(không rõ)")
+
+			raw_time = (row.time or "").strip()
+			start_time = raw_time or _("(không rõ)")
+			end_time = start_time
+			if raw_time and "-" in raw_time:
+				parts = [p.strip() for p in raw_time.split("-") if p.strip()]
+				if len(parts) >= 2:
+					start_time, end_time = parts[0], parts[1]
+
+			driver_segments.append(
+				"\n".join([
+					_("\nNội dung:\n{0}").format(content),
+					_("Thời gian: từ {0} {1} - đến {2} {3}.\n").format(
+						start_time,
+						formatdate(date_text, "dd-MM-yyyy"),
+						end_time,
+						formatdate(date_text, "dd-MM-yyyy"),
+					),
+					_("Lộ trình: {0} - {1}.\n").format(start_point, end_point),
+					_("Lái xe: {0} / BKS: {1}. \n").format(
+						driver_name or _("(không rõ)"),
+						car_id or _("(không rõ)"),
+					),
+				])
+			)
+
+		# Gửi thông báo riêng cho từng dòng trong `items` (1 thông báo = 1 dòng)
 		target_doctype = "VNT Car Registration"
-		target_docname = next(
-			(car.name for car in registrations.values() if car and car.name),
-			self.name,
-		)
-
-		make_notification_logs({
-			"type": "Alert",
-			"subject": _("Bạn đã được điều xe cho chuyến đi. {0}.").format(
-				# date_text,
-				driver_text,
-			),
-			"document_type": target_doctype,
-			"document_name": target_docname,
-		}, list(recipients))
-		frappe.enqueue(
-			"vinatex.integrations.teams_graph.notify_user",
-			queue="short",
-			timeout=50,
-			is_async=True,
-			upn_or_email=list(recipients),
-			content_type="html",
-			linkify=False,
-			message=_(
-			"🔔 Bạn đã được điều xe cho chuyến đi. {0}.<br>"
-			).format(
-				driver_text
-			),
-		)
-		send_rocket_message(
-			to_users=list(recipients),
-			title=":bell: Thông báo",
-			message=_("Bạn đã được điều xe cho chuyến đi. {0}.").format(
-				# date_text,
-				driver_text,
-			),
-			link=get_url_to_form(target_doctype, target_docname)
-    	)
+		for row in self.items:
+			if not (row.id_parent and row.id_child and row.driver):
+				continue
+			car = registrations.get(row.id_parent)
+			if not car:
+				continue
+			# người nhận trong dòng này
+			row_recipients = [get_employee_user_id(p.employee) for p in (car.get("list_emp") or [])]
+			row_recipients = [u for u in row_recipients if u]
+			row_creator = get_employee_user_id(car.get("employee"))
+			# loại bỏ creator nếu nằm trong recipients
+			if row_creator and row_creator in row_recipients:
+				row_recipients.remove(row_creator)
+			# xây dựng nội dung thông báo cho dòng
+			car_item = next((item for item in (car.get("items") or []) if item.name == row.id_child), None)
+			date_text = str(car_item.date) if (car_item and car_item.date) else (str(row.date) if row.date else _("(không rõ)"))
+			raw_time = (row.time or "").strip()
+			start_time = raw_time or _("(không rõ)")
+			end_time = start_time
+			if raw_time and "-" in raw_time:
+				parts = [p.strip() for p in raw_time.split("-") if p.strip()]
+				if len(parts) >= 2:
+					start_time, end_time = parts[0], parts[1]
+			driver_label = row.driver
+			vehicle = frappe.db.get_value("VNT Vehicle", row.driver, ["driver_name", "car_id"], as_dict=True)
+			if vehicle and vehicle.get("driver_name"):
+				driver_label = vehicle.driver_name
+			car_plate = row.car_id or (vehicle.get("car_id") if vehicle else "")
+			content = (car.note if car and car.note else None) or _("(không rõ)")
+			row_msg = "\n".join([
+				_("Nội dung:\n{0}").format(content),
+				_("Thời gian: từ {0} {1} - đến {2} {3}.").format(start_time, formatdate(date_text, "dd-MM-yyyy"), end_time, formatdate(date_text, "dd-MM-yyyy")),
+				_("Lộ trình: {0} - {1}.").format(row.start or _("(không rõ)"), row.end or _("(không rõ)")),
+				_("Lái xe: {0} / BKS: {1}").format(driver_label or _("(không rõ)"), car_plate or _("(không rõ)")),
+			])
+			# document link
+			target_docname = car.name if car and car.name else self.name
+			# gửi cho creator (1 người)
+			if row_creator:
+				make_notification_logs({
+					"type": "Alert",
+					"subject": _("Bạn đã được điều xe cho chuyến đi. {0}.").format(row_msg),
+					"document_type": target_doctype,
+					"document_name": target_docname,
+				}, [row_creator])
+				frappe.enqueue(
+					"vinatex.integrations.teams_graph.notify_user",
+					queue="short",
+					timeout=50,
+					is_async=True,
+					upn_or_email=[row_creator],
+					content_type="html",
+					linkify=False,
+					message=_("🔔 Bạn đã được điều xe cho chuyến đi. {0}.<br>").format(row_msg),
+				)
+				send_rocket_message(to_users=[row_creator], title=":bell: Thông báo", message=_("Bạn đã được điều xe cho chuyến đi. {0}.").format(row_msg), link=get_url_to_form(target_doctype, target_docname))
+			# gửi cho recipients của dòng
+			if row_recipients:
+				make_notification_logs({
+					"type": "Alert",
+					"subject": _("Anh/Chị nằm trong danh sách chuyến đi. {0}.").format(row_msg),
+					"document_type": target_doctype,
+					"document_name": target_docname,
+				}, row_recipients)
+				frappe.enqueue(
+					"vinatex.integrations.teams_graph.notify_user",
+					queue="short",
+					timeout=60,
+					is_async=True,
+					upn_or_email=row_recipients,
+					content_type="html",
+					linkify=False,
+					message=_("🔔 Anh/Chị nằm trong danh sách chuyến đi. {0}.<br>").format(row_msg),
+				)
+				send_rocket_message(to_users=row_recipients, title=":bell: Thông báo", message=_("Anh/Chị nằm trong danh sách chuyến đi. {0}.").format(row_msg), link=get_url_to_form(target_doctype, target_docname))
 		# Gửi thông báo tới các driver (nếu có)
 		driver_sent = set()
 		for row in self.items:
