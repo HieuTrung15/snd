@@ -107,6 +107,18 @@ frappe.ui.form.on("Leave Application", {
 	},
 	// lấy ra người duyệt cấp 2 và cập nhật dashboard
 	employee (frm) {
+		frappe.call({
+			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver_from_employee",
+			args: {
+				employee: frm.doc.employee
+			},
+			callback: function (r) {
+				if (r.message) {
+					frm.set_value("custom_approver", r.message[0]);
+					frm.set_value("custom_approver_name", r.message[1]);
+				}
+			}
+		});
 		// Cập nhật dashboard khi thay đổi employee
 		frm.trigger("make_dashboard");
 		
@@ -180,18 +192,18 @@ frappe.ui.form.on("Leave Application", {
 		if (frm.is_new()) {
 			frm.set_value("custom_leave_group", "Nghỉ phép");
 			frm.set_value("leave_type", "Nghỉ phép năm");
-			frappe.call({
-                method: "vinatex.vnt_hr.doctype.vnt_car_registration.vnt_car_registration.get_reports_to",
-                args: {
-                    user: frappe.session.user
-                },
-                callback: function (r) {
-                    if (r.message) {
-                        frm.set_value("custom_approver", r.message[0]);
-                        frm.set_value("custom_approver_name", r.message[1]);
-                    }
-                }
-            });
+			// frappe.call({
+            //     method: "vinatex.vnt_hr.doctype.vnt_car_registration.vnt_car_registration.get_reports_to",
+            //     args: {
+            //         user: frappe.session.user
+            //     },
+            //     callback: function (r) {
+            //         if (r.message) {
+            //             frm.set_value("custom_approver", r.message[0]);
+            //             frm.set_value("custom_approver_name", r.message[1]);
+            //         }
+            //     }
+            // });
 		}
 		toggle_reject_reason(frm);
 		// gỡ nút View Ledger (kể cả có group "View" hay không)

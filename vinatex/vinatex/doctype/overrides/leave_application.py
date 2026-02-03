@@ -632,6 +632,44 @@ def _check_state_to_close_todo(doc: Document, user: str):
 
 
 @frappe.whitelist()
+def get_leave_approver_from_employee(employee: str):
+	if not employee:
+		return ""
+
+	employee_doc = frappe.get_value(
+		"Employee",
+		employee,
+		["name", "employee_name", "department", "user_id"],
+		as_dict=True,
+	)
+	if not employee_doc:
+		return ""
+
+	if employee_doc.user_id:
+		roles = frappe.get_roles(employee_doc.user_id)
+		if "Leave Approver L1" in roles or "Leave Approver L2" in roles:
+			return employee_doc.name, employee_doc.employee_name
+
+	approver_users = frappe.get_all(
+		"Department Approver",
+		filters={"parent": employee_doc.department, "custom_level_1": True},
+		pluck="approver",
+	) or []
+	# Nếu user của nhân viên nằm trong danh sách approver thì trả đúng người đó
+	if employee_doc.user_id in approver_users:
+		return employee_doc.name, employee_doc.employee_name
+	target_user = approver_users[0] if approver_users else None
+	if target_user:
+		approver_emp = frappe.get_value(
+			"Employee",
+			{"user_id": target_user},
+			["name", "employee_name"],
+			as_dict=True,
+		)
+		if approver_emp:
+			return [approver_emp.get("name"), approver_emp.get("employee_name")]
+
+@frappe.whitelist()
 def get_leave_approver(employee: str):
 	# lấy approver trên Employee trước
 	emp = frappe.db.get_value("Employee", employee, ["reports_to", "user_id"], as_dict=True)
@@ -925,5 +963,3 @@ def get_leave_type(
 	blocks.append(current_block)
 
 	return [{"from_date": b["from_date"], "to_date": b["to_date"], "leave_type": b["leave_type"], "total_days": b["total_days"], "half_day": 1 if b["half_day_date"] else 0, "half_day_date": b["half_day_date"] or ""} for b in blocks]
-
-
