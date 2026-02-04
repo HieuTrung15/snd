@@ -16,7 +16,7 @@ frappe.ui.form.on("VNT Car Registration", {
                 }
             });
         }
-    },
+	},
 	refresh(frm) {
         if (frm.is_new()) {
             frappe.call({
@@ -34,9 +34,10 @@ frappe.ui.form.on("VNT Car Registration", {
                     if (!exists) {
                         frm.add_child("list_emp", {
                             employee: r.message.name,
-                            employee_name: r.message.employee_name
+                            full_name: r.message.employee_name
                         });
                         frm.refresh_field("list_emp");
+                        sync_list_emp_titles(frm);
                     }
                 }
             });
@@ -63,8 +64,8 @@ frappe.ui.form.on("VNT Car Registration", {
                     }
                 }
             });
-            
         }
+        sync_list_emp_titles(frm);
 	},
     employee(frm) {
         frappe.call({
@@ -100,7 +101,7 @@ frappe.ui.form.on("VNT Car Registration", {
         }
     },
     list_emp (frm) {
-        // hiển thị tên nhân viên của trường TableMultiSelect
+        sync_list_emp_titles(frm);
     }
 });
 
@@ -137,6 +138,56 @@ function update_emp_list_name(frm) {
 			const mapping = r.message || {};
 			const names = employee_ids.map((id) => mapping[id] || id);
 			frm.set_value("emp_list_name", names.join(", "));
+		},
+	});
+}
+
+// hàm hiển thị tên employee trong tablemultiselect
+function sync_list_emp_titles(frm) {
+	if (!frm.doc) {
+		return;
+	}
+
+	let rows = frm.doc.list_emp || [];
+	if (typeof rows === "string") {
+		try {
+			rows = JSON.parse(rows);
+		} catch (e) {
+			rows = [];
+		}
+	}
+	if (!Array.isArray(rows)) {
+		rows = [];
+	}
+
+	const known = {};
+	rows.forEach((row) => {
+		if (row?.employee && row?.full_name) {
+			known[row.employee] = row.full_name;
+		}
+	});
+	Object.keys(known).forEach((id) => {
+		frappe.utils.add_link_title("Employee", id, known[id]);
+	});
+
+	const missing = [...new Set(rows.map((row) => row?.employee).filter(Boolean))].filter(
+		(id) => !known[id]
+	);
+
+	if (!missing.length) {
+		frm.refresh_field("list_emp");
+		return;
+	}
+
+	frappe.call({
+		method: "vinatex.vnt_hr.doctype.vnt_car_registration.vnt_car_registration.get_employee_names",
+		args: { names: missing },
+		callback: function (r) {
+			const mapping = r.message || {};
+			Object.keys(mapping).forEach((id) => {
+				frappe.utils.add_link_title("Employee", id, mapping[id]);
+			});
+			frm.refresh_field("list_emp");
 		},
 	});
 }
