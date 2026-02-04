@@ -15,6 +15,8 @@
   "department",
   "department_short_name",
   "type",
+  "effective_type",
+  "reference_kpi_ban",
   "amended_from",
   "section_break_bgzi",
   "items"
@@ -52,6 +54,7 @@
    "reqd": 1
   },
   {
+   "fetch_from": "employee.department",
    "fieldname": "department",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -66,8 +69,23 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Ph\u00e2n lo\u1ea1i",
-   "options": "\nTheo k\u1ebf ho\u1ea1ch\n\u0110i\u1ec1u ch\u1ec9nh\nPh\u00e1t sinh",
+   "options": "Theo k\u1ebf ho\u1ea1ch\n\u0110i\u1ec1u ch\u1ec9nh\nPh\u00e1t sinh",
    "reqd": 1
+  },
+  {
+   "fieldname": "effective_type",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Lu\u1ed3ng KPI",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.type===\"\u0110i\u1ec1u ch\u1ec9nh\"",
+   "fieldname": "reference_kpi_ban",
+   "fieldtype": "Link",
+   "label": "Tham chi\u1ebfu KPI Ban g\u1ed1c",
+   "mandatory_depends_on": "eval:doc.type===\"\u0110i\u1ec1u ch\u1ec9nh\"",
+   "options": "VNT KPI Ban"
   },
   {
    "fieldname": "amended_from",
@@ -108,7 +126,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-16 15:18:36.305246",
+ "modified": "2026-02-04 17:58:47.394636",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT KPI Ban",

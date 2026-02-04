@@ -29,6 +29,9 @@ const load_review_tasks = (frm) => {
 				items.forEach((item) => {
 					const row = frm.add_child("items");
 					row.congviec = item.congviec;
+					row.kpi_cv_item = item.kpi_cv_item;
+					row.kpi_ban_item = item.kpi_ban_item;
+					row.percent_cv = item.percent_cv;
 				});
 
 				frm.refresh_field("items");
@@ -59,6 +62,20 @@ const load_review_tasks = (frm) => {
 };
 
 frappe.ui.form.on("VNT Review KPI", {
+	refresh(frm) {
+		if (!frm.doc.employee) {
+			frappe.db
+				.get_value("Employee", { user_id: frappe.session.user }, "name")
+				.then((r) => {
+					if (r.message) {
+						frm.set_value("employee", r.message.name);
+					}
+				});
+		}
+		if (!frm.doc.date) {
+			frm.set_value("date", frappe.datetime.get_today());
+		}
+	},
 	employee(frm) {
 		load_review_tasks(frm);
 	},
