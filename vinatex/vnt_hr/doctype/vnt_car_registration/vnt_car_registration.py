@@ -708,6 +708,14 @@ def get_employee_name(user):
 	return employee_doc.name if employee_doc else ""
 
 
+# Lấy employee_name từ employee để hiển thị tên approver 
+@frappe.whitelist()
+def get_employee_display_name(employee: str | None = None):
+	if not employee:
+		return ""
+	return frappe.db.get_value("Employee", employee, "employee_name") or ""
+
+
 @frappe.whitelist()
 def get_reports_to(user):
 	employee_doc = frappe.get_value(

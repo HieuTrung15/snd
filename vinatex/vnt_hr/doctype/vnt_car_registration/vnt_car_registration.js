@@ -61,6 +61,7 @@ frappe.ui.form.on("VNT Car Registration", {
                     if (r.message) {
                         frm.set_value("approver", r.message[0]);
                         frm.set_value("approver_name", r.message[1]);
+                        sync_employee_link_title(frm, "approver", "approver_name");
                     }
                 }
             });
@@ -188,6 +189,33 @@ function sync_list_emp_titles(frm) {
 				frappe.utils.add_link_title("Employee", id, mapping[id]);
 			});
 			frm.refresh_field("list_emp");
+		},
+	});
+}
+
+// hiển thị tên approver khi là readonly
+function sync_employee_link_title(frm, link_field, name_field) {
+	if (!frm?.doc) {
+		return;
+	}
+	const id = frm.doc[link_field];
+	if (!id) {
+		return;
+	}
+	// const label = name_field ? frm.doc[name_field] : "";
+	// if (label) {
+	// 	frappe.utils.add_link_title("Employee", id, label);
+	// 	frm.refresh_field(link_field);
+	// 	return;
+	// }
+	frappe.call({
+		method: "vinatex.vnt_hr.doctype.vnt_car_registration.vnt_car_registration.get_employee_display_name",
+		args: { employee: id },
+		callback: function (r) {
+			if (r.message) {
+				frappe.utils.add_link_title("Employee", id, r.message);
+			}
+			frm.refresh_field(link_field);
 		},
 	});
 }
