@@ -143,7 +143,10 @@ def get_data(filters=None):
 		"vpdu": "Văn phòng Đảng ủy%",
 		"cddm": "Công đoàn Dệt May Việt Nam%",
 		"lx": "Vinateximex + Lái xe kiêm nhiệm%",
-		"cg": "Chuyên gia%"
+		"cg": "Chuyên gia%",
+		"truong_ban": "Trưởng ban%",
+		"chanh_vp": "Chánh văn phòng%",
+		"pho_ban": "Phó ban%"
 	})
 
 	# join child table của Company
@@ -183,12 +186,15 @@ def get_data(filters=None):
 		WHERE emp.status != 'Left'
 		{where_sql}
 		{rep_where_sql}
-		ORDER BY CASE
+		ORDER BY
+		CASE
 			WHEN emp.designation LIKE 'Chủ tịch Hội đồng quản trị Tập đoàn' THEN -10
 			WHEN emp.designation LIKE 'Tổng Giám đốc Tập đoàn' THEN -9
 			WHEN emp.designation LIKE 'Phó Tổng Giám đốc Tập đoàn' THEN -8
 			WHEN emp.designation LIKE 'Kế toán trưởng Tập đoàn' THEN -6
-
+			ELSE 0
+		END,
+		CASE
 			WHEN emp.department LIKE %(hdqt)s   THEN 1
 			WHEN emp.department LIKE %(bks)s    THEN 2
 			WHEN emp.department LIKE %(cqdh)s   THEN 3
@@ -208,8 +214,13 @@ def get_data(filters=None):
 			WHEN emp.department LIKE %(cddm)s   THEN 17
 			WHEN emp.department LIKE %(lx)s     THEN 18
 			WHEN emp.department LIKE %(cg)s     THEN 19
-
 			ELSE 999
+		END,
+		CASE
+			WHEN emp.designation LIKE %(truong_ban)s THEN 1
+			WHEN emp.designation LIKE %(chanh_vp)s THEN 1
+			WHEN emp.designation LIKE %(pho_ban)s THEN 2
+			ELSE 99
 		END,
 		emp.employee_name
 	"""
@@ -338,4 +349,3 @@ def get_company_industries():
 		as_dict=True,
 	)
 	return [r.custom_industry for r in rows if r.get("custom_industry")]
-
