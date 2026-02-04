@@ -10,6 +10,7 @@
   "lo\u1ea1i",
   "employee",
   "department",
+  "kpi_cv_item",
   "kpi_chuy\u00ean_vi\u00ean",
   "naming_series",
   "column_break_neyj",
@@ -38,12 +39,20 @@
    "label": "T\u00ean c\u00f4ng vi\u1ec7c"
   },
   {
-   "fieldname": "kpi_chuy\u00ean_vi\u00ean",
+   "fieldname": "kpi_cv_item",
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "KPI Chuy\u00ean vi\u00ean",
-   "options": "VNT Cong Viec Chi Tiet"
+   "options": "VNT KPI Chuyen Vien Item"
+  },
+  {
+   "fieldname": "kpi_chuy\u00ean_vi\u00ean",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "KPI Chuy\u00ean vi\u00ean (Legacy)",
+   "options": "VNT KPI Chuyen Vien Item",
+   "read_only": 1
   },
   {
    "fieldname": "lo\u1ea1i",
@@ -152,7 +161,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-16 15:10:40.780677",
+ "modified": "2026-02-04 16:30:55.692221",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Task",

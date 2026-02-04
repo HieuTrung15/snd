@@ -7,6 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "congviec",
+  "kpi_cv_item",
+  "kpi_ban_item",
   "percent_cv",
   "diem_cv_danh_gia",
   "percent_ld",
@@ -19,6 +21,22 @@
    "in_list_view": 1,
    "label": "C\u00f4ng vi\u1ec7c",
    "options": "VNT Task"
+  },
+  {
+   "fieldname": "kpi_cv_item",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "KPI Chuy\u00ean vi\u00ean Item",
+   "options": "VNT KPI Chuyen Vien Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "kpi_ban_item",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "KPI Ban Item",
+   "options": "VNT KPI Ban Item",
+   "read_only": 1
   },
   {
    "fieldname": "percent_cv",
