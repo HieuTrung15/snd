@@ -8,8 +8,9 @@ SERVER_URL  = "https://chat.vinatex.com.vn"
 # BOT_USER_ID = "coJbfrAQHpSK3Q4gh"    # User ID từ My Account → Profile
 # BOT_TOKEN   = "PACpeEU-WnuBvzdclmCurNEYkU5jiRZAFoKgAfhYROw"      # Personal Access Token
 
-BOT_TOKEN = "ZfYrSJG4uP2kwgYUkznpjvRzBJTVp8LZMSxkNx7bNUB"
+# BOT_TOKEN = "ZfYrSJG4uP2kwgYUkznpjvRzBJTVp8LZMSxkNx7bNUB"
 BOT_USER_ID = "HPBAWPdZdETWatSig"
+BOT_TOKEN = ""
 
 rocket = RocketChat(user_id=BOT_USER_ID, auth_token=BOT_TOKEN, server_url=SERVER_URL.rstrip("/"))
 

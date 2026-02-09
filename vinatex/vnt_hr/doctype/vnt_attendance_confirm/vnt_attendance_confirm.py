@@ -203,12 +203,12 @@ def _send_notification(doc: Document, user: str | list[str] | tuple[str, ...], s
 		linkify=False,
 		message=message_with_link,
 	)
-	send_rocket_message(
-		to_users=recipients,
-		title=":bell: Thông báo",
-		message=f"*{subject}*\n{message_with_link}" if message_with_link else subject,
-		link=url,
-	)
+	# send_rocket_message(
+	# 	to_users=recipients,
+	# 	title=":bell: Thông báo",
+	# 	message=f"*{subject}*\n{message_with_link}" if message_with_link else subject,
+	# 	link=url,
+	# )
 
 
 def _normalize_confirmation_dates(dates: list[date] | None = None) -> list[date]:
