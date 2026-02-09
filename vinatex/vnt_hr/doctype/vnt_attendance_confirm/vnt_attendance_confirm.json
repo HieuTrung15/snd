@@ -25,7 +25,9 @@
   "approver_name",
   "column_break_wijp",
   "chi_ti\u1ebft_section",
-  "items"
+  "items",
+  "month",
+  "year"
  ],
  "fields": [
   {
@@ -66,18 +68,14 @@
    "fieldname": "from_date",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "T\u1eeb ng\u00e0y",
-   "read_only": 1
+   "label": "T\u1eeb ng\u00e0y"
   },
   {
    "allow_on_submit": 1,
    "fieldname": "to_date",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "\u0110\u1ebfn ng\u00e0y",
-   "read_only": 1
+   "label": "\u0110\u1ebfn ng\u00e0y"
   },
   {
    "fieldname": "section_break_kkv3",
@@ -159,12 +157,27 @@
    "in_list_view": 1,
    "label": "Tr\u1ea1ng th\u00e1i",
    "options": "Ch\u1edd gi\u1ea3i tr\u00ecnh\nCh\u1edd ph\u00ea duy\u1ec7t\n\u0110\u00e3 ph\u00ea duy\u1ec7t"
+  },
+  {
+   "fieldname": "month",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Th\u00e1ng",
+   "options": "\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12"
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "N\u0103m"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-30 09:11:28.285393",
+ "modified": "2026-02-05 15:47:02.404148",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Attendance Confirm",

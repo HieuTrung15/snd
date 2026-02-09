@@ -84,6 +84,12 @@ frappe.query_reports["Tổng hợp chấm công tháng"] = {
       "fieldtype": "Button",
       "btn_size": "xs",
       click: function () {
+        const vals = frappe.query_report.get_values() || {};
+        frappe.route_options = {};
+        if (vals.department) frappe.route_options.department = vals.department;
+        if (vals.employee) frappe.route_options.employee = vals.employee;
+        if (vals.month) frappe.route_options.month = vals.month;
+        if (vals.year) frappe.route_options.year = vals.year;
         frappe.set_route("List", "VNT Attendance Confirm");
       }
     },
