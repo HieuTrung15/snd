@@ -5,22 +5,22 @@
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
-  "field_order": [
-   "kpi_details",
-   "kpi_ban_item",
-   "cv_chi_tiet",
-   "rating",
-   "column_break_vdow",
-   "percent",
-   "percent_kpi_ban",
-   "percent_cv_rollup",
-   "diem_cv_rollup",
-   "percent_ld_rollup",
-   "diem_ld_rollup",
-   "review_count",
-   "date",
-   "note"
-  ],
+ "field_order": [
+  "kpi_details",
+  "kpi_ban_item",
+  "cv_chi_tiet",
+  "rating",
+  "column_break_vdow",
+  "percent",
+  "percent_kpi_ban",
+  "percent_cv_rollup",
+  "diem_cv_rollup",
+  "percent_ld_rollup",
+  "diem_ld_rollup",
+  "review_count",
+  "date",
+  "note"
+ ],
  "fields": [
   {
    "columns": 1,
@@ -77,14 +77,14 @@
    "columns": 1,
    "fieldname": "percent_cv_rollup",
    "fieldtype": "Percent",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "% HT CV t\u1ed5ng h\u1ee3p"
   },
   {
    "columns": 1,
    "fieldname": "diem_cv_rollup",
    "fieldtype": "Float",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "\u0110i\u1ec3m CV t\u1ed5ng h\u1ee3p",
    "precision": "2",
    "read_only": 1
@@ -93,6 +93,7 @@
    "columns": 1,
    "fieldname": "percent_ld_rollup",
    "fieldtype": "Percent",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "% HT L\u0110 t\u1ed5ng h\u1ee3p"
   },
@@ -100,7 +101,6 @@
    "columns": 1,
    "fieldname": "diem_ld_rollup",
    "fieldtype": "Float",
-   "in_list_view": 1,
    "label": "\u0110i\u1ec3m L\u0110 t\u1ed5ng h\u1ee3p",
    "precision": "2",
    "read_only": 1
@@ -109,7 +109,7 @@
    "columns": 1,
    "fieldname": "review_count",
    "fieldtype": "Int",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "S\u1ed1 task review",
    "read_only": 1
   },
@@ -128,7 +128,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-02-09 16:06:01.285859",
+ "modified": "2026-02-10 14:11:00.434341",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT KPI Chuyen Vien Item",
