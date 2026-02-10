@@ -100,14 +100,47 @@ const openTaskDialog = (frm) => {
 		dialog.fields_dict.kpi_cv_item_info.$wrapper.html(html);
 	};
 
+	const renderTaskSummary = (dialog, payload) => {
+		const cap = payload.allocation_cap_percent || 100;
+		const monthSummaries = payload.month_summaries || [];
+		const itemPercent = payload.item_percent || 0;
+
+		if (!monthSummaries.length) {
+			dialog.fields_dict.tasks_summary.$wrapper.html(
+				`<div style="padding: 4px 0; color: var(--text-muted);">
+					${__("Chưa có phân bổ theo tháng")} | ${__("KPI có tỉ trọng")}: ${itemPercent}%
+				</div>`
+			);
+			return;
+		}
+
+		const summaryLines = monthSummaries
+			.map(
+				(row) =>
+					`${__("Tháng")} ${row.month_label}: ${row.allocated_percent || 0}% / ${cap}% | ${__(
+						"Còn lại"
+					)}: ${row.remaining_percent || 0}%`
+			)
+			.join("<br>");
+
+		dialog.fields_dict.tasks_summary.$wrapper.html(
+			`<div style="padding: 4px 0; color: var(--text-muted);">
+				${summaryLines}<br>
+				${__("KPI có tỉ trọng")}: ${itemPercent}%
+			</div>`
+		);
+	};
+
 	const setTaskRows = (dialog, rows) => {
 		const tableField = dialog.fields_dict.tasks;
 		if (!tableField || !tableField.grid) {
 			return;
 		}
+		const defaultType = dialog.get_value("default_type") || null;
 		tableField.df.data = (rows || []).map((rowData, index) => ({
 			idx: index + 1,
 			__islocal: true,
+			loai: rowData.loai || defaultType,
 			...rowData,
 		}));
 		tableField.grid.refresh();
@@ -122,49 +155,46 @@ const openTaskDialog = (frm) => {
 			return;
 		}
 
-		frappe.call({
-			method: "vinatex.vnt_hr.doctype.vnt_kpi_chuyen_vien.vnt_kpi_chuyen_vien.get_tasks_for_kpi_chuyen_vien_item",
+			frappe.call({
+				method: "vinatex.vnt_hr.doctype.vnt_kpi_chuyen_vien.vnt_kpi_chuyen_vien.get_tasks_for_kpi_chuyen_vien_item",
 			args: {
 				kpi_chuyen_vien: frm.doc.name,
 				kpi_cv_item: selected.name,
 			},
-			freeze: true,
-			freeze_message: __("Đang tải task đã tạo..."),
-		}).then((r) => {
-			const payload = r.message || {};
-			const taskRows = (payload.items || []).map((row) => ({
-				task_name: row.task_name,
-				congviec: row.congviec,
-				loai: row.loai || payload.default_type,
-				percent: row.percent,
-				deadline: row.deadline,
-				exp_start_date: row.exp_start_date,
-				exp_end_date: row.exp_end_date,
-				expected_time: row.expected_time,
-				details: row.details,
-			}));
+				freeze: true,
+				freeze_message: __("Đang tải task đã tạo..."),
+			}).then((r) => {
+				const payload = r.message || {};
+				dialog.set_value("default_type", payload.default_type || frm.doc.type);
+				const taskRows = (payload.items || []).map((row) => ({
+					task_name: row.task_name,
+					congviec: row.congviec,
+					loai: row.loai || payload.default_type,
+					percent: row.percent,
+					deadline: row.deadline,
+					exp_start_date: row.exp_start_date,
+					expected_time: row.expected_time,
+					details: row.details,
+				}));
 
-			setTaskRows(dialog, taskRows);
-			renderSelectedItemInfo(dialog);
-
-			const summary = `<div style="padding: 4px 0; color: var(--text-muted);">
-				${__("Đã phân bổ")}: ${payload.allocated_percent || 0}% / ${
-					payload.allocation_cap_percent || 100
-				}% |
-				${__("Còn lại")}: ${payload.remaining_percent || 0}% |
-				${__("% KPI chuyên viên")}: ${payload.item_percent || 0}%
-			</div>`;
-			dialog.fields_dict.tasks_summary.$wrapper.html(summary);
-		});
-	};
+				setTaskRows(dialog, taskRows);
+				renderSelectedItemInfo(dialog);
+				renderTaskSummary(dialog, payload);
+			});
+		};
 
 	const dialog = new frappe.ui.Dialog({
 		title: __("Tạo công việc chi tiết"),
 		size: "large",
-		fields: [
-			{
-				fieldname: "kpi_cv_item_label",
-				fieldtype: "Select",
+			fields: [
+				{
+					fieldname: "default_type",
+					fieldtype: "Data",
+					hidden: 1,
+				},
+				{
+					fieldname: "kpi_cv_item_label",
+					fieldtype: "Select",
 				label: __("KPI Chuyên viên"),
 				options: ["", ...kpiItemOptions.map((opt) => opt.label)].join("\n"),
 				default: kpiItemOptions[0] ? kpiItemOptions[0].label : "",
@@ -198,6 +228,7 @@ const openTaskDialog = (frm) => {
 						fieldtype: "Select",
 						label: __("Loại"),
 						options: "\nTheo kế hoạch\nĐiều chỉnh\nPhát sinh\nNội bộ",
+						default: frm.doc.type || "",
 						in_list_view: 1,
 					},
 					{
@@ -208,26 +239,23 @@ const openTaskDialog = (frm) => {
 						in_list_view: 1,
 					},
 					{
-						fieldname: "deadline",
-						fieldtype: "Date",
-						label: __("Thời hạn"),
-						reqd: 1,
-						in_list_view: 1,
-					},
-					{
 						fieldname: "exp_start_date",
 						fieldtype: "Date",
-						label: __("Bắt đầu dự kiến"),
-					},
-					{
-						fieldname: "exp_end_date",
-						fieldtype: "Date",
-						label: __("Kết thúc dự kiến"),
+						label: __("Ngày bắt đầu"),
+						reqd: 1,
+						in_list_view: 1,
 					},
 					{
 						fieldname: "expected_time",
 						fieldtype: "Float",
 						label: __("Giờ dự kiến"),
+					},
+					{
+						fieldname: "deadline",
+						fieldtype: "Date",
+						label: __("Thời hạn"),
+						reqd: 1,
+						in_list_view: 1,
 					},
 					{
 						fieldname: "details",
@@ -258,8 +286,37 @@ const openTaskDialog = (frm) => {
 				return;
 			}
 
-			frappe.call({
-				method: "vinatex.vnt_hr.doctype.vnt_kpi_chuyen_vien.vnt_kpi_chuyen_vien.create_tasks_from_kpi_chuyen_vien",
+			const invalidDateRows = [];
+			(values.tasks || []).forEach((row, idx) => {
+				const start = row.exp_start_date
+					? frappe.datetime.str_to_obj(row.exp_start_date)
+					: null;
+				const end = row.deadline ? frappe.datetime.str_to_obj(row.deadline) : null;
+				if (!start || !end) {
+					invalidDateRows.push(idx + 1);
+					return;
+				}
+				if (
+					start.getFullYear() !== end.getFullYear() ||
+					start.getMonth() !== end.getMonth() ||
+					start > end
+				) {
+					invalidDateRows.push(idx + 1);
+				}
+			});
+
+			if (invalidDateRows.length) {
+				frappe.msgprint(
+					__(
+						"Dòng {0}: Ngày bắt đầu và Thời hạn phải trong cùng một tháng.",
+						[invalidDateRows.join(", ")]
+					)
+				);
+				return;
+			}
+
+				frappe.call({
+					method: "vinatex.vnt_hr.doctype.vnt_kpi_chuyen_vien.vnt_kpi_chuyen_vien.create_tasks_from_kpi_chuyen_vien",
 				args: {
 					kpi_chuyen_vien: frm.doc.name,
 					kpi_cv_item: selected.name,
@@ -268,23 +325,24 @@ const openTaskDialog = (frm) => {
 				freeze: true,
 				freeze_message: __("Đang tạo task..."),
 			}).then((r) => {
-				const payload = r.message || {};
-				const created = payload.created_tasks || [];
-				const updated = payload.updated_tasks || [];
-				const remaining = payload.remaining_percent || 0;
-				const cap = payload.allocation_cap_percent || 100;
+					const payload = r.message || {};
+					const created = payload.created_tasks || [];
+					const updated = payload.updated_tasks || [];
+					const monthSummaries = payload.month_summaries || [];
 
-				if (created.length || updated.length) {
-					frappe.show_alert({
-						message: __(
-							"Đã tạo {0}, cập nhật {1} task. Còn lại {2}% trên mức {3}%.",
-							[
-								created.length,
-								updated.length,
-								remaining,
-								cap,
-							]
-						),
+					if (created.length || updated.length) {
+						const monthInfo = monthSummaries.length
+							? `${__("Số tháng cập nhật")}: ${monthSummaries.length}.`
+							: "";
+						frappe.show_alert({
+							message: __(
+								"Đã tạo {0}, cập nhật {1} task. {2}",
+								[
+									created.length,
+									updated.length,
+									monthInfo,
+								]
+							),
 						indicator: "green",
 					});
 				}

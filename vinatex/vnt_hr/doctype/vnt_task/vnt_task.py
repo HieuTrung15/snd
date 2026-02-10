@@ -6,17 +6,22 @@ from __future__ import annotations
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt, getdate
+from frappe.utils import getdate
 
 
 class VNTTask(Document):
 	def validate(self):
+		self._sync_department_from_employee()
 		item_meta = self._sync_from_kpi_item()
 		self._validate_dates(item_meta)
 
-	def before_submit(self):
-		if flt(self.progress) < 100:
-			frappe.throw(_("Chỉ được submit Task khi % hoàn thành đạt 100%."))
+	def _sync_department_from_employee(self):
+		if not self.employee or self.department:
+			return
+
+		employee_department = frappe.db.get_value("Employee", self.employee, "department")
+		if employee_department:
+			self.department = employee_department
 
 	def _sync_from_kpi_item(self):
 		if not self.kpi_cv_item:
@@ -54,6 +59,16 @@ class VNTTask(Document):
 		start_date = getdate(self.exp_start_date) if self.exp_start_date else None
 		end_date = getdate(self.exp_end_date) if self.exp_end_date else None
 		deadline = getdate(self.deadline) if self.deadline else None
+
+		if self.kpi_cv_item:
+			if not start_date:
+				frappe.throw(_("Vui lòng nhập ngày bắt đầu dự kiến."))
+			if deadline:
+				if not end_date or end_date != deadline:
+					self.exp_end_date = deadline
+					end_date = deadline
+				if start_date.year != deadline.year or start_date.month != deadline.month:
+					frappe.throw(_("Ngày bắt đầu và thời hạn phải nằm trong cùng một tháng."))
 
 		if start_date and end_date and start_date > end_date:
 			frappe.throw(_("Ngày bắt đầu dự kiến không thể lớn hơn ngày kết thúc dự kiến."))
