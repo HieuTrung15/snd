@@ -133,23 +133,19 @@ class VNTVehicleControl(Document):
 
 			raw_time = (row.time or "").strip()
 			start_time = raw_time or _("(không rõ)")
-			end_time = start_time
 			if raw_time and "-" in raw_time:
 				parts = [p.strip() for p in raw_time.split("-") if p.strip()]
 				if len(parts) >= 2:
-					start_time, end_time = parts[0], parts[1]
-
+					start_time = parts[0]
 			driver_segments.append(
 				"\n".join([
-					_("\nNội dung:\n{0}").format(content),
-					_("Thời gian: từ {0} {1} - đến {2} {3}.\n").format(
+					_("\nNội dung:\n{0}.").format(content),
+					_("Thời gian: {0} {1}.\n").format(
 						start_time,
-						formatdate(date_text, "dd-MM-yyyy"),
-						end_time,
 						formatdate(date_text, "dd-MM-yyyy"),
 					),
 					_("Lộ trình: {0} - {1}.\n").format(start_point, end_point),
-					_("Lái xe: {0} / BKS: {1}. \n").format(
+					_("Phân xe: anh {0} / BKS: {1}. \n").format(
 						driver_name or _("(không rõ)"),
 						car_id or _("(không rõ)"),
 					),
@@ -176,11 +172,10 @@ class VNTVehicleControl(Document):
 			date_text = str(car_item.date) if (car_item and car_item.date) else (str(row.date) if row.date else _("(không rõ)"))
 			raw_time = (row.time or "").strip()
 			start_time = raw_time or _("(không rõ)")
-			end_time = start_time
 			if raw_time and "-" in raw_time:
 				parts = [p.strip() for p in raw_time.split("-") if p.strip()]
 				if len(parts) >= 2:
-					start_time, end_time = parts[0], parts[1]
+					start_time = parts[0]
 			driver_label = row.driver
 			vehicle = frappe.db.get_value("VNT Vehicle", row.driver, ["driver_name", "car_id"], as_dict=True)
 			if vehicle and vehicle.get("driver_name"):
@@ -188,10 +183,10 @@ class VNTVehicleControl(Document):
 			car_plate = row.car_id or (vehicle.get("car_id") if vehicle else "")
 			content = (car.note if car and car.note else None) or _("(không rõ)")
 			row_msg = "\n".join([
-				_("Nội dung:\n{0}").format(content),
-				_("Thời gian: từ {0} {1} - đến {2} {3}.").format(start_time, formatdate(date_text, "dd-MM-yyyy"), end_time, formatdate(date_text, "dd-MM-yyyy")),
+				_("Nội dung:\n{0}.").format(content),
+				_("Thời gian: {0} {1}.").format(start_time, formatdate(date_text, "dd-MM-yyyy")),
 				_("Lộ trình: {0} - {1}.").format(row.start or _("(không rõ)"), row.end or _("(không rõ)")),
-				_("Lái xe: {0} / BKS: {1}").format(driver_label or _("(không rõ)"), car_plate or _("(không rõ)")),
+				_("Phân xe: anh {0} / BKS: {1}.").format(driver_label or _("(không rõ)"), car_plate or _("(không rõ)")),
 			])
 			# document link
 			target_docname = car.name if car and car.name else self.name
@@ -233,8 +228,7 @@ class VNTVehicleControl(Document):
 					message=_("🔔 Anh/Chị nằm trong danh sách chuyến đi. {0}.<br>").format(row_msg),
 				)
 				send_rocket_message(to_users=row_recipients, title=":bell: Thông báo", message=_("Anh/Chị nằm trong danh sách chuyến đi. {0}.").format(row_msg), link=get_url_to_form(target_doctype, target_docname))
-		# Gửi thông báo tới các driver (nếu có)
-		driver_sent = set()
+		# Gửi thông báo tới các driver theo từng dòng items
 		for row in self.items:
 			if not (row.id_parent and row.id_child and row.driver):
 				continue
@@ -254,9 +248,6 @@ class VNTVehicleControl(Document):
 				driver_user = get_employee_user_id(row.driver)
 			if not driver_user:
 				continue
-			if driver_user in driver_sent:
-				continue
-			driver_sent.add(driver_user)
 			driver_label = (vehicle.get("driver_name") if vehicle else None) or row.driver
 			car_plate = row.car_id or (vehicle.get("car_id") if vehicle else "")
 			# danh sách nhân sự đi cùng cho dòng này (không liệt kê `car.employee`)
@@ -275,7 +266,7 @@ class VNTVehicleControl(Document):
 					passenger_names.append(emp_name)
 			passenger_text = ", ".join(passenger_names) if passenger_names else _("(không rõ)")
 			driver_msg = _(
-				"Phân xe: {0} xin xe của {1}. Nhân sự đi cùng: {2}. Cho anh {3} /BKS: {4}. Thời gian đi: {5} - ngày {6}. Đón tại: {7} - điểm đến: {8}."
+				"Phân xe: {0} xin xe của {1}. Nhân sự đi cùng: {2}. Cho anh {3} /BKS: {4}. Thời gian: {5} - ngày {6}. Đón tại: {7} - điểm đến: {8}."
 			).format(
 				(car.department if car and getattr(car, 'department', None) else _("(không rõ)")),
 				(car.employee_name if car and getattr(car, 'employee_name', None) else _("(không rõ)")),
