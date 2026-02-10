@@ -1,7 +1,34 @@
 // Copyright (c) 2026, vinatex and contributors
 // For license information, please see license.txt
 
+const syncDepartmentFromEmployee = (frm, override = false) => {
+	if (!frm.doc.employee) {
+		if (override && frm.doc.department) {
+			frm.set_value("department", "");
+		}
+		return Promise.resolve();
+	}
+
+	return frappe.db.get_value("Employee", frm.doc.employee, "department").then((r) => {
+		const employeeDept = (r.message && r.message.department) || "";
+		if (!employeeDept) {
+			return;
+		}
+		if (override || !frm.doc.department) {
+			frm.set_value("department", employeeDept);
+		}
+	});
+};
+
 frappe.ui.form.on("VNT Task", {
+	refresh(frm) {
+		if (frm.doc.employee && !frm.doc.department) {
+			syncDepartmentFromEmployee(frm);
+		}
+	},
+	employee(frm) {
+		syncDepartmentFromEmployee(frm, true);
+	},
 	kpi_cv_item(frm) {
 		if (!frm.doc.kpi_cv_item) {
 			return;

@@ -14,6 +14,7 @@ class VNTKPINam(Document):
 		self._apply_adjustment_policy()
 
 	def _apply_adjustment_policy(self):
+		# Phiếu không phải điều chỉnh thì luôn coi chính nó là phiếu hiệu lực.
 		if self.type != "Điều chỉnh":
 			self.reference_kpi_nam = None
 			self.effective_type = self.type
@@ -62,6 +63,7 @@ def get_effective_kpi_nam_items(kpi_year: int | str, department: str, business_t
 
 	items = []
 	for base in base_rows:
+		# Nếu có điều chỉnh đã submit thì dùng bản điều chỉnh mới nhất làm dữ liệu hiệu lực.
 		effective_name = _get_latest_adjustment("VNT KPI Nam", "reference_kpi_nam", base.name) or base.name
 		effective_data = frappe.db.get_value(
 			"VNT KPI Nam",

@@ -26,13 +26,14 @@ const load_review_tasks = (frm) => {
 				const items = Array.isArray(payload.items) ? payload.items : [];
 
 				frm.clear_table("items");
-				items.forEach((item) => {
-					const row = frm.add_child("items");
-					row.congviec = item.congviec;
-					row.kpi_cv_item = item.kpi_cv_item;
-					row.kpi_ban_item = item.kpi_ban_item;
-					row.percent_cv = item.percent_cv;
-				});
+					items.forEach((item) => {
+						const row = frm.add_child("items");
+						row.congviec = item.congviec;
+						row.kpi_cv_item = item.kpi_cv_item;
+						row.kpi_ban_item = item.kpi_ban_item;
+						row.percent_cv = item.percent_cv;
+						row.diem_cv_danh_gia = item.diem_cv_danh_gia;
+					});
 
 				frm.refresh_field("items");
 

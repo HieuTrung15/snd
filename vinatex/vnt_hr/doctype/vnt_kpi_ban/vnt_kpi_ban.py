@@ -14,6 +14,7 @@ class VNTKPIBan(Document):
 		self._apply_adjustment_policy()
 
 	def _apply_adjustment_policy(self):
+		# Phiếu thường thì chính là phiếu đang có hiệu lực.
 		if self.type != "Điều chỉnh":
 			self.reference_kpi_ban = None
 			self.effective_type = self.type
@@ -38,6 +39,7 @@ class VNTKPIBan(Document):
 		self.effective_type = source.effective_type or source.type
 
 		if not self.items:
+			# Phiếu điều chỉnh mặc định kế thừa item từ phiếu tham chiếu để người dùng chỉnh sửa tiếp.
 			for src in source.items or []:
 				row = self.append("items", {})
 				row.vnt_kpi_nam = src.vnt_kpi_nam
@@ -46,6 +48,12 @@ class VNTKPIBan(Document):
 				row.date = src.date
 				row.note = src.note
 				row.rating = src.rating
+				row.completion_percent = src.completion_percent
+				row.percent_cv_rollup = src.percent_cv_rollup
+				row.diem_cv_rollup = src.diem_cv_rollup
+				row.percent_ld_rollup = src.percent_ld_rollup
+				row.diem_ld_rollup = src.diem_ld_rollup
+				row.review_count = src.review_count
 
 
 @frappe.whitelist()
@@ -74,6 +82,7 @@ def get_effective_kpi_ban_doc(kpi_year: int | str, department: str, business_typ
 		return {}
 
 	base_name = base[0].name
+	# KPI Ban hiệu lực = phiếu gốc hoặc bản điều chỉnh submit mới nhất của phiếu gốc.
 	effective_name = _get_latest_adjustment(base_name) or base_name
 	doc = frappe.get_doc("VNT KPI Ban", effective_name)
 

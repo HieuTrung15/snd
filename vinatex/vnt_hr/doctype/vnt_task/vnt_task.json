@@ -41,8 +41,7 @@
   {
    "fieldname": "kpi_cv_item",
    "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
+   "hidden": 1,
    "label": "KPI Chuy\u00ean vi\u00ean",
    "options": "VNT KPI Chuyen Vien Item"
   },
@@ -69,9 +68,8 @@
   {
    "fieldname": "percent",
    "fieldtype": "Percent",
-   "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "% c\u00f4ng vi\u1ec7c",
+   "label": "% c\u00f4ng vi\u1ec7c trong th\u00e1ng",
    "precision": "2"
   },
   {
@@ -83,6 +81,8 @@
    "options": "Employee"
   },
   {
+   "fetch_from": "employee.department",
+   "fetch_if_empty": 1,
    "fieldname": "department",
    "fieldtype": "Link",
    "label": "Ph\u00f2ng/Ban",
@@ -137,6 +137,7 @@
   {
    "fieldname": "progress",
    "fieldtype": "Percent",
+   "in_list_view": 1,
    "label": "% ho\u00e0n th\u00e0nh"
   },
   {
@@ -161,7 +162,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-02-04 16:30:55.692221",
+ "modified": "2026-02-09 17:38:36.240955",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Task",

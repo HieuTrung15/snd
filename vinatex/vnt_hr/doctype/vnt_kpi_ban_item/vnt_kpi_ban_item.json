@@ -12,6 +12,7 @@
   "column_break_gsgq",
   "percent",
   "date",
+  "completion_percent",
   "percent_cv_rollup",
   "diem_cv_rollup",
   "percent_ld_rollup",
@@ -62,6 +63,14 @@
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh"
+  },
+  {
+   "columns": 1,
+   "fieldname": "completion_percent",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Tiến độ hoàn thành",
+   "read_only": 1
   },
   {
    "columns": 1,
