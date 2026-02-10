@@ -194,7 +194,7 @@ class VNTVehicleControl(Document):
 			if row_creator:
 				make_notification_logs({
 					"type": "Alert",
-					"subject": _("Bạn đã được điều xe cho chuyến đi. {0}.").format(row_msg),
+					"subject": _("Bạn đã được điều xe cho chuyến đi. {0}").format(row_msg),
 					"document_type": target_doctype,
 					"document_name": target_docname,
 				}, [row_creator])
@@ -206,14 +206,14 @@ class VNTVehicleControl(Document):
 					upn_or_email=[row_creator],
 					content_type="html",
 					linkify=False,
-					message=_("🔔 Bạn đã được điều xe cho chuyến đi. {0}.<br>").format(row_msg),
+					message=_("🔔 Bạn đã được điều xe cho chuyến đi. {0}<br>").format(row_msg),
 				)
 				send_rocket_message(to_users=[row_creator], title=":bell: Thông báo", message=_("Bạn đã được điều xe cho chuyến đi. {0}.").format(row_msg), link=get_url_to_form(target_doctype, target_docname))
 			# gửi cho recipients của dòng
 			if row_recipients:
 				make_notification_logs({
 					"type": "Alert",
-					"subject": _("Anh/Chị nằm trong danh sách chuyến đi. {0}.").format(row_msg),
+					"subject": _("Anh/Chị nằm trong danh sách chuyến đi. {0}").format(row_msg),
 					"document_type": target_doctype,
 					"document_name": target_docname,
 				}, row_recipients)
@@ -225,7 +225,7 @@ class VNTVehicleControl(Document):
 					upn_or_email=row_recipients,
 					content_type="html",
 					linkify=False,
-					message=_("🔔 Anh/Chị nằm trong danh sách chuyến đi. {0}.<br>").format(row_msg),
+					message=_("🔔 Anh/Chị nằm trong danh sách chuyến đi. {0}<br>").format(row_msg),
 				)
 				send_rocket_message(to_users=row_recipients, title=":bell: Thông báo", message=_("Anh/Chị nằm trong danh sách chuyến đi. {0}.").format(row_msg), link=get_url_to_form(target_doctype, target_docname))
 		# Gửi thông báo tới các driver theo từng dòng items
