@@ -1,0 +1,246 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:item",
+ "creation": "2026-02-10 09:15:39.285506",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "date",
+  "item",
+  "column_break_fxko",
+  "item_code",
+  "item_coats",
+  "default",
+  "section_break_qsvt",
+  "description",
+  "section_break_ybuo",
+  "ne",
+  "nhom_thanh_phan_soi",
+  "thanh_phan_soi_chi_tiet",
+  "ty_le_soi",
+  "chieu_dai_xo",
+  "column_break_mqyy",
+  "cau_truc_det",
+  "kho_moc",
+  "trong_luong_moc",
+  "epi_moc",
+  "ppi_moc",
+  "soi_doc",
+  "column_break_ilhg",
+  "luoc",
+  "kho_luoc",
+  "trong_luong_tp",
+  "kho_tp",
+  "epi_tp",
+  "ppp_tp",
+  "section_break_ztrp",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Ng\u01b0\u1eddi t\u1ea1o",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y t\u1ea1o"
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "M\u00e3 c\u00f4ng ngh\u1ec7 v\u1ea3i",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_fxko",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "label": "M\u00e3 v\u1ea3i ho\u00e0n t\u1ea5t",
+   "link_filters": "[[\"Item\",\"item_group\",\"=\",\"V\u1ea3i ho\u00e0n t\u1ea5t\"]]",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "item_coats",
+   "fieldtype": "Data",
+   "label": "M\u00e3 Coats"
+  },
+  {
+   "default": "0",
+   "fieldname": "default",
+   "fieldtype": "Check",
+   "label": "M\u1eb7c \u0111\u1ecbnh"
+  },
+  {
+   "fieldname": "section_break_qsvt",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "M\u00f4 t\u1ea3"
+  },
+  {
+   "fieldname": "ne",
+   "fieldtype": "Data",
+   "label": "Ch\u1ec9 s\u1ed1 s\u1ee3i (Ne)"
+  },
+  {
+   "fieldname": "nhom_thanh_phan_soi",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Nh\u00f3m th\u00e0nh ph\u1ea7n s\u1ee3i",
+   "reqd": 1
+  },
+  {
+   "fieldname": "thanh_phan_soi_chi_tiet",
+   "fieldtype": "Data",
+   "label": "Th\u00e0nh ph\u1ea7n s\u1ee3i chi ti\u1ebft"
+  },
+  {
+   "fieldname": "section_break_ybuo",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "ty_le_soi",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "T\u1ef7 l\u1ec7 s\u1ee3i",
+   "reqd": 1
+  },
+  {
+   "fieldname": "chieu_dai_xo",
+   "fieldtype": "Int",
+   "label": "Chi\u1ec1u d\u00e0i x\u01a1"
+  },
+  {
+   "fieldname": "cau_truc_det",
+   "fieldtype": "Data",
+   "label": "C\u1ea5u tr\u00fac d\u1ec7t"
+  },
+  {
+   "fieldname": "column_break_mqyy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "kho_moc",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Kh\u1ed5 m\u1ed9c (cm)",
+   "precision": "1",
+   "reqd": 1
+  },
+  {
+   "fieldname": "trong_luong_moc",
+   "fieldtype": "Float",
+   "label": "Tr\u1ecdng l\u01b0\u1ee3ng m\u1ed9c (GSM)",
+   "precision": "1",
+   "reqd": 1
+  },
+  {
+   "fieldname": "epi_moc",
+   "fieldtype": "Float",
+   "label": "EPI m\u1ed9c",
+   "precision": "1",
+   "reqd": 1
+  },
+  {
+   "fieldname": "ppi_moc",
+   "fieldtype": "Float",
+   "label": "PPI m\u1ed9c",
+   "precision": "1",
+   "reqd": 1
+  },
+  {
+   "fieldname": "soi_doc",
+   "fieldtype": "Int",
+   "label": "S\u1ee3i d\u1ecdc"
+  },
+  {
+   "fieldname": "luoc",
+   "fieldtype": "Int",
+   "label": "L\u01b0\u1ee3c"
+  },
+  {
+   "fieldname": "column_break_ilhg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "kho_luoc",
+   "fieldtype": "Float",
+   "label": "Kh\u1ed5 l\u01b0\u1ee3c (inch)",
+   "precision": "2"
+  },
+  {
+   "fieldname": "trong_luong_tp",
+   "fieldtype": "Int",
+   "label": "Tr\u1ecdng l\u01b0\u1ee3ng th\u00e0nh ph\u1ea9m (GSM)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "kho_tp",
+   "fieldtype": "Int",
+   "label": "Kh\u1ed5 th\u00e0nh ph\u1ea9m (cm)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "epi_tp",
+   "fieldtype": "Int",
+   "label": "EPI TP",
+   "reqd": 1
+  },
+  {
+   "fieldname": "ppp_tp",
+   "fieldtype": "Int",
+   "label": "PPP TP",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_ztrp",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Ghi ch\u00fa"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-02-10 13:29:05.440580",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Fabric Technology",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
