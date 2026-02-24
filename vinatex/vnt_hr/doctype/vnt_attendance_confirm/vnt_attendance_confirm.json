@@ -17,6 +17,7 @@
   "section_break_kkv3",
   "employee",
   "employee_name",
+  "designation",
   "column_break_l43u",
   "approver",
   "email",
@@ -86,7 +87,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Chuy\u00ean vi\u00ean",
+   "label": "Nh\u00e2n s\u1ef1",
    "options": "Employee",
    "read_only": 1
   },
@@ -172,12 +173,21 @@
    "hidden": 1,
    "in_standard_filter": 1,
    "label": "N\u0103m"
+  },
+  {
+   "fetch_from": "employee.designation",
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "in_list_view": 1,
+   "label": "Designation",
+   "options": "Designation"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-05 15:47:02.404148",
+ "modified": "2026-02-24 08:34:09.013393",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Attendance Confirm",
