@@ -14,7 +14,8 @@
   "client_secret",
   "me_id",
   "scope",
-  "refresh_token"
+  "refresh_token",
+  "group_chat_target"
  ],
  "fields": [
   {
@@ -65,6 +66,12 @@
    "fieldname": "refresh_token",
    "fieldtype": "Password",
    "label": "Refresh Token"
+  },
+  {
+   "description": "Dán link chat nhóm Teams hoặc chat_id (vd: 19:...@thread.v2)",
+   "fieldname": "group_chat_target",
+   "fieldtype": "Data",
+   "label": "Group Chat (ID/URL)"
   }
  ],
  "grid_page_length": 50,

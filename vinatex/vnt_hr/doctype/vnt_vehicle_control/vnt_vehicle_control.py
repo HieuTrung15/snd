@@ -154,6 +154,16 @@ class VNTVehicleControl(Document):
 
 		# Gửi thông báo riêng cho từng dòng trong `items` (1 thông báo = 1 dòng)
 		target_doctype = "VNT Car Registration"
+		group_chat_target = None
+		try:
+			if frappe.get_meta("VNT Teams URL").has_field("group_chat_target"):
+				rows = frappe.get_all("VNT Teams URL", fields=["name"], order_by="modified desc", limit=1)
+				if rows:
+					group_chat_target = frappe.db.get_value("VNT Teams URL", rows[0]["name"], "group_chat_target")
+					group_chat_target = str(group_chat_target).strip() if group_chat_target else None
+		except Exception:
+			group_chat_target = None
+
 		for row in self.items:
 			if not (row.id_parent and row.id_child and row.driver):
 				continue
@@ -264,20 +274,25 @@ class VNTVehicleControl(Document):
 					emp_name = frappe.db.get_value("Employee", emp, "employee_name")
 				if emp_name:
 					passenger_names.append(emp_name)
-			passenger_text = ", ".join(passenger_names) if passenger_names else _("(không rõ)")
+			passenger_part = _(" Nhân sự đi cùng: {0}.").format(", ".join(passenger_names)) if passenger_names else ""
+			requester_text = (car.employee_name if car and getattr(car, 'employee_name', None) else _("(không rõ)"))
+			if car and getattr(car, 'department', None):
+				requester_text = f"{requester_text} - {car.department}"
 			driver_msg = _(
-				"Phân xe: {0} xin xe của {1}. Nhân sự đi cùng: {2}. Cho anh {3} /BKS: {4}. Thời gian: {5} - ngày {6}. Đón tại: {7} - điểm đến: {8}."
+				"Phân xe: Xin xe {0} của {1}. Cho anh {2} /BKS: {3}.{4} Thời gian: {5} - ngày {6}. Đón tại: {7} - điểm đến: {8}."
 			).format(
-				(car.department if car and getattr(car, 'department', None) else _("(không rõ)")),
-				(car.employee_name if car and getattr(car, 'employee_name', None) else _("(không rõ)")),
-				passenger_text,
+				(car.note if car and getattr(car, 'note', None) else _("(không rõ)")),
+				requester_text,
 				driver_label,
 				car_plate or _("(không rõ)"),
+				passenger_part,
 				row.time or _("(không rõ)"),
 				formatdate(row.date, "dd-MM-yyyy") if row.date else _("(không rõ)"),
 				row.start or _("(không rõ)"),
 				row.end or _("(không rõ)"),
 			)
+			driver_msg_html = driver_msg.replace("Phân xe", "<b>Phân xe</b>", 1) if driver_msg else driver_msg
+			target_docname = car.name if car and car.name else self.name
 			make_notification_logs({
 				"type": "Alert",
 				"subject": driver_msg,
@@ -294,12 +309,23 @@ class VNTVehicleControl(Document):
 				linkify=False,
 				message=driver_msg
 			)
-			send_rocket_message(
-				to_users=[driver_user],
-				title=":bell: Thông báo",
-				message=driver_msg,
-				link=get_url_to_form(target_doctype, target_docname),
-			)
+			if group_chat_target:
+				frappe.enqueue(
+					"vinatex.integrations.teams_graph.notify_chat",
+					queue="short",
+					timeout=50,
+					is_async=True,
+					chat_id_or_url=group_chat_target,
+					content_type="html",
+					linkify=False,
+					message=driver_msg_html,
+				)
+			# send_rocket_message(
+			# 	to_users=[driver_user],
+			# 	title=":bell: Thông báo",
+			# 	message=driver_msg,
+			# 	link=get_url_to_form(target_doctype, target_docname),
+			# )
 		# close todo của người điều xe
 		user_group_name = "Nhận thông báo điều xe"
 		user_list = frappe.get_all(

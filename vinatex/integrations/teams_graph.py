@@ -18,6 +18,9 @@ GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 SETTINGS_DOCTYPE = "VNT Teams URL"
 LOG_DOCTYPE = "VNT Teams Message Log"
 LOG_NAMING_SERIES = "VTMSG-.YYYY.-.MM.-.####"
+ALLOWED_URL = "https://ihrm.vinatex.com.vn"
+# Bật True nếu muốn chỉ gửi khi site URL đúng ALLOWED_URL.
+ENFORCE_ALLOWED_SITE = True
 
 # Cache keys (Redis via frappe.cache)
 CACHE_TOKEN_KEY = "vnt_teams_graph:access_token"
@@ -39,6 +42,7 @@ class TeamsSettings:
     scope: str
     refresh_token: str
     callback_url: Optional[str] = None
+    group_chat_target: Optional[str] = None
 
 
 def _get_latest_settings_docname() -> str:
@@ -88,6 +92,7 @@ def get_settings(docname: Optional[str] = None) -> TeamsSettings:
         scope=doc.scope.strip(),
         refresh_token=refresh_token,
         callback_url=(doc.callback_url.strip() if (doc.get("callback_url") or "").strip() else None),
+        group_chat_target=(doc.group_chat_target.strip() if (doc.get("group_chat_target") or "").strip() else None),
     )
 
 
@@ -642,6 +647,43 @@ def _normalize_recipients(upn_or_email: str | Iterable[str] | None) -> list[str]
             recipients.append(trimmed)
     return recipients
 
+# chỉ gửi site URL nào đó (khi ENFORCE_ALLOWED_SITE=True) để tránh lộ thông tin vào môi trường không tin cậy 
+def _resolve_chat_id(chat_id_or_url: str) -> str:
+    raw = (chat_id_or_url or "").strip()
+    if not raw:
+        frappe.throw("Thiếu chat_id hoặc Teams chat URL.")
+
+    lowered = raw.lower()
+    if lowered.startswith("http://") or lowered.startswith("https://"):
+        parsed = urlparse(raw)
+        path = (parsed.path or "").strip()
+        match = re.search(r"/l/chat/([^/]+)", path)
+        if not match:
+            frappe.throw(
+                "Không tách được chat_id từ Teams URL. "
+                "Mẫu đúng: https://teams.microsoft.com/l/chat/<chat_id>/conversations"
+            )
+        return unquote(match.group(1))
+
+    return unquote(raw)
+
+
+def _get_site_url() -> str:
+    site_url = ""
+    try:
+        site_url = get_url()
+    except Exception:
+        pass
+    return site_url.rstrip("/") if site_url else ""
+
+
+def _is_site_allowed() -> tuple[bool, str]:
+    normalized_site = _get_site_url()
+    if not ENFORCE_ALLOWED_SITE:
+        return True, normalized_site
+    return normalized_site == ALLOWED_URL, normalized_site
+# chỉ gửi site URL nào đó (khi ENFORCE_ALLOWED_SITE=True) để tránh lộ thông tin vào môi trường không tin cậy
+
 
 def notify_user(
     upn_or_email: str | Iterable[str],
@@ -659,23 +701,17 @@ def notify_user(
     if not recipients:
         frappe.throw("Chưa cung cấp user Teams để gửi tin nhắn.")
 
-    # chỉ gửi thông báo nếu là domain cho phép
-    ALLOWED_URL = "https://ihrm.vinatex.com.vn"
-    site_url = ""
-    try:
-        site_url = get_url()
-    except Exception:
-        pass
-    normalized_site = site_url.rstrip("/") if site_url else ""
-    if normalized_site != ALLOWED_URL:
+    # chỉ gửi thông báo nếu là domain cho phép (khi ENFORCE_ALLOWED_SITE=True)
+    allowed, normalized_site = _is_site_allowed()
+    if not allowed:
         frappe.logger("vnt_teams_graph").info(
-            "Skipping Teams notify_user because site URL is not allowed: %s", site_url
+            "Skipping Teams notify_user because site URL is not allowed: %s", normalized_site
         )
         skipped_payloads = [
             {
                 "status": "skipped",
                 "reason": "site_url_not_allowed",
-                "site_url": site_url,
+                "site_url": normalized_site,
                 "recipient": recipient,
             }
             for recipient in recipients
@@ -732,6 +768,62 @@ def notify_user(
 
     return responses[0] if len(responses) == 1 else responses
 
+# gửi tin nhắn vào nhóm teams
+def notify_chat(
+    message: str,
+    chat_id_or_url: Optional[str] = None,
+    settings_docname: Optional[str] = None,
+    content_type: str = "text",
+    linkify: bool = False,
+    linkify_mode: str = "full",
+) -> Dict[str, Any]:
+    """
+    Gửi tin nhắn vào Teams group chat (existing chat) theo chat_id hoặc Teams chat URL.
+    Nếu không truyền chat_id_or_url sẽ lấy từ field `group_chat_target` trong VNT Teams URL.
+    """
+    settings = get_settings(settings_docname)
+
+    allowed, normalized_site = _is_site_allowed()
+    if not allowed:
+        frappe.logger("vnt_teams_graph").info(
+            "Skipping Teams notify_chat because site URL is not allowed: %s", normalized_site
+        )
+        return {
+            "status": "skipped",
+            "reason": "site_url_not_allowed",
+            "site_url": normalized_site,
+            "chat_target": chat_id_or_url or settings.group_chat_target,
+        }
+
+    chat_target = (chat_id_or_url or settings.group_chat_target or "").strip()
+    if not chat_target:
+        frappe.throw(
+            "Chưa có Group Chat target. Hãy cấu hình field `group_chat_target` trong `VNT Teams URL` "
+            "hoặc truyền tham số chat_id_or_url khi gọi notify_chat."
+        )
+
+    chat_id = _resolve_chat_id(chat_target)
+    total_start = time.time()
+
+    t0 = time.time()
+    token = get_access_token(settings)
+    token_ms = int((time.time() - t0) * 1000)
+
+    return send_chat_message(
+        chat_id,
+        message,
+        settings=settings,
+        to_upn_or_email="[group-chat]",
+        settings_docname=settings.name,
+        content_type=content_type,
+        linkify=linkify,
+        linkify_mode=linkify_mode,
+        token=token,
+        token_ms=token_ms,
+        total_start=total_start,
+    )
+# gửi tin nhắn vào nhóm teams
+
 
 @frappe.whitelist()
 def notify_user_api(
@@ -755,6 +847,28 @@ def notify_user_api(
         linkify_mode=linkify_mode,
     )
 
+# gửi tin nhắn vào nhóm teams
+@frappe.whitelist()
+def notify_chat_api(
+    message: str,
+    chat_id_or_url: Optional[str] = None,
+    settings_docname: Optional[str] = None,
+    content_type: str = "text",
+    linkify: bool = False,
+    linkify_mode: str = "full",
+) -> Dict[str, Any]:
+    """
+    Whitelisted wrapper: call from client/script to send into group chat.
+    """
+    return notify_chat(
+        message=message,
+        chat_id_or_url=chat_id_or_url,
+        settings_docname=settings_docname,
+        content_type=content_type,
+        linkify=linkify,
+        linkify_mode=linkify_mode,
+    )
+# gửi tin nhắn vào nhóm teams
 
 @frappe.whitelist()
 def enqueue_notify_user(
@@ -781,6 +895,35 @@ def enqueue_notify_user(
         linkify_mode=linkify_mode,
     )
     return str(job) if job else "enqueued"
+
+
+# gửi tin nhắn vào nhóm teams
+@frappe.whitelist()
+def enqueue_notify_chat(
+    message: str,
+    chat_id_or_url: Optional[str] = None,
+    settings_docname: Optional[str] = None,
+    content_type: str = "text",
+    linkify: bool = False,
+    linkify_mode: str = "full",
+) -> str:
+    """
+    Background job: gửi group chat để không chậm UI.
+    """
+    job = frappe.enqueue(
+        "vinatex.integrations.teams_graph.notify_chat",
+        queue="default",
+        timeout=300,
+        is_async=True,
+        message=message,
+        chat_id_or_url=chat_id_or_url,
+        settings_docname=settings_docname,
+        content_type=content_type,
+        linkify=linkify,
+        linkify_mode=linkify_mode,
+    )
+    return str(job) if job else "enqueued"
+# gửi tin nhắn vào nhóm teams
 
 
 @frappe.whitelist()
