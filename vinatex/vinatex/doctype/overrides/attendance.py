@@ -6,7 +6,7 @@ from hrms.hr.doctype.attendance.attendance import (
 	Attendance
 )
 from datetime import datetime, date, time, timedelta
-from frappe.utils import getdate, now_datetime
+from frappe.utils import cint, getdate, now_datetime
 
 STANDARD_START_TIME = time(8, 15)
 STANDARD_END_TIME = time(17, 0)
@@ -74,13 +74,21 @@ def create_attendance_from_checkin():
 			'to_date': getdate(leave.to_date)
 		})
 	
-	# Lấy tất cả holidays theo holiday_list
-	holiday_data = frappe.get_all('Holiday', fields=['parent', 'holiday_date'])
+	# Tách ngày weekly_off=1 (skip) và weekly_off=0 (tạo Present không cần checkin)
+	holiday_data = frappe.get_all('Holiday',
+		filters={
+			'holiday_date': ['between', [date.replace(month=1, day=1), date.replace(month=12, day=31)]]
+		},
+		fields=['parent', 'holiday_date', 'weekly_off']
+	)
 	holiday_lists = {}
+	# holiday_force_present_lists: Ngày holiday có weekly_off=0: tạo Present dù không có checkin
+	holiday_force_present_lists = {}
 	for holiday in holiday_data:
-		if holiday.parent not in holiday_lists:
-			holiday_lists[holiday.parent] = set()
-		holiday_lists[holiday.parent].add(getdate(holiday.holiday_date))
+		target = holiday_lists if cint(holiday.weekly_off) else holiday_force_present_lists
+		if holiday.parent not in target:
+			target[holiday.parent] = set()
+		target[holiday.parent].add(getdate(holiday.holiday_date))
 	
 	# Lấy tất cả checkin data trong khoảng thời gian
 	checkin_data = frappe.db.sql("""
@@ -115,8 +123,10 @@ def create_attendance_from_checkin():
 		emp_name = emp['name']
 		emp_leaves = employee_leaves.get(emp_name, [])
 		emp_holidays = holiday_lists.get(emp['holiday_list'], set()) if emp.get('holiday_list') else set()
+		# Ngày holiday có weekly_off=0: tạo Present dù không có checkin
+		emp_force_present_holidays = holiday_force_present_lists.get(emp['holiday_list'], set()) if emp.get('holiday_list') else set()
+		# Ngày holiday có weekly_off=0: tạo Present dù không có checkin
 		emp_checkins = employee_checkins.get(emp_name, {})
-		
 		for current_date in date_list:
 			# Skip nếu đã có attendance
 			if (emp_name, current_date) in existing_attendances:
@@ -132,6 +142,20 @@ def create_attendance_from_checkin():
 				for leave in emp_leaves
 			)
 			if is_leave_day:
+				continue
+
+			# Ngày holiday có weekly_off=0: tạo Present dù không có checkin
+			if current_date in emp_force_present_holidays:
+				attendances_to_create.append({
+					'doctype': 'Attendance',
+					'employee': emp_name,
+					'employee_name': emp['employee_name'],
+					'company': emp['company'],
+					'attendance_date': current_date,
+					'status': 'Present',
+					'shift': 'Hành chính',
+					'docstatus': 1
+				})
 				continue
 			
 			# Lấy checkin data
@@ -224,41 +248,3 @@ def create_attendance_from_checkin():
 						frappe.log_error(f"Error creating attendance for {att_data.get('employee')} on {att_data.get('attendance_date')}: {str(individual_error)}", "Individual Attendance Error")
 	
 	return len(attendances_to_create)
-
-
-def _get_employee_checkin(employee, date=None):
-	"""
-	DEPRECATED: Sử dụng query tổng hợp trong create_attendance_from_checkin thay thế
-	"""
-	if not date:
-		date = now_datetime().date()
-	else:
-		date = getdate(date)
-	
-	start_date = datetime.combine(date, datetime.min.time())
-	end_date = datetime.combine(date, datetime.max.time())
-	
-	# Query MIN IN time
-	in_time = frappe.db.sql("""
-		SELECT MIN(time) as min_time
-		FROM `tabEmployee Checkin`
-		WHERE employee = %s
-		AND log_type = 'IN'
-		AND time >= %s
-		AND time <= %s
-	""", (employee, start_date, end_date), as_dict=1)
-	
-	in_time = in_time[0]['min_time'] if in_time and in_time[0]['min_time'] else None
-	
-	# Query MAX OUT time
-	out_time = frappe.db.sql("""
-		SELECT MAX(time) as max_time
-		FROM `tabEmployee Checkin`
-		WHERE employee = %s
-		AND log_type = 'OUT'
-		AND time >= %s
-		AND time <= %s
-	""", (employee, start_date, end_date), as_dict=1)
-	
-	out_time = out_time[0]['max_time'] if out_time and out_time[0]['max_time'] else None
-	return in_time, out_time
