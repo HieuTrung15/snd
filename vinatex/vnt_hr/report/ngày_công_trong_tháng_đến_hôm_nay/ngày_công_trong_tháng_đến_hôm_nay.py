@@ -68,9 +68,14 @@ def execute(filters=None):
 	totals = context["totals"]
 	category_totals = context["category_totals"]
 	# manual_flag = context["manual_flag"]
+	base_value_units = context["value_units"]
+	holiday_units = float(totals.get("tot_holiday") or 0.0)
+	value_with_holidays = (
+		None if base_value_units is None else float(base_value_units) + holiday_units
+	)
 
 	row = {
-		"value": None if context["value_units"] is None else float(context["value_units"]),
+		"value": value_with_holidays,
 		"employee": employee,
 		"employee_name": emp_doc.get("employee_name") or employee,
 		"department": emp_doc.get("department"),
