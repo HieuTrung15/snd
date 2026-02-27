@@ -564,6 +564,7 @@ def make_attendance_confirm():
 	leaves_set = _bulk_fetch_leaves(emps, t0, t1)
 	trip_set = _bulk_fetch_trip(emps, t0, t1)
 	attendance_set = _bulk_fetch_attendance(emps, t0, t1)
+	on_leave_attendance_set = _bulk_fetch_attendance_on_leave(emps, t0, t1)
 
 	results = []
 	for emp in emps:
@@ -601,7 +602,13 @@ def make_attendance_confirm():
 		for d in working_days:
 			key = (emp_name, d)
 			row = existing_by_date.get(d)
-
+			# sửa lại trường hợp duyệt phép giữa sau khi đã có attendance
+			if key in on_leave_attendance_set:
+				if row and att:
+					att.remove(row)
+					existing_by_date.pop(d, None)
+					changed = True
+				continue
 			if key in attendance_set:
 				# if row:
 				# 	att.remove(row)
@@ -825,6 +832,27 @@ def _bulk_fetch_attendance(employees, d_start, d_end):
 		WHERE employee IN %(emps)s
 		  AND attendance_date BETWEEN %(d0)s AND %(d1)s
 		  AND docstatus != 2
+		""",
+		{"emps": emps, "d0": d_start.date(), "d1": d_end.date()},
+		as_dict=True,
+	)
+	return {(r["employee"], getdate(r["attendance_date"])) for r in rows}
+
+
+def _bulk_fetch_attendance_on_leave(employees, d_start, d_end):
+	"""Trả về set[(emp, date)] cho các ngày Attendance có status = 'On Leave' (docstatus != Cancelled)."""
+	if not employees:
+		return set()
+
+	emps = _emp_names(employees)
+	rows = frappe.db.sql(
+		"""
+		SELECT employee, attendance_date
+		FROM `tabAttendance`
+		WHERE employee IN %(emps)s
+		  AND attendance_date BETWEEN %(d0)s AND %(d1)s
+		  AND docstatus != 2
+		  AND status = 'On Leave'
 		""",
 		{"emps": emps, "d0": d_start.date(), "d1": d_end.date()},
 		as_dict=True,
