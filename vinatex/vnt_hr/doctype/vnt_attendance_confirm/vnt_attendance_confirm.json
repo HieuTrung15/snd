@@ -55,6 +55,7 @@
   {
    "fieldname": "department",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Ph\u00f2ng ban",
@@ -187,7 +188,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-24 08:34:09.013393",
+ "modified": "2026-03-03 13:36:26.657629",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Attendance Confirm",
