@@ -1,7 +1,7 @@
 import frappe
 from frappe import _
 from hrms.hr.doctype.employee_checkin.employee_checkin import EmployeeCheckin
-from datetime import datetime, time, date
+from datetime import datetime, time, date, timedelta
 from frappe.utils import today, getdate
 from zk import ZK
 
@@ -37,11 +37,8 @@ def get_timekeeping_data_morning():
     d_today = getdate(today())                 # ngày hôm nay (date)
     d_month_start = d_today.replace(day=1)     # ngày đầu tháng (date)
 
-    # start_dt = datetime.combine(d_month_start, time.min)  # 00:00:00 ngày 01
-
-    start_dt = datetime.combine(date(2025, 9, 1), time.min)  # 2025-09-01 00:00:00
+    start_dt = datetime.combine(d_month_start, time.min)  # 00:00:00 ngày 01
     end_dt   = datetime.combine(d_today, time.max)     # 23:59:59.999999 hôm nay
-    # end_dt   = datetime.combine(date(2025, 9, 30), time.max)
 
     # get_today = date.today()
     # start_dt = datetime.combine(get_today, time.min)
@@ -126,12 +123,12 @@ def get_timekeeping_data_morning():
 def get_timekeeping_data_evening():
     d_today = getdate(today())                 # ngày hôm nay (date)
     d_month_start = d_today.replace(day=1)     # ngày đầu tháng (date)
+    d_yesterday = d_today - timedelta(days=1)  # ngày hôm qua (date)
 
-    # start_dt = datetime.combine(d_month_start, time.min)  # 00:00:00 ngày 01
-
-    start_dt = datetime.combine(date(2025, 9, 1), time.min)  # 2025-09-01 00:00:00
-    end_dt   = datetime.combine(d_today, time.max)     # 23:59:59.999999 hôm nay
-    # end_dt   = datetime.combine(date(2025, 9, 30), time.max)
+    if d_yesterday < d_month_start:
+        return
+    start_dt = datetime.combine(d_month_start, time.min)  # 00:00:00 ngày 01
+    end_dt = datetime.combine(d_yesterday, time.max)      # 23:59:59.999999 hôm qua
     # Lấy dữ liệu mới từ thiết bị
     rows = _collect_unique_rows(start_dt=start_dt, end_dt=end_dt)
     if not rows:

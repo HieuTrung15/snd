@@ -6,7 +6,7 @@ from hrms.hr.doctype.attendance.attendance import (
 	Attendance
 )
 from datetime import datetime, date, time, timedelta
-from frappe.utils import cint, getdate, now_datetime
+from frappe.utils import today, getdate, add_days, now_datetime, cint
 
 STANDARD_START_TIME = time(8, 15)
 STANDARD_END_TIME = time(17, 0)
@@ -23,9 +23,9 @@ def create_attendance_from_checkin():
 	Tối ưu để tránh timeout khi chạy cron.
 	"""
 	# Lấy ngày hiện tại
-	date = now_datetime().date()
+	# date = now_datetime().date()
+	date = getdate(add_days(today(), -1))
 	start_date = date.replace(day=1)  # Đầu tháng
-	# start_date = date.replace(month=9, day=1)
 	# Lấy danh sách employee active một lần
 	employees = frappe.get_all('Employee', 
 		filters={'status': 'Active', 'custom_need_check': 0}, 
