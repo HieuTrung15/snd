@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from frappe import _
 import frappe
 from frappe.utils import cint, getdate, flt, today, add_days
+from frappe.utils.data import escape_html
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from frappe.utils.file_manager import save_file
@@ -60,6 +61,7 @@ def execute(filters):
 	for emp in emps:
 		emp_code = emp["name"]
 		doj = getdate(emp.get("date_of_joining")) if emp.get("date_of_joining") else date.min
+		relieving_date = getdate(emp.get("relieving_date")) if emp.get("relieving_date") else None
 
 		row = {
 			"employee": emp_code,
@@ -76,6 +78,9 @@ def execute(filters):
 			"tot_late": 0.0,
 			"tot_miss": 0.0,
 			"tot_not_joined": 0.0,
+			"tot_required_workdays_to_date": 0.0,
+			"workday_attendance_compare": "",
+			"workday_compare_mismatch": 0,
 		}
 
 		for d in days:
@@ -87,6 +92,8 @@ def execute(filters):
 			if d_date < doj:
 				row[key] = STATUS_CODE["CHƯA VÀO LÀM"]
 				row["tot_not_joined"] += 1
+				continue
+			if relieving_date and d_date > relieving_date:
 				continue
 
 			# 2) Holiday (ưu tiên hơn weekend & attendance)
@@ -101,6 +108,8 @@ def execute(filters):
 				row["tot_weekend"] += 1
 				continue
 
+			row["tot_required_workdays_to_date"] += 1
+
 			# 4) Attendance (ƯU TIÊN trước Leave/Checkin)
 			att = att_map.get((emp_code, d_date))
 			if att:
@@ -108,7 +117,7 @@ def execute(filters):
 				leave_type = att.get("leave_type")
 				leave_group = leave_type_groups.get(leave_type)
 				units = 1.0
-				if st in ("Present", "Work From Home"):
+				if st in ("Present", "Work From Home", "Work From Office"):
 					row[key] = STATUS_CODE["ĐI LÀM"]
 					row["tot_present"] += 1
 				elif st in ("Work Trip",):
@@ -171,10 +180,17 @@ def execute(filters):
 			row[key] = STATUS_CODE["CHẤM CÔNG BẤT THƯỜNG"]
 			row["tot_miss"] += 1
 
+		actual_work_units = flt(row["tot_present"], 4) + flt(row["tot_leave"], 4)
+		required_work_units = flt(row["tot_required_workdays_to_date"], 4)
+		row["workday_attendance_compare"] = (
+			f"{_format_units(actual_work_units)}/{_format_units(required_work_units)}"
+		)
+		row["workday_compare_mismatch"] = 1 if abs(actual_work_units - required_work_units) > 0.0001 else 0
+
 		out.append(row)
 
-	legend = _legend_html()
-	return cols, out, legend
+	message = _legend_html() + _workday_compare_html(out, filters.get("employee"))
+	return cols, out, message
 
 
 def _columns_pivot(days):
@@ -201,6 +217,55 @@ def _columns_pivot(days):
 		{"fieldname": "tot_miss",    "label": "Chấm công bất thường","fieldtype": "Float", "width": 100, "precision": 2},
 	]
 	return base
+
+
+def _format_units(value):
+	value = flt(value, 2)
+	if value.is_integer():
+		return str(int(value))
+	if (value * 10).is_integer():
+		return f"{value:.1f}"
+	return f"{value:.2f}"
+
+
+def _workday_compare_html(rows, selected_employee=None):
+	if not rows:
+		return ""
+
+	if selected_employee:
+		selected_row = next((r for r in rows if r.get("employee") == selected_employee), rows[0])
+		compare_text = selected_row.get("workday_attendance_compare") or ""
+		is_mismatch = cint(selected_row.get("workday_compare_mismatch")) == 1
+		compare_style = "color:#c53030;" if is_mismatch else ""
+		return (
+			"<div style='margin-bottom:8px;'>"
+			"<strong>Đi làm+Phép/Công chuẩn đến hiện tại</strong>: "
+			f"<strong style='{compare_style}'>{escape_html(compare_text)}</strong>"
+			"</div>"
+		)
+
+	mismatch_items = []
+	for row in rows:
+		if cint(row.get("workday_compare_mismatch")) != 1:
+			continue
+		emp_label = row.get("employee_name") or row.get("employee") or ""
+		compare_text = row.get("workday_attendance_compare") or ""
+		mismatch_items.append(
+			f"<span style='margin-right:12px;'>{escape_html(emp_label)}: "
+			f"<strong style='color:#c53030;'>{escape_html(compare_text)}</strong></span>"
+		)
+
+	if not mismatch_items:
+		return ""
+
+	content = "".join(mismatch_items)
+
+	return (
+		"<div style='margin-bottom:8px;'>"
+		"<strong>Đi làm+Phép/Công chuẩn đến hiện tại</strong>: "
+		f"{content}"
+		"</div>"
+	)
 
 # ====== helpers giữ nguyên, chỉ bổ sung _attendance_map và lấy cuối tuần theo Holiday List ======
 def _month_bounds(year, month):

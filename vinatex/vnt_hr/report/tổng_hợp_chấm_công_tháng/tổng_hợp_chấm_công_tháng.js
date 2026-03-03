@@ -160,4 +160,5 @@ frappe.query_reports["Tổng hợp chấm công tháng"] = {
 
     // Hiển thị ghi chú ký hiệu một lần trên đầu báo cáo
   },
+
 };
