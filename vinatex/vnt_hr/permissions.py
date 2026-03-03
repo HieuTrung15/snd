@@ -2,7 +2,7 @@ import frappe
 
 HR_SALARY_USERS = {
     "tult@vinatex.com.vn",
-    "hoaltm@vinatex.com.vn",
+    "hienht@vinatex.com.vn",
     "thaottt@vinatex.com.vn",
 }
 
