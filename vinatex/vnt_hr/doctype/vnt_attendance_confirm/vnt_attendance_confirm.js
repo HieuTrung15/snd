@@ -8,11 +8,33 @@ frappe.ui.form.on("VNT Attendance Confirm", {
 		}
 		set_self_approver(frm);
 		_update_parent_status(frm);
+		// xóa những dòng trong items mà có employee có đủ checkin và checkout
+		frappe.call({
+			method: "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.remove_rows_with_complete_checkin_checkout",
+			args: {
+				docname: frm.doc.name,
+			},
+			callback(res) {
+				if (res && res.message) {
+					frm.reload_doc();
+				}
+			},
+		});
 	},
 	before_save (frm) {
 		frm.doc.confirm = '';
 	},
 	refresh(frm) {
+		// frm.add_custom_button(__('Lấy dữ liệu chấm công'), () => {
+		// 	frappe.call({
+		// 		method: "vinatex.vinatex.doctype.overrides.attendance.create_attendance_from_checkin",
+		// 		args: {
+		// 		},
+		// 		callback(res) {
+					
+		// 		},
+		// 	});
+		// });
 		frm.set_df_property("items", "cannot_delete_rows", true);
 		frm.set_df_property("items", "cannot_add_rows", true);
 		if (frm.doc && frm.doc.employee) {

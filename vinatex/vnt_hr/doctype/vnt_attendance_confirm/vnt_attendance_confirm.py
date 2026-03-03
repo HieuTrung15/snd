@@ -193,16 +193,16 @@ def _send_notification(doc: Document, user: str | list[str] | tuple[str, ...], s
 		"message": message_with_link,
 		"link": url,
 	}, recipients)
-	frappe.enqueue(
-		"vinatex.integrations.teams_graph.notify_user",
-		queue="long",
-		timeout=900,
-		is_async=True,
-		upn_or_email=recipients,
-		content_type="html",
-		linkify=False,
-		message=message_with_link,
-	)
+	# frappe.enqueue(
+	# 	"vinatex.integrations.teams_graph.notify_user",
+	# 	queue="long",
+	# 	timeout=900,
+	# 	is_async=True,
+	# 	upn_or_email=recipients,
+	# 	content_type="html",
+	# 	linkify=False,
+	# 	message=message_with_link,
+	# )
 	# send_rocket_message(
 	# 	to_users=recipients,
 	# 	title=":bell: Thông báo",
@@ -542,7 +542,44 @@ def _cron_submit_attendance_confirm():
 
 def get_reports_to(user):
 	return frappe.get_value("Employee", {"name": user}, "employee_name")
-	
+
+
+@frappe.whitelist()
+def remove_rows_with_complete_checkin_checkout(docname=None):
+	emps = _pick_employees(None)
+	working_days = get_working_dates_of_month()
+	if not working_days:
+		return
+
+	month_from, month_to = min_max_date(working_days)
+	t0, _ = _day_bounds(month_from)
+	_, t1 = _day_bounds(month_to)
+	checkins_map = _bulk_fetch_checkins(emps, t0, t1)
+
+	for emp in emps:
+		emp_name = emp["name"]
+		att_name = frappe.db.get_value(
+			"VNT Attendance Confirm",
+			{
+				"employee": emp_name,
+				"from_date": month_from,
+				"docstatus": ["<", 2],
+			},
+			"name",
+		)
+		if not att_name:
+			continue
+		att = frappe.get_doc("VNT Attendance Confirm", att_name)
+		existing_by_date = {getdate(r.get("date")): r for r in (att.get("items") or [])}
+		for d in working_days:
+			key = (emp_name, d)
+			if key in checkins_map and checkins_map[key]["cnt_in"] > 0 and checkins_map[key]["cnt_out"] > 0:
+				row = existing_by_date.get(d)
+				if row and att:
+					att.remove(row)
+					existing_by_date.pop(d, None)
+					att.save()
+
 
 @frappe.whitelist()
 def make_attendance_confirm():
