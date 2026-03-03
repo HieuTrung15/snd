@@ -223,8 +223,8 @@ scheduler_events = {
 		"*/30 9-10 * * *": [
 			"vinatex.vinatex.doctype.overrides.timekeeping.get_timekeeping_data_morning",
 		],
-		# Chạy chấm công lúc 22h tối hàng ngày
-        "0 22 * * *": [
+		# Chạy chấm công lúc 23h59p tối hàng ngày
+        "59 23 * * *": [
 			"vinatex.vinatex.doctype.overrides.timekeeping.get_timekeeping_data_evening",
 		],
 		"0 23 * * *": [
