@@ -30,7 +30,7 @@ const VNT_T13_TOTAL_LABEL = __("Tổng lương đi làm năm");
 
 const HR_SALARY_USERS = new Set([
 	"tult@vinatex.com.vn",
-	"hienht@vinatex.com.vn",
+	"thudtx@vinatex.com.vn",
 	"thaottt@vinatex.com.vn",
 ]);
 

@@ -60,7 +60,6 @@ def execute(filters):
 	for emp in emps:
 		emp_code = emp["name"]
 		doj = getdate(emp.get("date_of_joining")) if emp.get("date_of_joining") else date.min
-		relieving_date = getdate(emp.get("relieving_date")) if emp.get("relieving_date") else None
 
 		row = {
 			"employee": emp_code,
@@ -89,8 +88,6 @@ def execute(filters):
 				row[key] = STATUS_CODE["CHƯA VÀO LÀM"]
 				row["tot_not_joined"] += 1
 				continue
-			if relieving_date and d_date > relieving_date:
-				continue
 
 			# 2) Holiday (ưu tiên hơn weekend & attendance)
 			if (emp_code, d_date) in holi_map:
@@ -111,7 +108,7 @@ def execute(filters):
 				leave_type = att.get("leave_type")
 				leave_group = leave_type_groups.get(leave_type)
 				units = 1.0
-				if st in ("Present", "Work From Home", "Work From Office"):
+				if st in ("Present", "Work From Home"):
 					row[key] = STATUS_CODE["ĐI LÀM"]
 					row["tot_present"] += 1
 				elif st in ("Work Trip",):
@@ -176,8 +173,8 @@ def execute(filters):
 
 		out.append(row)
 
-	message = _legend_html()
-	return cols, out, message
+	legend = _legend_html()
+	return cols, out, legend
 
 
 def _columns_pivot(days):
@@ -204,57 +201,6 @@ def _columns_pivot(days):
 		{"fieldname": "tot_miss",    "label": "Chấm công bất thường","fieldtype": "Float", "width": 100, "precision": 2},
 	]
 	return base
-
-
-def _format_units(value):
-	value = flt(value, 2)
-	if value.is_integer():
-		return str(int(value))
-	if (value * 10).is_integer():
-		return f"{value:.1f}"
-	return f"{value:.2f}"
-
-
-@frappe.whitelist()
-def get_workday_target_to_date(employee=None, from_date=None, to_date=None, company=None):
-	"""Trả về số công chuẩn của cả kỳ lọc (tháng), không gồm lễ/cuối tuần."""
-	if not employee or not from_date or not to_date:
-		return {"value": ""}
-
-	start_date = getdate(from_date)
-	end_date = getdate(to_date)
-	if end_date < start_date:
-		return {"value": "0"}
-
-	emp = frappe.db.get_value(
-		"Employee",
-		employee,
-		["name", "company", "holiday_list", "date_of_joining", "relieving_date"],
-		as_dict=True,
-	)
-	if not emp:
-		return {"value": ""}
-
-	company = company or emp.get("company")
-	if not company:
-		return {"value": ""}
-
-	emp_ref = [{
-		"name": emp["name"],
-		"holiday_list": emp.get("holiday_list"),
-	}]
-	holi_map = _holiday_map(emp_ref, company, start_date, end_date)
-	weekend_map = _weekend_map(emp_ref, company, start_date, end_date)
-
-	target_units = 0.0
-	for d in _daterange(start_date, end_date):
-		if (employee, d) in holi_map:
-			continue
-		if (employee, d) in weekend_map:
-			continue
-		target_units += 1
-
-	return {"value": _format_units(target_units)}
 
 # ====== helpers giữ nguyên, chỉ bổ sung _attendance_map và lấy cuối tuần theo Holiday List ======
 def _month_bounds(year, month):

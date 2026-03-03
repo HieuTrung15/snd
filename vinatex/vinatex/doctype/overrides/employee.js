@@ -45,7 +45,7 @@ frappe.ui.form.on("Employee", {
 
 const HR_SALARY_USERS = new Set([
   "tult@vinatex.com.vn",
-  "hienhtm@vinatex.com.vn",
+  "thudtx@vinatex.com.vn",
   "thaottt@vinatex.com.vn"
 ]);
 
