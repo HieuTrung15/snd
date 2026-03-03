@@ -3,7 +3,6 @@ from datetime import date, timedelta
 from frappe import _
 import frappe
 from frappe.utils import cint, getdate, flt, today, add_days
-from frappe.utils.data import escape_html
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from frappe.utils.file_manager import save_file
@@ -78,9 +77,6 @@ def execute(filters):
 			"tot_late": 0.0,
 			"tot_miss": 0.0,
 			"tot_not_joined": 0.0,
-			"tot_required_workdays_to_date": 0.0,
-			"workday_attendance_compare": "",
-			"workday_compare_mismatch": 0,
 		}
 
 		for d in days:
@@ -107,8 +103,6 @@ def execute(filters):
 				row[key] = STATUS_CODE["CUỐI TUẦN"]
 				row["tot_weekend"] += 1
 				continue
-
-			row["tot_required_workdays_to_date"] += 1
 
 			# 4) Attendance (ƯU TIÊN trước Leave/Checkin)
 			att = att_map.get((emp_code, d_date))
@@ -180,16 +174,9 @@ def execute(filters):
 			row[key] = STATUS_CODE["CHẤM CÔNG BẤT THƯỜNG"]
 			row["tot_miss"] += 1
 
-		actual_work_units = flt(row["tot_present"], 4) + flt(row["tot_leave"], 4)
-		required_work_units = flt(row["tot_required_workdays_to_date"], 4)
-		row["workday_attendance_compare"] = (
-			f"{_format_units(actual_work_units)}/{_format_units(required_work_units)}"
-		)
-		row["workday_compare_mismatch"] = 1 if abs(actual_work_units - required_work_units) > 0.0001 else 0
-
 		out.append(row)
 
-	message = _legend_html() + _workday_compare_html(out, filters.get("employee"))
+	message = _legend_html()
 	return cols, out, message
 
 
@@ -228,44 +215,46 @@ def _format_units(value):
 	return f"{value:.2f}"
 
 
-def _workday_compare_html(rows, selected_employee=None):
-	if not rows:
-		return ""
+@frappe.whitelist()
+def get_workday_target_to_date(employee=None, from_date=None, to_date=None, company=None):
+	"""Trả về số công chuẩn của cả kỳ lọc (tháng), không gồm lễ/cuối tuần."""
+	if not employee or not from_date or not to_date:
+		return {"value": ""}
 
-	if selected_employee:
-		selected_row = next((r for r in rows if r.get("employee") == selected_employee), rows[0])
-		compare_text = selected_row.get("workday_attendance_compare") or ""
-		is_mismatch = cint(selected_row.get("workday_compare_mismatch")) == 1
-		compare_style = "color:#c53030;" if is_mismatch else ""
-		return (
-			"<div style='margin-bottom:8px;'>"
-			"<strong>Đi làm+Phép/Công chuẩn đến hiện tại</strong>: "
-			f"<strong style='{compare_style}'>{escape_html(compare_text)}</strong>"
-			"</div>"
-		)
+	start_date = getdate(from_date)
+	end_date = getdate(to_date)
+	if end_date < start_date:
+		return {"value": "0"}
 
-	mismatch_items = []
-	for row in rows:
-		if cint(row.get("workday_compare_mismatch")) != 1:
-			continue
-		emp_label = row.get("employee_name") or row.get("employee") or ""
-		compare_text = row.get("workday_attendance_compare") or ""
-		mismatch_items.append(
-			f"<span style='margin-right:12px;'>{escape_html(emp_label)}: "
-			f"<strong style='color:#c53030;'>{escape_html(compare_text)}</strong></span>"
-		)
-
-	if not mismatch_items:
-		return ""
-
-	content = "".join(mismatch_items)
-
-	return (
-		"<div style='margin-bottom:8px;'>"
-		"<strong>Đi làm+Phép/Công chuẩn đến hiện tại</strong>: "
-		f"{content}"
-		"</div>"
+	emp = frappe.db.get_value(
+		"Employee",
+		employee,
+		["name", "company", "holiday_list", "date_of_joining", "relieving_date"],
+		as_dict=True,
 	)
+	if not emp:
+		return {"value": ""}
+
+	company = company or emp.get("company")
+	if not company:
+		return {"value": ""}
+
+	emp_ref = [{
+		"name": emp["name"],
+		"holiday_list": emp.get("holiday_list"),
+	}]
+	holi_map = _holiday_map(emp_ref, company, start_date, end_date)
+	weekend_map = _weekend_map(emp_ref, company, start_date, end_date)
+
+	target_units = 0.0
+	for d in _daterange(start_date, end_date):
+		if (employee, d) in holi_map:
+			continue
+		if (employee, d) in weekend_map:
+			continue
+		target_units += 1
+
+	return {"value": _format_units(target_units)}
 
 # ====== helpers giữ nguyên, chỉ bổ sung _attendance_map và lấy cuối tuần theo Holiday List ======
 def _month_bounds(year, month):

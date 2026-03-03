@@ -851,7 +851,7 @@ function toNumber(value) {
 // ==== Quyền tính lương ====
 const HR_SALARY_USERS = new Set([
 	"tult@vinatex.com.vn",
-	"hoaltm@vinatex.com.vn",
+	"hienht@vinatex.com.vn",
 	"thaottt@vinatex.com.vn",
 ]);
 
