@@ -510,7 +510,7 @@ def compute_item(employee, company=None, month=None, year=None, docname=None):
     employee_info = frappe.db.get_value(
         "Employee",
         employee,
-        ["employment_type", "custom_muc_luong_pc_dang", "custom_allowance_coefficient_1"],
+        ["employment_type", "custom_muc_luong_pc_dang", "custom_allowance_coefficient_1", "custom_relation_number"],
         as_dict=True,
     ) or {}
 
@@ -816,6 +816,7 @@ def compute_item(employee, company=None, month=None, year=None, docname=None):
         "employment_type": employee_info.get("employment_type"),
         "custom_muc_luong_pc_dang": employee_info.get("custom_muc_luong_pc_dang"),
         "custom_allowance_coefficient_1": employee_info.get("custom_allowance_coefficient_1"),
+        "so_npt": flt(employee_info.get("custom_relation_number") or 0),
         "previous_truy_thu": get_latest_truy_thu(employee, month=month, year=year, exclude_doc=docname),
     }
 
