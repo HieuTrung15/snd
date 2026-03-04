@@ -9,17 +9,17 @@ frappe.ui.form.on("VNT Attendance Confirm", {
 		set_self_approver(frm);
 		_update_parent_status(frm);
 		// xóa những dòng trong items mà có employee có đủ checkin và checkout
-		frappe.call({
-			method: "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.remove_rows_with_complete_checkin_checkout",
-			args: {
-				docname: frm.doc.name,
-			},
-			callback(res) {
-				if (res && res.message) {
-					frm.reload_doc();
-				}
-			},
-		});
+		// frappe.call({
+		// 	method: "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.remove_rows_with_complete_checkin_checkout",
+		// 	args: {
+		// 		docname: frm.doc.name,
+		// 	},
+		// 	callback(res) {
+		// 		if (res && res.message) {
+		// 			frm.reload_doc();
+		// 		}
+		// 	},
+		// });
 	},
 	before_save (frm) {
 		frm.doc.confirm = '';
