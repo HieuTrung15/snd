@@ -503,6 +503,27 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 
 	const regionalMinWage = toNumber(payload.regional_minimum_wage);
 	const corporateMinWage = toNumber(payload.corporate_minimum_wage);
+
+	const hsLuongCbRaw = payload.custom_basic_salary_coefficient;
+	const hsLuongCb =
+		hsLuongCbRaw === undefined || hsLuongCbRaw === null || hsLuongCbRaw === ""
+			? toNumber(row.hs_luong_cb)
+			: toNumber(hsLuongCbRaw);
+	if (Number.isFinite(hsLuongCb)) {
+		row.hs_luong_cb = hsLuongCb;
+		frappe.model.set_value(row.doctype, row.name, "hs_luong_cb", hsLuongCb);
+	}
+
+	const hsPcKiemNhiemRaw = payload.custom_allowance_coefficient_2;
+	const hsPcKiemNhiem =
+		hsPcKiemNhiemRaw === undefined || hsPcKiemNhiemRaw === null || hsPcKiemNhiemRaw === ""
+			? toNumber(row.hs_pc_kiem_nhiem1)
+			: toNumber(hsPcKiemNhiemRaw);
+	if (Number.isFinite(hsPcKiemNhiem)) {
+		row.hs_pc_kiem_nhiem1 = hsPcKiemNhiem;
+		frappe.model.set_value(row.doctype, row.name, "hs_pc_kiem_nhiem1", hsPcKiemNhiem);
+	}
+
 	const pcDangOverrideRaw = payload.custom_muc_luong_pc_dang;
 	const pcDangOverride =
 		pcDangOverrideRaw === undefined || pcDangOverrideRaw === null || pcDangOverrideRaw === ""
