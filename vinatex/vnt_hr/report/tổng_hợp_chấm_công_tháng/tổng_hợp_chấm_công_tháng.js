@@ -1,3 +1,11 @@
+function isDayColumn(fieldname) {
+  return /^d\d{2}$/.test(fieldname || "");
+}
+
+function isEmptyCellValue(value) {
+  return value === null || value === undefined || (typeof value === "string" && value.trim() === "");
+}
+
 frappe.query_reports["Tổng hợp chấm công tháng"] = {
   "filters": [
     {
@@ -108,6 +116,20 @@ frappe.query_reports["Tổng hợp chấm công tháng"] = {
       "hidden": 1
     },
   ],
+
+  formatter: function (value, row, column, data, default_formatter) {
+    const formatted = default_formatter ? default_formatter(value, row, column, data) : value;
+    const fieldname = column && column.fieldname ? column.fieldname : "";
+
+    if (
+      isDayColumn(fieldname) &&
+      isEmptyCellValue(value)
+    ) {
+      return '<span style="display:block; width:100%; min-height:18px; background:#ffd6d6;">&nbsp;</span>';
+    }
+
+    return formatted;
+  },
 
   onload: function (report) {
     const today = new Date();

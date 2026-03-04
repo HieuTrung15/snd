@@ -173,7 +173,8 @@ def execute(filters):
 
 		out.append(row)
 
-	legend = _legend_html()
+	standard_working_days = _count_standard_working_days(days)
+	legend = _legend_html(standard_working_days)
 	return cols, out, legend
 
 
@@ -201,6 +202,11 @@ def _columns_pivot(days):
 		{"fieldname": "tot_miss",    "label": "Chấm công bất thường","fieldtype": "Float", "width": 100, "precision": 2},
 	]
 	return base
+
+
+def _count_standard_working_days(days):
+	"""Số công chuẩn trong tháng: chỉ tính T2-T6."""
+	return sum(1 for d in days if d.weekday() < 5)
 
 # ====== helpers giữ nguyên, chỉ bổ sung _attendance_map và lấy cuối tuần theo Holiday List ======
 def _month_bounds(year, month):
@@ -881,7 +887,7 @@ def chart_data(rows):
 	}
 
 
-def _legend_html() -> str:
+def _legend_html(standard_working_days: int = 0) -> str:
 	items = [
 		_("X = Đi làm"),
 		_("P = Nghỉ phép"),
@@ -895,4 +901,12 @@ def _legend_html() -> str:
 	]
 	parts = ["<strong>{}</strong>: ".format(_("Ghi chú ký hiệu"))]
 	parts.append(", ".join(items))
-	return "<div style='margin-bottom:8px;'>{}</div>".format("".join(parts))
+	legend_line = "<div style='margin-bottom:4px;'>{}</div>".format("".join(parts))
+	formula_line = "<div style='margin-bottom:4px;'><strong>{}</strong></div>".format(
+		_("Số công = (Công + Nghỉ + Nghỉ lễ) / Công chuẩn")
+	)
+	standard_line = "<div style='margin-bottom:8px;'><strong>{}</strong>: {}</div>".format(
+		_("Tổng số công chuẩn trong tháng"),
+		cint(standard_working_days or 0),
+	)
+	return legend_line + formula_line + standard_line
