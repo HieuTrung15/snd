@@ -84,11 +84,12 @@ doctype_js = {
     "Leave Application": "vinatex/doctype/overrides/leave_application.js",
     "Employee": "vinatex/doctype/overrides/employee.js",
 	"ToDo": "vinatex/doctype/overrides/todo.js",
-    "User": "vinatex/doctype/overrides/user.js",
-    "Job Requisition": "vinatex/doctype/overrides/job_requisition.js",
-    "VNT CVE Source": "vinatex/public/js/vnt_itsec/vnt_cve_source.js",
-    "VNT Vulnerability Advisory": "vinatex/public/js/vnt_itsec/vnt_vulnerability_advisory.js",
-    "VNT CVE": "vinatex/public/js/vnt_itsec/vnt_cve.js",
+	"User": "vinatex/doctype/overrides/user.js",
+	"Job Requisition": "vinatex/doctype/overrides/job_requisition.js",
+	"Job Applicant": "doctype/overrides/job_applicant.js",
+	"VNT CVE Source": "vinatex/public/js/vnt_itsec/vnt_cve_source.js",
+	"VNT Vulnerability Advisory": "vinatex/public/js/vnt_itsec/vnt_vulnerability_advisory.js",
+	"VNT CVE": "vinatex/public/js/vnt_itsec/vnt_cve.js",
 }
 doctype_list_js = {
     "VNT Salary Slip": "vinatex/vnt_hr/doctype/vnt_salary_slip/vnt_salary_slip_list.js",
