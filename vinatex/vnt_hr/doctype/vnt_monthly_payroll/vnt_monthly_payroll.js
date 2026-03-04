@@ -495,6 +495,11 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 	row.ngay_cong_cu = previousWorkingDays;
 	frappe.model.set_value(row.doctype, row.name, "ngay_cong", currentWorkingDays);
 	frappe.model.set_value(row.doctype, row.name, "ngay_cong_cu", previousWorkingDays);
+	if (Object.prototype.hasOwnProperty.call(payload, "so_npt")) {
+		const soNpt = toNumber(payload.so_npt);
+		row.so_npt = soNpt;
+		frappe.model.set_value(row.doctype, row.name, "so_npt", soNpt);
+	}
 
 	const regionalMinWage = toNumber(payload.regional_minimum_wage);
 	const corporateMinWage = toNumber(payload.corporate_minimum_wage);
