@@ -259,33 +259,23 @@ frappe.ui.form.on("VNT Monthly Payroll Item", {
 	},
 	khac(frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
-		if (!row || !row.employee) return;
-		if (row._current_payroll_payload) {
-			applyPayrollPayload(frm, row, row._current_payroll_payload);
-			return;
-		}
-		if (!frm.doc.month || !frm.doc.year) return;
-		frm.events.compute_row(frm, row, { freeze: false });
+		if (!row) return;
+		recalculateThucLinh(row);
 	},
 	truy_thu(frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
-		if (!row || !row.employee) return;
-		if (row._current_payroll_payload) {
-			applyPayrollPayload(frm, row, row._current_payroll_payload);
-			return;
-		}
-		if (!frm.doc.month || !frm.doc.year) return;
-		frm.events.compute_row(frm, row, { freeze: false });
+		if (!row) return;
+		recalculateThucLinh(row);
 	},
 	duoc_hoan_lai(frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
-		if (!row || !row.employee) return;
-		if (row._current_payroll_payload) {
-			applyPayrollPayload(frm, row, row._current_payroll_payload);
-			return;
-		}
-		if (!frm.doc.month || !frm.doc.year) return;
-		frm.events.compute_row(frm, row, { freeze: false });
+		if (!row) return;
+		recalculateThucLinh(row);
+	},
+	tncn_tam_thu(frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		if (!row) return;
+		recalculateThucLinh(row);
 	},
 });
 
@@ -791,16 +781,7 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 	frappe.model.set_value(row.doctype, row.name, "tncn_tam_thu", tncn);
 	row.tncn_tam_thu = tncn;
 
-	const thucLinh =
-		tongThuNhap -
-		toNumber(row.xh_yt_tn) -
-		toNumber(row.doan_phi_cd) -
-		toNumber(row.dang_phi) -
-		toNumber(row.tncn_tam_thu) -
-		toNumber(row.khac) -
-		toNumber(row.truy_thu) +
-		toNumber(row.duoc_hoan_lai);
-	frappe.model.set_value(row.doctype, row.name, "thuc_linh", thucLinh);
+	recalculateThucLinh(row);
 
 	if (refresh) {
 		frm.refresh_field("items");
@@ -847,6 +828,23 @@ function compute_all_items(frm, rows = []) {
 function toNumber(value) {
 	const num = Number(value);
 	return Number.isFinite(num) ? num : 0;
+}
+
+function recalculateThucLinh(row) {
+	if (!row) return;
+
+	const thucLinh =
+		toNumber(row.tong_thu_nhap) -
+		toNumber(row.xh_yt_tn) -
+		toNumber(row.doan_phi_cd) -
+		toNumber(row.dang_phi) -
+		toNumber(row.tncn_tam_thu) -
+		toNumber(row.khac) -
+		toNumber(row.truy_thu) +
+		toNumber(row.duoc_hoan_lai);
+
+	frappe.model.set_value(row.doctype, row.name, "thuc_linh", thucLinh);
+	row.thuc_linh = thucLinh;
 }
 
 // ==== Quyền tính lương ====
