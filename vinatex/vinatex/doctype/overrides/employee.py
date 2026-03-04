@@ -14,6 +14,11 @@ from erpnext.setup.doctype.employee.employee import (
 
 
 class VntEmployee(Employee):
+    # điền fullname cho khi tạo employee loại bỏ khoảng trắng thừa
+    def on_update(self):
+        self.employee_name = f"{self.first_name or ''} {self.middle_name or ''} {self.last_name or ''}".strip()
+
+
     # hàm khi validate sẽ tính toán số lượng người phụ thuộc khi có tick is_dependent trong bảng custom_vnt_employee_tax, sau đó gán vào trường custom_relation_number
     def validate(self):
         self._validate_contract_terms()
@@ -22,6 +27,7 @@ class VntEmployee(Employee):
             if row.is_dependent:
                 total_dependent += 1
         self.custom_relation_number = total_dependent
+
 
     def _validate_contract_terms(self):
         """Chỉ cho nhập số trong trường 'Thời hạn HĐ (tháng)' của bảng custom_vnt_contract."""
