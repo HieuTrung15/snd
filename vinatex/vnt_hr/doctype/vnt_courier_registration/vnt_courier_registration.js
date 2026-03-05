@@ -4,6 +4,7 @@
 frappe.ui.form.on("VNT Courier Registration", {
 	refresh(frm) {
         if (frm.is_new()) {
+            ensure_initial_item_row(frm);
             frm.set_value("date", frappe.datetime.get_today());
             frappe.call({
                 method: "vinatex.vnt_hr.doctype.vnt_courier_registration.vnt_courier_registration.get_employee_name",
@@ -30,6 +31,15 @@ frappe.ui.form.on("VNT Courier Registration", {
         }
 	},
 });
+
+function ensure_initial_item_row(frm) {
+    if ((frm.doc.items || []).length) {
+        return;
+    }
+
+    frm.add_child("items");
+    frm.refresh_field("items");
+}
 
 
 frappe.ui.form.on("VNT Courier Registration Item", {
