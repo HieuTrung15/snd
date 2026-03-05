@@ -239,7 +239,19 @@ def _get_monthly_payroll_name(slip: VNTSalarySlip) -> Optional[str]:
 	return rows[0]["name"] if rows else None
 
 
-def _render_salary_slip_html(slip: VNTSalarySlip) -> str:
+def _get_employee_display_info(slip: VNTSalarySlip) -> Dict[str, str]:
+	employee_name = (slip.get("employee_name") or "").strip()
+	designation = (slip.get("designation") or "").strip()
+	if slip.employee and (not employee_name or not designation):
+		employee_info = frappe.db.get_value("Employee", slip.employee, ["employee_name", "designation"], as_dict=True) or {}
+		if not employee_name:
+			employee_name = (employee_info.get("employee_name") or "").strip()
+		if not designation:
+			designation = (employee_info.get("designation") or "").strip()
+	return {"employee_name": employee_name, "designation": designation}
+
+
+def render_salary_slip_html(slip: VNTSalarySlip, payroll_name: Optional[str] = None) -> str:
 	def fmt_number(value, decimals=0, blank_for_zero=False):
 		if value is None:
 			return ""
@@ -247,7 +259,7 @@ def _render_salary_slip_html(slip: VNTSalarySlip) -> str:
 		if blank_for_zero and abs(number) < 0.0001:
 			return ""
 		if decimals:
-			formatted = f"{number:,.{decimals}f}".rstrip("0").rstrip(".")
+			formatted = f"{number:,.{decimals}f}"
 		else:
 			formatted = f"{int(round(number)):,}"
 		return formatted
@@ -263,8 +275,18 @@ def _render_salary_slip_html(slip: VNTSalarySlip) -> str:
 			return ""
 		return formatted
 
-	def section_row(title):
-		return f'<tr class="section-row"><td colspan="4">{escape_html(title)}</td></tr>'
+	def section_row(idx, title, value="", row_class="section-row"):
+		idx_html = escape_html(idx) if idx else ""
+		title_html = escape_html(title)
+		value_html = escape_html(value) if value else ""
+		return (
+			f'<tr class="{row_class}">'
+			f'<td class="index">{idx_html}</td>'
+			f'<td class="label">{title_html}</td>'
+			f'<td class="colon">:</td>'
+			f'<td class="value">{value_html}</td>'
+			f"</tr>"
+		)
 
 	def value_row(idx, label, value, indent=False):
 		label_html = escape_html(label)
@@ -284,40 +306,48 @@ def _render_salary_slip_html(slip: VNTSalarySlip) -> str:
 	if thue_nam_truoc in (None, ""):
 		thue_nam_truoc = flt(slip.get("truy_thu")) - flt(slip.get("duoc_hoan_lai"))
 
+	display_info = _get_employee_display_info(slip)
+	employee_name = display_info.get("employee_name")
+	designation = display_info.get("designation")
+
+	month_str = str(slip.month or "").zfill(2)
+	year_str = str(slip.year or "")
+
 	rows = [
-		section_row("I. THÔNG TIN CHUNG"),
+		section_row("A", f"LUONG THANG {month_str}/{year_str}", row_class="section-row period-row"),
+		section_row("I", "THÔNG TIN CHUNG"),
 		value_row("1", "Số ngày công", fmt_number(slip.so_ngay_cong, 1)),
-		value_row("2", "Số ngày nghỉ tính phép", fmt_number(slip.so_ngay_nghi_tinh_phep, 0)),
+		value_row("2", "Số ngày nghỉ tính phép", fmt_number(slip.so_ngay_nghi_tinh_phep, 1)),
 		value_row(
 			"3",
 			"Số ngày nghỉ việc riêng có hưởng lương",
-			fmt_number(slip.so_ngay_nghi_viec_rieng_co_huong_luong, 0),
+			fmt_number(slip.so_ngay_nghi_viec_rieng_co_huong_luong, 1),
 		),
 		value_row(
 			"4",
 			"Số ngày nghỉ không lương/ Nghỉ ốm/ TS nam",
-			fmt_number(slip.so_ngay_nghi_khong_luong, 0, blank_for_zero=True),
+			fmt_number(slip.so_ngay_nghi_khong_luong, 1),
 		),
-		value_row("5", "Hệ số lương cơ bản", fmt_number(slip.he_so_luong_co_ban, 2, blank_for_zero=True)),
+		value_row("5", "Hệ số lương cơ bản", fmt_number(slip.he_so_luong_co_ban, 1)),
 		value_row("6", "Hệ số phụ cấp", ""),
-		value_row("", "a. Trách nhiệm Đảng", fmt_number(slip.hs_pc_dang, 2, blank_for_zero=True), indent=True),
+		value_row("", "a. Trách nhiệm Đảng", fmt_number(slip.hs_pc_dang, 1), indent=True),
 		value_row(
 			"",
 			"b. Kiêm nhiệm Đoàn thể",
-			fmt_number(slip.hs_pc_kiem_nhiem, 2, blank_for_zero=True),
+			fmt_number(slip.hs_pc_kiem_nhiem, 1),
 			indent=True,
 		),
 		value_row("7", "Tiền lương tính BHXH", ""),
 		value_row("", "a. Lương cơ bản", fmt_currency(slip.luong_co_ban), indent=True),
-		value_row("", "b. PC trách nhiệm Đảng", fmt_currency(slip.pc_dang), indent=True),
-		value_row("", "c. PC kiêm nhiệm Đoàn thể", fmt_currency(slip.pc_kiem_nhiem), indent=True),
-		value_row("8", "Số người phụ thuộc", fmt_number(slip.so_nguoi_phu_thuoc, 0, blank_for_zero=True)),
-		section_row("II. TỔNG THU NHẬP"),
-		value_row("1", "Hệ số lương CBCV", fmt_number(slip.he_so_luong_cbcv, 2, blank_for_zero=True)),
+		value_row("", "a. PC trách nhiệm Đảng", fmt_currency(slip.pc_dang), indent=True),
+		value_row("", "b. PC kiêm nhiệm Đoàn thể", fmt_currency(slip.pc_kiem_nhiem), indent=True),
+		value_row("8", "Số người phụ thuộc", fmt_number(slip.so_nguoi_phu_thuoc, 1)),
+		section_row("II", "TỔNG THU NHẬP", fmt_currency(slip.tong_thu_nhap, blank_for_zero=False), row_class="section-row total-row"),
+		value_row("1", "Hệ số lương CBCV", fmt_number(slip.he_so_luong_cbcv, 1)),
 		value_row("2", "Lương CBCV", fmt_currency(slip.luong_cbcv)),
 		value_row("3", "Phụ cấp", ""),
 		value_row("", "a. Trách nhiệm Đảng", fmt_currency(slip.pc_dang2), indent=True),
-		value_row("", "b. Kiêm nhiệm Đoàn thể", fmt_currency(slip.pc_kiem_nhiem2), indent=True),
+		value_row("", "c. Kiêm nhiệm Đoàn thể", fmt_currency(slip.pc_kiem_nhiem2), indent=True),
 		value_row("4", "Thù lao (HĐQT, Ban KS)", fmt_currency(slip.get("thu_lao_hdqt"))),
 		value_row("5", "Tiền lương CQĐH, KTT", fmt_currency(slip.get("tien_luong_hqcv_cu"))),
 		value_row("6", "Lương ngày phép", fmt_currency(slip.luong_ngay_phep)),
@@ -329,55 +359,65 @@ def _render_salary_slip_html(slip: VNTSalarySlip) -> str:
 		value_row("8", "Truy lĩnh", fmt_currency(slip.truy_linh, blank_for_zero=False)),
 		value_row("9", "Tiền ăn ca", fmt_currency(slip.tien_an_ca)),
 		value_row("10", "Khoản công tác phí", fmt_currency(slip.cong_tac_phi)),
-		value_row("", "Tổng thu nhập", fmt_currency(slip.tong_thu_nhap, blank_for_zero=False), indent=True),
-		section_row("III. CÁC KHOẢN TRỪ VÀO LƯƠNG"),
+		section_row("III", "CÁC KHOẢN TRỪ VÀO LƯƠNG"),
 		value_row("1", "BHXH, BHYT, BHTN (10,5%)", fmt_currency(slip.xh_yt_tn, blank_for_zero=False)),
-		value_row("2", "Công đoàn phí (1%)", fmt_currency(slip.cong_doan, blank_for_zero=False)),
-		value_row("3", "Thuế TNCN tạm thu", fmt_currency(slip.thue_tncn, blank_for_zero=False)),
-		value_row(
-			"4",
-			"Thuế TNCN năm 2024",
-			fmt_currency(thue_nam_truoc, blank_for_zero=True),
-		),
+		value_row("2", "Công đoàn phí (0,5%)", fmt_currency(slip.cong_doan, blank_for_zero=False)),
+		value_row("3", "Đảng phí", fmt_currency(slip.get("dang_phi"), blank_for_zero=False)),
+		value_row("4", "Thuế TNCN tạm thu", fmt_currency(slip.thue_tncn, blank_for_zero=False)),
 	]
 
-	if flt(slip.get("khac")):
-		rows.append(value_row("5", "Các khoản khác", fmt_currency(slip.get("khac"), blank_for_zero=False)))
+	if abs(flt(thue_nam_truoc)) > 0.0001:
+		rows.append(value_row("5", "Thuế TNCN năm trước", fmt_currency(thue_nam_truoc, blank_for_zero=False)))
 
-	rows.extend(
-		[
-			section_row("IV. THỰC LĨNH (II - III)"),
-			value_row("", "Thực lĩnh", fmt_currency(slip.thuc_linh, blank_for_zero=False)),
-		]
-	)
-
-	payroll_name = _get_monthly_payroll_name(slip) or slip.name
-	header = (
-		f'<div class="salary-slip-header">'
-		f'<div><strong>Nhân sự:</strong> {escape_html(slip.employee_name or "")} ({escape_html(slip.employee or "")})</div>'
-		f'<div><strong>Kỳ lương:</strong> Tháng {escape_html(slip.month or "")} / {escape_html(str(slip.year or ""))}</div>'
-		f'<div><strong>Bảng lương:</strong> {escape_html(payroll_name)}</div>'
-		f"</div>"
-	)
+	rows.append(value_row("6", "Khác (...)", fmt_currency(slip.get("khac"), blank_for_zero=False)))
+	rows.append(section_row("IV", "THỰC LĨNH (II-III)", fmt_currency(slip.thuc_linh, blank_for_zero=False), row_class="section-row total-row"))
 
 	style = (
 		"<style>"
-		".salary-slip-wrapper{font-size:12px;font-family:var(--font-family,'Inter','Helvetica','Arial',sans-serif);}"  # noqa: E501
-		".salary-slip-header{margin-bottom:8px;}"
-		".salary-slip-header div{margin-bottom:2px;}"
+		".salary-slip-wrapper{font-size:16px;line-height:1.2;font-family:'Times New Roman',Times,serif;color:#111;}"  # noqa: E501
+		".salary-slip-company{font-size:17px;font-weight:700;}"
+		".salary-slip-company + .salary-slip-company{margin-top:2px;}"
+		".salary-slip-title{margin:18px 0 16px;text-align:center;font-size:34px;font-weight:700;}"
+		".salary-slip-meta{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}"
+		".salary-slip-meta-left{font-size:16px;}"
+		".salary-slip-meta-row{margin-bottom:2px;display:flex;align-items:flex-start;}"
+		".salary-slip-meta-label{display:inline-block;width:110px;font-weight:700;}"
+		".salary-slip-meta-colon{display:inline-block;width:14px;text-align:center;font-weight:700;}"
+		".salary-slip-meta-name{color:#c50000;font-style:italic;font-weight:700;}"
+		".salary-slip-meta-designation{font-style:italic;font-weight:700;}"
+		".salary-slip-meta-unit{font-size:16px;font-weight:700;margin-top:24px;}"
 		".salary-slip-table{width:100%;border-collapse:collapse;}"
-		".salary-slip-table td{border:1px solid #444;padding:4px 6px;vertical-align:top;}"
-		".salary-slip-table .section-row td{background:#f4f4f4;font-weight:600;text-transform:uppercase;text-align:left;}"
-		".salary-slip-table .index{width:42px;text-align:center;font-weight:600;}"
-		".salary-slip-table .label{width:55%;}"
-		".salary-slip-table .label.indent{padding-left:18px;}"
-		".salary-slip-table .colon{width:18px;text-align:center;font-weight:600;}"
-		".salary-slip-table .value{width:25%;text-align:right;font-weight:600;}"
+		".salary-slip-table td{border:1px solid #2e2e2e;padding:3px 6px;vertical-align:middle;font-size:16px;}"
+		".salary-slip-table .section-row td{background:#c8d1e2;font-weight:700;text-transform:uppercase;}"
+		".salary-slip-table .section-row.total-row td{font-weight:800;}"
+		".salary-slip-table .period-row td{color:#c50000;font-weight:800;}"
+		".salary-slip-table .index{width:42px;text-align:center;font-weight:700;}"
+		".salary-slip-table .label{width:58%;}"
+		".salary-slip-table .label.indent{padding-left:24px;}"
+		".salary-slip-table .colon{width:18px;text-align:center;font-weight:700;}"
+		".salary-slip-table .value{width:28%;text-align:right;font-weight:700;}"
 		"</style>"
+	)
+
+	header = (
+		f'<div class="salary-slip-company">TẬP ĐOÀN DỆT MAY VIỆT NAM</div>'
+		f'<div class="salary-slip-company">BAN QUẢN LÝ NNL</div>'
+		f'<div class="salary-slip-title">BẢNG LƯƠNG CÁ NHÂN</div>'
+		f'<div class="salary-slip-meta">'
+		f'<div class="salary-slip-meta-left">'
+		f'<div class="salary-slip-meta-row"><span class="salary-slip-meta-label">Họ và tên</span><span class="salary-slip-meta-colon">:</span><span class="salary-slip-meta-name">{escape_html(employee_name or slip.employee or "")}</span></div>'  # noqa: E501
+		f'<div class="salary-slip-meta-row"><span class="salary-slip-meta-label">Chức vụ</span><span class="salary-slip-meta-colon">:</span><span class="salary-slip-meta-designation">{escape_html(designation or "")}</span></div>'  # noqa: E501
+		f"</div>"
+		f'<div class="salary-slip-meta-unit">Đơn vị: đồng</div>'
+		f"</div>"
 	)
 
 	table_html = "".join(rows)
 	return f'<div class="salary-slip-wrapper">{style}{header}<table class="salary-slip-table">{table_html}</table></div>'
+
+
+def _render_salary_slip_html(slip: VNTSalarySlip) -> str:
+	return render_salary_slip_html(slip)
 
 
 @frappe.whitelist()

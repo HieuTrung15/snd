@@ -51,7 +51,7 @@ const HR_SALARY_USERS = new Set([
 
 function toggle_salary_tables_visibility(frm) {
   const can_view = can_view_salary_data(frm);
-  ["custom_section_break_bywfl", "custom_emp_salary_history", "custom_section_break_0co8w", "custom_phu_cap", "custom_section_break_8zxr5"].forEach((fieldname) => {
+  ["custom_section_break_bywfl", "custom_emp_salary_history", "custom_section_break_0co8w", "custom_phu_cap", "custom_section_break_8zxr5", "custom_basic_salary_coefficient", "custom_allowance_coefficient_2", "custom_allowance_coefficient_1", "custom_muc_luong_pc_dang"].forEach((fieldname) => {
     if (frm.fields_dict[fieldname]) {
       frm.toggle_display(fieldname, can_view);
     }
