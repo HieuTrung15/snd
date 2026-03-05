@@ -822,44 +822,48 @@ def _build_bang_tong_workbook(doc):
         {"title": "PC Đảng", "field": "pc_dang1", "group": "Lương cơ bản", "width": 12, "sum": True, "format": "currency"},
         {"title": "PC kiêm nhiệm", "field": "pc_kiem_nhiem1", "group": "Lương cơ bản", "width": 14, "sum": True, "format": "currency"},
         {"title": "Lương tính đóng BHXH", "field": "tong_luong_cb", "group": "Lương cơ bản", "width": 18, "sum": True, "format": "currency"},
-        {"title": "Lương tính đóng CĐP", "field": "tong_luong_cb", "group": "Lương phép", "width": 18, "sum": True, "format": "currency"},
-        {
-            "title": "Số phép",
-            "field": "sophep",
-            "compute": "sophep_with_vr",
-            "group": "Lương phép",
-            "width": 10,
-            "sum": True,
-            "format": "int",
-        },
+        {"title": "Lương tính đóng CĐP", "field": "tong_luong_cb", "group": "Lương cơ bản", "width": 18, "sum": True, "format": "currency"},
+        {"title": "Số phép", "field": "sophep", "compute": "sophep_with_vr", "group": "Lương phép", "width": 10, "sum": True, "format": "int"},
         {"title": "Tiền", "field": "luong_nghiphep_vr", "group": "Lương phép", "width": 12, "sum": True, "format": "currency"},
-        {"title": "Nghỉ không lương/ Nghỉ TS Nam", "field": "nghi_kluong_bhxh", "width": 18, "sum": True, "format": "int"},
+        {"title": "Nghỉ việc riêng có hưởng lương", "field": "so_ngay_nghi_vr", "width": 18, "sum": True, "format": "int"},
+        {"title": "Nghỉ TS Nam", "field": "nghi_kluong_bhxh", "width": 18, "sum": True, "format": "int"},
         {"title": "Ngày công", "field": "ngay_cong", "width": 12, "sum": True, "format": "decimal1"},
         {"title": "Hệ số CBCV", "field": "he_so_cbnv", "group": "Lương CBCV", "width": 12, "sum": False, "format": "decimal2"},
         {"title": "Tiền lương CBCV", "field": "tien_luong_hqcv", "group": "Lương CBCV", "width": 16, "sum": True, "format": "currency"},
         {"title": "PC Đảng", "field": "pc_dang2", "group": "Lương CBCV", "width": 12, "sum": True, "format": "currency"},
         {"title": "PC kiêm nhiệm", "field": "pc_kiem_nhiem2", "group": "Lương CBCV", "width": 14, "sum": True, "format": "currency"},
-        {"title": "Tiền lương CQĐH, KTT", "field": "tien_luong_hqcv_cu", "fallback_field": "tien_luong_hqcv", "width": 16, "sum": True, "format": "currency"},
+        {"title": "Tiền lương CQĐH", "field": "tien_luong_hqcv_cu2", "width": 16, "sum": True, "format": "currency"},
         {"title": "Thù lao HĐQT, BKS", "field": "thu_lao_hdqt", "width": 16, "sum": True, "format": "currency"},
         {"title": "Tiền ăn ca", "field": "tien_an", "width": 12, "sum": True, "format": "currency"},
         {"title": "Tiền khoán công tác phí", "field": "tien_khoan_ct", "width": 18, "sum": True, "format": "currency"},
         {"title": "Truy lĩnh", "field": "truylinh", "width": 12, "sum": True, "format": "currency"},
         {"title": "Tổng thu nhập", "field": "tong_thu_nhap", "width": 16, "sum": True, "format": "currency"},
-        {"title": "Bảo hiểm (XH, YT, TN)", "field": "xh_yt_tn", "group": "Các khoản khấu trừ lương", "width": 18, "sum": True, "format": "currency"},
+        {"title": "Thu nhập chịu thuế", "field": "tong_tn_chiu_thue", "fallback_field": "thu_nhap_tinh_thue", "width": 16, "sum": True, "format": "currency"},
+        {"title": "BHXH 8%", "field": "xh_yt_tn", "group": "BHXH, BHYT, BHTN", "width": 16, "sum": True, "format": "currency"},
+        {"title": "BHYT 1.5%", "field": "tru_bhyt", "group": "BHXH, BHYT, BHTN", "width": 14, "sum": True, "format": "currency"},
+        {"title": "BHTN 1%", "field": "tru_bhtn", "group": "BHXH, BHYT, BHTN", "width": 14, "sum": True, "format": "currency"},
         {"title": "CĐP 0.5%", "field": "doan_phi_cd", "group": "Các khoản khấu trừ lương", "width": 12, "sum": True, "format": "currency"},
         {"title": "Đảng phí 1%", "field": "dang_phi", "group": "Các khoản khấu trừ lương", "width": 12, "sum": True, "format": "currency"},
-        {"title": "Thuế TNCN tạm thu", "field": "tncn_tam_thu", "group": "Các khoản khấu trừ lương", "width": 16, "sum": True, "format": "currency"},
-        {"title": "Truy thu thuế TNCN 2024", "field": "truy_thu", "group": "Các khoản khấu trừ lương", "width": 18, "sum": True, "format": "currency"},
-        {"title": "Thu nhập thực lĩnh", "field": "thuc_linh", "width": 18, "sum": True, "format": "currency"},
-        {"title": "Ghi chú", "field": "note", "width": 18, "sum": False, "format": "text"},
+        {"title": "Thu nhập tính thuế", "field": "thu_nhap_tinh_thue", "group": "Thuế TNCN", "width": 16, "sum": True, "format": "currency"},
+        {"title": "Thuế TNCN tạm thu", "field": "tncn_tam_thu", "group": "Thuế TNCN", "width": 16, "sum": True, "format": "currency"},
+        {"title": "Truy thu thuế TNCN", "field": "truy_thu", "group": "Thuế TNCN", "width": 18, "sum": True, "format": "currency"},
+        {"title": "Khác", "field": "khac", "width": 12, "sum": True, "format": "currency"},
+        {"title": "Thu nhập thực lĩnh", "field": "thuc_linh", "width": 16, "sum": True, "format": "currency"},
+        {"title": "Ghi chú", "field": "note", "width": 18, "format": "text"},
     ]
 
-    group_spans = {
-        "Lương cơ bản": (3, 6),
-        "Lương phép": (7, 9),
-        "Lương CBCV": (12, 15),
-        "Các khoản khấu trừ lương": (22, 26),
-    }
+    # Tính động vị trí cột theo danh sách `columns` để khi đổi `group`
+    # ở từng cột thì header nhóm trong file Excel tự cập nhật theo.
+    group_spans = {}
+    for idx, col in enumerate(columns, start=1):
+        group_name = col.get("group")
+        if not group_name:
+            continue
+
+        if group_name not in group_spans:
+            group_spans[group_name] = [idx, idx]
+        else:
+            group_spans[group_name][1] = idx
 
     header_fill = PatternFill("solid", fgColor="D9EAD3")
     total_fill = PatternFill("solid", fgColor="E2EFDA")
