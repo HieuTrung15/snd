@@ -33,6 +33,7 @@
    "fetch_from": "supplier.supplier_name",
    "fieldname": "supplier_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "in_standard_filter": 1,
    "label": "T\u00ean DN v\u1eadn chuy\u1ec3n"
   },
@@ -58,6 +59,7 @@
   },
   {
    "columns": 2,
+   "fetch_from": "supplier.supplier_details",
    "fieldname": "addr",
    "fieldtype": "Small Text",
    "in_list_view": 1,
@@ -68,7 +70,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-30 13:51:52.532300",
+ "modified": "2026-03-05 08:59:42.497850",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Courier Registration Item",
