@@ -25,7 +25,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "M\u00e3 DN v\u1eadn chuy\u1ec3n",
+   "label": "M\u00e3 DN",
    "link_filters": "[[\"Supplier\",\"is_transporter\",\"=\",1]]",
    "options": "Supplier"
   },
@@ -70,7 +70,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-03-05 08:59:42.497850",
+ "modified": "2026-03-05 09:22:48.850459",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Courier Registration Item",
