@@ -1,6 +1,6 @@
 (() => {
 	const DEFAULT_SALUTATION = "anh/chị";
-	let genderSalutationPromise;
+	let userProfilePromise;
 
 	const getUserFullName = () => {
 		const frappeObj = window?.frappe;
@@ -25,41 +25,62 @@
 		return DEFAULT_SALUTATION;
 	};
 
-	const getUserGender = () => {
-		if (genderSalutationPromise) return genderSalutationPromise;
+	const normalizeDepartmentName = (department) => {
+		const raw = (department || "").toString().trim();
+		if (!raw) return "";
+
+		// Remove trailing company suffix, e.g. "Ban CNTT ... - VGT" -> "Ban CNTT ..."
+		return raw.replace(/\s-\s[^-]+$/, "").trim();
+	};
+
+	const getCurrentUserProfile = () => {
+		if (userProfilePromise) return userProfilePromise;
 
 		const frappeObj = window?.frappe;
-		if (!frappeObj) return Promise.resolve(DEFAULT_SALUTATION);
+		if (!frappeObj) {
+			return Promise.resolve({
+				gender: DEFAULT_SALUTATION,
+				designation: "",
+				department: "",
+			});
+		}
 
 		const currentUser = frappeObj.session?.user;
 		const info =
 			currentUser && (frappeObj.boot?.user_info?.[currentUser] || frappeObj.boot?.user);
 
-		// Try boot info first to avoid an API call if gender is already available
-		if (info?.gender) {
-			genderSalutationPromise = Promise.resolve(mapGenderToSalutation(info.gender));
-			return genderSalutationPromise;
-		}
-
-		genderSalutationPromise = new Promise((resolve) => {
+		userProfilePromise = new Promise((resolve) => {
 			frappeObj.call({
 				method: "vinatex.api.user.get_current_user_gender",
-				callback: (r) => resolve(r?.message?.gender),
-				error: () => resolve(null),
+				callback: (r) => resolve(r?.message || {}),
+				error: () => resolve({}),
 			});
 		})
-			.then((gender) => mapGenderToSalutation(gender))
-			.catch(() => DEFAULT_SALUTATION);
+			.then((profile) => ({
+				gender: mapGenderToSalutation(profile?.gender || info?.gender),
+				designation: (profile?.designation || "").toString().trim(),
+				department: normalizeDepartmentName(profile?.department),
+			}))
+			.catch(() => ({
+				gender: mapGenderToSalutation(info?.gender),
+				designation: "",
+				department: "",
+			}));
 
-		return genderSalutationPromise;
+		return userProfilePromise;
 	};
 
 	const TITLE = "TẬP ĐOÀN DỆT MAY VIỆT NAM";
 	const getSubtitleText = async () => {
 		const name = getUserFullName();
 		if (!name) return "";
-		const gender = await getUserGender();
-		return `Xin chào ${gender} ${name}`;
+		const profile = await getCurrentUserProfile();
+		const extraInfo = [profile.designation, profile.department]
+			.filter(Boolean)
+			.join(" - ");
+		return extraInfo
+			? `Xin chào ${profile.gender} ${name} (${extraInfo})`
+			: `Xin chào ${profile.gender} ${name}`;
 	};
 	const HOME_SIDE_LINES = [
 		"",
