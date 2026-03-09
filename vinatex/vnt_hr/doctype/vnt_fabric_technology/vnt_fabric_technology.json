@@ -10,7 +10,6 @@
   "date",
   "item",
   "column_break_fxko",
-  "item_code",
   "item_coats",
   "default",
   "section_break_qsvt",
@@ -61,14 +60,6 @@
   {
    "fieldname": "column_break_fxko",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "item_code",
-   "fieldtype": "Link",
-   "label": "M\u00e3 v\u1ea3i ho\u00e0n t\u1ea5t",
-   "link_filters": "[[\"Item\",\"item_group\",\"=\",\"V\u1ea3i ho\u00e0n t\u1ea5t\"]]",
-   "options": "Item",
-   "reqd": 1
   },
   {
    "fieldname": "item_coats",
@@ -218,7 +209,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-24 13:13:59.334278",
+ "modified": "2026-03-09 09:02:34.183523",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Fabric Technology",
@@ -250,6 +241,7 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
+ "search_fields": "item, item_coats",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
