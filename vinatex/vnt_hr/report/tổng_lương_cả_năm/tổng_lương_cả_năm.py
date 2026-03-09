@@ -265,7 +265,7 @@ def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, mo
 	elif (bhxh_flag == "Đóng BHXH, đóng ĐPCĐ") and (not type_now_excluded) and (total_days_for_bhxh >= 14 or allow_override_bhxh):
 		tru_bhxh = tong_luong_cb * 0.08
 		tru_bhyt = tong_luong_cb * 0.015
-		tru_bhtn = tong_luong_cb * 0.01
+		tru_bhtn = gross_base * 0.01
 	else:
 		tru_bhxh = tru_bhyt = tru_bhtn = 0.0
 	xh_yt_tn = tru_bhxh + tru_bhyt + tru_bhtn
@@ -282,7 +282,7 @@ def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, mo
 	tien_luong_hqcv_cu = 0
 	if standard_days:
 		tien_luong_hqcv = (muc_luong_theo_hqcv / standard_days) * current_working_days
-		if previous_working_days > 0 and previous_salary_coefficient is not None:
+		if previous_working_days > 0 and previous_salary_amount is not None:
 			tien_luong_hqcv_cu = (muc_luong_theo_hqcv_cu / standard_days) * previous_working_days
 
 	# Tiền ăn ca
@@ -311,7 +311,7 @@ def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, mo
 
 	tong_tn_chiu_thue = tong_thu_nhap - tien_an - tien_khoan_ct - tien_gui_xe
 
-	dang_phi = tong_tn_chiu_thue * 0.01 if dang_vien == "Chính thức" else 0
+	dang_phi = tong_luong_cb * 0.01 if dang_vien == "Chính thức" else 0
 
 	# Thu nhập tính thuế
 	formal_contracts = {
@@ -355,9 +355,13 @@ def _calculate_net_from_payload(employee_ctx: dict, payload: dict, year: int, mo
 	brackets = sorted(brackets, key=lambda b: b["from"])
 
 	tncn_tam_thu = 0.0
-	if thue_tam_trich:
-		base_for_flat_tax = tong_tn_chiu_thue or tong_thu_nhap
-		tncn_tam_thu = _js_round(base_for_flat_tax * 0.1)
+	apply_flat_tax_10 = thue_tam_trich or current_contract_type in formal_contracts
+	if apply_flat_tax_10:
+		if tong_tn_chiu_thue > 2_000_000:
+			base_for_flat_tax = tong_tn_chiu_thue or tong_thu_nhap
+			tncn_tam_thu = _js_round(base_for_flat_tax * 0.1)
+		else:
+			tncn_tam_thu = 0.0
 	else:
 		total_tax = 0.0
 		for b in brackets:
