@@ -5,19 +5,20 @@
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
-  "field_order": [
-   "employee",
-   "designation",
-   "allowance_type",
-   "he_so",
-   "amount",
-   "so_thang",
-   "tong",
-   "thue_tncn",
-   "thuc_linh",
-   "salary_slip",
-   "salary_slip_item"
-  ],
+ "field_order": [
+  "employee",
+  "designation",
+  "allowance_type",
+  "he_so",
+  "column_break_nmha",
+  "amount",
+  "so_thang",
+  "tong",
+  "thue_tncn",
+  "thuc_linh",
+  "salary_slip",
+  "salary_slip_item"
+ ],
  "fields": [
   {
    "fieldname": "employee",
@@ -98,13 +99,17 @@
    "label": "Salary Slip Item",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_nmha",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-18 14:48:34.817130",
+ "modified": "2026-03-11 15:59:12.284199",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Recurring Extra Benefit Item",
