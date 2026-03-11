@@ -11,6 +11,7 @@
   "html_editer",
   "th\u00f4ng_tin_chung_section",
   "type",
+  "vnt_type",
   "department",
   "phan_loai",
   "type_doc",
@@ -21,6 +22,8 @@
   "employee",
   "naming_series",
   "lead_depart",
+  "lead_department",
+  "short_name_depart",
   "column_break_fdwp",
   "document_date",
   "nguoi_ky",
@@ -29,9 +32,10 @@
   "short_text_department",
   "noi_nhan",
   "ds_phong_ban_noibo",
-  "hdqt_opinion",
+  "scic_opinion",
   "column_break_frgm",
   "reference_number",
+  "text_number",
   "summary",
   "section_break_mugf",
   "attach",
@@ -41,50 +45,13 @@
   "item2",
   "section_break_fsrf",
   "items",
+  "th\u00e0nh_vi\u00ean_h\u0111qt_section",
+  "items6",
+  "summary_opinion",
+  "t\u1ed5ng_h\u1ee3p_\u00fd_ki\u1ebfn_l\u1ea7n_2_section",
+  "items7",
   "danh_s\u00e1ch_nh\u00e2n_vi\u00ean_section",
   "items4",
-  "dfsdsdsfg",
-  "thanh_vien_1",
-  "deadline1",
-  "y_kien_1",
-  "column_break_dhbv",
-  "y_kien_khac_1",
-  "section_break_mva3",
-  "thanh_vien_2",
-  "deadline2",
-  "y_kien_2",
-  "column_break_jfol",
-  "y_kien_khac_2",
-  "th\u00e0nh_vi\u00ean_h\u1ed9i_\u0111\u1ed3ng_qu\u1ea3n_tr\u1ecb_section",
-  "thanh_vien_3",
-  "deadline3",
-  "y_kien_3",
-  "column_break_yedw",
-  "y_kien_khac_3",
-  "section4",
-  "thanh_vien_4",
-  "deadline4",
-  "y_kien_4",
-  "column_break_idxq",
-  "y_kien_khac_4",
-  "5",
-  "thanh_vien_5",
-  "deadline5",
-  "y_kien_5",
-  "column_break_adfx",
-  "y_kien_khac_5",
-  "6",
-  "thanh_vien_6",
-  "deadline6",
-  "y_kien_6",
-  "column_break_tqja",
-  "y_kien_khac_6",
-  "7",
-  "thanh_vien_7",
-  "deadline7",
-  "y_kien_7",
-  "column_break_rona",
-  "y_kien_khac_7",
   "th\u00f4ng_tin_ng\u01b0\u1eddi_x\u1eed_l\u00fd_section",
   "y_kien_ld_td",
   "column_break_cjki",
@@ -172,27 +139,27 @@
    "reqd": 1
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "received_date",
    "fieldtype": "Date",
    "label": "Ng\u00e0y \u0111\u1ebfn",
-   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\""
+   "mandatory_depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\""
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"\r\n",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"\r\n",
    "fieldname": "sender",
    "fieldtype": "Data",
    "label": "N\u01a1i g\u1eedi",
-   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"\r\n"
+   "mandatory_depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"\r\n"
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" && doc.internal == 0",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "handler",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "label": "L\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n",
    "link_filters": "[[\"Employee\",\"name\",\"in\",[\"VGT00067\",\"VGT00069\",\"VGT00079\",\"VGT00080\",\"VGT00083\"]]]",
-   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" && doc.internal == 0",
+   "mandatory_depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" && doc.internal == 0",
    "no_copy": 1,
    "options": "Employee"
   },
@@ -214,27 +181,27 @@
   {
    "fieldname": "type",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Lo\u1ea1i v\u0103n b\u1ea3n",
    "no_copy": 1,
-   "options": "\nC\u00f4ng v\u0103n \u0111\u1ebfn\nC\u00f4ng v\u0103n \u0111i\nQuy\u1ebft \u0111\u1ecbnh",
-   "reqd": 1
+   "options": "\nC\u00f4ng v\u0103n \u0111\u1ebfn\nC\u00f4ng v\u0103n \u0111i\nQuy\u1ebft \u0111\u1ecbnh\nKh\u00e1c"
   },
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "hidden": 1,
    "label": "Naming Series",
-   "options": "\nCV\u0110I.-.MM..YY.-.####\nCV\u0110EN.-.MM..YY.-.####\nQ\u0110.-.MM..YY.-.####"
+   "options": "\nCV\u0110I.-.YY.-.####\nCV\u0110EN.-.YY.-.####\nQ\u0110.-.YY.-.####"
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "handler_status",
    "fieldtype": "Button",
    "label": "Chuy\u1ec3n x\u1eed l\u00fd",
    "no_copy": 1
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" && doc.internal == 0",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" && doc.internal == 0",
    "fieldname": "handler_transferred_at",
    "fieldtype": "Datetime",
    "hidden": 1,
@@ -248,14 +215,14 @@
    "label": "Th\u00f4ng tin chuy\u1ec3n x\u1eed l\u00fd"
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "y_kien_ld_td",
    "fieldtype": "Small Text",
    "label": "\u00dd ki\u1ebfn L\u00e3nh \u0111\u1ea1o",
    "max_height": "120px"
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "items",
    "fieldtype": "Table",
    "no_copy": 1,
@@ -394,11 +361,11 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" || doc.vnt_type == 'N\u1ed9i b\u1ed9 ban'",
    "fieldname": "deadline",
    "fieldtype": "Date",
    "label": "Th\u1eddi h\u1ea1n",
-   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\""
+   "mandatory_depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\""
   },
   {
    "fieldname": "section_break_bpgl",
@@ -442,21 +409,22 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "deadline_copy",
    "fieldtype": "Date",
+   "hidden": 1,
    "label": "Th\u1eddi h\u1ea1n",
    "read_only": 1
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" && doc.internal == 0",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "section_break_fsrf",
    "fieldtype": "Section Break",
    "label": "L\u00e3nh \u0111\u1ea1o c\u1ea5p trung"
   },
   {
    "default": "0",
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "is_handler_status",
    "fieldtype": "Check",
    "label": "\u0110\u00e3 chuy\u1ec3n x\u1eed l\u00fd",
@@ -469,16 +437,16 @@
    "permlevel": 1
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\" || doc.type == \"Quy\u1ebft \u0111\u1ecbnh\"",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111i\" || doc.vnt_type == \"Quy\u1ebft \u0111\u1ecbnh\"",
    "fieldname": "department",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "label": "Ban g\u1eedi \u0111i",
-   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\" || doc.type == \"Quy\u1ebft \u0111\u1ecbnh\"",
+   "mandatory_depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111i\" || doc.vnt_type == \"Quy\u1ebft \u0111\u1ecbnh\"",
    "options": "Department"
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111i\"",
    "fieldname": "vnt_doc_mng",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
@@ -487,20 +455,20 @@
    "options": "VNT Document Management"
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\" || (doc.type == \"Quy\u1ebft \u0111\u1ecbnh\" && doc.phan_loai == \"B\u00ean ngo\u00e0i\")\r\n",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111i\" || (doc.vnt_type == \"Quy\u1ebft \u0111\u1ecbnh\" && doc.phan_loai == \"B\u00ean ngo\u00e0i\")\r\n",
    "fieldname": "noi_nhan",
    "fieldtype": "Data",
    "label": "N\u01a1i nh\u1eadn",
-   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\" || (doc.type == \"Quy\u1ebft \u0111\u1ecbnh\" && doc.phan_loai == \"B\u00ean ngo\u00e0i\")\r\n"
+   "mandatory_depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111i\" || (doc.vnt_type == \"Quy\u1ebft \u0111\u1ecbnh\" && doc.phan_loai == \"B\u00ean ngo\u00e0i\")\r\n"
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\" || doc.type == \"Quy\u1ebft \u0111\u1ecbnh\"",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111i\" || doc.vnt_type == \"Quy\u1ebft \u0111\u1ecbnh\"",
    "fieldname": "nguoi_ky",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi k\u00fd",
    "link_filters": "[[\"Employee\",\"custom_designation_group\",\"in\",[\"L\u00e3nh \u0111\u1ea1o c\u1ea5p trung\",\"Ng\u01b0\u1eddi qu\u1ea3n l\u00fd\"]]]",
-   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\" || doc.type == \"Quy\u1ebft \u0111\u1ecbnh\"",
+   "mandatory_depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111i\" || doc.vnt_type == \"Quy\u1ebft \u0111\u1ecbnh\"",
    "options": "Employee"
   },
   {
@@ -513,31 +481,31 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111i\"",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111i\"",
    "fieldname": "type_doc",
    "fieldtype": "Select",
    "label": "Lo\u1ea1i",
    "options": "\nTB\nUQ\nBC\nGM\nTM\nTTr"
   },
   {
-   "depends_on": "eval: doc.type == \"Quy\u1ebft \u0111\u1ecbnh\"",
+   "depends_on": "eval: doc.vnt_type == \"Quy\u1ebft \u0111\u1ecbnh\"",
    "fieldname": "phan_loai",
    "fieldtype": "Select",
    "label": "Ph\u00e2n lo\u1ea1i",
-   "mandatory_depends_on": "eval: doc.type == \"Quy\u1ebft \u0111\u1ecbnh\"",
+   "mandatory_depends_on": "eval: doc.vnt_type == \"Quy\u1ebft \u0111\u1ecbnh\"",
    "options": "N\u1ed9i b\u1ed9\nB\u00ean ngo\u00e0i\nC\u1ea3 2"
   },
   {
-   "depends_on": "eval: doc.type == \"Quy\u1ebft \u0111\u1ecbnh\" && (doc.phan_loai == \"N\u1ed9i b\u1ed9\" || doc.phan_loai == \"C\u1ea3 2\")",
+   "depends_on": "eval: doc.vnt_type == \"Quy\u1ebft \u0111\u1ecbnh\" && (doc.phan_loai == \"N\u1ed9i b\u1ed9\" || doc.phan_loai == \"C\u1ea3 2\")",
    "fieldname": "ds_phong_ban_noibo",
    "fieldtype": "Table MultiSelect",
    "label": "N\u01a1i nh\u1eadn",
-   "mandatory_depends_on": "eval: doc.type == \"Quy\u1ebft \u0111\u1ecbnh\" && (doc.phan_loai == \"N\u1ed9i b\u1ed9\" || doc.phan_loai == \"C\u1ea3 2\")",
+   "mandatory_depends_on": "eval: doc.vnt_type == \"Quy\u1ebft \u0111\u1ecbnh\" && (doc.phan_loai == \"N\u1ed9i b\u1ed9\" || doc.phan_loai == \"C\u1ea3 2\")",
    "options": "VNT Department Group Member"
   },
   {
    "collapsible": 1,
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" && doc.internal == 0",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "section_break_tujj",
    "fieldtype": "Section Break",
    "label": "L\u00e3nh \u0111\u1ea1o c\u1ea5p cao"
@@ -549,31 +517,31 @@
   {
    "fieldname": "item2",
    "fieldtype": "Table",
-   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
+   "mandatory_depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "no_copy": 1,
    "options": "VNT Document Management Item2"
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" && doc.internal == 1",
+   "depends_on": "eval: doc.vnt_type == \"N\u1ed9i b\u1ed9 ban\"",
    "fieldname": "lead_depart",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "label": "L\u00e3nh \u0111\u1ea1o ban",
-   "mandatory_depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" && doc.internal == 1",
    "no_copy": 1,
    "options": "Employee"
   },
   {
    "default": "0",
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\"",
    "fieldname": "internal",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "N\u1ed9i b\u1ed9"
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" && doc.internal == 1",
    "fieldname": "danh_s\u00e1ch_nh\u00e2n_vi\u00ean_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Danh s\u00e1ch nh\u00e2n vi\u00ean"
   },
   {
@@ -587,252 +555,16 @@
    "label": "Danh s\u00e1ch \u0111\u00ednh k\u00e8m"
   },
   {
-   "depends_on": "eval: doc.type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" && doc.internal == 1",
+   "depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111\u1ebfn\" && doc.internal == 1",
    "fieldname": "items5",
    "fieldtype": "Table",
    "label": "Danh s\u00e1ch file \u0111\u00ednh k\u00e8m",
    "options": "VNT Document Management Item3"
   },
   {
-   "default": "0",
-   "fieldname": "hdqt_opinion",
-   "fieldtype": "Check",
-   "label": "L\u1ea5y \u00fd ki\u1ebfn H\u0110QT"
-  },
-  {
-   "fieldname": "thanh_vien_1",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "label": "Nh\u00e2n s\u1ef1",
-   "options": "Employee"
-  },
-  {
-   "fieldname": "deadline1",
-   "fieldtype": "Date",
-   "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh"
-  },
-  {
-   "fieldname": "y_kien_1",
-   "fieldtype": "Select",
-   "label": "\u00dd ki\u1ebfn",
-   "options": "\n\u0110\u1ed3ng \u00fd\nKh\u00f4ng \u0111\u1ed3ng \u00fd\nKh\u00f4ng \u00fd ki\u1ebfn"
-  },
-  {
-   "fieldname": "column_break_jfol",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "y_kien_khac_1",
-   "fieldtype": "Small Text",
-   "label": "\u00dd ki\u1ebfn kh\u00e1c"
-  },
-  {
-   "fieldname": "thanh_vien_2",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "label": "Nh\u00e2n s\u1ef1",
-   "options": "Employee"
-  },
-  {
-   "fieldname": "deadline2",
-   "fieldtype": "Date",
-   "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh"
-  },
-  {
-   "fieldname": "y_kien_2",
-   "fieldtype": "Select",
-   "label": "\u00dd ki\u1ebfn",
-   "options": "\n\u0110\u1ed3ng \u00fd\nKh\u00f4ng \u0111\u1ed3ng \u00fd\nKh\u00f4ng \u00fd ki\u1ebfn"
-  },
-  {
-   "fieldname": "y_kien_khac_2",
-   "fieldtype": "Small Text",
-   "label": "\u00dd ki\u1ebfn kh\u00e1c"
-  },
-  {
-   "depends_on": "eval: doc.hdqt_opinion ==1",
-   "fieldname": "th\u00e0nh_vi\u00ean_h\u1ed9i_\u0111\u1ed3ng_qu\u1ea3n_tr\u1ecb_section",
-   "fieldtype": "Section Break",
-   "label": "Th\u00e0nh vi\u00ean H\u1ed9i \u0111\u1ed3ng qu\u1ea3n tr\u1ecb"
-  },
-  {
-   "fieldname": "column_break_dhbv",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval: doc.hdqt_opinion ==1",
-   "fieldname": "dfsdsdsfg",
-   "fieldtype": "Section Break",
-   "label": "Th\u00e0nh vi\u00ean H\u1ed9i \u0111\u1ed3ng qu\u1ea3n tr\u1ecb"
-  },
-  {
-   "depends_on": "eval: doc.hdqt_opinion == 1",
-   "fieldname": "section_break_mva3",
-   "fieldtype": "Section Break",
-   "label": "Th\u00e0nh vi\u00ean H\u1ed9i \u0111\u1ed3ng qu\u1ea3n tr\u1ecb"
-  },
-  {
-   "fieldname": "thanh_vien_3",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "label": "Nh\u00e2n s\u1ef1",
-   "options": "Employee"
-  },
-  {
-   "fieldname": "deadline3",
-   "fieldtype": "Date",
-   "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh"
-  },
-  {
-   "fieldname": "y_kien_3",
-   "fieldtype": "Select",
-   "label": "\u00dd ki\u1ebfn",
-   "options": "\n\u0110\u1ed3ng \u00fd\nKh\u00f4ng \u0111\u1ed3ng \u00fd\nKh\u00f4ng \u00fd ki\u1ebfn"
-  },
-  {
-   "fieldname": "column_break_yedw",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "y_kien_khac_3",
-   "fieldtype": "Small Text",
-   "label": "\u00dd ki\u1ebfn kh\u00e1c"
-  },
-  {
-   "depends_on": "eval: doc.hdqt_opinion ==1",
-   "fieldname": "section4",
-   "fieldtype": "Section Break",
-   "label": "Th\u00e0nh vi\u00ean H\u1ed9i \u0111\u1ed3ng qu\u1ea3n tr\u1ecb"
-  },
-  {
-   "fieldname": "thanh_vien_4",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "label": "Nh\u00e2n s\u1ef1",
-   "options": "Employee"
-  },
-  {
-   "fieldname": "deadline4",
-   "fieldtype": "Date",
-   "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh"
-  },
-  {
-   "fieldname": "y_kien_4",
-   "fieldtype": "Select",
-   "label": "\u00dd ki\u1ebfn",
-   "options": "\n\u0110\u1ed3ng \u00fd\nKh\u00f4ng \u0111\u1ed3ng \u00fd\nKh\u00f4ng \u00fd ki\u1ebfn"
-  },
-  {
-   "fieldname": "column_break_idxq",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "y_kien_khac_4",
-   "fieldtype": "Small Text",
-   "label": "\u00dd ki\u1ebfn kh\u00e1c"
-  },
-  {
-   "depends_on": "eval: doc.hdqt_opinion ==1",
-   "fieldname": "5",
-   "fieldtype": "Section Break",
-   "label": "Th\u00e0nh vi\u00ean H\u1ed9i \u0111\u1ed3ng qu\u1ea3n tr\u1ecb"
-  },
-  {
-   "fieldname": "thanh_vien_5",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "label": "Nh\u00e2n s\u1ef1",
-   "options": "Employee"
-  },
-  {
-   "fieldname": "deadline5",
-   "fieldtype": "Date",
-   "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh"
-  },
-  {
-   "fieldname": "y_kien_5",
-   "fieldtype": "Select",
-   "label": "\u00dd ki\u1ebfn",
-   "options": "\n\u0110\u1ed3ng \u00fd\nKh\u00f4ng \u0111\u1ed3ng \u00fd\nKh\u00f4ng \u00fd ki\u1ebfn"
-  },
-  {
-   "fieldname": "column_break_adfx",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "y_kien_khac_5",
-   "fieldtype": "Small Text",
-   "label": "\u00dd ki\u1ebfn kh\u00e1c"
-  },
-  {
-   "depends_on": "eval: doc.hdqt_opinion ==1",
-   "fieldname": "6",
-   "fieldtype": "Section Break",
-   "label": "Th\u00e0nh vi\u00ean H\u1ed9i \u0111\u1ed3ng qu\u1ea3n tr\u1ecb"
-  },
-  {
-   "fieldname": "thanh_vien_6",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "label": "Nh\u00e2n s\u1ef1",
-   "options": "Employee"
-  },
-  {
-   "depends_on": "eval: doc.hdqt_opinion ==1",
-   "fieldname": "7",
-   "fieldtype": "Section Break",
-   "label": "Th\u00e0nh vi\u00ean H\u1ed9i \u0111\u1ed3ng qu\u1ea3n tr\u1ecb"
-  },
-  {
-   "fieldname": "thanh_vien_7",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "label": "Nh\u00e2n s\u1ef1",
-   "options": "Employee"
-  },
-  {
-   "fieldname": "deadline6",
-   "fieldtype": "Date",
-   "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh"
-  },
-  {
-   "fieldname": "y_kien_6",
-   "fieldtype": "Select",
-   "label": "\u00dd ki\u1ebfn",
-   "options": "\n\u0110\u1ed3ng \u00fd\nKh\u00f4ng \u0111\u1ed3ng \u00fd\nKh\u00f4ng \u00fd ki\u1ebfn"
-  },
-  {
-   "fieldname": "deadline7",
-   "fieldtype": "Date",
-   "label": "Th\u1eddi h\u1ea1n ho\u00e0n th\u00e0nh"
-  },
-  {
-   "fieldname": "y_kien_7",
-   "fieldtype": "Select",
-   "label": "\u00dd ki\u1ebfn",
-   "options": "\n\u0110\u1ed3ng \u00fd\nKh\u00f4ng \u0111\u1ed3ng \u00fd\nKh\u00f4ng \u00fd ki\u1ebfn"
-  },
-  {
-   "fieldname": "column_break_tqja",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "y_kien_khac_6",
-   "fieldtype": "Small Text",
-   "label": "\u00dd ki\u1ebfn kh\u00e1c"
-  },
-  {
-   "fieldname": "column_break_rona",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "y_kien_khac_7",
-   "fieldtype": "Small Text",
-   "label": "\u00dd ki\u1ebfn kh\u00e1c"
-  },
-  {
    "fieldname": "tr\u00ecnh_duy\u1ec7t_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Tr\u00ecnh duy\u1ec7t"
   },
   {
@@ -868,12 +600,77 @@
    "fieldtype": "Select",
    "label": "Tr\u1ea1ng th\u00e1i L\u00e3nh \u0111\u1ea1o T\u1eadp \u0111o\u00e0n",
    "options": "\n\u0110\u1ed3ng \u00fd\nKh\u00f4ng \u0111\u1ed3ng \u00fd\nKh\u00f4ng \u00fd ki\u1ebfn"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.vnt_type == 'N\u1ed9i b\u1ed9 ban'",
+   "fieldname": "scic_opinion",
+   "fieldtype": "Check",
+   "label": "L\u1ea5y \u00fd ki\u1ebfn SCIC"
+  },
+  {
+   "fieldname": "th\u00e0nh_vi\u00ean_h\u0111qt_section",
+   "fieldtype": "Section Break",
+   "label": "\u00dd ki\u1ebfn c\u1ee7a th\u00e0nh vi\u00ean H\u0110QT"
+  },
+  {
+   "fieldname": "items6",
+   "fieldtype": "Table",
+   "options": "VNT Document Management Item6"
+  },
+  {
+   "fieldname": "summary_opinion",
+   "fieldtype": "Data",
+   "label": "T\u1ed5ng h\u1ee3p \u00fd ki\u1ebfn",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.vnt_type == 'N\u1ed9i b\u1ed9 ban'",
+   "fieldname": "text_number",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "S\u1ed1 hi\u1ec7u v\u0103n b\u1ea3n",
+   "options": "VNT Document Naming"
+  },
+  {
+   "depends_on": "eval: doc.scic_opinion == 1",
+   "fieldname": "t\u1ed5ng_h\u1ee3p_\u00fd_ki\u1ebfn_l\u1ea7n_2_section",
+   "fieldtype": "Section Break",
+   "label": "T\u1ed5ng h\u1ee3p \u00fd ki\u1ebfn sau khi l\u1ea5y \u00fd ki\u1ebfn c\u1ee7a SCIC"
+  },
+  {
+   "fieldname": "items7",
+   "fieldtype": "Table",
+   "options": "VNT Document Management Item6"
+  },
+  {
+   "fieldname": "vnt_type",
+   "fieldtype": "Link",
+   "label": "Lo\u1ea1i v\u0103n b\u1ea3n",
+   "options": "VNT Document Type",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval: doc.vnt_type == \"N\u1ed9i b\u1ed9 ban\"",
+   "fetch_from": "lead_depart.department",
+   "fieldname": "lead_department",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fetch_from": "lead_department.custom_short_text_qlvb",
+   "fieldname": "short_name_depart",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Short Name Department"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-27 14:49:56.472400",
+ "modified": "2026-03-10 17:16:42.154973",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
@@ -910,6 +707,19 @@
    "read": 1,
    "report": 1,
    "role": "Employee",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "L\u00e3nh \u0111\u1ea1o t\u1eadp \u0111o\u00e0n",
    "select": 1,
    "share": 1,
    "write": 1

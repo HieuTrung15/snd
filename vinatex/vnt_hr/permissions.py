@@ -112,6 +112,13 @@ def _user_employee(user: str | None) -> str | None:
         return None
 
 
+def _is_tap_doan_leader(user: str | None) -> bool:
+    if not user or user == "Guest":
+        return False
+    roles = {(r or "").strip().lower() for r in frappe.get_roles(user)}
+    return "lãnh đạo tập đoàn" in roles or "lanh dao tap doan" in roles
+
+
 def vnt_document_management_permission_query_conditions(user=None):
     user = user or frappe.session.user
     if not user or user == "Guest":
@@ -119,8 +126,8 @@ def vnt_document_management_permission_query_conditions(user=None):
 
     allow_empty_type = "ifnull(`tabVNT Document Management`.type, '') = ''"
 
-    # Cho Administrator/System Manager view all
-    if user == "Administrator" or "System Manager" in frappe.get_roles(user):
+    # Cho Administrator/System Manager/Lãnh đạo tập đoàn view all
+    if user == "Administrator" or "System Manager" in frappe.get_roles(user) or _is_tap_doan_leader(user):
         return ""
 
     emp = _user_employee(user)
@@ -176,6 +183,13 @@ def vnt_document_management_permission_query_conditions(user=None):
                     OR it.cv_xu_ly = {esc}
                   )
             )
+            OR EXISTS (
+                SELECT 1 FROM `tabVNT Document Management Item6` i6
+                WHERE i6.parent = `tabVNT Document Management`.name
+                  AND i6.parenttype = 'VNT Document Management'
+                  AND i6.parentfield IN ('items6', 'items7')
+                  AND i6.employee = {esc}
+            )
             {outgoing_clause}
         )
     """
@@ -185,7 +199,7 @@ def vnt_document_management_has_permission(doc=None, user=None, ptype=None):
     user = user or frappe.session.user
     if not user or user == "Guest":
         return False
-    if user == "Administrator" or "System Manager" in frappe.get_roles(user):
+    if user == "Administrator" or "System Manager" in frappe.get_roles(user) or _is_tap_doan_leader(user):
         return True
 
     # Khi doc=None (check cấp doctype), cho phép để còn áp dụng query_conditions
@@ -229,6 +243,14 @@ def vnt_document_management_has_permission(doc=None, user=None, ptype=None):
         if getattr(row, "cv_xu_ly", None) == emp:
             return True
 
+    # 2.1) Thành viên HĐQT ở items6/items7
+    for row in getattr(doc, "items6", []) or []:
+        if getattr(row, "employee", None) == emp:
+            return True
+    for row in getattr(doc, "items7", []) or []:
+        if getattr(row, "employee", None) == emp:
+            return True
+
     # 3) Fallback truy vấn khi doc chưa load child
     if frappe.db.exists(
         "VNT Document Management Item2",
@@ -243,6 +265,11 @@ def vnt_document_management_has_permission(doc=None, user=None, ptype=None):
     if frappe.db.exists(
         "VNT Document Management Item",
         {"parent": doc.name, "parenttype": doc.doctype, "nguoi_phoi_hop": emp},
+    ):
+        return True
+    if frappe.db.exists(
+        "VNT Document Management Item6",
+        {"parent": doc.name, "parenttype": doc.doctype, "parentfield": ["in", ["items6", "items7"]], "employee": emp},
     ):
         return True
     return bool(

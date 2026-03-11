@@ -46,6 +46,7 @@ const is_checked = (val) => {
 const is_done = (val) => (val || "").trim() === "Hoàn thành";
 
 const normalize_label = (val) => (val || "").toString().trim().toLowerCase();
+const normalize_department_name = (val) => normalize_label(val).replace(/\s*-\s*/g, "-").replace(/\s+/g, " ");
 
 const get_section_fieldnames = (frm, sectionLabel) => {
   const metaFields = frm?.meta?.fields || [];
@@ -111,51 +112,365 @@ const get_handler_owner = (frm) => {
   return (target || "").trim();
 };
 
-const get_employee_department = async (employee) => {
-  if (!employee) return null;
+// Lấy danh sách thành viên HĐQT theo lead_depart.
+// Điều kiện role + phòng ban của lead được kiểm tra tập trung ở server (employee_in_hdqt).
+const get_hdqt_members_by_lead = async (frm) => {
+  const lead = (frm.doc.lead_depart || "").trim();
+  if (!lead) return [];
+
+  const cached = frm._hdqt_member_cache;
+  if (cached?.lead === lead && Array.isArray(cached.members)) {
+    return cached.members;
+  }
+
   try {
-    const r = await frappe.db.get_value("Employee", employee, "department");
-    return (r?.message?.department || "").trim() || null;
+    const r = await frappe.call({
+      method: "vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.employee_in_hdqt",
+      args: { employee: lead },
+    });
+    const members = Array.isArray(r?.message) ? r.message : [];
+    frm._hdqt_member_cache = { lead, members };
+    return members;
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error(err);
-    return null;
+    frm._hdqt_member_cache = { lead, members: [] };
+    return [];
   }
 };
 
-const get_department_name = async (department) => {
-  if (!department) return null;
-  try {
-    const r = await frappe.db.get_value("Department", department, "department_name");
-    return (r?.message?.department_name || "").trim() || null;
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error(err);
-    return null;
+const HDQT_MAJORITY_COUNT = 4;
+// 2 mã thành viên do lead_depart nhập ý kiến thay ở vòng 1 khi scic_opinion = 1.
+const SCIC_MANUAL_EMPLOYEES = new Set(["VGT00070", "VGT00073"]);
+// Điều kiện hiển thị vnt_type "Nội bộ ban" theo user đăng nhập.
+const VNT_TYPE_NOI_BO_BAN = "Nội bộ ban";
+const LEAVE_APPROVER_L1_ROLE = "Leave Approver L1";
+const LEAD_HDQT_DEPARTMENTS = new Set([normalize_department_name("Văn phòng HĐQT - VGT")]);
+const MEMBER_HDQT_DEPARTMENTS = new Set([
+  normalize_department_name("Hội đồng quản trị - VGT"),
+  normalize_department_name("Hội đồng quản trị"),
+]);
+
+const sync_summary_opinion = (frm) => {
+  const rows = Array.isArray(frm.doc.items6) ? frm.doc.items6 : [];
+  const agreeCount = rows.filter((row) => (row?.opinion || "").trim() === "Đồng ý").length;
+  const disagreeCount = rows.filter((row) => (row?.opinion || "").trim() === "Không đồng ý").length;
+
+  // Chỉ kết luận khi đạt mốc 4/7: 4 "Đồng ý" => "Đồng ý", 4 "Không đồng ý" => "Không đồng ý".
+  let summary = "";
+  if (agreeCount >= HDQT_MAJORITY_COUNT) summary = "Đồng ý";
+  else if (disagreeCount >= HDQT_MAJORITY_COUNT) summary = "Không đồng ý";
+
+  if ((frm.doc.summary_opinion || "") !== summary) {
+    frm.set_value("summary_opinion", summary);
   }
+};
+
+const sync_hdqt_deadline_from_parent = (frm, opts = {}) => {
+  // Khi chọn deadline ở form cha, đồng bộ xuống deadline của items6/items7.
+  // Không khóa field con: user vẫn có thể chỉnh deadline từng dòng sau đó.
+  const parentDeadline = frm.doc.deadline || null;
+  if (!parentDeadline) return;
+  const overwrite = opts.overwrite === true;
+
+  const apply_table = (tableFieldname) => {
+    const rows = Array.isArray(frm.doc[tableFieldname]) ? frm.doc[tableFieldname] : [];
+    let changed = false;
+    rows.forEach((row) => {
+      if (!row) return;
+      // overwrite=false: chỉ fill cho dòng chưa có deadline (vd: dòng mới thêm).
+      if (!overwrite && row.deadline) return;
+      if ((row.deadline || null) === parentDeadline) return;
+      row.deadline = parentDeadline;
+      changed = true;
+    });
+    if (changed) frm.refresh_field(tableFieldname);
+  };
+
+  apply_table("items6");
+  apply_table("items7");
+};
+
+const set_hdqt_members_to_table = (frm, tableFieldname, members = []) => {
+  if (!frm.get_field(tableFieldname)) return;
+  // Chỉ mutate table khi dữ liệu thực sự đổi, tránh tình trạng form luôn "modified after load".
+  const normalize = (val) => ((val === null || val === undefined) ? "" : `${val}`).trim();
+  const buildRowMap = (rows = []) => {
+    const map = new Map();
+    rows.forEach((row) => {
+      const employee = normalize(row?.employee);
+      if (!employee || map.has(employee)) return;
+      map.set(employee, {
+        opinion: normalize(row?.opinion),
+        attach: normalize(row?.attach),
+        deadline: normalize(row?.deadline),
+      });
+    });
+    return map;
+  };
+
+  // Giữ lại opinion/attach theo employee khi rebuild bảng để tránh mất dữ liệu đã nhập.
+  const existingRows = Array.isArray(frm.doc[tableFieldname]) ? frm.doc[tableFieldname] : [];
+  const previousByEmployee = new Map();
+  existingRows.forEach((row) => {
+    const employee = normalize(row?.employee);
+    if (!employee || previousByEmployee.has(employee)) return;
+    previousByEmployee.set(employee, {
+      opinion: normalize(row.opinion),
+      attach: row.attach || null,
+      deadline: normalize(row.deadline),
+    });
+  });
+
+  const targetRows = [];
+  members.forEach((member) => {
+    const employee = normalize(member?.name);
+    if (!employee) return;
+    const previous = previousByEmployee.get(employee);
+    targetRows.push({
+      employee,
+      opinion: previous?.opinion || "",
+      attach: previous?.attach || null,
+      // Giữ deadline đã nhập tay theo employee; nếu là dòng mới thì lấy deadline cha làm mặc định.
+      deadline: previous?.deadline || normalize(frm.doc.deadline),
+    });
+  });
+
+  const currentMap = buildRowMap(existingRows);
+  const targetMap = buildRowMap(targetRows);
+  const sameRows = currentMap.size === targetMap.size
+    && [...targetMap.keys()].every((employee) => {
+      const current = currentMap.get(employee);
+      const target = targetMap.get(employee);
+      return !!current && !!target
+        && current.opinion === target.opinion
+        && current.attach === normalize(target.attach)
+        && current.deadline === normalize(target.deadline);
+    });
+  if (sameRows) {
+    frm.refresh_field(tableFieldname);
+    return;
+  }
+
+  frm.clear_table(tableFieldname);
+  targetRows.forEach((item) => {
+    const row = frm.add_child(tableFieldname);
+    row.employee = item.employee;
+    row.opinion = item.opinion;
+    row.attach = item.attach;
+    row.deadline = item.deadline || null;
+    // Lưu ID Employee để hợp lệ khi save, nhưng ép UI hiển thị tên nhân sự.
+    const member = members.find((m) => normalize(m?.name) === item.employee);
+    if (member?.employee_name) {
+      frappe.utils.add_link_title("Employee", member.name, member.employee_name);
+    }
+  });
+  frm.refresh_field(tableFieldname);
+};
+
+const set_hdqt_members = (frm, members = []) => {
+  set_hdqt_members_to_table(frm, "items6", members);
+  sync_summary_opinion(frm);
+};
+
+const set_scic_hdqt_members = (frm, members = []) => {
+  set_hdqt_members_to_table(frm, "items7", members);
+};
+
+const filter_items6_members_by_scic = (members = [], scicEnabled = false) => {
+  if (!scicEnabled) return members;
+  // scic_opinion = 1: items6 bỏ 2 mã cố định, chỉ còn 5 thành viên.
+  return members.filter((member) => member?.name && !SCIC_MANUAL_EMPLOYEES.has(member.name));
+};
+
+const sync_hdqt_member_tables = async (frm, members = null) => {
+  const hdqtMembers = Array.isArray(members) ? members : await get_hdqt_members_by_lead(frm);
+  const scicEnabled = is_checked(frm.doc.scic_opinion);
+
+  // items6: scic=1 thì còn 5 người, scic=0 thì rollback đủ 7 người.
+  set_hdqt_members(frm, filter_items6_members_by_scic(hdqtMembers, scicEnabled));
+
+  // items7 chỉ dùng cho luồng scic=1.
+  if (scicEnabled) {
+    set_scic_hdqt_members(frm, hdqtMembers);
+  } else {
+    set_scic_hdqt_members(frm, []);
+  }
+};
+
+const can_edit_items6_opinion = (row, currentEmp) => {
+  if (frappe.user.has_role("Administrator") || frappe.user.has_role("System Manager")) return true;
+  return !!(row?.employee && currentEmp && row.employee === currentEmp);
+};
+
+const apply_items6_opinion_scope = async (frm) => {
+  const grid = frm.fields_dict.items6?.grid;
+  if (!grid) return;
+  const currentEmp = await get_current_employee(frm);
+  (grid.grid_rows || []).forEach((gridRow) => {
+    const canEdit = can_edit_items6_opinion(gridRow.doc, currentEmp);
+    if (typeof gridRow.toggle_editable === "function") {
+      gridRow.toggle_editable("opinion", canEdit);
+    }
+    const formField = gridRow.grid_form?.fields_dict?.opinion;
+    if (formField) {
+      formField.df.read_only = canEdit ? 0 : 1;
+      formField.refresh();
+    }
+  });
+};
+
+const is_items7_manual_pair_completed = (frm) => {
+  // Chỉ cho phép mở vòng nhập của các member còn lại khi 2 mã SCIC đã có opinion hợp lệ.
+  const rows = Array.isArray(frm.doc.items7) ? frm.doc.items7 : [];
+  const opinionByEmployee = new Map();
+  rows.forEach((row) => {
+    const employee = (row?.employee || "").trim();
+    if (!employee || !SCIC_MANUAL_EMPLOYEES.has(employee)) return;
+    opinionByEmployee.set(employee, normalize_label(row?.opinion));
+  });
+  return [...SCIC_MANUAL_EMPLOYEES].every((employee) => (
+    ["đồng ý", "không đồng ý"].includes(opinionByEmployee.get(employee) || "")
+  ));
+};
+
+const can_edit_items7_opinion = (row, currentEmp, leadEmp, manualPairCompleted = false) => {
+  if (frappe.user.has_role("Administrator") || frappe.user.has_role("System Manager")) return true;
+  if (!row?.employee || !currentEmp) return false;
+  // 2 mã cố định: chỉ lead_depart được sửa.
+  if (SCIC_MANUAL_EMPLOYEES.has(row.employee)) {
+    return !!(leadEmp && currentEmp === leadEmp);
+  }
+  // Các thành viên còn lại chỉ được nhập sau khi 2 mã SCIC đã có opinion.
+  if (!manualPairCompleted) return false;
+  // Đến vòng này, mỗi member chỉ sửa dòng của chính mình.
+  return row.employee === currentEmp;
+};
+
+const apply_items7_opinion_scope = async (frm) => {
+  const grid = frm.fields_dict.items7?.grid;
+  if (!grid) return;
+  const currentEmp = await get_current_employee(frm);
+  const leadEmp = (frm.doc.lead_depart || "").trim();
+  const manualPairCompleted = is_items7_manual_pair_completed(frm);
+  (grid.grid_rows || []).forEach((gridRow) => {
+    const canEdit = can_edit_items7_opinion(gridRow.doc, currentEmp, leadEmp, manualPairCompleted);
+    if (typeof gridRow.toggle_editable === "function") {
+      gridRow.toggle_editable("opinion", canEdit);
+    }
+    const formField = gridRow.grid_form?.fields_dict?.opinion;
+    if (formField) {
+      formField.df.read_only = canEdit ? 0 : 1;
+      formField.refresh();
+    }
+  });
 };
 
 const should_show_hdqt_opinion = async (frm) => {
-  const lead = (frm.doc.lead_depart || "").trim();
-  if (!lead) return false;
-  if (lead === "VGT00087") return true;
-  const department = await get_employee_department(lead);
-  if (!department) return false;
-  if (department === "Văn phòng HĐQT") return true;
-  const departmentName = await get_department_name(department);
-  return departmentName === "Văn phòng HĐQT";
+  const members = await get_hdqt_members_by_lead(frm);
+  return members.length > 0;
+};
+
+const is_items6_opinion_completed = (frm) => {
+  // Chỉ xét điều kiện hoàn tất items6 khi bật luồng SCIC.
+  if (!is_checked(frm.doc.scic_opinion)) return false;
+  // Chỉ hiển thị items7 khi dữ liệu đã được lưu xuống DB (đúng yêu cầu Save + F5).
+  const isSavedDoc = !frm.is_new()
+    && !(typeof frm.is_dirty === "function" ? frm.is_dirty() : !!frm.doc.__unsaved);
+  if (!isSavedDoc) return false;
+  const rows = Array.isArray(frm.doc.items6) ? frm.doc.items6 : [];
+  if (!rows.length) return false;
+  // "Có giá trị" nghĩa là opinion không rỗng.
+  return rows.every((row) => !!normalize_label(row?.opinion));
+};
+
+const apply_items7_visibility = (frm) => {
+  // items7 chỉ hiển thị khi scic_opinion = 1 và tất cả opinion ở items6 đã có giá trị.
+  const shouldShow = is_items6_opinion_completed(frm);
+  const round2Section = "tổng_hợp_ý_kiến_lần_2_section";
+  if (frm.get_field(round2Section)) {
+    frm.toggle_display(round2Section, shouldShow);
+  }
+  if (frm.get_field("items7")) {
+    frm.toggle_display("items7", shouldShow);
+  }
+  return shouldShow;
+};
+
+const is_noi_bo_ban_type = (val) => normalize_label(val) === normalize_label(VNT_TYPE_NOI_BO_BAN);
+const is_department_matched = (department, allowedDepartments) => allowedDepartments.has(normalize_department_name(department));
+
+const get_current_employee_department = async (frm, employee = null) => {
+  if (frm._currentEmployeeDepartment !== undefined) return frm._currentEmployeeDepartment;
+  const currentEmp = employee || await get_current_employee(frm);
+  if (!currentEmp) {
+    frm._currentEmployeeDepartment = null;
+    return null;
+  }
+  try {
+    const r = await frappe.db.get_value("Employee", currentEmp, "department");
+    frm._currentEmployeeDepartment = r?.message?.department || null;
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error(err);
+    frm._currentEmployeeDepartment = null;
+  }
+  return frm._currentEmployeeDepartment;
+};
+
+const can_show_noi_bo_ban_for_current_user = async (frm) => {
+  // Cache theo form để tránh gọi DB lặp lại nhiều lần khi refresh.
+  if (frm._canShowNoiBoBanType !== undefined) return !!frm._canShowNoiBoBanType;
+
+  // Bắt buộc user có Employee để xác định phòng ban.
+  const currentEmp = await get_current_employee(frm);
+  if (!currentEmp) {
+    frm._canShowNoiBoBanType = false;
+    return false;
+  }
+
+  const department = await get_current_employee_department(frm, currentEmp);
+
+  // Nhóm 1: Leave Approver L1 thuộc phòng Văn phòng HĐQT - VGT.
+  const isHdqtOfficeL1 = frappe.user.has_role(LEAVE_APPROVER_L1_ROLE)
+    && is_department_matched(department, LEAD_HDQT_DEPARTMENTS);
+
+  // Nhóm 2: tất cả employee thuộc department Hội đồng quản trị.
+  const isHdqtMember = is_department_matched(department, MEMBER_HDQT_DEPARTMENTS);
+
+  // Hiển thị "Nội bộ ban" nếu thuộc 1 trong 2 nhóm trên.
+  frm._canShowNoiBoBanType = isHdqtOfficeL1 || isHdqtMember;
+  return !!frm._canShowNoiBoBanType;
+};
+
+const get_vnt_type_filters = (frm) => {
+  // Không đủ điều kiện thì ẩn "Nội bộ ban" khỏi dropdown.
+  if (frm._canShowNoiBoBanType) return {};
+  return { name: ["!=", VNT_TYPE_NOI_BO_BAN] };
+};
+
+const apply_vnt_type_filter = async (frm) => {
+  await can_show_noi_bo_ban_for_current_user(frm);
+  // Nếu đang giữ giá trị không hợp lệ thì xóa để đảm bảo đúng rule.
+  if (!frm._canShowNoiBoBanType && is_noi_bo_ban_type(frm.doc.vnt_type)) {
+    frm.set_value("vnt_type", null);
+  }
 };
 
 const apply_hdqt_opinion_visibility = async (frm) => {
-  if (!frm.get_field("hdqt_opinion")) return false;
+  // Theo metadata JSON, items6 không có depends_on riêng nên cần toggle bằng JS.
   const shouldShow = await should_show_hdqt_opinion(frm);
-  frm.toggle_display("hdqt_opinion", shouldShow);
-  frm.toggle_display("items6", shouldShow && is_checked(frm.doc.hdqt_opinion));
+  if (frm.get_field("hdqt_opinion")) {
+    frm.toggle_display("hdqt_opinion", shouldShow);
+  }
+  if (frm.get_field("items6")) {
+    frm.toggle_display("items6", shouldShow);
+    frm.toggle_display("summary_opinion", shouldShow);
+  }
   return shouldShow;
 };
 
 const toggle_process_section = (frm) => {
-  const isOutgoing = (frm.doc.type || "").trim() === "Công văn đến";
+  const isOutgoing = (frm.doc.vnt_type || "").trim() === "Công văn đến";
   frm.toggle_display("biểu_đồ_xử_lý_section", isOutgoing);
   frm.toggle_display("html_editer", isOutgoing);
 };
@@ -172,7 +487,7 @@ const set_chair_status_prev = (frm, val) => {
 };
 
 const maybe_autofill_reference_number = async (frm, opts = {}) => {
-  const type = (frm.doc.type || "").trim();
+  const type = (frm.doc.vnt_type || "").trim();
   if (type !== "Công văn đi") return;
 
   const department = frm.doc.department;
@@ -202,6 +517,44 @@ const maybe_autofill_reference_number = async (frm, opts = {}) => {
     if (nextRef) {
       frm._autoRefKey = autoKey;
       frm.set_value("reference_number", nextRef);
+    }
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error(err);
+  }
+};
+
+// Autofill reference_number cho "Quyết định" với format: {number}/QĐ-TĐDMVN
+// Số tự động tăng từ 01, reset mỗi năm mới
+const autofill_qd_reference_number = async (frm, opts = {}) => {
+  const type = (frm.doc.vnt_type || "").trim();
+  if (type !== "Quyết định") return;
+
+  // Nếu không có ngày, auto set ngày hiện tại
+  let docDate = frm.doc.document_date;
+  if (!docDate) {
+    docDate = frappe.datetime.now_date();
+    await frm.set_value("document_date", docDate);
+  }
+
+  const currentRef = (frm.doc.reference_number || "").trim();
+  const forced = opts.force === true;
+
+  // Không đè nếu người dùng đã nhập thủ công, trừ khi force=true
+  if (currentRef && !forced) return;
+  if (currentRef && forced && frm._qdAutoRefKey === docDate) return;
+
+  try {
+    // Gọi backend để lấy số thứ tự tiếp theo cho năm hiện tại
+    const r = await frappe.call({
+      method: "vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.get_next_qd_reference_number",
+      args: { document_date: docDate },
+    });
+    const nextNum = (r?.message || "").trim();
+    if (nextNum) {
+      frm._qdAutoRefKey = docDate;
+      // Format: 01/QĐ-TĐDMVN, 02/QĐ-TĐDMVN, ...
+      frm.set_value("reference_number", `${nextNum}/QĐ-TĐDMVN`);
     }
   } catch (err) {
     // eslint-disable-next-line no-console
@@ -371,7 +724,7 @@ const patch_scroll_to_field = (frm) => {
 };
 
 const can_view_handler_controls = async (frm) => {
-  const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
+  const isIncoming = (frm.doc.vnt_type || "").trim() === "Công văn đến";
   if (!isIncoming) return true;
 
   const handler = get_handler_owner(frm);
@@ -435,7 +788,7 @@ const set_handler_editable = (frm, enabled, opts = {}) => {
 };
 
 const enforce_chair_scope = async (frm) => {
-  const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
+  const isIncoming = (frm.doc.vnt_type || "").trim() === "Công văn đến";
   if (!isIncoming) {
     frm._is_chair_scope_active = false;
     return;
@@ -499,7 +852,7 @@ const enforce_handler_scope = async (frm) => {
     return; // Ưu tiên khóa của Chủ trì
   }
 
-  const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
+  const isIncoming = (frm.doc.vnt_type || "").trim() === "Công văn đến";
   if (!isIncoming) {
     frm._is_handler_scope_active = false;
     return;
@@ -591,7 +944,7 @@ const enforce_specialist_scope = async (frm) => {
     return; // Ưu tiên khóa của Chủ trì/Lãnh đạo
   }
 
-  const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
+  const isIncoming = (frm.doc.vnt_type || "").trim() === "Công văn đến";
   if (!isIncoming) {
     frm._is_specialist_scope_active = false;
     return;
@@ -665,7 +1018,7 @@ const enforce_collab_scope = async (frm) => {
     return; // Ưu tiên khóa cao hơn
   }
 
-  const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
+  const isIncoming = (frm.doc.vnt_type || "").trim() === "Công văn đến";
   if (!isIncoming) {
     frm._is_collab_scope_active = false;
     return;
@@ -766,7 +1119,7 @@ const enforce_collab_scope = async (frm) => {
 };
 
 const apply_handler_edit_lock = async (frm) => {
-  const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
+  const isIncoming = (frm.doc.vnt_type || "").trim() === "Công văn đến";
   if (!isIncoming) {
     set_handler_editable(frm, true);
     return;
@@ -926,7 +1279,7 @@ const find_multiple_chair = (frm) => {
 };
 
 frappe.ui.form.on("VNT Document Management", {
-  onload (frm) {
+  async onload (frm) {
     frm.set_query('lead_depart', () => {
       return {
         filters: {
@@ -941,73 +1294,119 @@ frappe.ui.form.on("VNT Document Management", {
         query: "vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.employee_query_all"
       };
     });
+    // Filter vnt_type theo user đăng nhập:
+    // chỉ hiện "Nội bộ ban" cho:
+    // 1) Leave Approver L1 của Văn phòng HĐQT - VGT; hoặc
+    // 2) toàn bộ employee thuộc Hội đồng quản trị.
+    frm.set_query("vnt_type", () => ({
+      filters: get_vnt_type_filters(frm),
+    }));
+    await apply_vnt_type_filter(frm);
   },
   async lead_depart(frm) {
-    // 1. Lưu giá trị lead vào biến để so sánh
-    const lead_id = frm.doc.lead_depart;
+    const lead_id = (frm.doc.lead_depart || "").trim();
+    frm._hdqt_member_cache = null;
 
-    frappe.call({
-        method: "vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.employee_in_department",
-        args: {
-            employee: lead_id
-        },
-        callback: (r) => {
-            if (r.message && r.message.length > 0) {
-              // 2. Làm sạch bảng trước khi chèn dữ liệu mới
-              frm.clear_table("items4");
+    frm.clear_table("items4");
+    if (lead_id) {
+      try {
+        const r = await frappe.call({
+          method: "vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.employee_in_department",
+          args: { employee: lead_id }
+        });
+        const employees = Array.isArray(r?.message) ? r.message : [];
+        const filtered_employees = employees.filter((item) => (
+          item.name !== lead_id && item.designation !== "Trưởng ban"
+        ));
+        filtered_employees.forEach((item) => {
+          const row = frm.add_child("items4");
+          row.employee = item.name;
+          row.department = item.department;
+        });
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error(err);
+      }
+    }
+    frm.refresh_field("items4");
 
-              // 3. Sử dụng .filter() để lọc danh sách theo 2 yêu cầu
-              const filtered_employees = r.message.filter(item => {
-                  return item.name !== lead_id && item.designation !== "Trưởng ban";
-              });
-
-              // 4. Duyệt qua danh sách đã lọc để thêm vào Child Table
-              filtered_employees.forEach((item) => {
-                  const row = frm.add_child("items4");
-                  row.employee = item.name;
-                  row.department = item.department;
-                  // Nếu bảng items4 có cột chức danh, bạn có thể gán thêm:
-                  // row.designation = item.designation; 
-              });
-
-              // 5. Cập nhật lại giao diện người dùng
-              frm.refresh_field("items4");
-
-              // trả về tên phòng ban
-             
-            }
-          }
-      });
+    // Sync lại 2 bảng HĐQT theo scic_opinion:
+    // - scic=1: items6 còn 5, items7 giữ 7
+    // - scic=0: items6 rollback 7, items7 rỗng
+    const hdqtMembers = await get_hdqt_members_by_lead(frm);
+    await sync_hdqt_member_tables(frm, hdqtMembers);
+    // Nếu đã có deadline cha thì fill deadline mặc định cho các dòng mới ở items6/items7.
+    sync_hdqt_deadline_from_parent(frm, { overwrite: false });
     await apply_hdqt_opinion_visibility(frm);
+    await apply_items6_opinion_scope(frm);
+    await apply_items7_opinion_scope(frm);
+    apply_items7_visibility(frm);
   },
-  async hdqt_opinion (frm) {
-    const shouldShow = await apply_hdqt_opinion_visibility(frm);
-    if (!shouldShow || !is_checked(frm.doc.hdqt_opinion)) return;
-    frappe.call({
-        method: "vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.employee_in_hdqt",
-        args: {},
-        callback: (r) => {
-            if (r.message && r.message.length > 0) {
-              const fields = [
-                "thanh_vien_1",
-                "thanh_vien_2",
-                "thanh_vien_3",
-                "thanh_vien_4",
-                "thanh_vien_5",
-                "thanh_vien_6",
-                "thanh_vien_7"
-              ];
-              const updates = {};
-              fields.forEach((fieldname, idx) => {
-                updates[fieldname] = r.message[idx]?.name || null;
-              });
-              frm.set_value(updates);
-            }
-          }
-      });
+  async scic_opinion(frm) {
+    await sync_hdqt_member_tables(frm);
+    // Toggle scic có thể tạo lại dòng bảng, nên fill deadline cha cho dòng chưa có deadline.
+    sync_hdqt_deadline_from_parent(frm, { overwrite: false });
+    await apply_items6_opinion_scope(frm);
+    await apply_items7_opinion_scope(frm);
+    apply_items7_visibility(frm);
   },
+  async enforce_items6_opinion_scope(frm) {
+    await apply_items6_opinion_scope(frm);
+  },
+  async enforce_items7_opinion_scope(frm) {
+    await apply_items7_opinion_scope(frm);
+  },
+  async refresh_vnt_type_filter(frm) {
+    await apply_vnt_type_filter(frm);
+  },
+  // async hdqt_opinion (frm) {
+  //   const shouldShow = await apply_hdqt_opinion_visibility(frm);
+  //   if (!shouldShow || !is_checked(frm.doc.hdqt_opinion)) return;
+  //   frappe.call({
+  //       method: "vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.employee_in_hdqt",
+  //       args: {},
+  //       callback: (r) => {
+  //           if (r.message && r.message.length > 0) {
+  //             const fields = [
+  //               "thanh_vien_1",
+  //               "thanh_vien_2",
+  //               "thanh_vien_3",
+  //               "thanh_vien_4",
+  //               "thanh_vien_5",
+  //               "thanh_vien_6",
+  //               "thanh_vien_7"
+  //             ];
+  //             const updates = {};
+  //             fields.forEach((fieldname, idx) => {
+  //               updates[fieldname] = r.message[idx]?.name || null;
+  //             });
+  //             frm.set_value(updates);
+  //           }
+  //         }
+  //     });
+  // },
   async toggle_hdqt_opinion_visibility(frm) {
     await apply_hdqt_opinion_visibility(frm);
+  },
+  items6_add(frm) {
+    // Dòng mới của items6 mặc định lấy deadline cha (nếu có), vẫn cho sửa tay.
+    sync_hdqt_deadline_from_parent(frm, { overwrite: false });
+    sync_summary_opinion(frm);
+    frm.trigger("enforce_items6_opinion_scope");
+    apply_items7_visibility(frm);
+  },
+  items6_remove(frm) {
+    sync_summary_opinion(frm);
+    frm.trigger("enforce_items6_opinion_scope");
+    apply_items7_visibility(frm);
+  },
+  items7_add(frm) {
+    // Dòng mới của items7 mặc định lấy deadline cha (nếu có), vẫn cho sửa tay.
+    sync_hdqt_deadline_from_parent(frm, { overwrite: false });
+    frm.trigger("enforce_items7_opinion_scope");
+  },
+  items7_remove(frm) {
+    frm.trigger("enforce_items7_opinion_scope");
   },
   setup(frm) {
     patch_scroll_to_field(frm);
@@ -1031,7 +1430,7 @@ frappe.ui.form.on("VNT Document Management", {
     }
 
     ensure_spec_deadline_not_after_chair(frm);
-    if (frm.doc.type == "Công văn đi" &&  !frm.doc.document_date) {
+    if (frm.doc.vnt_type == "Công văn đi" &&  !frm.doc.document_date) {
       frm.set_value("document_date", frappe.datetime.now_date());
     }
 
@@ -1072,6 +1471,12 @@ frappe.ui.form.on("VNT Document Management", {
     toggle_process_section(frm);
     hide_legacy_fields(frm);
     frm.trigger("toggle_hdqt_opinion_visibility");
+    sync_summary_opinion(frm);
+    frm.trigger("scic_opinion");
+    frm.trigger("enforce_items6_opinion_scope");
+    frm.trigger("enforce_items7_opinion_scope");
+    frm.trigger("refresh_vnt_type_filter");
+    apply_items7_visibility(frm);
 
     // Chỉ set mặc định khi là phiếu mới
     if (frm.is_new()) {
@@ -1082,7 +1487,7 @@ frappe.ui.form.on("VNT Document Management", {
       if (!frm.doc.received_date) {
         frm.set_value("received_date", frappe.datetime.now_date());
       }
-      if (frm.doc.type == "Công văn đi" && !frm.doc.document_date) {
+      if (frm.doc.vnt_type == "Công văn đi" && !frm.doc.document_date) {
         frm.set_value("document_date", frappe.datetime.now_date());
       }
       
@@ -1090,27 +1495,46 @@ frappe.ui.form.on("VNT Document Management", {
     }
   },
 
-  // thay đổi naming series khi đổi loại văn bản
-  type(frm) {
-    if (frm.doc.type == "Công văn đến") {
-      frm.set_value("naming_series", "CVĐEN.-.MM..YY.-.####");
-    }
-    else if (frm.doc.type == "Công văn đi") {
+  // Xử lý tất cả logic khi đổi loại văn bản (vnt_type)
+  async vnt_type(frm) {
+    const type = frm.doc.vnt_type || "";
+    
+    // === 1. Đặt naming_series theo loại văn bản ===
+    if (type == "Công văn đến") {
+      frm.set_value("naming_series", "CVĐEN.-.YY.-.####");
+    } else if (type == "Công văn đi") {
+      // Tự động set ngày hiện tại nếu chưa có
       if (!frm.doc.document_date) {
         frm.set_value("document_date", frappe.datetime.now_date());
       }
-      frm.set_value("naming_series", "CVĐI.-.MM..YY.-.####");
+      frm.set_value("naming_series", "CVĐI.-.YY.-.####");
       maybe_autofill_reference_number(frm);
-    } else if (frm.doc.type == "Quyết định") {
-      frm.set_value("naming_series", "QĐ.-.MM..YY.-.####");
+    } else if (type == "Quyết định") {
+      frm.set_value("naming_series", "QĐ.-.YY.-.####");
+      // Autofill reference_number: 01/QĐ-TĐDMVN, 02/QĐ-TĐDMVN, ...
+      await autofill_qd_reference_number(frm);
+    } else if (type == "Nội bộ ban") {
+      // Dạng naming_series động: {short_name_depart}.-.YY.-.####
+      // VD: "HR.-.26.-.0001" (HR là viết tắt phòng ban, 26 là năm, 0001 là số thứ tự)
+      frm.set_value("naming_series", "{short_name_depart}.-.YY.-.####");
+      
+      // Tự động điền lead_depart = employee hiện tại nếu là "Nội bộ ban"
+      if (is_noi_bo_ban_type(type)) {
+        const currentEmp = await get_current_employee(frm);
+        if (currentEmp && (frm.doc.lead_depart || "").trim() !== currentEmp) {
+          await frm.set_value("lead_depart", currentEmp);
+        }
+      }
     }
 
-
+    // === 2. Áp dụng các quy tắc chỉnh sửa quyền hạn & UI ===
     frm.trigger("enforce_handler_edit_permission");
     frm.trigger("enforce_creator_edit_permission");
     frm.trigger("enforce_chair_edit_permission");
     toggle_process_section(frm);
-    if ((frm.doc.type || "").trim() === "Công văn đến") {
+    
+    // === 3. Điền sẵn Level 1 Approver cho "Công văn đến" ===
+    if (type.trim() === "Công văn đến") {
       frm.trigger("prefill_level1_approvers");
     }
   },
@@ -1128,10 +1552,16 @@ frappe.ui.form.on("VNT Document Management", {
     if (frm.doc.deadline_copy !== val) {
       frm.set_value("deadline_copy", val);
     }
+    // Khi user chọn lại deadline cha, đồng bộ lại toàn bộ deadline items6/items7 theo giá trị mới.
+    sync_hdqt_deadline_from_parent(frm, { overwrite: true });
   },
 
   document_date(frm) {
+    // Autofill reference_number khi người dùng thay đổi ngày
+    // - Công văn đi: gọi maybe_autofill_reference_number
+    // - Quyết định: gọi autofill_qd_reference_number (reset số mỗi khi sang năm mới)
     maybe_autofill_reference_number(frm, { force: true });
+    autofill_qd_reference_number(frm, { force: true });
   },
 
   // Khi trường attach đổi, render lại
@@ -1157,7 +1587,7 @@ frappe.ui.form.on("VNT Document Management", {
   },
 
   async handler_status(frm) {
-    if ((frm.doc.type || "").trim() === "Công văn đến") {
+    if ((frm.doc.vnt_type || "").trim() === "Công văn đến") {
       const currentEmp = await get_current_employee(frm);
       const isInternal = is_checked(frm.doc.internal);
       const handlerOwner = get_handler_owner(frm);
@@ -1447,7 +1877,7 @@ frappe.ui.form.on("VNT Document Management", {
 
   prefill_level1_approvers(frm) {
     if (!frm.is_new()) return;
-    const docType = (frm.doc.type || "").trim();
+    const docType = (frm.doc.vnt_type || "").trim();
     if (docType !== "Công văn đến") return;
 
     const hasCapCao = Array.isArray(frm.doc.item2) && frm.doc.item2.length;
@@ -1927,7 +2357,7 @@ frappe.ui.form.on("VNT Document Management", {
     
     nodes.push(...roleNodes);
     let incomingDocKey = null;
-    const isIncoming = (frm.doc.type || "").trim() === "Công văn đến";
+    const isIncoming = (frm.doc.vnt_type || "").trim() === "Công văn đến";
     const outgoingDocValue = (frm.doc.cong_van_di || "").trim();
     if (isIncoming && outgoingDocValue) {
       const employeeNode = nodes.find((node) => node.key === "employee") || null;
@@ -2230,5 +2660,62 @@ frappe.ui.form.on("VNT Document Management Item3", {
     if (!currentUser) return;
     if (row.user === currentUser) return;
     frappe.model.set_value(cdt, cdn, "user", currentUser);
+  }
+});
+
+const clear_invalid_opinion_selection = (frm, row) => {
+  // Khi user chọn opinion không hợp lệ (không đúng quyền), xóa ngay giá trị vừa chọn.
+  if (!row || !row.parentfield) return;
+  row.opinion = "";
+  frm.refresh_field(row.parentfield);
+};
+
+// Child table hooks: VNT Document Management Item6 (items6)
+frappe.ui.form.on("VNT Document Management Item6", {
+  async opinion(frm, cdt, cdn) {
+    const row = (locals[cdt] && locals[cdt][cdn]) || null;
+    if (!row) return;
+    const currentEmp = await get_current_employee(frm);
+
+    // items6: mỗi employee chỉ sửa opinion của mình.
+    if (row.parentfield === "items6") {
+      if (!can_edit_items6_opinion(row, currentEmp)) {
+        // Sai quyền: xóa giá trị vừa chọn trước khi cảnh báo.
+        clear_invalid_opinion_selection(frm, row);
+        sync_summary_opinion(frm);
+        apply_items7_visibility(frm);
+        frappe.throw("Bạn chỉ được chọn ý kiến của chính mình.");
+        return;
+      }
+      sync_summary_opinion(frm);
+      apply_items7_visibility(frm);
+      return;
+    }
+
+    // items7:
+    // - VGT00070/VGT00073 chỉ lead_depart sửa.
+    // - 5 thành viên còn lại chỉ sửa opinion của chính mình.
+    if (row.parentfield === "items7") {
+      const leadEmp = (frm.doc.lead_depart || "").trim();
+      const manualPairCompleted = is_items7_manual_pair_completed(frm);
+      // Chưa đủ opinion của 2 mã SCIC thì chặn member còn lại nhập và cảnh báo rõ nguyên nhân.
+      if (!SCIC_MANUAL_EMPLOYEES.has((row.employee || "").trim()) && !manualPairCompleted) {
+        clear_invalid_opinion_selection(frm, row);
+        frappe.throw("Vui lòng điền ý kiến của các thành viên SCIC trước khi các thành viên còn lại nhập ý kiến.");
+        return;
+      }
+      if (!can_edit_items7_opinion(row, currentEmp, leadEmp, manualPairCompleted)) {
+        // Sai quyền: xóa giá trị vừa chọn trước khi cảnh báo.
+        clear_invalid_opinion_selection(frm, row);
+        frappe.throw("Bạn không có quyền sửa ý kiến của dòng này.");
+        return;
+      }
+      // Sau khi 2 mã SCIC đổi opinion, refresh lại scope để mở/khóa đúng ngay trên UI.
+      frm.trigger("enforce_items7_opinion_scope");
+    }
+  },
+  form_render(frm) {
+    frm.trigger("enforce_items6_opinion_scope");
+    frm.trigger("enforce_items7_opinion_scope");
   }
 });

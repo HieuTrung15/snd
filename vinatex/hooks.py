@@ -237,6 +237,10 @@ scheduler_events = {
         "0 7 * * *": [
             "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.make_attendance_confirm",
         ],
+		# Nhắc hạn điền opinion items6/items7 (D-1 và D0) mỗi ngày.
+		"30 7 * * *": [
+			"vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.notify_pending_hdqt_opinion_deadline",
+		],
 		"0 7 4 * *": [
 			# "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm._cron_submit_attendance_confirm",
 		],
