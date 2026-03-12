@@ -1,8 +1,6 @@
 // Copyright (c) 2025, vinatex and contributors
 // For license information, please see license.txt
 
-const VNT_RECURRING_TAX_RATE = 0.1;
-
 frappe.ui.form.on("VNT Recurring Extra Benefit", {
 	refresh(frm) {
 		// Không yêu cầu hủy VNT Salary Slip khi hủy phiếu này
@@ -36,6 +34,9 @@ frappe.ui.form.on("VNT Recurring Extra Benefit", {
 	items_remove(frm) {
 		vntRecurringUpdateTotals(frm);
 	},
+	excel(frm) {
+		vntRecurringDownloadExcel(frm);
+	},
 
 	get_emp_list(frm) {
 		if (!frm.doc.type) {
@@ -63,6 +64,7 @@ frappe.ui.form.on("VNT Recurring Extra Benefit", {
 					row.allowance_type = item.allowance_type;
 					row.he_so = item.he_so;
 					row.amount = item.amount;
+					row.thue = item.thue;
 				});
 				frm.refresh_field("items");
 				vntRecurringSyncMonthToRows(frm);
@@ -92,6 +94,9 @@ frappe.ui.form.on("VNT Recurring Extra Benefit Item", {
 		vntRecurringRecalculateRow(cdt, cdn);
 	},
 	so_thang(frm, cdt, cdn) {
+		vntRecurringRecalculateRow(cdt, cdn);
+	},
+	thue(frm, cdt, cdn) {
 		vntRecurringRecalculateRow(cdt, cdn);
 	},
 	tong(frm) {
@@ -148,7 +153,8 @@ function vntRecurringRecalculateRow(cdt, cdn) {
 	const months = Math.max(vntRecurringNumber(row.so_thang), 0);
 	const amount = vntRecurringNumber(row.amount);
 	const total = months * amount;
-	const tax = total * VNT_RECURRING_TAX_RATE;
+	const taxRate = Math.min(Math.max(vntRecurringNumber(row.thue), 0), 100) / 100;
+	const tax = total * taxRate;
 	const net = total - tax;
 
 	frappe.model.set_value(cdt, cdn, "tong", total || 0);
@@ -173,4 +179,34 @@ function vntRecurringCountMonths(value) {
 		return Number.isFinite(num) && num > 0 && num <= 12;
 	});
 	return months.length;
+}
+
+function vntRecurringDownloadExcel(frm) {
+	if (!frm || !frm.doc) {
+		return;
+	}
+	if (frm.is_new() || !frm.doc.name) {
+		frappe.msgprint(__("Vui lòng lưu chứng từ trước khi tải xuống Excel."));
+		return;
+	}
+	if (frm.is_dirty()) {
+		frappe.msgprint(__("Vui lòng lưu chứng từ trước khi tải xuống Excel."));
+		return;
+	}
+	const allowanceType = (frm.doc.type || "").trim();
+	if (!["PC CĐS", "PC CDS"].includes(allowanceType)) {
+		frappe.msgprint(
+			__('Hiện chỉ hỗ trợ tải Excel cho "Loại phụ cấp" là PC CĐS.')
+		);
+		return;
+	}
+
+	const method =
+		"vinatex.vnt_hr.doctype.vnt_recurring_extra_benefit.vnt_recurring_extra_benefit.download_recurring_extra_benefit_excel";
+	const params = new URLSearchParams({
+		docname: frm.doc.name,
+	});
+	const url = `/api/method/${method}?${params.toString()}`;
+	const fullUrl = frappe.urllib.get_full_url(url);
+	window.open(fullUrl);
 }

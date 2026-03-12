@@ -10,6 +10,7 @@
   "designation",
   "allowance_type",
   "he_so",
+  "thue",
   "column_break_nmha",
   "amount",
   "so_thang",
@@ -21,6 +22,7 @@
  ],
  "fields": [
   {
+   "columns": 2,
    "fieldname": "employee",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -28,13 +30,13 @@
    "options": "Employee"
   },
   {
+   "columns": 2,
    "fetch_from": "employee.designation",
    "fetch_if_empty": 1,
    "fieldname": "designation",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Ch\u1ee9c v\u1ee5",
-   "options": "Designation"
+   "label": "Ch\u1ee9c v\u1ee5"
   },
   {
    "columns": 1,
@@ -59,6 +61,7 @@
    "precision": "3"
   },
   {
+   "columns": 1,
    "fieldname": "tong",
    "fieldtype": "Currency",
    "in_list_view": 1,
@@ -66,12 +69,15 @@
    "precision": "3"
   },
   {
+   "columns": 1,
    "fieldname": "thue_tncn",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Thu\u1ebf TNCN",
    "precision": "3"
   },
   {
+   "columns": 1,
    "fieldname": "thuc_linh",
    "fieldtype": "Currency",
    "in_list_view": 1,
@@ -103,13 +109,21 @@
   {
    "fieldname": "column_break_nmha",
    "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "thue",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Kh\u1ea5u tr\u1eeb thu\u1ebf (%)",
+   "precision": "0"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-03-11 15:59:12.284199",
+ "modified": "2026-03-12 09:55:13.983638",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Recurring Extra Benefit Item",

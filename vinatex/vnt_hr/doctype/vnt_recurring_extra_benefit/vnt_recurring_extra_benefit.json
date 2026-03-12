@@ -10,6 +10,8 @@
   "naming_series",
   "employee",
   "date",
+  "branch",
+  "excel",
   "column_break_rbgs",
   "month",
   "year",
@@ -140,13 +142,26 @@
    "label": "T\u1ed5ng th\u1ef1c l\u0129nh",
    "precision": "0",
    "read_only": 1
+  },
+  {
+   "fetch_from": "employee.branch",
+   "fetch_if_empty": 1,
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Chi nh\u00e1nh",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "excel",
+   "fieldtype": "Button",
+   "label": "T\u1ea3i xu\u1ed1ng Excel"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-07 15:07:02.872421",
+ "modified": "2026-03-12 09:40:04.282067",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Recurring Extra Benefit",
