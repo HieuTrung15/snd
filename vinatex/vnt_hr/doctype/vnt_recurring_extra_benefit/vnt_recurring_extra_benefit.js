@@ -6,27 +6,40 @@ frappe.ui.form.on("VNT Recurring Extra Benefit", {
 		// Không yêu cầu hủy VNT Salary Slip khi hủy phiếu này
 		frm.ignore_doctypes_on_cancel_all = ["VNT Salary Slip"];
 
-		if (!frm.doc.employee) {
-			frappe.db
-				.get_value("Employee", { user_id: frappe.session.user }, "name")
-				.then((r) => r?.message?.name && frm.set_value("employee", r.message.name));
-		}
-		if (!frm.doc.date) {
-			frm.set_value("date", frappe.datetime.get_today());
-		}
-		if (!frm.doc.month) {
-			frm.set_value("month", frappe.datetime.get_today().slice(5, 7));
-		}
-		if (!frm.doc.year) {
-			frm.set_value("year", frappe.datetime.get_today().slice(0, 4));
+		if (frm.is_new()) {
+			if (!frm.doc.employee) {
+				frappe.db
+					.get_value("Employee", { user_id: frappe.session.user }, "name")
+					.then((r) => r?.message?.name && frm.set_value("employee", r.message.name));
+			}
+			if (!frm.doc.date) {
+				frm.set_value("date", frappe.datetime.get_today());
+			}
+			if (!frm.doc.month) {
+				frm.set_value("month", frappe.datetime.get_today().slice(5, 7));
+			}
+			if (!frm.doc.year) {
+				frm.set_value("year", frappe.datetime.get_today().slice(0, 4));
+			}
+
+			vntRecurringSyncMonthToRows(frm);
+			vntRecurringUpdateTotals(frm);
 		}
 
-		vntRecurringSyncMonthToRows(frm);
-		vntRecurringUpdateTotals(frm);
+		const allowanceTypeKey = vntRecurringNormalizeType(frm.doc.type);
+		if (["PC DAC THU", "PC DT"].includes(allowanceTypeKey) && !frm.doc.luong_tt) {
+			vntRecurringApplyAllowanceType(frm);
+		}
 	},
 
 	month(frm) {
 		vntRecurringSyncMonthToRows(frm);
+	},
+	type(frm) {
+		vntRecurringApplyAllowanceType(frm);
+	},
+	luong_tt(frm) {
+		vntRecurringRecalculateAllRows(frm);
 	},
 	items_add(frm) {
 		vntRecurringUpdateTotals(frm);
@@ -54,6 +67,11 @@ frappe.ui.form.on("VNT Recurring Extra Benefit", {
 			.then((r) => {
 				const payload = r?.message || {};
 				const rows = Array.isArray(payload.items) ? payload.items : [];
+				const allowanceTypeKey = vntRecurringNormalizeType(frm.doc.type);
+				const isDacThu = ["PC DAC THU", "PC DT"].includes(allowanceTypeKey);
+				if (isDacThu && payload.luong_tt) {
+					frm.set_value("luong_tt", vntRecurringNumber(payload.luong_tt));
+				}
 
 				frm.clear_table("items");
 				rows.forEach((item) => {
@@ -129,20 +147,43 @@ function vntRecurringUpdateTotals(frm) {
 		totalNet += vntRecurringNumber(row.thuc_linh);
 	});
 
-	frm.set_value("tong_pc", totalAllowance || 0);
-	frm.set_value("tong_thue_tncn", totalTax || 0);
-	frm.set_value("tong_thuc_linh", totalNet || 0);
+	vntRecurringSetParentIfChanged(frm, "tong_pc", totalAllowance || 0);
+	vntRecurringSetParentIfChanged(frm, "tong_thue_tncn", totalTax || 0);
+	vntRecurringSetParentIfChanged(frm, "tong_thuc_linh", totalNet || 0);
 }
 
-function vntRecurringSyncMonthToRows(frm) {
+function vntRecurringSyncMonthToRows(frm, options = {}) {
 	if (!frm || !frm.doc) {
+		return;
+	}
+	if (options.skipIfSaved && !frm.is_new()) {
 		return;
 	}
 	const monthCount = vntRecurringCountMonths(frm.doc.month);
 	const valueToSet = monthCount > 0 ? monthCount : null;
 	(frm.doc.items || []).forEach((row) => {
+		const currentRaw = row.so_thang;
+		const currentValue =
+			currentRaw === null || currentRaw === undefined || currentRaw === ""
+				? null
+				: parseInt(currentRaw, 10);
+		if (currentValue === valueToSet) {
+			return;
+		}
 		frappe.model.set_value(row.doctype, row.name, "so_thang", valueToSet);
 	});
+}
+
+function vntRecurringSetParentIfChanged(frm, fieldname, value) {
+	if (!frm || !frm.doc) {
+		return;
+	}
+	const current = vntRecurringNumber(frm.doc[fieldname]);
+	const target = vntRecurringNumber(value);
+	if (Math.abs(current - target) < 0.000001) {
+		return;
+	}
+	frm.set_value(fieldname, target);
 }
 
 function vntRecurringRecalculateRow(cdt, cdn) {
@@ -151,7 +192,12 @@ function vntRecurringRecalculateRow(cdt, cdn) {
 		return;
 	}
 	const months = Math.max(vntRecurringNumber(row.so_thang), 0);
-	const amount = vntRecurringNumber(row.amount);
+	let amount = vntRecurringNumber(row.amount);
+	const allowanceTypeKey = vntRecurringNormalizeType(cur_frm?.doc?.type);
+	if (["PC DAC THU", "PC DT"].includes(allowanceTypeKey)) {
+		amount = vntRecurringNumber(cur_frm?.doc?.luong_tt) * vntRecurringNumber(row.he_so);
+		row.amount = amount;
+	}
 	const total = months * amount;
 	const taxRate = Math.min(Math.max(vntRecurringNumber(row.thue), 0), 100) / 100;
 	const tax = total * taxRate;
@@ -164,6 +210,15 @@ function vntRecurringRecalculateRow(cdt, cdn) {
 	if (cur_frm) {
 		vntRecurringUpdateTotals(cur_frm);
 	}
+}
+
+function vntRecurringRecalculateAllRows(frm) {
+	if (!frm || !frm.doc) {
+		return;
+	}
+	(frm.doc.items || []).forEach((row) => {
+		vntRecurringRecalculateRow(row.doctype, row.name);
+	});
 }
 
 function vntRecurringCountMonths(value) {
@@ -193,10 +248,10 @@ function vntRecurringDownloadExcel(frm) {
 		frappe.msgprint(__("Vui lòng lưu chứng từ trước khi tải xuống Excel."));
 		return;
 	}
-	const allowanceType = (frm.doc.type || "").trim();
-	if (!["PC CĐS", "PC CDS"].includes(allowanceType)) {
+	const allowanceTypeKey = vntRecurringNormalizeType(frm.doc.type);
+	if (!["PC CDS", "PC BAN CHQS", "PC CHQS", "PC DAC THU", "PC DT"].includes(allowanceTypeKey)) {
 		frappe.msgprint(
-			__('Hiện chỉ hỗ trợ tải Excel cho "Loại phụ cấp" là PC CĐS.')
+			__('Hiện chỉ hỗ trợ tải Excel cho "Loại phụ cấp" là PC CĐS, PC Ban CHQS hoặc PC đặc thù.')
 		);
 		return;
 	}
@@ -209,4 +264,48 @@ function vntRecurringDownloadExcel(frm) {
 	const url = `/api/method/${method}?${params.toString()}`;
 	const fullUrl = frappe.urllib.get_full_url(url);
 	window.open(fullUrl);
+}
+
+function vntRecurringApplyAllowanceType(frm) {
+	if (!frm || !frm.doc) {
+		return;
+	}
+
+	const allowanceTypeKey = vntRecurringNormalizeType(frm.doc.type);
+	const isDacThu = ["PC DAC THU", "PC DT"].includes(allowanceTypeKey);
+	frm.toggle_display("luong_tt", isDacThu);
+	frm.toggle_reqd("luong_tt", isDacThu);
+	if (!isDacThu) {
+		if (frm.doc.luong_tt) {
+			frm.set_value("luong_tt", null);
+		}
+		return;
+	}
+
+	frm.call({
+		doc: frm.doc,
+		method: "fetch_luong_tt",
+		freeze: false,
+	}).then((r) => {
+		const payload = r?.message || {};
+		const luongTT = vntRecurringNumber(payload.corporate_minimum_wage || 0);
+		frm.set_value("luong_tt", luongTT || null);
+		if (!luongTT) {
+			frappe.msgprint(__("Không tìm thấy VNT Salary Parameter (đã Submit) còn hiệu lực."));
+		}
+	}).catch(() => {
+		frappe.msgprint(__("Không lấy được Lương TT từ VNT Salary Parameter."));
+	});
+}
+
+function vntRecurringNormalizeType(value) {
+	const raw = (value || "").toString().trim().toUpperCase();
+	if (!raw) {
+		return "";
+	}
+	return raw
+		.normalize("NFD")
+		.replace(/[\u0300-\u036f]/g, "")
+		.replace(/Đ/g, "D")
+		.replace(/\s+/g, " ");
 }

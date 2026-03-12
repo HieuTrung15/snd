@@ -16,6 +16,7 @@
   "month",
   "year",
   "type",
+  "luong_tt",
   "get_emp_list",
   "section_break_ulhi",
   "items",
@@ -155,13 +156,20 @@
    "fieldname": "excel",
    "fieldtype": "Button",
    "label": "T\u1ea3i xu\u1ed1ng Excel"
+  },
+  {
+   "depends_on": "eval: doc.type == \"PC \u0111\u1eb7c th\u00f9\"",
+   "fieldname": "luong_tt",
+   "fieldtype": "Currency",
+   "label": "L\u01b0\u01a1ng TT",
+   "mandatory_depends_on": "eval: doc.type == \"PC \u0111\u1eb7c th\u00f9\""
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-03-12 09:40:04.282067",
+ "modified": "2026-03-12 13:45:34.779408",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Recurring Extra Benefit",
