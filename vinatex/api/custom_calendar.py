@@ -28,6 +28,11 @@ LEADER_DESIGNATION_ORDER = {
     "Giám đốc điều hành Tập đoàn": 3,
 }
 
+# ====== CONFIG: LỊCH CÔNG TÁC TUẦN LÃNH ĐẠO ======
+LEADER_WEEKLY_TRIP_PARENT_DOCTYPE = "VNT Leader Weekly Trip"
+LEADER_WEEKLY_TRIP_ITEM_DOCTYPE = "VNT Leader Weekly Trip Item"
+LEADER_WEEKLY_TRIP_PARENTFIELD = "items"
+
 
 def _month_range(year: int, month: int):
     start = getdate(f"{year:04d}-{month:02d}-01")
@@ -90,7 +95,7 @@ def get_department_calendar(year: int | None = None, month: int | None = None):
     Calendar theo THÁNG cho PHÒNG BAN của user đăng nhập:
     - trips: công tác (destination)
     - meetings: họp (note)
-    - leader_trips: công tác của lãnh đạo tập đoàn
+    - leader_trips: công tác của lãnh đạo tập đoàn + lịch công tác tuần lãnh đạo
     - leader_leaves: nghỉ của lãnh đạo tập đoàn
     """
     user = frappe.session.user
@@ -409,7 +414,102 @@ def get_department_calendar(year: int | None = None, month: int | None = None):
             _add_date_range(by_date, s, e, "leader_trips", trip)
             _add_date_range(common_by_date, s, e, "leader_trips", trip)
 
-    # 3.3) Lịch cá nhân (Leave + Trip + Meeting)
+    # 3.3) Lịch công tác tuần của lãnh đạo (doctype phụ)
+    leader_weekly_trip_sql = f"""
+        SELECT
+            t.name AS request_name,
+            t.from_date AS parent_from_date,
+            t.to_date AS parent_to_date,
+            i.trip_date,
+            i.time_slot,
+            i.destination,
+            i.purpose,
+            i.employee,
+            i.employee_name
+        FROM `tab{LEADER_WEEKLY_TRIP_PARENT_DOCTYPE}` t
+        JOIN `tab{LEADER_WEEKLY_TRIP_ITEM_DOCTYPE}` i
+          ON i.parent = t.name
+         AND i.parenttype = %s
+         AND i.parentfield = %s
+        WHERE t.docstatus < 2
+          AND (
+            (i.trip_date IS NOT NULL AND i.trip_date BETWEEN %s AND %s)
+            OR (i.trip_date IS NULL AND t.from_date <= %s AND t.to_date >= %s)
+          )
+        ORDER BY COALESCE(i.trip_date, t.from_date) ASC, i.employee_name ASC
+    """
+    try:
+        leader_weekly_trip_rows = frappe.db.sql(
+            leader_weekly_trip_sql,
+            (
+                LEADER_WEEKLY_TRIP_PARENT_DOCTYPE,
+                LEADER_WEEKLY_TRIP_PARENTFIELD,
+                start,
+                end,
+                end,
+                start,
+            ),
+            as_dict=True,
+        )
+    except Exception:
+        leader_weekly_trip_rows = []
+
+    leader_weekly_trip_map = {}
+    for row in leader_weekly_trip_rows:
+        trip_date = getdate(row.trip_date) if row.trip_date else None
+        parent_from_date = getdate(row.parent_from_date) if row.parent_from_date else None
+        parent_to_date = getdate(row.parent_to_date) if row.parent_to_date else None
+
+        from_date = trip_date or parent_from_date
+        to_date = trip_date or parent_to_date
+        if not from_date or not to_date:
+            continue
+
+        destination = (row.destination or "").strip() or "(chưa có địa điểm)"
+        purpose = (row.purpose or "").strip()
+        time_slot = (row.time_slot or "").strip() or "Cả ngày"
+        if time_slot in {"Sáng", "Chiều"}:
+            destination = f"[{time_slot}] {destination}"
+
+        key = (
+            row.request_name,
+            str(from_date),
+            str(to_date),
+            destination,
+            purpose,
+            time_slot,
+        )
+        trip = leader_weekly_trip_map.setdefault(
+            key,
+            {
+                "request_name": row.request_name,
+                "from_date": str(from_date),
+                "to_date": str(to_date),
+                "destination": destination,
+                "purpose": purpose,
+                "time_slot": time_slot,
+                "people": [],
+            },
+        )
+        trip["people"].append(
+            {
+                "employee": row.employee,
+                "employee_name": row.employee_name or row.employee,
+            }
+        )
+
+    for trip in leader_weekly_trip_map.values():
+        trip["people"] = sorted(
+            trip["people"], key=lambda item: (item.get("employee_name") or "", item.get("employee") or "")
+        )
+        fd = getdate(trip["from_date"])
+        td = getdate(trip["to_date"])
+        s = fd if fd > start else start
+        e = td if td < end else end
+        _add_date_range(by_date, s, e, "leader_trips", trip)
+        _add_date_range(common_by_date, s, e, "leader_trips", trip)
+
+    # 3.4) Lịch cá nhân (Leave + Trip + Meeting)
     if emp and emp.get("name"):
         emp_id = emp.get("name")
 

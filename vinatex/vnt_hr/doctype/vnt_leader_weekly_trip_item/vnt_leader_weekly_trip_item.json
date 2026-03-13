@@ -1,0 +1,94 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-03-13 00:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_people",
+  "trip_date",
+  "time_slot",
+  "employee",
+  "employee_name",
+  "designation",
+  "destination",
+  "purpose"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_people",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "trip_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Ng\u00e0y c\u00f4ng t\u00e1c",
+   "reqd": 1
+  },
+  {
+   "default": "C\u1ea3 ng\u00e0y",
+   "fieldname": "time_slot",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Bu\u1ed5i",
+   "options": "C\u1ea3 ng\u00e0y\nS\u00e1ng\nChi\u1ec1u",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "in_list_view": 1,
+   "label": "L\u00e3nh \u0111\u1ea1o",
+   "link_filters": "[[\"Employee\",\"custom_designation_group\",\"=\",\"Ng\u01b0\u1eddi qu\u1ea3n l\u00fd\"]]",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fetch_if_empty": 1,
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "H\u1ecd v\u00e0 t\u00ean",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.designation",
+   "fetch_if_empty": 1,
+   "fieldname": "designation",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Ch\u1ee9c danh",
+   "read_only": 1
+  },
+  {
+   "fieldname": "destination",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "N\u01a1i c\u00f4ng t\u00e1c",
+   "reqd": 1
+  },
+  {
+   "fieldname": "purpose",
+   "fieldtype": "Small Text",
+   "label": "N\u1ed9i dung \u0111i"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-03-13 16:28:29.088573",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Leader Weekly Trip Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
