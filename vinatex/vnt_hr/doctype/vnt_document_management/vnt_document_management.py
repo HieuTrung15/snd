@@ -11,7 +11,7 @@ from vinatex.patches.utils.rocket_chat import send_rocket_message
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 
 # Cặp thành viên đặc biệt do lead_depart nhập ý kiến thay ở vòng 1 khi scic_opinion = 1.
-SCIC_MANUAL_EMPLOYEES = {"VGT00070", "VGT00073"}
+SCIC_MANUAL_EMPLOYEES = {"VGT00068", "VGT00072"}
 
 # Marker dùng để chống gửi thông báo lặp theo từng giai đoạn.
 SCIC_ROUND1_TODO_MARKER = "[SCIC_HDQT_ROUND1]"
@@ -59,6 +59,7 @@ class VNTDocumentManagement(Document):
 		self._maybe_notify_lead_depart_to_fill_scic_pair()
 		self._maybe_notify_items6_round_2()
 		self._maybe_notify_lead_depart_on_items7_completed()
+		self._maybe_close_doc_todos_on_status_done()
 
 	def on_update(self):
 		self._maybe_notify_items6_round_1()
@@ -66,6 +67,8 @@ class VNTDocumentManagement(Document):
 		self._maybe_notify_lead_depart_to_fill_scic_pair()
 		self._maybe_notify_items6_round_2()
 		self._maybe_notify_lead_depart_on_items7_completed()
+		self._maybe_notify_items6_feedback_flow()
+		self._maybe_close_doc_todos_on_status_done()
 
 	def _validate_handler_status_roles(self):
 		"""Yêu cầu phải có ít nhất 1 dòng Chủ trì/Phối hợp/Nhận để biết khi đặt trạng thái lãnh đạo."""
@@ -159,6 +162,13 @@ class VNTDocumentManagement(Document):
 			return None
 		return frappe.db.get_value("Employee", {"user_id": user}, "name")
 
+	def _hdqt_notify_title(self) -> str:
+		"""Tiêu đề dùng cho thông báo HDQT."""
+		title = (self.title or "").strip()
+		if title:
+			return title
+		return (self.reference_number or self.name or "").strip()
+
 	def _get_prev_item6_rows(self, parentfield: str) -> dict[str, object]:
 		"""
 		Lấy snapshot rows trước khi save để biết chính xác dòng nào vừa bị đổi opinion.
@@ -186,6 +196,7 @@ class VNTDocumentManagement(Document):
 			return
 
 		current_emp = self._current_session_employee()
+		lead_emp = (self.lead_depart or "").strip()
 		prev_rows = self._get_prev_item6_rows("items6")
 
 		for row in self.get("items6") or []:
@@ -193,7 +204,16 @@ class VNTDocumentManagement(Document):
 			prev_opinion = (prev_rows.get(row.name).opinion or "").strip() if prev_rows.get(row.name) else ""
 			if new_opinion == prev_opinion:
 				continue
-			if not current_emp or (row.employee or "").strip() != current_emp:
+			employee = (row.employee or "").strip()
+			is_owner = bool(current_emp and employee == current_emp)
+			# Ngoại lệ: lead_depart được nhập/sửa cho 2 mã SCIC trong items6 (nếu có).
+			is_lead_scic_override = bool(
+				current_emp
+				and lead_emp
+				and current_emp == lead_emp
+				and employee in SCIC_MANUAL_EMPLOYEES
+			)
+			if not (is_owner or is_lead_scic_override):
 				frappe.throw("Bạn chỉ được chọn Ý kiến của chính mình.")
 
 	def _validate_items7_opinion_owner(self):
@@ -258,6 +278,31 @@ class VNTDocumentManagement(Document):
 		for row in todos:
 			if (row.status or "").strip().lower() == "closed":
 				continue
+			frappe.db.set_value("ToDo", row.name, "status", "Closed", update_modified=False)
+
+	def _maybe_close_doc_todos_on_status_done(self):
+		"""
+		Khi status_doc = 'Đã hoàn thành' (luồng Nội bộ ban),
+		đóng toàn bộ ToDo còn mở của chính văn bản này.
+		"""
+		if (self.vnt_type or "").strip() != "Nội bộ ban":
+			return
+		if (self.status_doc or "").strip() != "Đã hoàn thành":
+			return
+		if not self.name:
+			return
+
+		open_todos = frappe.get_all(
+			"ToDo",
+			filters={
+				"reference_type": self.doctype,
+				"reference_name": self.name,
+				"status": ["not in", ["Closed", "Cancelled"]],
+			},
+			fields=["name"],
+			ignore_permissions=True,
+		)
+		for row in open_todos:
 			frappe.db.set_value("ToDo", row.name, "status", "Closed", update_modified=False)
 
 	def _maybe_close_handler_todo_on_transfer(self):
@@ -848,34 +893,54 @@ class VNTDocumentManagement(Document):
 		"""Opinion hợp lệ cho thành viên: chỉ Đồng ý / Không đồng ý."""
 		return (opinion or "").strip() in {"Đồng ý", "Không đồng ý"}
 
-	def _todo_marker_exists(self, marker: str, allocated_to: str | None = None) -> bool:
-		"""Kiểm tra đã có ToDo marker chưa để chống gửi lặp."""
+	def _todo_marker_exists(self, marker: str, allocated_to: str | None = None, todo_description: str | None = None) -> bool:
+		"""Kiểm tra đã có ToDo marker/todo_description chưa để chống gửi lặp."""
+		descriptions = [f"{marker} {self.name}"]
+		if (todo_description or "").strip():
+			descriptions.append((todo_description or "").strip())
+		descriptions = list(dict.fromkeys(descriptions))
+
 		filters = {
 			"reference_type": self.doctype,
 			"reference_name": self.name,
-			"description": f"{marker} {self.name}",
+			"description": ["in", descriptions],
 			"status": ("!=", "Cancelled"),
 		}
 		if allocated_to:
 			filters["allocated_to"] = allocated_to
 		return bool(frappe.db.exists("ToDo", filters))
 
-	def _notify_users_once(self, user_ids: list[str], marker: str, message: str, force_notify: bool = False):
+	def _notify_users_once(
+		self,
+		user_ids: list[str],
+		marker: str,
+		message: str,
+		force_notify: bool = False,
+		todo_description: str | None = None,
+	):
 		"""
 		Gửi Notification + tạo ToDo theo marker.
 		Mỗi user chỉ nhận 1 lần cho mỗi marker.
 		force_notify=True:
 		- Nếu đã có ToDo marker thì không tạo ToDo mới.
 		- Nhưng vẫn bắn Notification Log lại để nhắc lần nữa.
+		todo_description:
+		- Nếu có, dùng làm nội dung ToDo (description).
+		- Nếu không, giữ format cũ: "{marker} {self.name}".
 		"""
 		if not user_ids:
 			return
+
+		# Mặc định giữ format marker để không ảnh hưởng các luồng khác.
+		todo_text = (todo_description or f"{marker} {self.name}").strip()
+		if not todo_text:
+			todo_text = f"{marker} {self.name}"
 
 		sent_users = []
 		for user_id in set(user_ids):
 			if not user_id:
 				continue
-			already_exists = self._todo_marker_exists(marker, user_id)
+			already_exists = self._todo_marker_exists(marker, user_id, todo_text)
 			if already_exists and not force_notify:
 				continue
 			if not already_exists:
@@ -886,7 +951,7 @@ class VNTDocumentManagement(Document):
 						"allocated_to": user_id,
 						"reference_type": self.doctype,
 						"reference_name": self.name,
-						"description": f"{marker} {self.name}",
+						"description": todo_text,
 						"priority": "Medium",
 					}
 				).insert(ignore_permissions=True)
@@ -909,7 +974,7 @@ class VNTDocumentManagement(Document):
 
 	def _did_scic_manual_pair_opinion_change(self) -> bool:
 		"""
-		Kiểm tra lead có vừa sửa opinion của VGT00070/VGT00073 trong items7 không.
+		Kiểm tra lead có vừa sửa opinion của VGT00068/VGT00072 trong items7 không.
 		Chỉ dùng cho luồng scic_opinion = 1 ở lần update.
 		"""
 		if not self.name or not self._is_scic_round_2_mode():
@@ -946,6 +1011,118 @@ class VNTDocumentManagement(Document):
 			if user_id:
 				user_ids.add(user_id)
 		return list(user_ids)
+
+	def _maybe_notify_items6_feedback_flow(self):
+		"""
+		Flow thông báo theo yêu cầu bảng items6:
+		1) Employee đổi opinion/other => báo lead_depart kiểm tra.
+		2) Lead_depart đổi explan/attach_doc => báo lại employee cùng dòng.
+		"""
+		if not self.name:
+			return
+
+		prev_doc = self.get_doc_before_save()
+		if not prev_doc:
+			return
+
+		current_emp = (self._current_session_employee() or "").strip()
+		lead_emp = (self.lead_depart or "").strip()
+		is_lead_actor = bool(current_emp and lead_emp and current_emp == lead_emp)
+
+		# Cache user_id để tránh query lặp khi nhiều dòng đổi cùng lúc.
+		employee_user_cache: dict[str, str | None] = {}
+		employee_name_cache: dict[str, str | None] = {}
+
+		def _get_user_id(employee: str) -> str:
+			emp = (employee or "").strip()
+			if not emp:
+				return ""
+			if emp not in employee_user_cache:
+				employee_user_cache[emp] = frappe.db.get_value("Employee", emp, "user_id")
+			return (employee_user_cache.get(emp) or "").strip()
+
+		def _get_employee_name(employee: str) -> str:
+			emp = (employee or "").strip()
+			if not emp:
+				return "Employee"
+			if emp not in employee_name_cache:
+				employee_name_cache[emp] = frappe.db.get_value("Employee", emp, "employee_name")
+			return (employee_name_cache.get(emp) or emp).strip()
+
+		lead_user = _get_user_id(lead_emp)
+
+		prev_map: dict[str, object] = {
+			(row.name or "").strip(): row
+			for row in (prev_doc.get("items6") or [])
+			if (row.name or "").strip()
+		}
+
+		for row in self.get("items6") or []:
+			row_name = (row.name or "").strip()
+			prev_row = prev_map.get(row_name)
+
+			prev_opinion = (getattr(prev_row, "opinion", None) or "").strip() if prev_row else ""
+			prev_other = (getattr(prev_row, "other", None) or "").strip() if prev_row else ""
+			prev_explan = (getattr(prev_row, "explan", None) or "").strip() if prev_row else ""
+			prev_attach_doc = (getattr(prev_row, "attach_doc", None) or "").strip() if prev_row else ""
+
+			cur_opinion = (row.opinion or "").strip()
+			cur_other = (row.other or "").strip()
+			cur_explan = (row.explan or "").strip()
+			cur_attach_doc = (row.attach_doc or "").strip()
+
+			opinion_changed = cur_opinion != prev_opinion
+			other_changed = cur_other != prev_other
+			explan_changed = cur_explan != prev_explan
+			attach_doc_changed = cur_attach_doc != prev_attach_doc
+
+			row_employee = (row.employee or "").strip()
+			is_row_owner_actor = bool(current_emp and row_employee and current_emp == row_employee)
+
+			# Nhóm 1: employee gửi ý kiến cho lead_depart.
+			# - opinion = Đồng ý / Không đồng ý => gửi.
+			# - opinion trống + other có giá trị => gửi.
+			# - mỗi lần other đổi => gửi lại.
+			should_notify_lead = False
+			if is_row_owner_actor and lead_user:
+				if other_changed:
+					should_notify_lead = True
+				elif opinion_changed:
+					if cur_opinion in {"Đồng ý", "Không đồng ý"}:
+						should_notify_lead = True
+					elif not cur_opinion and cur_other:
+						should_notify_lead = True
+
+			if should_notify_lead:
+				employee_name = _get_employee_name(row_employee)
+				doc_title = self._hdqt_notify_title()
+				make_notification_logs(
+					{
+						"type": "Alert",
+						"subject": f"{employee_name} đã cho ý kiến về: {doc_title}.",
+						"document_type": self.doctype,
+						"document_name": self.name,
+					},
+					[lead_user],
+				)
+
+			# Nhóm 2: lead_depart giải trình cho dòng employee.
+			# Mỗi lần đổi explan hoặc attach_doc đều báo lại employee của đúng dòng.
+			if is_lead_actor and (explan_changed or attach_doc_changed):
+				employee_user = _get_user_id(row_employee)
+				if not employee_user:
+					continue
+				lead_depart_name = frappe.db.get_value("Employee", self.lead_depart, "employee_name") or self.lead_depart
+				doc_title = self._hdqt_notify_title()
+				make_notification_logs(
+					{
+						"type": "Alert",
+						"subject": f"{lead_depart_name} đã giải trình về: {doc_title}.",
+						"document_type": self.doctype,
+						"document_name": self.name,
+					},
+					[employee_user],
+				)
 
 	def _is_items6_opinion_completed(self) -> bool:
 		"""Luồng scic_opinion = 0: tất cả dòng items6 hợp lệ đều đã nhập opinion."""
@@ -1023,16 +1200,25 @@ class VNTDocumentManagement(Document):
 		"""
 		if not self.name or not self._is_scic_doc():
 			return
+		# Phiếu round-2 (có link_doc) sẽ dùng thông báo riêng ở _maybe_notify_items6_round_2.
+		# Bỏ qua round-1 để tránh tạo 2 ToDo cho cùng employee items6.
+		if self._is_scic_round_2_mode() and (self.link_doc or "").strip():
+			return
 		user_ids = self._get_items6_user_ids()
 		if not user_ids:
 			return
-		ref = self.name
+		doc_title = self._hdqt_notify_title()
 		# scic_opinion = 0: dùng đúng mẫu thông báo yêu cầu user đưa ý kiến.
 		if self._is_scic_round_1_mode():
-			message = f"Hãy đưa ra ý kiến cho văn bản {ref}."
+			message = f"Hãy cho ý kiến về: {doc_title}."
 		else:
-			message = f"Hãy cho ý kiến lần 1 cho văn bản {ref}."
-		self._notify_users_once(user_ids, SCIC_ROUND1_TODO_MARKER, message)
+			message = f"Hãy cho ý kiến về: {doc_title}."
+		self._notify_users_once(
+			user_ids,
+			SCIC_ROUND1_TODO_MARKER,
+			message,
+			todo_description=message,
+		)
 
 	def _maybe_notify_lead_depart_on_items6_completed(self):
 		"""
@@ -1048,30 +1234,40 @@ class VNTDocumentManagement(Document):
 			return
 		ref = self.reference_number or self.name
 		message = f"Các thành viên HĐQT đã hoàn tất ý kiến cho văn bản số {ref}."
-		self._notify_users_once([lead_user], SCIC_ROUND1_DONE_TODO_MARKER, message)
+		self._notify_users_once(
+			[lead_user],
+			SCIC_ROUND1_DONE_TODO_MARKER,
+			message,
+			todo_description=message,
+		)
 
 	def _maybe_notify_items6_round_2(self):
 		"""
 		Luồng scic_opinion = 1:
-		Sau khi nhóm items6 hoàn tất vòng 1 + lead nhập đủ opinion cho
-		VGT00070/VGT00073 ở items7, gửi thông báo vòng 2 cho các thành viên
-		còn lại trong items7 (không gồm 2 mã SCIC thủ công).
+		- Chỉ gửi thông báo round-2 cho toàn bộ employee trong items6 khi phiếu có link_doc.
+		- Không còn gửi thông báo theo bảng items7 trong hàm này.
 		"""
 		if not self.name or not self._is_scic_round_2_mode():
 			return
-		if not self._is_items6_round_2_entry_completed():
+
+		# Phiếu round-2 sinh từ nút opinion_next sẽ có link_doc.
+		# Chỉ các phiếu này mới phát thông báo vòng 2 cho items6.
+		link_doc = (self.link_doc or "").strip()
+		if not link_doc:
 			return
-		if not self._is_items7_manual_pair_completed():
-			return
-		user_ids = self._get_item_user_ids("items7", exclude_manual_pair=True)
+
+		user_ids = self._get_items6_user_ids()
 		if not user_ids:
 			return
-		ref = self.reference_number or self.name
-		message = f"Hãy cho ý kiến lần 2 cho văn bản số {ref}."
-		# Nếu lead vừa sửa lại opinion của 2 mã SCIC sau khi đã phát round 2,
-		# vẫn gửi thông báo nhắc lại cho nhóm còn lại (không tạo ToDo trùng).
-		force_round2_notify = bool(getattr(self.flags, "scic_manual_pair_changed", False)) and self._is_round_2_requested()
-		self._notify_users_once(user_ids, SCIC_ROUND2_TODO_MARKER, message, force_notify=force_round2_notify)
+
+		doc_title = self._hdqt_notify_title() if hasattr(self, "_hdqt_notify_title") else (self.reference_number or self.name)
+		message = f"Hãy cho ý kiến về: {doc_title}."
+		self._notify_users_once(
+			user_ids,
+			SCIC_ROUND2_TODO_MARKER,
+			message,
+			todo_description=message,
+		)
 
 	def _maybe_notify_lead_depart_to_fill_scic_pair(self):
 		"""
@@ -1099,7 +1295,12 @@ class VNTDocumentManagement(Document):
 			]
 		)
 		message = f"Các thành viên HĐQT đã hoàn tất ý kiến. Hãy điền ý kiến của 2 thành viên SCIC trong văn bản số {ref}."
-		self._notify_users_once([lead_user], SCIC_MANUAL_PAIR_TODO_MARKER, message)
+		self._notify_users_once(
+			[lead_user],
+			SCIC_MANUAL_PAIR_TODO_MARKER,
+			message,
+			todo_description=message,
+		)
 
 	def _maybe_notify_lead_depart_on_items7_completed(self):
 		"""Khi items7 hoàn tất vòng 2, gửi thông báo về lead_depart."""
@@ -1112,7 +1313,12 @@ class VNTDocumentManagement(Document):
 			return
 		ref = self.reference_number or self.name
 		message = f"Đã hoàn tất ý kiến lần 2 của HĐQT cho văn bản số {ref}."
-		self._notify_users_once([lead_user], SCIC_ROUND2_DONE_TODO_MARKER, message)
+		self._notify_users_once(
+			[lead_user],
+			SCIC_ROUND2_DONE_TODO_MARKER,
+			message,
+			todo_description=message,
+		)
 
 
 def _gather_related_doc_names(emp_name: str, emp_department: str | None = None, ignore_permissions: bool = False) -> set[str]:
@@ -1257,7 +1463,7 @@ def notify_pending_hdqt_opinion_deadline():
 		for doc in frappe.get_all(
 			"VNT Document Management",
 			filters={"name": ["in", parent_names], "docstatus": ["<", 2]},
-			fields=["name", "reference_number"],
+			fields=["name", "reference_number", "title"],
 			ignore_permissions=True,
 		)
 	}
@@ -1285,12 +1491,19 @@ def notify_pending_hdqt_opinion_deadline():
 		if not row_deadline:
 			continue
 
-		ref = parent_docs[doc_name].reference_number or doc_name
-		table_label = "items6" if row.parentfield == "items6" else "items7"
+		doc_row = parent_docs[doc_name]
+		title = (doc_row.title or "").strip()
+		ref = doc_row.reference_number or doc_name
 		if row_deadline == tomorrow:
-			subject = f"Nhắc hạn: Còn 1 ngày đến hạn điền ý kiến cho văn bản số {ref}."
+			if row.parentfield == "items6":
+				subject = f"Nhắc hạn: Còn 1 ngày đến hạn điền ý kiến cho: {title or ref}."
+			else:
+				subject = f"Nhắc hạn: Còn 1 ngày đến hạn điền ý kiến cho văn bản số {ref}."
 		elif row_deadline == today:
-			subject = f"Nhắc hạn: Hôm nay là hạn điền ý kiến cho văn bản số {ref}."
+			if row.parentfield == "items6":
+				subject = f"Nhắc hạn: Hôm nay là hạn điền ý kiến cho: {title or ref}."
+			else:
+				subject = f"Nhắc hạn: Hôm nay là hạn điền ý kiến cho văn bản số {ref}."
 		else:
 			continue
 
@@ -2368,12 +2581,13 @@ def get_document_kpis_v2():
 	}
 
 # ===== Custom HTML Block API (v2) =====
-# KPI + danh sách dùng chung 1 logic trạng thái, chỉ tính 3 loại: Công văn đến/đi/Quyết định
+# KPI + danh sách dùng chung 1 logic trạng thái, tính 4 loại:
+# Công văn đến / Công văn đi / Quyết định / Nội bộ ban
 
 import frappe
 from frappe.utils import getdate, nowdate, cint
 
-_ALLOWED_BLOCK_TYPES = ("Công văn đến", "Công văn đi", "Quyết định")
+_ALLOWED_BLOCK_TYPES = ("Công văn đến", "Công văn đi", "Quyết định", "Nội bộ ban")
 
 
 def _block_best_deadline(d: dict):
@@ -2434,7 +2648,7 @@ def get_document_block_data_v2(
 	- has_next: có trang tiếp theo không
 	- kpis: { total, completed, processing, overdue } (tính trên toàn bộ tập lọc, KHÔNG theo status_filter)
 
-	Chỉ tính 3 loại: Công văn đến / Công văn đi / Quyết định.
+	Áp dụng cho 4 loại: Công văn đến / Công văn đi / Quyết định / Nội bộ ban.
 	"""
 	page = max(1, cint(page or 1))
 	page_size = max(1, cint(page_size or 20))
@@ -2487,6 +2701,8 @@ def get_document_block_data_v2(
 		"received_date",
 		"sender",
 		"noi_nhan",
+		"title",
+		"status_doc",
 		"department",
 		"nguoi_chu_tri",
 		"chairperson_status",
@@ -2551,7 +2767,7 @@ def get_document_block_data_v2(
 	want_end = want_start + page_size + 1  # +1 để biết has_next
 
 	order_by = "document_date desc"
-	use_custom_sort = type_doc in ("Công văn đến", "Công văn đi", "Quyết định")
+	use_custom_sort = type_doc in ("Công văn đến", "Công văn đi", "Quyết định", "Nội bộ ban")
 	if use_custom_sort:
 		order_by = "name desc"
 

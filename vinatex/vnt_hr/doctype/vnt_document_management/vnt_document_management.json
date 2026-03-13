@@ -33,10 +33,14 @@
   "noi_nhan",
   "ds_phong_ban_noibo",
   "scic_opinion",
+  "opinion_next",
+  "link_doc",
+  "status_doc",
   "column_break_frgm",
   "reference_number",
   "text_number",
   "summary",
+  "title",
   "section_break_mugf",
   "attach",
   "html",
@@ -609,6 +613,7 @@
    "label": "L\u1ea5y \u00fd ki\u1ebfn SCIC"
   },
   {
+   "depends_on": "eval: doc.vnt_type == 'N\u1ed9i b\u1ed9 ban'",
    "fieldname": "th\u00e0nh_vi\u00ean_h\u0111qt_section",
    "fieldtype": "Section Break",
    "label": "\u00dd ki\u1ebfn c\u1ee7a th\u00e0nh vi\u00ean H\u0110QT"
@@ -636,6 +641,7 @@
    "depends_on": "eval: doc.scic_opinion == 1",
    "fieldname": "t\u1ed5ng_h\u1ee3p_\u00fd_ki\u1ebfn_l\u1ea7n_2_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "T\u1ed5ng h\u1ee3p \u00fd ki\u1ebfn sau khi l\u1ea5y \u00fd ki\u1ebfn c\u1ee7a SCIC"
   },
   {
@@ -655,7 +661,6 @@
    "fetch_from": "lead_depart.department",
    "fieldname": "lead_department",
    "fieldtype": "Link",
-   "ignore_user_permissions": 1,
    "label": "Department",
    "options": "Department"
   },
@@ -665,12 +670,38 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Short Name Department"
+  },
+  {
+   "fieldname": "link_doc",
+   "fieldtype": "Link",
+   "label": "V\u0103n b\u1ea3n g\u1ed1c",
+   "options": "VNT Document Management",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.vnt_type == 'N\u1ed9i b\u1ed9 ban' && doc.scic_opinion == 1",
+   "fieldname": "opinion_next",
+   "fieldtype": "Button",
+   "label": "Xin \u00fd ki\u1ebfn l\u1ea7n 2"
+  },
+  {
+   "depends_on": "eval: doc.vnt_type == 'N\u1ed9i b\u1ed9 ban'",
+   "fieldname": "title",
+   "fieldtype": "Small Text",
+   "label": "Ti\u00eau \u0111\u1ec1"
+  },
+  {
+   "depends_on": "eval: doc.vnt_type == 'N\u1ed9i b\u1ed9 ban'",
+   "fieldname": "status_doc",
+   "fieldtype": "Select",
+   "label": "Tr\u1ea1ng th\u00e1i v\u0103n b\u1ea3n",
+   "options": "\n\u0110ang x\u1eed l\u00fd\n\u0110\u00e3 ho\u00e0n th\u00e0nh"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-10 17:16:42.154973",
+ "modified": "2026-03-13 13:17:25.314266",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
@@ -727,6 +758,7 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
+ "search_fields": "reference_number",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

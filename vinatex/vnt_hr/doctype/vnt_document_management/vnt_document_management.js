@@ -140,7 +140,11 @@ const get_hdqt_members_by_lead = async (frm) => {
 
 const HDQT_MAJORITY_COUNT = 4;
 // 2 mã thành viên do lead_depart nhập ý kiến thay ở vòng 1 khi scic_opinion = 1.
-const SCIC_MANUAL_EMPLOYEES = new Set(["VGT00070", "VGT00073"]);
+const SCIC_MANUAL_EMPLOYEES = new Set(["VGT00068", "VGT00072"]);
+// Các field nhập liệu trong items6 cần khóa theo quyền từng dòng.
+const ITEMS6_LOCKABLE_FIELDS = ["opinion", "attach", "other", "deadline", "explan", "attach_doc"];
+// Lead_depart được phép cập nhật 2 field này trên mọi dòng items6.
+const ITEMS6_LEAD_GLOBAL_FIELDS = new Set(["explan", "attach_doc"]);
 // Điều kiện hiển thị vnt_type "Nội bộ ban" theo user đăng nhập.
 const VNT_TYPE_NOI_BO_BAN = "Nội bộ ban";
 const LEAVE_APPROVER_L1_ROLE = "Leave Approver L1";
@@ -297,25 +301,41 @@ const sync_hdqt_member_tables = async (frm, members = null) => {
   }
 };
 
-const can_edit_items6_opinion = (row, currentEmp) => {
+const can_edit_items6_opinion = (row, currentEmp, leadEmp = "") => {
   if (frappe.user.has_role("Administrator") || frappe.user.has_role("System Manager")) return true;
-  return !!(row?.employee && currentEmp && row.employee === currentEmp);
+  const employee = (row?.employee || "").trim();
+  if (!employee || !currentEmp) return false;
+  const isOwner = employee === currentEmp;
+  // Ngoại lệ: lead_depart có thể sửa dòng của 2 mã SCIC trong items6.
+  const isLeadScicOverride = !!(leadEmp && currentEmp === leadEmp && SCIC_MANUAL_EMPLOYEES.has(employee));
+  return isOwner || isLeadScicOverride;
+};
+
+const apply_items6_row_lock = (gridRow, canEditRow, isLeadUser) => {
+  ITEMS6_LOCKABLE_FIELDS.forEach((fieldname) => {
+     // Giữ nguyên rule cũ theo dòng; bổ sung quyền global cho lead_depart ở explan/attach_doc.
+    const canEdit = canEditRow || (isLeadUser && ITEMS6_LEAD_GLOBAL_FIELDS.has(fieldname));
+    if (typeof gridRow.toggle_editable === "function") {
+      gridRow.toggle_editable(fieldname, canEdit);
+    }
+    const formField = gridRow.grid_form?.fields_dict?.[fieldname];
+    if (formField) {
+      formField.df.read_only = canEdit ? 0 : 1;
+      formField.refresh();
+    }
+  });
 };
 
 const apply_items6_opinion_scope = async (frm) => {
   const grid = frm.fields_dict.items6?.grid;
   if (!grid) return;
   const currentEmp = await get_current_employee(frm);
+  const leadEmp = (frm.doc.lead_depart || "").trim();
+  const isLeadUser = !!(currentEmp && leadEmp && currentEmp === leadEmp);
   (grid.grid_rows || []).forEach((gridRow) => {
-    const canEdit = can_edit_items6_opinion(gridRow.doc, currentEmp);
-    if (typeof gridRow.toggle_editable === "function") {
-      gridRow.toggle_editable("opinion", canEdit);
-    }
-    const formField = gridRow.grid_form?.fields_dict?.opinion;
-    if (formField) {
-      formField.df.read_only = canEdit ? 0 : 1;
-      formField.refresh();
-    }
+    const canEditRow = can_edit_items6_opinion(gridRow.doc, currentEmp, leadEmp);
+    // Khóa toàn bộ field nhập liệu của items6 nếu không thuộc dòng được phép sửa.
+    apply_items6_row_lock(gridRow, canEditRow, isLeadUser);
   });
 };
 
@@ -1349,6 +1369,50 @@ frappe.ui.form.on("VNT Document Management", {
     await apply_items6_opinion_scope(frm);
     await apply_items7_opinion_scope(frm);
     apply_items7_visibility(frm);
+    // Cập nhật mốc giá trị hợp lệ mới nhất để phục vụ rollback khi user không đủ quyền.
+  },
+  opinion_next(frm) {
+    const docname = (frm.doc.name || "").trim();
+    const isScicRound2 = is_checked(frm.doc.scic_opinion);
+    const isHdqtSeries = docname.startsWith("VPHĐQT-");
+
+    // Chỉ cho phép điều hướng khi đúng điều kiện nghiệp vụ:
+    // 1) scic_opinion = 1
+    // 2) mã phiếu bắt đầu bằng "VPHĐQT-"
+    if (!isScicRound2 || !isHdqtSeries) {
+      frappe.msgprint("Chỉ thực hiện được khi scic_opinion = 1 và mã phiếu bắt đầu bằng VPHĐQT-.");
+      return;
+    }
+
+    // Tạo local draft bằng API chuẩn của Frappe rồi route thẳng vào form đó.
+    const newDoc = frappe.model.get_new_doc("VNT Document Management");
+    if (!newDoc) {
+      frappe.msgprint("Không thể tạo phiếu mới. Vui lòng thử lại.");
+      return;
+    }
+
+    // Copy các field header theo yêu cầu.
+    newDoc.vnt_type = frm.doc.vnt_type || "";
+    newDoc.lead_depart = frm.doc.lead_depart || "";
+    newDoc.department = frm.doc.department || "";
+    newDoc.document_date = frm.doc.document_date || '';
+    newDoc.title = frm.doc.title || '';
+    // Giữ nguyên cờ SCIC từ phiếu cũ (yêu cầu: scic_opinion = 1 lấy từ doc cũ).
+    newDoc.scic_opinion = frm.doc.scic_opinion || 0;
+    // Lưu liên kết về văn bản gốc để theo dõi chuỗi xin ý kiến.
+    newDoc.link_doc = docname;
+
+    // Copy bảng items6 theo yêu cầu: chỉ lấy Employee.
+    // Dùng add_child để Frappe tự sinh cấu trúc row chuẩn (name/idx/doctype...).
+    const sourceRows = Array.isArray(frm.doc.items6) ? frm.doc.items6 : [];
+    sourceRows.forEach((src) => {
+      const row = frappe.model.add_child(newDoc, "VNT Document Management Item6", "items6");
+      row.employee = src.employee || "";
+    });
+
+    // Tránh route_options cũ ảnh hưởng dữ liệu của form mới.
+    frappe.route_options = null;
+    frappe.set_route("Form", "VNT Document Management", newDoc.name);
   },
   async enforce_items6_opinion_scope(frm) {
     await apply_items6_opinion_scope(frm);
@@ -1434,6 +1498,40 @@ frappe.ui.form.on("VNT Document Management", {
       frm.set_value("document_date", frappe.datetime.now_date());
     }
 
+    const update_history = (table_name) => {
+      const rows = Array.isArray(frm.doc[table_name]) ? frm.doc[table_name] : [];
+      let updated = false;
+      rows.forEach((row) => {
+        let changed = false;
+        if (row.other && row.other.trim()) {
+          const user = frappe.session.user_fullname || frappe.session.user || "Người dùng";
+          const time = frappe.datetime.now_datetime();
+          const new_msg = `${user} (${time}):\n${row.other}`;
+          // Chỉ thêm vào history nếu new_msg chưa tồn tại để tránh duplicate khi Save nhiều lần
+          if (!row.history || !row.history.includes(new_msg)) {
+            row.history = row.history ? row.history + "\n---\n" + new_msg : new_msg;
+            changed = true;
+          }
+        }
+        if (row.explan && row.explan.trim()) {
+          const user = frappe.session.user_fullname || frappe.session.user || "Người dùng";
+          const now = frappe.datetime.now_datetime(); // "2026-03-13 10:30:45"
+          const [date, time] = now.split(' ');
+          const [year, month, day] = date.split('-');
+          const dateFormatted = `${day}-${month}-${year}`; // "13-03-2026"
+          const timeFormatted = time.substring(0, 5); // "10:30"
+          const new_msg = `${user} (${dateFormatted} ${timeFormatted}):\n${row.explan}`;
+          if (!row.history || !row.history.includes(new_msg)) {
+            row.history = row.history ? row.history + "\n---\n" + new_msg : new_msg;
+            changed = true;
+          }
+        }
+        if (changed) updated = true;
+      });
+      if (updated) frm.refresh_field(table_name);
+    };
+
+    update_history("items6");
   },
 
   chairperson(frm) {
@@ -1444,6 +1542,7 @@ frappe.ui.form.on("VNT Document Management", {
   },
 
   refresh(frm) {
+    frm.set_df_property("items6", "cannot_add_rows", true);
     if (frm._handlerStatusLastSaved === undefined) {
       set_handler_status_prev(frm, frm.doc.handler_status || null);
     }
@@ -1472,11 +1571,11 @@ frappe.ui.form.on("VNT Document Management", {
     hide_legacy_fields(frm);
     frm.trigger("toggle_hdqt_opinion_visibility");
     sync_summary_opinion(frm);
-    frm.trigger("scic_opinion");
+    // frm.trigger("scic_opinion");
     frm.trigger("enforce_items6_opinion_scope");
     frm.trigger("enforce_items7_opinion_scope");
     frm.trigger("refresh_vnt_type_filter");
-    apply_items7_visibility(frm);
+    // apply_items7_visibility(frm);
 
     // Chỉ set mặc định khi là phiếu mới
     if (frm.is_new()) {
@@ -2679,7 +2778,8 @@ frappe.ui.form.on("VNT Document Management Item6", {
 
     // items6: mỗi employee chỉ sửa opinion của mình.
     if (row.parentfield === "items6") {
-      if (!can_edit_items6_opinion(row, currentEmp)) {
+      const leadEmp = (frm.doc.lead_depart || "").trim();
+      if (!can_edit_items6_opinion(row, currentEmp, leadEmp)) {
         // Sai quyền: xóa giá trị vừa chọn trước khi cảnh báo.
         clear_invalid_opinion_selection(frm, row);
         sync_summary_opinion(frm);
@@ -2693,7 +2793,7 @@ frappe.ui.form.on("VNT Document Management Item6", {
     }
 
     // items7:
-    // - VGT00070/VGT00073 chỉ lead_depart sửa.
+    // - VGT00068/VGT00072 chỉ lead_depart sửa.
     // - 5 thành viên còn lại chỉ sửa opinion của chính mình.
     if (row.parentfield === "items7") {
       const leadEmp = (frm.doc.lead_depart || "").trim();
