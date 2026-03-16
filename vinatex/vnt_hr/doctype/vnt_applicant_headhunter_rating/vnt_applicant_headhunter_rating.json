@@ -14,17 +14,18 @@
   {
    "fieldname": "headhunter",
    "fieldtype": "Link",
-   "hidden": 1,
+   "ignore_user_permissions": 1,
+   "in_list_view": 1,
    "label": "HR Headhunter User",
    "options": "User",
-   "read_only": 1,
    "reqd": 1
   },
   {
    "fieldname": "headhunter_full_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "in_list_view": 1,
-   "label": "Nhân sự đánh giá",
+   "label": "Nh\u00e2n s\u1ef1 \u0111\u00e1nh gi\u00e1",
    "read_only": 1
   },
   {
@@ -38,7 +39,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-03-12 11:00:00.000000",
+ "modified": "2026-03-16 10:44:47.181520",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Applicant Headhunter Rating",

@@ -87,6 +87,7 @@ doctype_js = {
 	"User": "vinatex/doctype/overrides/user.js",
 	"Job Requisition": "vinatex/doctype/overrides/job_requisition.js",
 	"Job Applicant": "doctype/overrides/job_applicant.js",
+	"VNT Applicant Headhunter Rating": "vinatex/vnt_hr/doctype/vnt_applicant_headhunter_rating/vnt_applicant_headhunter_rating.js",
 	"VNT CVE Source": "vinatex/public/js/vnt_itsec/vnt_cve_source.js",
 	"VNT Vulnerability Advisory": "vinatex/public/js/vnt_itsec/vnt_vulnerability_advisory.js",
 	"VNT CVE": "vinatex/public/js/vnt_itsec/vnt_cve.js",
@@ -137,7 +138,7 @@ jinja = {
 # ------------
 
 # before_install = "vinatex.install.before_install"
-after_install = "vinatex.vnt_itsec.install.bootstrap"
+# after_install = "vinatex.vnt_itsec.install.bootstrap"
 
 # Uninstallation
 # ------------
@@ -205,6 +206,11 @@ has_permission = {
 # 		"on_trash": "method"
 # 	}
 # }
+doc_events = {
+	"Job Applicant": {
+		"validate": "vinatex.vnt_hr.job_applicant_rating.validate_job_applicant_rating",
+	}
+}
 
 # Scheduled Tasks
 # ---------------
@@ -303,6 +309,7 @@ scheduler_events = {
 # ----------------
 # before_request = ["vinatex.utils.before_request"]
 # after_request = ["vinatex.utils.after_request"]
+# boot_session = "vinatex.api.boot.boot_session"
 
 # Job Events
 # ----------

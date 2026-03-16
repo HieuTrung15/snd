@@ -220,7 +220,7 @@ def get_recruitment_dashboard(pos=None, source=None, from_date=None, to_date=Non
 		app_params,
 	)[0][0] or 0
 
-	open_status_checks = ["ifnull(o.status,'') in ('Open','Opened')"]
+	open_status_checks = ["ifnull(o.status,'') in ('Open','Opened','Đang đăng tuyển')"]
 	if frappe.db.has_column("Job Opening", "is_published"):
 		open_status_checks.append("ifnull(o.is_published,0)=1")
 	if frappe.db.has_column("Job Opening", "open"):

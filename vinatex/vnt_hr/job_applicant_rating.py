@@ -5,6 +5,7 @@ from frappe.utils import flt
 RATING_ROLE = "HR Headhunters"
 MATCHED_STATUS = "Phù hợp"
 MAX_RATING = 5
+SPECIAL_RATING_MANAGER_USERS = {"thuhuyen@vinatex.com.vn"}
 
 
 def _user_has_role(user: str, role: str) -> bool:
@@ -44,6 +45,8 @@ def _validate_direct_rating_edit(doc):
 
 def _is_privileged_user():
 	if frappe.session.user == "Administrator":
+		return True
+	if frappe.session.user in SPECIAL_RATING_MANAGER_USERS:
 		return True
 	return "System Manager" in frappe.get_roles(frappe.session.user)
 
@@ -134,18 +137,59 @@ def _get_headhunter_users():
 	return rows
 
 
+def _get_user_display_map(user_ids):
+	user_ids = tuple({(user or "").strip() for user in (user_ids or []) if (user or "").strip()})
+	if not user_ids:
+		return {}
+
+	rows = frappe.db.sql(
+		"""
+		SELECT
+			u.name AS user_id,
+			COALESCE(
+				MAX(CASE WHEN IFNULL(e.status, '') = 'Active' AND IFNULL(e.employee_name, '') != '' THEN e.employee_name END),
+				MAX(NULLIF(e.employee_name, '')),
+				NULLIF(u.full_name, ''),
+				u.name
+			) AS display_name
+		FROM `tabUser` u
+		LEFT JOIN `tabEmployee` e
+			ON e.user_id = u.name
+			AND e.docstatus < 2
+		WHERE u.name IN %(user_ids)s
+		GROUP BY u.name, u.full_name
+		""",
+		{"user_ids": user_ids},
+		as_dict=True,
+	)
+	return {(row.user_id or "").strip(): (row.display_name or row.user_id) for row in rows}
+
+
 def _sync_headhunter_rows(doc):
 	headhunters = _get_headhunter_users()
 	headhunter_set = {row.user_id for row in headhunters}
 	rating_map = {}
+	manual_user_ids = []
 	child_meta = frappe.get_meta("VNT Applicant Headhunter Rating")
 	has_display_field = bool(child_meta.get_field("headhunter_full_name"))
 
 	for row in doc.get("custom_headhunter_ratings") or []:
 		user_id = (row.headhunter or "").strip()
-		if not user_id or user_id not in headhunter_set or user_id in rating_map:
+		if not user_id or user_id in rating_map:
 			continue
 		rating_map[user_id] = min(MAX_RATING, max(0, flt(row.applicant_rating)))
+		if user_id not in headhunter_set:
+			manual_user_ids.append(user_id)
+
+	if manual_user_ids:
+		display_map = _get_user_display_map(manual_user_ids)
+		for user_id in manual_user_ids:
+			headhunters.append(
+				frappe._dict(
+					user_id=user_id,
+					display_name=display_map.get(user_id, user_id),
+				)
+			)
 
 	doc.set("custom_headhunter_ratings", [])
 	for row in headhunters:
