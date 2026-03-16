@@ -5,7 +5,10 @@ from frappe.utils import flt
 RATING_ROLE = "HR Headhunters"
 MATCHED_STATUS = "Phù hợp"
 MAX_RATING = 5
-SPECIAL_RATING_MANAGER_USERS = {"thuhuyen@vinatex.com.vn"}
+SPECIAL_RATING_MANAGER_USERS = {
+	"thuhuyen@vinatex.com.vn",
+	"thangnd@vinatex.com.vn",
+}
 
 
 def _user_has_role(user: str, role: str) -> bool:

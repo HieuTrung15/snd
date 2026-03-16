@@ -3,7 +3,10 @@
 	const MATCHED_STATUS = "Phù hợp";
 	const HEADHUNTER_ROLE = "HR Headhunters";
 	const SYSTEM_MANAGER_ROLE = "System Manager";
-	const SPECIAL_RATING_MANAGER_USER = "thuhuyen@vinatex.com.vn";
+	const SPECIAL_RATING_MANAGER_USERS = [
+		"thuhuyen@vinatex.com.vn",
+		"thangnd@vinatex.com.vn",
+	];
 	const RATING_TABLE_FIELD = "custom_headhunter_ratings";
 
 	function apply_job_opening_query(frm) {
@@ -26,7 +29,7 @@
 	function canManageAllRatings() {
 		return (
 			frappe.session.user === "Administrator" ||
-			frappe.session.user === SPECIAL_RATING_MANAGER_USER ||
+			SPECIAL_RATING_MANAGER_USERS.includes(frappe.session.user) ||
 			hasRole(SYSTEM_MANAGER_ROLE)
 		);
 	}
