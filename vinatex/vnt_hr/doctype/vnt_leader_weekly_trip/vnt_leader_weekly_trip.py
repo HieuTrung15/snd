@@ -46,8 +46,8 @@ class VNTLeaderWeeklyTrip(Document):
 			if not (row.get("destination") or "").strip():
 				frappe.throw(_("Dòng {0}: chưa nhập nơi công tác").format(idx))
 
-			if not (row.get("purpose") or "").strip():
-				frappe.throw(_("Dòng {0}: chưa nhập nội dung đi").format(idx))
+			# if not (row.get("purpose") or "").strip():
+			# 	frappe.throw(_("Dòng {0}: chưa nhập nội dung đi").format(idx))
 
 			if fd and td:
 				trip_day = getdate(trip_date)
