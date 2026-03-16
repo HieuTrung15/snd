@@ -495,6 +495,20 @@ const toggle_process_section = (frm) => {
   frm.toggle_display("html_editer", isOutgoing);
 };
 
+// Tự động điền số công văn đến tiếp theo khi chọn loại "Công văn đến" nếu docu_number đang trống.
+const autofill_incoming_docu_number = async (frm) => {
+  const type = (frm.doc.vnt_type || "").trim();
+  if (type !== "Công văn đến") return;
+  const r = await frappe.call({
+    method: "vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.get_next_incoming_docu_number",
+    args: { document_date: frappe.datetime.now_date() },
+  });
+  const nextDocNo = (r?.message || "").trim();
+  if (nextDocNo) {
+    frm.set_value("docu_number", nextDocNo);
+  }
+};
+
 const get_chair_status_prev = (frm) => {
   if (frm._chairStatusLastSaved === undefined) {
     frm._chairStatusLastSaved = frm.doc.chairperson_status || null;
@@ -1589,6 +1603,7 @@ frappe.ui.form.on("VNT Document Management", {
       if (frm.doc.vnt_type == "Công văn đi" && !frm.doc.document_date) {
         frm.set_value("document_date", frappe.datetime.now_date());
       }
+      autofill_incoming_docu_number(frm);
       
       frm.trigger("prefill_level1_approvers");
     }
@@ -1601,6 +1616,7 @@ frappe.ui.form.on("VNT Document Management", {
     // === 1. Đặt naming_series theo loại văn bản ===
     if (type == "Công văn đến") {
       frm.set_value("naming_series", "CVĐEN.-.YY.-.####");
+      await autofill_incoming_docu_number(frm);
     } else if (type == "Công văn đi") {
       // Tự động set ngày hiện tại nếu chưa có
       if (!frm.doc.document_date) {

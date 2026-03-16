@@ -21,7 +21,70 @@ SCIC_ROUND1_DONE_TODO_MARKER = "[SCIC_HDQT_ROUND1_DONE]"
 SCIC_MANUAL_PAIR_TODO_MARKER = "[SCIC_HDQT_FILL_PAIR]"
 
 
+def _get_next_incoming_doc_name(
+	document_date: str | None = None, *, persist_series: bool = False
+) -> str:
+	"""
+	Tính name kế tiếp cho Công văn đến theo format: CVĐEN-YY-####.
+	- persist_series=False: chỉ preview (không cập nhật tabSeries).
+	- persist_series=True: lock tabSeries để tránh duplicate khi insert đồng thời.
+	"""
+	doc_date = getdate(document_date) if document_date else getdate(nowdate())
+	yy = doc_date.strftime("%y")
+	prefix = f"CVĐEN-{yy}-"
+	width = 4
+
+	if persist_series:
+		frappe.db.sql(
+			"insert ignore into `tabSeries` (name, current) values (%s, 0)",
+			(prefix,),
+		)
+		frappe.db.sql(
+			"select `current` from `tabSeries` where name = %s for update",
+			(prefix,),
+		)
+
+	last_rows = frappe.db.sql(
+		"""
+		select name
+		from `tabVNT Document Management`
+		where name like %s
+		  and name regexp %s
+		order by cast(substring_index(name, '-', -1) as unsigned) desc
+		limit 1
+		""",
+		(f"{prefix}%", rf"^{re.escape(prefix)}[0-9]+$"),
+		as_dict=True,
+	)
+
+	max_num = 0
+	if last_rows:
+		last_name = (last_rows[0].get("name") or "").strip()
+		match = re.search(r"(\d+)$", last_name)
+		if match:
+			num_str = match.group(1)
+			max_num = cint(num_str)
+			width = max(width, len(num_str))
+
+	next_num = max_num + 1
+	if persist_series:
+		frappe.db.sql(
+			"update `tabSeries` set `current` = %s where name = %s",
+			(next_num, prefix),
+		)
+
+	return f"{prefix}{str(next_num).zfill(width)}"
+
+
 class VNTDocumentManagement(Document):
+	def autoname(self):
+		"""Công văn đến: luôn sinh name theo số lớn nhất hiện có trong DB (CVĐEN-YY-####)."""
+		doc_type = (self.vnt_type or "").strip()
+		if doc_type != "Công văn đến":
+			return
+		# Luôn gọi hàm lấy name mới nhất từ DB để tránh duplicate khi insert đồng thời nhiều doc.
+		self.name = _get_next_incoming_doc_name(document_date=nowdate(), persist_series=True)
+
 	def validate(self):
 		self._validate_handler_status_roles()
 		self._validate_collab_vs_specialist_status()
@@ -2392,6 +2455,15 @@ def get_next_reference_number(
 	if abbr:
 		return f"{render_num}/TĐDMVN-{abbr}"
 	return f"{render_num}/TĐDMVN"
+
+
+@frappe.whitelist()
+def get_next_incoming_docu_number(document_date: str | None = None) -> str:
+	"""
+	Preview số kế tiếp cho Công văn đến theo format: CVĐEN-YY-####.
+	"""
+	return _get_next_incoming_doc_name(document_date=document_date, persist_series=False)
+
 
 @frappe.whitelist()
 def get_next_qd_reference_number(document_date: str | None = None) -> str | None:
