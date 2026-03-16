@@ -390,6 +390,7 @@ class VNTRecurringExtraBenefit(Document):
 
 def _get_employees_with_allowance(allowance_type: str) -> List[Dict]:
 	"""Fetch active employees and allowance values for the given allowance type."""
+	allowance_key = _normalize_allowance_type_key(allowance_type)
 	allowance_rows = frappe.db.get_all(
 		"VNT Employee Allowance Type",
 		filters={
@@ -400,6 +401,7 @@ def _get_employees_with_allowance(allowance_type: str) -> List[Dict]:
 		fields=[
 			"parent as employee",
 			"type",
+			"chuc_danh",
 			"he_so",
 			"so_tien_phu_cap",
 			"thue",
@@ -437,11 +439,12 @@ def _get_employees_with_allowance(allowance_type: str) -> List[Dict]:
 		allowance = latest_allowance.get(emp.name)
 		if not allowance:
 			continue
+		designation = allowance.get("chuc_danh") or emp.designation
 		result.append(
 			{
 				"employee": emp.name,
 				"employee_name": emp.employee_name,
-				"designation": emp.designation,
+				"designation": designation,
 				"allowance_type": allowance.get("type"),
 				"he_so": allowance.get("he_so"),
 				"amount": allowance.get("so_tien_phu_cap"),
@@ -451,7 +454,12 @@ def _get_employees_with_allowance(allowance_type: str) -> List[Dict]:
 			}
 		)
 
-	result.sort(key=lambda d: (d.get("employee_name") or d.get("employee") or ""))
+	if allowance_key in {"PC BAN CHQS", "PC CHQS"}:
+		result = _sort_pc_ban_chqs_employee_rows(result)
+	elif allowance_key in {"PC CDS"}:
+		result = _sort_pc_cds_employee_rows(result)
+	else:
+		result.sort(key=lambda d: (d.get("employee_name") or d.get("employee") or ""))
 	return result
 
 
@@ -539,6 +547,7 @@ def _build_pc_cds_workbook(doc: Document):
 	ws.title = "PC CDS"
 	items = list(doc.get("items") or [])
 	employee_info_map = _get_employee_info_map(items)
+	items = _sort_pc_cds_items(items, employee_info_map)
 	preparer_name = _resolve_preparer_name(doc, employee_info_map)
 
 	column_widths = {
@@ -730,6 +739,7 @@ def _build_pc_ban_chqs_workbook(doc: Document):
 
 	items = list(doc.get("items") or [])
 	employee_info_map = _get_employee_info_map(items)
+	items = _sort_pc_ban_chqs_items(items, employee_info_map)
 	preparer_name = _resolve_preparer_name(doc, employee_info_map)
 	month_label = _resolve_month_label(doc.month)
 	year_label = str(cint(doc.year) or "")
@@ -884,7 +894,7 @@ def _build_pc_ban_chqs_workbook(doc: Document):
 	sign_name_row = total_row + 10
 	sign_blocks = [
 		("TỔNG GIÁM ĐỐC", "Cao Hữu Hiếu", 1, 2),
-		("KẾ TOÁN TRƯỞNG", "Nguyễn Ngọc Cách", 3, 4),
+		("TRƯỞNG BAN TCKT", "Nguyễn Ngọc Cách", 3, 4),
 		("TRƯỞNG BAN QLNNL", "Trần Thị Thu Thảo", 5, 6),
 		("LẬP BIỂU", preparer_name, 7, 8),
 	]
@@ -1156,7 +1166,7 @@ def _build_pc_dac_thu_workbook(doc: Document):
 	sign_name_row = total_row + 11
 	sign_blocks = [
 		("TỔNG GIÁM ĐỐC", "Cao Hữu Hiếu", 1, 2),
-		("KẾ TOÁN TRƯỞNG", "Nguyễn Ngọc Cách", 3, 4),
+		("TRƯỞNG BAN TCKT", "Nguyễn Ngọc Cách", 3, 4),
 		("TRƯỞNG BAN QLNNL", "Trần Thị Thu Thảo", 5, 7),
 		("NGƯỜI LẬP", preparer_name, 8, 10),
 	]
@@ -1257,7 +1267,7 @@ def _append_pc_dac_thu_ds_chi_sheet(
 	ws["G3"].font = Font(bold=True, size=12)
 	ws["G3"].alignment = Alignment(horizontal="center", vertical="center")
 
-	ws["I3"] = f"-{ref_month}/{year_text}-"
+	ws["I3"] = "-01/2025-"
 	ws["I3"].font = Font(bold=True, size=12)
 	ws["I3"].alignment = Alignment(horizontal="center", vertical="center")
 
@@ -1300,7 +1310,7 @@ def _append_pc_dac_thu_ds_chi_sheet(
 		current_row = data_start_row + idx - 1
 		emp_info = employee_info_map.get(row.employee) or {}
 		bank_name = (emp_info.get("bank_name") or "").strip()
-		transfer_mode = "N" if (bank_name and "VCB" not in bank_name.upper()) else ""
+		transfer_mode = _resolve_transfer_mode(bank_name)
 
 		row_data = [
 			idx,
@@ -1363,7 +1373,7 @@ def _append_pc_dac_thu_ds_chi_sheet(
 	sign_name_row = total_row + 12
 
 	ws.merge_cells(start_row=sign_title_row, start_column=2, end_row=sign_title_row, end_column=4)
-	ws.cell(row=sign_title_row, column=2, value="KẾ TOÁN TRƯỞNG")
+	ws.cell(row=sign_title_row, column=2, value="TRƯỞNG BAN TCKT")
 	ws.cell(row=sign_title_row, column=2).font = Font(bold=True, size=14)
 	ws.cell(row=sign_title_row, column=2).alignment = Alignment(horizontal="center", vertical="center")
 
@@ -1440,7 +1450,7 @@ def _append_pc_chqs_ds_chi_sheet(
 	ws["G3"].font = Font(bold=True, size=12)
 	ws["G3"].alignment = Alignment(horizontal="center", vertical="center")
 
-	ws["I3"] = f"-{ref_month}/{year_text}-"
+	ws["I3"] = "-01/2025-"
 	ws["I3"].font = Font(bold=True, size=12)
 	ws["I3"].alignment = Alignment(horizontal="center", vertical="center")
 
@@ -1483,7 +1493,7 @@ def _append_pc_chqs_ds_chi_sheet(
 		current_row = data_start_row + idx - 1
 		emp_info = employee_info_map.get(row.employee) or {}
 		bank_name = (emp_info.get("bank_name") or "").strip()
-		transfer_mode = "N" if (bank_name and "VCB" not in bank_name.upper()) else ""
+		transfer_mode = _resolve_transfer_mode(bank_name)
 
 		row_data = [
 			idx,
@@ -1546,7 +1556,7 @@ def _append_pc_chqs_ds_chi_sheet(
 	sign_name_row = total_row + 12
 
 	ws.merge_cells(start_row=sign_title_row, start_column=2, end_row=sign_title_row, end_column=4)
-	ws.cell(row=sign_title_row, column=2, value="KẾ TOÁN TRƯỞNG")
+	ws.cell(row=sign_title_row, column=2, value="TRƯỞNG BAN TCKT")
 	ws.cell(row=sign_title_row, column=2).font = Font(bold=True, size=14)
 	ws.cell(row=sign_title_row, column=2).alignment = Alignment(horizontal="center", vertical="center")
 
@@ -1621,7 +1631,7 @@ def _append_pc_cds_ds_chi_sheet(
 	ws["G3"].font = Font(bold=True, size=12)
 	ws["G3"].alignment = Alignment(horizontal="center", vertical="center")
 
-	ws["I3"] = f"-{month_label}/{year_text}-"
+	ws["I3"] = "-01/2025-"
 	ws["I3"].font = Font(bold=True, size=12)
 	ws["I3"].alignment = Alignment(horizontal="center", vertical="center")
 
@@ -1665,7 +1675,7 @@ def _append_pc_cds_ds_chi_sheet(
 		current_row = data_start_row + idx - 1
 		emp_info = employee_info_map.get(row.employee) or {}
 		bank_name = (emp_info.get("bank_name") or "").strip()
-		transfer_mode = "N" if (bank_name and "VCB" not in bank_name.upper()) else ""
+		transfer_mode = _resolve_transfer_mode(bank_name)
 
 		row_data = [
 			idx,
@@ -1728,7 +1738,7 @@ def _append_pc_cds_ds_chi_sheet(
 	sign_name_row = total_row + 12
 
 	ws.merge_cells(start_row=sign_title_row, start_column=2, end_row=sign_title_row, end_column=4)
-	ws.cell(row=sign_title_row, column=2, value="KẾ TOÁN TRƯỞNG")
+	ws.cell(row=sign_title_row, column=2, value="TRƯỞNG BAN TCKT")
 	ws.cell(row=sign_title_row, column=2).font = Font(bold=True, size=14)
 	ws.cell(row=sign_title_row, column=2).alignment = Alignment(horizontal="center", vertical="center")
 
@@ -1795,6 +1805,31 @@ def _to_upper_no_accents(value: str | None) -> str:
 	normalized = unicodedata.normalize("NFD", text)
 	no_accents = "".join(ch for ch in normalized if unicodedata.category(ch) != "Mn")
 	return no_accents.upper()
+
+
+def _bank_name_key(value: str | None) -> str:
+	raw = _to_upper_no_accents(value)
+	if not raw:
+		return ""
+	return re.sub(r"[^A-Z0-9]+", " ", raw).strip()
+
+
+def _is_vietcombank(bank_name: str | None) -> bool:
+	key = _bank_name_key(bank_name)
+	if not key:
+		return False
+	parts = set(key.split())
+	if "VCB" in parts:
+		return True
+	if "VIETCOMBANK" in key:
+		return True
+	return "NGOAI THUONG" in key and "VIET" in parts
+
+
+def _resolve_transfer_mode(bank_name: str | None) -> str:
+	if not (bank_name or "").strip():
+		return ""
+	return "N" if _is_vietcombank(bank_name) else ""
 
 
 def _number_to_words_vnd(amount: float | int) -> str:
@@ -1981,3 +2016,116 @@ def _extract_valid_month_tokens(month_value: str | None) -> List[int]:
 		if 1 <= month_num <= 12 and month_num not in tokens:
 			tokens.append(month_num)
 	return tokens
+
+
+def _normalize_position_key(value: str | None) -> str:
+	raw = _to_upper_no_accents(value)
+	if not raw:
+		return ""
+	return re.sub(r"\s+", " ", raw).strip()
+
+
+def _pc_ban_chqs_position_rank(position: str | None) -> int:
+	order = [
+		"CHI HUY TRUONG",
+		"CHINH TRI VIEN TRUONG",
+		"CHI HUY PHO",
+		"CHINH TRI VIEN PHO",
+		"CAN BO QUAN SU",
+	]
+	position_key = _normalize_position_key(position)
+	if not position_key:
+		return len(order)
+
+	for idx, title in enumerate(order):
+		if position_key == title:
+			return idx
+	for idx, title in enumerate(order):
+		if title in position_key:
+			return idx
+	return len(order)
+
+
+def _sort_pc_ban_chqs_employee_rows(rows: List[Dict]) -> List[Dict]:
+	return sorted(
+		rows,
+		key=lambda row: (
+			_pc_ban_chqs_position_rank(row.get("designation")),
+			_normalize_position_key(row.get("employee_name") or row.get("employee")),
+			row.get("employee") or "",
+		),
+	)
+
+
+def _sort_pc_ban_chqs_items(
+	items: List[Document], employee_info_map: Dict[str, Dict[str, str]]
+) -> List[Document]:
+	return sorted(
+		items,
+		key=lambda row: (
+			_pc_ban_chqs_position_rank(getattr(row, "designation", None)),
+			_normalize_position_key(
+				(employee_info_map.get(getattr(row, "employee", None)) or {}).get("employee_name")
+				or getattr(row, "employee", None)
+			),
+			getattr(row, "employee", "") or "",
+		),
+	)
+
+
+def _position_key_for_match(value: str | None) -> str:
+	return re.sub(r"[^A-Z0-9]+", " ", _normalize_position_key(value)).strip()
+
+
+def _pc_cds_position_rank(position: str | None) -> int:
+	match_key = _position_key_for_match(position)
+	order_patterns = [
+		["TRUONG BAN QLDA", "TRUONG BAN QL DA"],
+		["THANH VIEN BAN QLDA", "THANH VIEN BAN QL DA"],
+		["PT DU AN CDS TCKT", "P T DU AN CDS TCKT", "PHU TRACH DU AN CDS TCKT"],
+		["TV DU AN CDS TCKT", "T V DU AN CDS TCKT", "THANH VIEN DU AN CDS TCKT"],
+		["THU KY BQL DU AN", "THU KY BQL DA", "TO PHO TO DIEU PHOI"],
+		["PHO BAN CNTT CDS", "PHO BAN CNTT VA CDS"],
+		["THANH VIEN BAN QLDA", "THANH VIEN BAN QL DA", "THANH VIEN BAN CNTT CDS"],
+	]
+	if not match_key:
+		return len(order_patterns)
+
+	for idx, patterns in enumerate(order_patterns):
+		for pattern in patterns:
+			pattern_key = _position_key_for_match(pattern)
+			if match_key == pattern_key:
+				return idx
+	for idx, patterns in enumerate(order_patterns):
+		for pattern in patterns:
+			pattern_key = _position_key_for_match(pattern)
+			if pattern_key and pattern_key in match_key:
+				return idx
+	return len(order_patterns)
+
+
+def _sort_pc_cds_employee_rows(rows: List[Dict]) -> List[Dict]:
+	return sorted(
+		rows,
+		key=lambda row: (
+			_pc_cds_position_rank(row.get("designation")),
+			_normalize_position_key(row.get("employee_name") or row.get("employee")),
+			row.get("employee") or "",
+		),
+	)
+
+
+def _sort_pc_cds_items(
+	items: List[Document], employee_info_map: Dict[str, Dict[str, str]]
+) -> List[Document]:
+	return sorted(
+		items,
+		key=lambda row: (
+			_pc_cds_position_rank(getattr(row, "designation", None)),
+			_normalize_position_key(
+				(employee_info_map.get(getattr(row, "employee", None)) or {}).get("employee_name")
+				or getattr(row, "employee", None)
+			),
+			getattr(row, "employee", "") or "",
+		),
+	)
