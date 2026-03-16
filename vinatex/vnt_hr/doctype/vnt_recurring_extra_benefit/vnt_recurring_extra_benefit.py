@@ -1063,11 +1063,11 @@ def _build_pc_dac_thu_workbook(doc: Document):
 	ws.row_dimensions[header_bottom_row].height = 26
 
 	group_defs = [
-		("HDQT", "I", "Hội đồng quản trị"),
-		("CQDH", "II", "Cơ quan điều hành"),
-		("BAN", "II", "Chuyên viên các ban"),
+		("HDQT", "I", "Hội đồng quản trị", True),
+		("CQDH", "II", "Cơ quan điều hành", True),
+		("BAN", "III", "Chuyên viên các ban", False),
 	]
-	grouped_items = {key: [] for key, _, _ in group_defs}
+	grouped_items = {key: [] for key, _, _, _ in group_defs}
 	for row in items:
 		emp_info = employee_info_map.get(row.employee) or {}
 		group_key = _categorize_dac_thu_group(emp_info.get("department"))
@@ -1081,29 +1081,32 @@ def _build_pc_dac_thu_workbook(doc: Document):
 	total_month_1 = 0.0
 	total_month_2 = 0.0
 
-	for key, roman, label in group_defs:
-		ws.cell(row=current_row, column=1, value=roman)
-		ws.merge_cells(start_row=current_row, start_column=2, end_row=current_row, end_column=10)
-		ws.cell(row=current_row, column=2, value=label)
-		for col_idx in range(1, 11):
-			cell = ws.cell(row=current_row, column=col_idx)
-			cell.fill = group_fill
-			cell.border = thin_border
-			if col_idx == 1:
-				cell.alignment = Alignment(horizontal="center", vertical="center")
-				cell.font = Font(bold=True, size=12)
-			elif col_idx == 2:
-				cell.alignment = Alignment(horizontal="left", vertical="center")
-				cell.font = Font(bold=True, size=12)
-		current_row += 1
-
+	for key, roman, label, show_group_header in group_defs:
 		group_rows = grouped_items.get(key) or []
-		if not group_rows:
+		if show_group_header:
+			ws.cell(row=current_row, column=1, value=roman)
+			ws.merge_cells(start_row=current_row, start_column=2, end_row=current_row, end_column=10)
+			ws.cell(row=current_row, column=2, value=label)
 			for col_idx in range(1, 11):
-				cell = ws.cell(row=current_row, column=col_idx, value="")
+				cell = ws.cell(row=current_row, column=col_idx)
+				cell.fill = group_fill
 				cell.border = thin_border
-				cell.alignment = Alignment(horizontal="center", vertical="center")
+				if col_idx == 1:
+					cell.alignment = Alignment(horizontal="center", vertical="center")
+					cell.font = Font(bold=True, size=12)
+				elif col_idx == 2:
+					cell.alignment = Alignment(horizontal="left", vertical="center")
+					cell.font = Font(bold=True, size=12)
 			current_row += 1
+
+			if not group_rows:
+				for col_idx in range(1, 11):
+					cell = ws.cell(row=current_row, column=col_idx, value="")
+					cell.border = thin_border
+					cell.alignment = Alignment(horizontal="center", vertical="center")
+				current_row += 1
+				continue
+		elif not group_rows:
 			continue
 
 		for row in group_rows:
