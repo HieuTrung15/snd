@@ -35,7 +35,12 @@ class VNTRecurringExtraBenefit(Document):
 		if not self.type:
 			frappe.throw(_("Vui lòng chọn Loại phụ cấp trước khi lấy danh sách nhân sự."))
 
-		rows = _get_employees_with_allowance(self.type)
+		rows = _get_employees_with_allowance(
+			self.type,
+			month=self.month,
+			year=self.year,
+			target_date=self.date,
+		)
 		allowance_key = _normalize_allowance_type_key(self.type)
 		luong_tt = flt(self.luong_tt)
 		if allowance_key in {"PC DAC THU", "PC DT"}:
@@ -50,8 +55,9 @@ class VNTRecurringExtraBenefit(Document):
 					self.luong_tt = luong_tt
 
 			for row in rows:
-				he_so = flt(row.get("he_so"))
-				row["amount"] = luong_tt * he_so
+				he_so = row.get("he_so")
+				if _has_dac_thu_coefficient(he_so):
+					row["amount"] = luong_tt * flt(he_so)
 
 		return {"items": rows, "luong_tt": luong_tt}
 
@@ -388,9 +394,19 @@ class VNTRecurringExtraBenefit(Document):
 		return self._link_fields_present
 
 
-def _get_employees_with_allowance(allowance_type: str) -> List[Dict]:
+def _get_employees_with_allowance(
+	allowance_type: str,
+	month: str | None = None,
+	year: int | str | None = None,
+	target_date: str | None = None,
+) -> List[Dict]:
 	"""Fetch active employees and allowance values for the given allowance type."""
 	allowance_key = _normalize_allowance_type_key(allowance_type)
+	period_ranges = _resolve_allowance_filter_period_ranges(
+		month=month,
+		year=year,
+		target_date=target_date,
+	)
 	allowance_rows = frappe.db.get_all(
 		"VNT Employee Allowance Type",
 		filters={
@@ -420,6 +436,8 @@ def _get_employees_with_allowance(allowance_type: str) -> List[Dict]:
 	for row in allowance_rows:
 		employee_code = row.get("employee")
 		if not employee_code or employee_code in latest_allowance:
+			continue
+		if not _allowance_row_effective_in_ranges(row, period_ranges):
 			continue
 		latest_allowance[employee_code] = row
 
@@ -1943,6 +1961,48 @@ def _resolve_salary_parameter_effective_date(
 	if target_date:
 		return getdate(target_date)
 	return getdate(today())
+
+
+def _resolve_allowance_filter_period_ranges(
+	month: str | None = None, year: int | str | None = None, target_date: str | None = None
+) -> List[tuple]:
+	year_num = cint(year)
+	month_tokens = _extract_valid_month_tokens(month)
+	if year_num and month_tokens:
+		ranges = []
+		for month_num in month_tokens:
+			month_start = getdate(f"{year_num}-{month_num:02d}-01")
+			ranges.append((month_start, get_last_day(month_start)))
+		return ranges
+
+	ref_date = getdate(target_date) if target_date else getdate(today())
+	ref_month_start = getdate(f"{ref_date.year}-{ref_date.month:02d}-01")
+	return [(ref_month_start, get_last_day(ref_month_start))]
+
+
+def _allowance_row_effective_in_ranges(row: Dict, period_ranges: List[tuple]) -> bool:
+	if not period_ranges:
+		return True
+
+	from_raw = row.get("from_date")
+	to_raw = row.get("to_date")
+
+	from_date = getdate(from_raw) if from_raw else getdate("1900-01-01")
+	if to_raw and str(to_raw) != "0000-00-00":
+		to_date = getdate(to_raw)
+	else:
+		to_date = getdate("2999-12-31")
+
+	for period_start, period_end in period_ranges:
+		if from_date <= period_end and to_date >= period_start:
+			return True
+	return False
+
+
+def _has_dac_thu_coefficient(value) -> bool:
+	if value in (None, ""):
+		return False
+	return abs(flt(value)) > 0.000001
 
 
 def _build_dac_thu_period_title(month_value: str | None, year_value: str) -> str:

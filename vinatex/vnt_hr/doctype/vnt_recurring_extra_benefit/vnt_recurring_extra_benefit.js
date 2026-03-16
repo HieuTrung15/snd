@@ -133,6 +133,14 @@ function vntRecurringNumber(value) {
 	return Number.isFinite(num) ? num : 0;
 }
 
+function vntRecurringHasDacThuHeSo(value) {
+	if (value === null || value === undefined || value === "") {
+		return false;
+	}
+	const num = parseFloat(value);
+	return Number.isFinite(num) && Math.abs(num) > 0.000001;
+}
+
 function vntRecurringUpdateTotals(frm) {
 	if (!frm || !frm.doc) {
 		return;
@@ -194,7 +202,10 @@ function vntRecurringRecalculateRow(cdt, cdn) {
 	const months = Math.max(vntRecurringNumber(row.so_thang), 0);
 	let amount = vntRecurringNumber(row.amount);
 	const allowanceTypeKey = vntRecurringNormalizeType(cur_frm?.doc?.type);
-	if (["PC DAC THU", "PC DT"].includes(allowanceTypeKey)) {
+	if (
+		["PC DAC THU", "PC DT"].includes(allowanceTypeKey) &&
+		vntRecurringHasDacThuHeSo(row.he_so)
+	) {
 		amount = vntRecurringNumber(cur_frm?.doc?.luong_tt) * vntRecurringNumber(row.he_so);
 		row.amount = amount;
 	}
