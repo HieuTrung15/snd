@@ -28,21 +28,17 @@
   },
   {
    "columns": 1,
-   "depends_on": "eval: doc.type == \"PC \u0111\u1eb7c th\u00f9\"",
    "fieldname": "he_so",
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "H\u1ec7 s\u1ed1 ph\u1ee5 c\u1ea5p",
-   "mandatory_depends_on": "eval: doc.type == \"PC \u0111\u1eb7c th\u00f9\"",
    "precision": "2"
   },
   {
-   "depends_on": "eval: doc.type != \"PC \u0111\u1eb7c th\u00f9\"",
    "fieldname": "so_tien_phu_cap",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Ti\u1ec1n PC/th\u00e1ng",
-   "mandatory_depends_on": "eval: doc.type != \"PC \u0111\u1eb7c th\u00f9\""
+   "label": "Ti\u1ec1n PC/th\u00e1ng"
   },
   {
    "columns": 1,
@@ -97,7 +93,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-03-16 09:07:51.042406",
+ "modified": "2026-03-16 11:23:00.315439",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Employee Allowance Type",
