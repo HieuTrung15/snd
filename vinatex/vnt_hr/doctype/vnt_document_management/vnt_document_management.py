@@ -2839,30 +2839,30 @@ def get_document_block_data_v2(
 	want_end = want_start + page_size + 1  # +1 để biết has_next
 
 	order_by = "document_date desc"
-	use_custom_sort = type_doc in ("Công văn đến", "Công văn đi", "Quyết định", "Nội bộ ban")
+	use_custom_sort = type_doc in ("Công văn đến", "Nội bộ ban")
 	if use_custom_sort:
 		order_by = "name desc"
+	elif type_doc in ("Công văn đi", "Quyết định"):
+		# Công văn đi/Quyết định: ưu tiên bản ghi tạo mới nhất lên đầu.
+		order_by = "creation desc, modified desc, name desc"
 
-	def _parse_doc_code_key(code: str) -> tuple[int, int, str]:
-		code = (code or "").strip()
+	def _parse_doc_name_key(name: str) -> tuple[int, int, str]:
+		name = (name or "").strip()
 		year = 0
 		seq = 0
 
-		if "-" in code:
-			parts = code.rsplit("-", 2)
+		if "-" in name:
+			parts = name.rsplit("-", 2)
 			if len(parts) == 3:
-				mid = parts[1].strip()      # ví dụ: 0126 hoặc 26
-				seq_str = parts[2].strip()  # ví dụ: 0021
-
-				yy = mid[-2:] if len(mid) >= 2 else ""
+				mmyy = parts[1].strip()
+				seq_str = parts[2].strip()
+				yy = mmyy[-2:] if len(mmyy) >= 2 else ""
 				if yy.isdigit():
 					year = 2000 + cint(yy)
-
 				if seq_str.isdigit():
 					seq = cint(seq_str)
-
-		elif "." in code:
-			parts = code.split(".")
+		elif "." in name:
+			parts = name.split(".")
 			if len(parts) >= 3:
 				seq_str = parts[-2].strip()
 				year_str = parts[-1].strip()
@@ -2871,7 +2871,7 @@ def get_document_block_data_v2(
 				if seq_str.isdigit():
 					seq = cint(seq_str)
 
-		return (year, seq, code)
+		return (year, seq, name)
 
 	if use_custom_sort:
 		import heapq
@@ -2906,8 +2906,7 @@ def get_document_block_data_v2(
 				matched_total += 1
 				d["computed_status"] = st
 
-				sort_code = d.get("reference_number") or d.get("name") or ""
-				key = _parse_doc_code_key(sort_code)
+				key = _parse_doc_name_key(d.get("name"))
 				item = (key, d)
 				if len(top_rows) < want_end:
 					heapq.heappush(top_rows, item)
