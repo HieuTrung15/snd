@@ -798,17 +798,31 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
 	vehicle_request.insert(ignore_permissions=True)
 	frappe.db.commit()
 
-	# gửi thông báo cho ngườ điều xe (1 người)
-	# tạo bản ghi mới trong vnt vehicle control hoặc cập nhật nếu đã có
+	# gửi thông báo cho người điều xe
+	user_branch = doc.get("branch") or frappe.db.get_value("Employee", doc.employee, "branch")
 	user_group_name = "Nhận thông báo điều xe"
-	user_list = frappe.get_all(
+	all_users = frappe.get_all(
 		"User Group Member",
 		filters={"parent": user_group_name},
 		pluck="user",
 	)
-	if not user_list:
+
+	if not all_users:
 		return
 
+	# Lọc những user có employee thuộc cùng chi nhánh (branch) với người đăng ký
+	user_list = frappe.get_all(
+		"Employee",
+		filters={
+			"user_id": ["in", all_users],
+			"branch": user_branch,
+		},
+		pluck="user_id",
+	)
+
+	if not user_list:
+		return
+	# lấy ra người đầu tiên trong danh sách điều xe
 	employee_user = frappe.get_value('User', {'name': user_list[0]}, 'full_name')
 	vehicle_control_name = frappe.db.get_value(
 		"VNT Vehicle Control Item",
@@ -827,6 +841,7 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
 	vehicle_control.employee_name = employee_user
 	vehicle_control.employee = doc.employee_name
 	vehicle_control.id_parent = vehicle_request.name
+	vehicle_control.branch = user_branch
 
 	for item in vehicle_request.get("items") or []:
 		vehicle_control.append(

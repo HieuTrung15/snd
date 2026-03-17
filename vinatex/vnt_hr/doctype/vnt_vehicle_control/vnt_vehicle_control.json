@@ -9,6 +9,7 @@
   "employee_name",
   "employee",
   "status",
+  "branch",
   "column_break_rcr0",
   "date",
   "id_parent",
@@ -47,6 +48,14 @@
    "in_list_view": 1,
    "label": "Ng\u00e0y \u0111i\u1ec1u xe",
    "reqd": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "V\u0103n ph\u00f2ng",
+   "options": "Branch",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_ldls",
@@ -89,7 +98,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-30 09:47:34.885364",
+ "modified": "2026-03-17 09:39:20.395353",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Vehicle Control",

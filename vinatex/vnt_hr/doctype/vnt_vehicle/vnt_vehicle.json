@@ -11,7 +11,9 @@
   "driver",
   "driver_name",
   "phone",
-  "status"
+  "status",
+  "column_break_zxky",
+  "branch"
  ],
  "fields": [
   {
@@ -53,12 +55,24 @@
    "fieldtype": "Data",
    "label": "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i",
    "reqd": 1
+  },
+  {
+   "fieldname": "column_break_zxky",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "driver.branch",
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Branch",
+   "options": "Branch"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-06 11:22:53.271124",
+ "modified": "2026-03-16 14:22:56.388021",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Vehicle",

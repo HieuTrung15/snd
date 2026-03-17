@@ -302,18 +302,37 @@ def _notify_to_user_receive(doc: Document):
 		Tạo bản ghi VNT Vehicle Control để người điều xe vào điền trong bản ghi này
 	"""
 	# tạo bản ghi mới trong vnt vehicle control
+	user_branch = doc.get("branch") or frappe.db.get_value("Employee", doc.employee, "branch")
 	user_group_name = "Nhận thông báo điều xe"
-	user_list = frappe.get_all(
+	all_users = frappe.get_all(
 		"User Group Member",
 		filters={"parent": user_group_name},
 		pluck="user",
 	)
+
+	if not all_users:
+		return
+
+	# Lọc những user có employee thuộc cùng chi nhánh (branch) với người đăng ký
+	user_list = frappe.get_all(
+		"Employee",
+		filters={
+			"user_id": ["in", all_users],
+			"branch": user_branch,
+		},
+		pluck="user_id",
+	)
+
+	if not user_list:
+		return
+	# lấy ra người đầu tiên trong danh sách điều xe
 	employee_user = frappe.get_value('User', {'name': user_list[0]}, 'full_name')
 	items = doc.get("items") or []
 	if items:
 		vehicle_control = frappe.new_doc("VNT Vehicle Control")
 		vehicle_control.employee_name = employee_user
 		vehicle_control.date = nowdate()
+		vehicle_control.branch = user_branch
 		vehicle_control.employee = doc.employee_name
 		vehicle_control.id_parent = doc.name
 		for item in items:

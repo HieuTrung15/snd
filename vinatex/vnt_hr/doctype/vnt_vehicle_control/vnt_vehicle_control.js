@@ -15,11 +15,14 @@ frappe.ui.form.on("VNT Vehicle Control", {
     },
 	onload (frm) {
 		frm.set_query("driver", "items", function (doc, cdt, cdn) {
-			let d = locals[cdt][cdn];
+			let filters = {
+				status: 1
+			};
+			if (doc.branch) {
+				filters.branch = doc.branch;
+			}
 			return {
-				filters: {
-					status: 1
-				},
+				filters: filters
 			};
 		});
 	}
