@@ -148,6 +148,7 @@ const ITEMS6_LEAD_GLOBAL_FIELDS = new Set(["explan", "attach_doc"]);
 // Điều kiện hiển thị vnt_type "Nội bộ ban" theo user đăng nhập.
 const VNT_TYPE_NOI_BO_BAN = "Nội bộ ban";
 const LEAVE_APPROVER_L1_ROLE = "Leave Approver L1";
+const VNT_DOCUMENT_MANAGER_ROLE = "VNT Document Manager";
 const LEAD_HDQT_DEPARTMENTS = new Set([normalize_department_name("Văn phòng HĐQT - VGT")]);
 const MEMBER_HDQT_DEPARTMENTS = new Set([
   normalize_department_name("Hội đồng quản trị - VGT"),
@@ -1178,6 +1179,11 @@ const set_creator_editable = (frm, enabled) => {
 };
 
 const apply_creator_edit_lock = async (frm) => {
+  if (frappe.user.has_role(VNT_DOCUMENT_MANAGER_ROLE)) {
+    set_creator_editable(frm, true);
+    return;
+  }
+
   const creator = frm.doc.employee || null;
   if (!creator) {
     set_creator_editable(frm, true);
