@@ -92,9 +92,6 @@ class VNTVehicleControl(Document):
 				frappe.db.set_value("VNT Business Trip Request Transportation", transport_row.name, "phone", row.phone)
 				frappe.db.set_value("VNT Business Trip Request Transportation", transport_row.name, "car_id", row.car_id)
 
-		if not recipients:
-			return
-
 		# Nếu người tạo (creator) nằm trong recipients thì loại bỏ họ
 		recipients.difference_update(creator)
 
@@ -256,8 +253,7 @@ class VNTVehicleControl(Document):
 			# fallback: nếu row.driver chứa user/employee
 			if not driver_user:
 				driver_user = get_employee_user_id(row.driver)
-			if not driver_user:
-				continue
+
 			driver_label = (vehicle.get("driver_name") if vehicle else None) or row.driver
 			car_plate = row.car_id or (vehicle.get("car_id") if vehicle else "")
 			# danh sách nhân sự đi cùng cho dòng này (không liệt kê `car.employee`)
@@ -293,28 +289,30 @@ class VNTVehicleControl(Document):
 			)
 			driver_msg_html = driver_msg.replace("Phân xe", "<b>Phân xe</b>", 1) if driver_msg else driver_msg
 			target_docname = car.name if car and car.name else self.name
-			make_notification_logs({
-				"type": "Alert",
-				"subject": driver_msg,
-				"document_type": target_doctype,
-				"document_name": target_docname,
-			}, [driver_user])
-			frappe.enqueue(
-				"vinatex.integrations.teams_graph.notify_user",
-				queue="short",
-				timeout=50,
-				is_async=True,
-				upn_or_email=[driver_user],
-				content_type="html",
-				linkify=False,
-				message=driver_msg
-			)
-			if group_chat_target:
+			if driver_user:
+				make_notification_logs({
+					"type": "Alert",
+					"subject": driver_msg,
+					"document_type": target_doctype,
+					"document_name": target_docname,
+				}, [driver_user])
 				frappe.enqueue(
-					"vinatex.integrations.teams_graph.notify_chat",
+					"vinatex.integrations.teams_graph.notify_user",
 					queue="short",
 					timeout=50,
 					is_async=True,
+					upn_or_email=[driver_user],
+					content_type="html",
+					linkify=False,
+					message=driver_msg
+				)
+			if group_chat_target:
+				frappe.enqueue(
+					"vinatex.integrations.teams_graph.notify_chat",
+					queue="long",
+					timeout=900,
+					is_async=True,
+					enqueue_after_commit=True,
 					chat_id_or_url=group_chat_target,
 					content_type="html",
 					linkify=False,
