@@ -2173,7 +2173,7 @@ def get_document_overview(limit: int = 6):
 				_add_assignment(name, "Người ký", _outgoing_status(doc))
 			if emp_department and getattr(doc, "department", None) == emp_department:
 				_add_assignment(name, "Ban gửi đi", _outgoing_status(doc))
-			if (doc.type_doc or "").strip().upper() == "QĐ":
+			if (doc.vnt_type or "").strip().upper() == "QĐ":
 				_add_assignment(name, "Quyết định", _outgoing_status(doc))
 
 	# Vai trò từ child
@@ -2350,7 +2350,7 @@ def get_document_dashboard_vn():
 
 		# Loại hiển thị (Quyết định nếu type_doc = QĐ)
 		raw_type = doc.get("vnt_type")
-		type_doc = (doc.get("type_doc") or "").strip().upper()
+		type_doc = (doc.get("vnt_type") or "").strip().upper()
 		display_type = raw_type
 		if raw_type == "Công văn đi" and type_doc == "QĐ":
 			display_type = "Quyết định"
@@ -2684,8 +2684,12 @@ def _block_normalize_status(raw: str) -> str:
 def _block_compute_status(doc: dict, today=None) -> str:
 	today = today or getdate(nowdate())
 
-	# Công văn đi + Quyết định (lưu dạng Công văn đi + type_doc=QĐ)
-	is_outgoing_or_qd = (doc.get("vnt_type") == "Công văn đi") or ((doc.get("type_doc") or "").strip().upper() == "QĐ")
+	# Công văn đi + Quyết định:
+	# - Dữ liệu mới: vnt_type = "Quyết định"
+	# - Legacy: vnt_type = "Công văn đi" + type_doc = "QĐ"
+	vnt_type = (doc.get("vnt_type") or "").strip()
+	type_doc = (doc.get("type_doc") or "").strip().upper()
+	is_outgoing_or_qd = vnt_type in ("Công văn đi", "Quyết định") or type_doc == "QĐ"
 	if is_outgoing_or_qd:
 		return "Hoàn thành" if int(doc.get("docstatus") or 0) == 1 else "Đang xử lý"
 
@@ -2736,10 +2740,16 @@ def get_document_block_data_v2(
 	post_filter = None
 	base_filters = [["docstatus", "<", 2]]
 
-	# Quyết định lưu: type="Công văn đi" + type_doc="QĐ"
+	# Quyết định hỗ trợ cả dữ liệu mới và legacy:
+	# - Mới: vnt_type="Quyết định"
+	# - Legacy: vnt_type="Công văn đi" + type_doc="QĐ"
 	if type_doc == "Quyết định":
-		base_filters.append(["vnt_type", "=", "Công văn đi"])
-		base_filters.append(["type_doc", "=", "QĐ"])
+		# Hỗ trợ cả dữ liệu mới (vnt_type=Quyết định) và legacy (Công văn đi + type_doc=QĐ).
+		base_filters.append(["vnt_type", "in", ["Quyết định", "Công văn đi"]])
+		post_filter = lambda d: (d.get("vnt_type") or "").strip() == "Quyết định" or (
+			(d.get("vnt_type") or "").strip() == "Công văn đi"
+			and (d.get("type_doc") or "").strip().upper() == "QĐ"
+		)
 	else:
 		base_filters.append(["vnt_type", "=", type_doc])
 
