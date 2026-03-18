@@ -12,6 +12,7 @@
   {
    "fieldname": "department",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Department",
    "options": "Department"
   }
@@ -20,7 +21,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-12-15 16:13:07.988523",
+ "modified": "2026-03-18 10:01:48.679089",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Department Group Member",
