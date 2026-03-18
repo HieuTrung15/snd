@@ -207,7 +207,7 @@ class VNTVehicleControl(Document):
 				}, [row_creator])
 				frappe.enqueue(
 					"vinatex.integrations.teams_graph.notify_user",
-					queue="short",
+					queue="default",
 					timeout=50,
 					is_async=True,
 					upn_or_email=[row_creator],
@@ -226,7 +226,7 @@ class VNTVehicleControl(Document):
 				}, row_recipients)
 				frappe.enqueue(
 					"vinatex.integrations.teams_graph.notify_user",
-					queue="short",
+					queue="default",
 					timeout=60,
 					is_async=True,
 					upn_or_email=row_recipients,
@@ -298,7 +298,7 @@ class VNTVehicleControl(Document):
 				}, [driver_user])
 				frappe.enqueue(
 					"vinatex.integrations.teams_graph.notify_user",
-					queue="short",
+					queue="default",
 					timeout=50,
 					is_async=True,
 					upn_or_email=[driver_user],
