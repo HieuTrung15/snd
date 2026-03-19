@@ -1,0 +1,214 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2026-03-19 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "section_break_main",
+  "requested_at",
+  "endpoint",
+  "operation",
+  "request_method",
+  "status",
+  "http_status",
+  "column_break_auth",
+  "api_user",
+  "auth_source",
+  "api_key_prefix",
+  "remote_addr",
+  "duration_ms",
+  "section_break_document",
+  "document",
+  "reference_number",
+  "file_name",
+  "file_size",
+  "section_break_payload",
+  "request_payload",
+  "response_payload",
+  "error"
+ ],
+ "fields": [
+  {
+   "default": "VAPILOG-.YYYY.-.MM.-.####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "VAPILOG-.YYYY.-.MM.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_main",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "requested_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Requested At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "endpoint",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Endpoint",
+   "read_only": 1
+  },
+  {
+   "fieldname": "operation",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Operation",
+   "options": "Công văn đến\nCông văn đi",
+   "read_only": 1
+  },
+  {
+   "fieldname": "request_method",
+   "fieldtype": "Data",
+   "label": "Request Method",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Success\nFailure",
+   "read_only": 1
+  },
+  {
+   "fieldname": "http_status",
+   "fieldtype": "Int",
+   "label": "HTTP Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_auth",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "api_user",
+   "fieldtype": "Link",
+   "label": "API User",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "auth_source",
+   "fieldtype": "Data",
+   "label": "Auth Source",
+   "read_only": 1
+  },
+  {
+   "fieldname": "api_key_prefix",
+   "fieldtype": "Data",
+   "label": "API Key Prefix",
+   "read_only": 1
+  },
+  {
+   "fieldname": "remote_addr",
+   "fieldtype": "Data",
+   "label": "Remote Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "duration_ms",
+   "fieldtype": "Int",
+   "label": "Duration (ms)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_document",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "document",
+   "fieldtype": "Link",
+   "label": "Document",
+   "options": "VNT Document Management",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_number",
+   "fieldtype": "Data",
+   "label": "Reference Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "file_name",
+   "fieldtype": "Data",
+   "label": "File Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "file_size",
+   "fieldtype": "Int",
+   "label": "File Size (bytes)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_payload",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "request_payload",
+   "fieldtype": "Code",
+   "label": "Request Payload",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "response_payload",
+   "fieldtype": "Code",
+   "label": "Response Payload",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "error",
+   "fieldtype": "Long Text",
+   "label": "Error",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-03-19 00:00:00",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT API Integration Log",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Infomation Technology",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "requested_at",
+ "sort_order": "DESC",
+ "states": []
+}

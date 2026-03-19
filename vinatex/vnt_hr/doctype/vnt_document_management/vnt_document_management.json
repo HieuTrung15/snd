@@ -709,7 +709,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-18 08:54:57.879937",
+ "modified": "2026-03-19 10:50:56.507979",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
@@ -772,6 +772,18 @@
    "read": 1,
    "report": 1,
    "role": "Infomation Technology",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "API",
    "share": 1,
    "write": 1
   }
