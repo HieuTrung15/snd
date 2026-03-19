@@ -1016,3 +1016,72 @@ input[type=file]::-webkit-file-upload-button {
 		margin-top: 2px;
 	}
 }
+
+/* Hiển thị chữ Actions trên Mobile và cân đối Header */
+@media (max-width: 767px) {
+    /* 1. Hiện chữ Actions (vốn bị class hidden-xs của Frappe ẩn đi) */
+    .actions-btn-group .actions-btn-group-label.hidden-xs {
+        display: inline-block !important;
+        margin-right: 4px;
+        /* font-weight: 600; */
+        font-size: 13px;
+    }
+
+    /* 2. Điều chỉnh kích thước nút bấm cho cân đối */
+    .actions-btn-group .btn-primary.btn-sm,
+    .actions-btn-group .btn-default.btn-sm {
+        padding: 7px 12px !important;
+        display: inline-flex !important;
+        align-items: center;
+        height: auto !important;
+    }
+
+    /* 3. Ép Header không xuống dòng và thu gọn Tiêu đề để nhường chỗ cho nút */
+    .page-head-content.flex.justify-between {
+        flex-wrap: nowrap !important;
+    }
+
+    /* Ẩn mã số tiêu đề h3 trên mobile */
+    .page-head .page-title h3.title-text {
+        display: none !important;
+    }
+
+    .page-head .page-title {
+        flex: 1 1 auto !important;
+        min-width: 0 !important; /* Giúp ellipsis hoạt động */
+        max-width: calc(100% - 135px) !important; /* Chừa 135px cho nút Actions */
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        display: flex !important;
+        align-items: center;
+    }
+    
+    /* Thu gọn cả ID và Trạng thái bên trong nếu quá dài */
+    .page-head .page-title .title-text,
+    .page-head .page-title .indicator-pill {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Dropdown vừa khít tuyệt đối 100% với nút Actions */
+    .actions-btn-group {
+        position: relative !important;
+    }
+
+    .actions-btn-group .dropdown-menu {
+        min-width: 100% !important;
+        width: 100% !important;
+        left: 0 !important;
+        right: 0 !important;
+        padding: 4px 0 !important;
+        margin-top: 2px !important;
+    }
+
+    .actions-btn-group .dropdown-menu li a {
+        padding: 8px 5px !important;
+        font-size: 13px !important;
+        text-align: center !important;
+    }
+}
