@@ -83,7 +83,7 @@ frappe.ui.form.on('VNT Business Trip Request', {
                 },
                 callback: function (r) {
                     if (r.message) {
-                        // frm.set_value("approver", r.message[0]);
+                        frm.set_value("approver", r.message[0]);
                         frm.set_value("approver_name", r.message[1]);
                     }
                 }
