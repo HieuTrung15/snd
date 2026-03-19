@@ -33,6 +33,8 @@ Edit `sites/YOUR_SITE/site_config.json` and add:
   "vnt_itsec_nvd_api_key": "",
   "vnt_itsec_cvelistv5_path": "/home/frappe/vnt_itsec_data/cvelistV5",
   "vnt_itsec_osv_enabled": 1,
+  "vnt_itsec_osv_queries": [],
+  "vnt_itsec_alert_email": "sonph@vinatex.com.vn",
   "vnt_itsec_store_only_matched": 1,
   "vnt_itsec_cve_retention_days": 30
 }
@@ -41,6 +43,8 @@ Edit `sites/YOUR_SITE/site_config.json` and add:
 Notes:
 - NVD API key is optional but recommended to avoid rate limits.
 - The cvelistV5 repo path must be readable by the bench user.
+- `vnt_itsec_osv_queries` accepts JSON array for OSV querybatch payload (fallback uses POC sample packages).
+- `vnt_itsec_alert_email` receives automation summary emails.
 - When `vnt_itsec_store_only_matched=1`, cleanup removes CVEs not linked to affected assets.
 - `vnt_itsec_cve_retention_days` controls the cutoff for periodic cleanup (days).
 
@@ -62,6 +66,7 @@ Expected:
 - `VNT CVE` contains records
 - `published_date` / `last_modified_date` are source timestamps
 - `first_seen_at` is the local ingest time
+- Matching + remediation ticket creation run automatically after nightly sync.
 
 ## 5) Enable nightly scheduler
 

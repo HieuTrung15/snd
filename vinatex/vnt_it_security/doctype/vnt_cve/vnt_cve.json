@@ -8,24 +8,26 @@
  "engine": "InnoDB",
  "field_order": [
   "cve_id",
+  "severity",
+  "cisa_kev",
   "published_date",
   "last_modified_date",
-  "severity",
+  "column_break_hztd",
   "cvss_version",
   "cvss_base_score",
   "vector_string",
-  "cisa_kev",
   "kev_due_date",
   "epss_score",
+  "section_break_5uwu",
   "epss_percentile",
   "description",
   "references_json",
+  "affected_cpes",
   "source_primary",
   "source_ids_json",
   "source_payloads_json",
   "raw_json",
-  "first_seen_at",
-  "affected_cpes"
+  "first_seen_at"
  ],
  "fields": [
   {
@@ -53,7 +55,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "M\u1ee9c \u0111\u1ed9",
-   "options": "Critical | Critical\nHigh | High\nMedium | Medium\nLow | Low\nUnknown | Unknown"
+   "options": "Critical\nHigh\nMedium\nLow\nUnknown"
   },
   {
    "fieldname": "cvss_base_score",
@@ -64,7 +66,7 @@
   {
    "fieldname": "vector_string",
    "fieldtype": "Data",
-   "label": "Vector"
+   "label": "Chu\u1ed7i vector CVSS"
   },
   {
    "default": "0",
@@ -86,6 +88,7 @@
   {
    "fieldname": "epss_percentile",
    "fieldtype": "Float",
+   "hidden": 1,
    "label": "B\u00e1ch ph\u00e2n v\u1ecb EPSS"
   },
   {
@@ -102,7 +105,7 @@
    "fieldname": "source_primary",
    "fieldtype": "Select",
    "label": "Ngu\u1ed3n ch\u00ednh",
-   "options": "CVELISTV5 | CVELISTV5\nNVD | NVD\nOSV | OSV\nCVE_ORG | CVE_ORG\nGLOBALCVE | GLOBALCVE"
+   "options": "CVELISTV5\nNVD\nOSV\nCVE_ORG\nGLOBALCVE"
   },
   {
    "fieldname": "source_ids_json",
@@ -135,13 +138,21 @@
    "fieldname": "cvss_version",
    "fieldtype": "Select",
    "label": "Phi\u00ean b\u1ea3n CVSS",
-   "options": "2.0 | 2.0\n3.0 | 3.0\n3.1 | 3.1\n4.0 | 4.0"
+   "options": "2.0\n3.0\n3.1\n4.0"
+  },
+  {
+   "fieldname": "section_break_5uwu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_hztd",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-30 10:45:07.430512",
+ "modified": "2026-03-18 17:21:43.035954",
  "modified_by": "Administrator",
  "module": "VNT IT Security",
  "name": "VNT CVE",

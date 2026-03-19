@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime
 
 import requests
@@ -8,6 +9,8 @@ from frappe.utils import now_datetime
 
 from vinatex.vnt_itsec.sync.common import (
     maybe_set_raw_json,
+    normalize_select_key,
+    select_value,
     set_source_ids,
     set_source_payload,
 )
@@ -22,6 +25,33 @@ def _sample_packages_for_poc() -> list[dict]:
         {"package": {"name": "requests", "ecosystem": "PyPI"}, "version": "2.19.0"},
         {"package": {"name": "lodash", "ecosystem": "npm"}, "version": "4.17.15"},
     ]
+
+
+def _configured_queries() -> list[dict]:
+    cfg = frappe.conf.get("vnt_itsec_osv_queries")
+    if not cfg:
+        return []
+    if isinstance(cfg, list):
+        return [row for row in cfg if isinstance(row, dict)]
+    if isinstance(cfg, str):
+        try:
+            data = json.loads(cfg)
+        except Exception:
+            return []
+        if isinstance(data, list):
+            return [row for row in data if isinstance(row, dict)]
+    return []
+
+
+def _query_url(source_doc) -> str:
+    base = (source_doc.api_base_url or "").strip().rstrip("/")
+    if not base:
+        return OSV_QUERY
+    if base.endswith("/v1/querybatch"):
+        return base
+    if base.endswith("/v1"):
+        return f"{base}/querybatch"
+    return f"{base}/v1/querybatch"
 
 
 def _extract_references(vuln: dict) -> list[dict]:
@@ -45,8 +75,9 @@ def _upsert_from_osv(vuln: dict) -> datetime | None:
         doc = frappe.get_doc(
             {"doctype": "VNT CVE", "cve_id": primary_id, "first_seen_at": now_datetime()}
         )
+    source_primary = normalize_select_key(doc.source_primary)
 
-    if published and (not doc.published_date or doc.source_primary in (None, "OSV")):
+    if published and (not doc.published_date or source_primary == "OSV"):
         doc.published_date = published
 
     if modified:
@@ -60,11 +91,11 @@ def _upsert_from_osv(vuln: dict) -> datetime | None:
         doc.description = details or summary
 
     references = _extract_references(vuln)
-    if references and (not doc.references_json or doc.source_primary in (None, "OSV")):
+    if references and (not doc.references_json or source_primary == "OSV"):
         doc.references_json = frappe.as_json(references)
 
     if not doc.source_primary:
-        doc.source_primary = "OSV"
+        doc.source_primary = select_value("VNT CVE", "source_primary", "OSV")
 
     set_source_ids(doc, "OSV", vuln.get("id"))
     set_source_payload(doc, "OSV", vuln)
@@ -78,10 +109,10 @@ def sync_osv_batch(source_doc) -> dict:
     if not frappe.conf.get("vnt_itsec_osv_enabled", 1):
         return {"source": "OSV", "count": 0, "skipped": True}
 
-    payload = {"queries": _sample_packages_for_poc()}
+    payload = {"queries": _configured_queries() or _sample_packages_for_poc()}
 
     try:
-        resp = requests.post(OSV_QUERY, json=payload, timeout=60)
+        resp = requests.post(_query_url(source_doc), json=payload, timeout=60)
         resp.raise_for_status()
         data = resp.json()
     except requests.RequestException as exc:

@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\": \"itsec-header\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">IT Security</span>\", \"col\": 12}}, {\"id\": \"itsec-shortcut-1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"ITSEC Dashboard\", \"col\": 3}}, {\"id\": \"itsec-shortcut-2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"CVE Sources\", \"col\": 3}}, {\"id\": \"itsec-shortcut-3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"CVE Database\", \"col\": 3}}, {\"id\": \"itsec-shortcut-4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"IT Assets\", \"col\": 3}}, {\"id\": \"itsec-shortcut-5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Asset Types\", \"col\": 3}}, {\"id\": \"itsec-shortcut-6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Vendors\", \"col\": 3}}, {\"id\": \"itsec-shortcut-7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Products\", \"col\": 3}}, {\"id\": \"itsec-shortcut-8\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Advisories\", \"col\": 3}}, {\"id\": \"itsec-shortcut-9\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Affected Assets\", \"col\": 3}}, {\"id\": \"itsec-shortcut-10\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Remediation Tickets\", \"col\": 3}}]",
+ "content": "[{\"id\": \"itsec-header\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">An to\u00e0n th\u00f4ng tin</span>\", \"col\": 12}}, {\"id\": \"itsec-shortcut-1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"B\u1ea3ng \u0111i\u1ec1u khi\u1ec3n ATTT\", \"col\": 3}}, {\"id\": \"itsec-shortcut-2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Ngu\u1ed3n CVE\", \"col\": 3}}, {\"id\": \"itsec-shortcut-3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"C\u01a1 s\u1edf d\u1eef li\u1ec7u CVE\", \"col\": 3}}, {\"id\": \"itsec-shortcut-4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"T\u00e0i s\u1ea3n CNTT\", \"col\": 3}}, {\"id\": \"itsec-shortcut-5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Lo\u1ea1i t\u00e0i s\u1ea3n\", \"col\": 3}}, {\"id\": \"itsec-shortcut-6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Nh\u00e0 cung c\u1ea5p\", \"col\": 3}}, {\"id\": \"itsec-shortcut-7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"S\u1ea3n ph\u1ea9m\", \"col\": 3}}, {\"id\": \"itsec-shortcut-8\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Khuy\u1ebfn c\u00e1o\", \"col\": 3}}, {\"id\": \"itsec-shortcut-9\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"T\u00e0i s\u1ea3n b\u1ecb \u1ea3nh h\u01b0\u1edfng\", \"col\": 3}}, {\"id\": \"itsec-shortcut-10\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Phi\u1ebfu kh\u1eafc ph\u1ee5c\", \"col\": 3}}]",
  "creation": "2025-12-30 14:35:33.124603",
  "custom_blocks": [],
  "docstatus": 0,
@@ -10,7 +10,7 @@
  "idx": 0,
  "indicator_color": "green",
  "is_hidden": 0,
- "label": "VNT IT Security",
+ "label": "VNT An to\u00e0n th\u00f4ng tin",
  "links": [],
  "modified": "2026-01-05 13:45:36.440345",
  "modified_by": "Administrator",
@@ -26,64 +26,64 @@
  "shortcuts": [
   {
    "doc_view": "",
-   "label": "ITSEC Dashboard",
+   "label": "B\u1ea3ng \u0111i\u1ec1u khi\u1ec3n ATTT",
    "link_to": "itsec-dashboard",
    "type": "Page"
   },
   {
    "doc_view": "",
-   "label": "CVE Sources",
+   "label": "Ngu\u1ed3n CVE",
    "link_to": "VNT CVE Source",
    "type": "DocType"
   },
   {
    "doc_view": "",
-   "label": "CVE Database",
+   "label": "C\u01a1 s\u1edf d\u1eef li\u1ec7u CVE",
    "link_to": "VNT CVE",
    "type": "DocType"
   },
   {
    "doc_view": "",
-   "label": "IT Assets",
+   "label": "T\u00e0i s\u1ea3n CNTT",
    "link_to": "VNT IT Asset",
    "type": "DocType"
   },
   {
    "doc_view": "",
-   "label": "Asset Types",
+   "label": "Lo\u1ea1i t\u00e0i s\u1ea3n",
    "link_to": "VNT IT Asset Type",
    "type": "DocType"
   },
   {
    "doc_view": "",
-   "label": "Vendors",
+   "label": "Nh\u00e0 cung c\u1ea5p",
    "link_to": "VNT IT Vendor",
    "type": "DocType"
   },
   {
    "doc_view": "",
-   "label": "Products",
+   "label": "S\u1ea3n ph\u1ea9m",
    "link_to": "VNT IT Product",
    "type": "DocType"
   },
   {
    "doc_view": "",
-   "label": "Advisories",
+   "label": "Khuy\u1ebfn c\u00e1o",
    "link_to": "VNT Vulnerability Advisory",
    "type": "DocType"
   },
   {
    "doc_view": "",
-   "label": "Affected Assets",
+   "label": "T\u00e0i s\u1ea3n b\u1ecb \u1ea3nh h\u01b0\u1edfng",
    "link_to": "VNT Affected Asset",
    "type": "DocType"
   },
   {
    "doc_view": "",
-   "label": "Remediation Tickets",
+   "label": "Phi\u1ebfu kh\u1eafc ph\u1ee5c",
    "link_to": "VNT Remediation Ticket",
    "type": "DocType"
   }
  ],
- "title": "VNT IT Security"
+ "title": "VNT An to\u00e0n th\u00f4ng tin"
 }

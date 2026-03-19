@@ -25,7 +25,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Loại thành phần",
-   "options": "OS | OS\nFirmware | Firmware\nApplication | Application\nLibrary | Library\nService | Service",
+   "options": "OS\nFirmware\nApplication\nLibrary\nService",
    "reqd": 1
   },
   {
@@ -61,7 +61,7 @@
    "fieldname": "cpe_confidence",
    "fieldtype": "Select",
    "label": "Độ tin cậy CPE",
-   "options": "High | High\nMedium | Medium\nLow | Low"
+   "options": "High\nMedium\nLow"
   },
   {
    "fieldname": "notes",

@@ -9,20 +9,29 @@ from frappe.utils import add_days, now_datetime
 
 from vinatex.vnt_itsec.sync.common import (
     maybe_set_raw_json,
+    normalize_select_key,
     normalize_severity,
+    select_value,
     set_source_ids,
     set_source_payload,
 )
 from vinatex.vnt_itsec.utils.dt import parse_source_datetime
 
 
-def _get_api_key() -> str:
+def _get_api_key(source_doc=None) -> str:
+    if source_doc:
+        try:
+            api_key = source_doc.get_password("api_key") or ""
+        except Exception:
+            api_key = (source_doc.api_key or "")
+        if api_key:
+            return api_key
     return frappe.conf.get("vnt_itsec_nvd_api_key") or ""
 
 
-def _headers() -> dict:
+def _headers(source_doc=None) -> dict:
     headers = {"Accept": "application/json"}
-    api_key = _get_api_key()
+    api_key = _get_api_key(source_doc=source_doc)
     if api_key:
         headers["apiKey"] = api_key
     return headers
@@ -137,8 +146,9 @@ def _upsert_cve_from_nvd(item: dict) -> datetime | None:
         doc = frappe.get_doc(
             {"doctype": "VNT CVE", "cve_id": cve_id, "first_seen_at": now_datetime()}
         )
+    source_primary = normalize_select_key(doc.source_primary)
 
-    if published and (not doc.published_date or doc.source_primary in (None, "NVD")):
+    if published and (not doc.published_date or source_primary == "NVD"):
         doc.published_date = published
 
     if modified:
@@ -150,18 +160,18 @@ def _upsert_cve_from_nvd(item: dict) -> datetime | None:
 
     if base_score is not None:
         doc.cvss_base_score = float(base_score)
-        doc.severity = severity
+        doc.severity = select_value("VNT CVE", "severity", severity)
     if vector:
         doc.vector_string = vector
     if cvss_version:
-        doc.cvss_version = cvss_version
+        doc.cvss_version = select_value("VNT CVE", "cvss_version", cvss_version)
 
     references = cve.get("references") or []
-    if references and (not doc.references_json or doc.source_primary in (None, "NVD")):
+    if references and (not doc.references_json or source_primary == "NVD"):
         doc.references_json = frappe.as_json(references)
 
     if not doc.source_primary:
-        doc.source_primary = "NVD"
+        doc.source_primary = select_value("VNT CVE", "source_primary", "NVD")
 
     set_source_ids(doc, "NVD", cve_id)
     set_source_payload(doc, "NVD", item)
@@ -200,7 +210,12 @@ def sync_nvd_incremental(source_doc) -> dict:
     total = 0
     max_modified: datetime | None = None
     while True:
-        resp = requests.get(base_url, headers=_headers(), params=params, timeout=60)
+        resp = requests.get(
+            base_url,
+            headers=_headers(source_doc=source_doc),
+            params=params,
+            timeout=60,
+        )
         resp.raise_for_status()
         data = resp.json()
         vulns = data.get("vulnerabilities") or []

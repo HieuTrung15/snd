@@ -31,7 +31,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Chu\u1ed7i \u0111\u1eb7t t\u00ean",
-   "options": "RMD-.YYYY.-.MM.-.#### | RMD-.YYYY.-.MM.-.####",
+   "options": "RMD-.YYYY.-.MM.-.####",
    "reqd": 1
   },
   {
@@ -68,7 +68,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "\u01afu ti\u00ean",
-   "options": "P1 | P1\nP2 | P2\nP3 | P3\nP4 | P4",
+   "options": "P1\nP2\nP3\nP4",
    "reqd": 1
   },
   {
@@ -76,7 +76,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Tr\u1ea1ng th\u00e1i",
-   "options": "Open | Open\nAssigned | Assigned\nIn Progress | In Progress\nWaiting | Waiting\nDone | Done\nRejected | Rejected",
+   "options": "Open\nAssigned\nIn Progress\nWaiting\nDone\nRejected",
    "reqd": 1
   },
   {
