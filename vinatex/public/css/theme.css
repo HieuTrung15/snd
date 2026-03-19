@@ -169,7 +169,7 @@ h6.uppercase {
 		font-size: 12px;
 	}
 	.navbar #vnt-search-title .vnt-search-subtitle {
-		font-size: 10px;
+		display: none !important;
 	}
 }
 
