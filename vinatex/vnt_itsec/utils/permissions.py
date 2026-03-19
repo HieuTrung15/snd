@@ -3,11 +3,8 @@ from __future__ import annotations
 import frappe
 
 ROLES = [
-    "VNT_ITSEC_ADMIN",
-    "VNT_ITSEC_ANALYST",
-    "VNT_UNIT_IT_ADMIN",
-    "VNT_UNIT_IT_EDITOR",
-    "VNT_UNIT_VIEWER",
+    "Infomation Technology",
+    "VNT External IT User"
 ]
 
 

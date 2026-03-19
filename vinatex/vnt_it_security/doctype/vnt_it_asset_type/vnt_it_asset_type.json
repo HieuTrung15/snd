@@ -16,7 +16,7 @@
    "fieldname": "asset_type",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Loại tài sản",
+   "label": "Lo\u1ea1i t\u00e0i s\u1ea3n",
    "reqd": 1,
    "unique": 1
   },
@@ -25,8 +25,8 @@
    "fieldname": "category",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Danh mục",
-   "options": "Hardware | Hardware\nSoftware | Software\nService | Service",
+   "label": "Danh m\u1ee5c",
+   "options": "Hardware\nSoftware\nService",
    "reqd": 1
   },
   {
@@ -34,16 +34,17 @@
    "fieldname": "is_network_device",
    "fieldtype": "Check",
    "in_list_view": 1,
-   "label": "Thiết bị mạng"
+   "label": "Thi\u1ebft b\u1ecb m\u1ea1ng"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-19 14:57:08.210824",
+ "modified": "2026-02-01 11:49:48.683352",
  "modified_by": "Administrator",
  "module": "VNT IT Security",
  "name": "VNT IT Asset Type",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -66,50 +67,9 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "VNT_ITSEC_ADMIN",
+   "role": "Infomation Technology",
    "share": 1,
    "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_ITSEC_ANALYST",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_UNIT_IT_ADMIN",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_UNIT_IT_EDITOR",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "VNT_UNIT_VIEWER",
-   "share": 1
   }
  ],
  "row_format": "Dynamic",

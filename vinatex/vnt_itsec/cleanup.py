@@ -73,8 +73,16 @@ def cleanup_cves(retention_days: int | None = None, store_only_matched: int | No
         if frappe.db.table_exists("tabVNT Advisory CVE")
         else 0
     )
-    deleted_tickets = 0
-    deleted_affected = 0
+    deleted_tickets = (
+        _delete_by_values("tabVNT Remediation Ticket", "cve", to_delete)
+        if frappe.db.table_exists("tabVNT Remediation Ticket")
+        else 0
+    )
+    deleted_affected = (
+        _delete_by_values("tabVNT Affected Asset", "cve", to_delete)
+        if frappe.db.table_exists("tabVNT Affected Asset")
+        else 0
+    )
     deleted_cpe = (
         _delete_by_values("tabVNT CVE Affected CPE", "parent", to_delete)
         if frappe.db.table_exists("tabVNT CVE Affected CPE")

@@ -37,16 +37,18 @@
   {
    "fieldname": "default_cpe_prefix",
    "fieldtype": "Data",
-   "label": "CPE Prefix m\u1eb7c \u0111\u1ecbnh"
+   "hidden": 1,
+   "label": "CPE m\u1eb7c \u0111\u1ecbnh"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-30 10:45:49.245068",
+ "modified": "2026-03-18 16:59:17.281795",
  "modified_by": "Administrator",
  "module": "VNT IT Security",
  "name": "VNT IT Product",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {

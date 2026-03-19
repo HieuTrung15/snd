@@ -4,6 +4,8 @@ import json
 
 import frappe
 
+from vinatex.vnt_itsec.sync.common import select_value
+
 
 def merge_cve_records() -> None:
     """
@@ -27,5 +29,5 @@ def merge_cve_records() -> None:
         else:
             primary = "NVD"
         doc = frappe.get_doc("VNT CVE", row["name"])
-        doc.source_primary = primary
+        doc.source_primary = select_value("VNT CVE", "source_primary", primary)
         doc.save(ignore_permissions=True)

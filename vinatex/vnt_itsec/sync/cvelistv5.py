@@ -10,10 +10,40 @@ from frappe.utils import now_datetime
 
 from vinatex.vnt_itsec.sync.common import (
     maybe_set_raw_json,
+    normalize_select_key,
+    select_value,
     set_source_ids,
     set_source_payload,
 )
 from vinatex.vnt_itsec.utils.dt import parse_source_datetime
+
+
+def _parse_resume_cursor(value: str | None) -> dict | None:
+    raw = (value or "").strip()
+    if not raw or not raw.startswith("{"):
+        return None
+    try:
+        data = json.loads(raw)
+    except Exception:
+        return None
+    if not isinstance(data, dict):
+        return None
+    if "mode" not in data or "next_index" not in data:
+        return None
+    return data
+
+
+def _build_resume_cursor(
+    mode: str, target_rev: str, next_index: int, base_rev: str | None = None
+) -> str:
+    payload = {
+        "mode": mode,
+        "target_rev": target_rev,
+        "next_index": int(next_index),
+    }
+    if base_rev:
+        payload["base_rev"] = base_rev
+    return json.dumps(payload, ensure_ascii=True, separators=(",", ":"))
 
 
 def _repo_path() -> str:
@@ -29,6 +59,13 @@ def _repo_ready(repo: str) -> bool:
 def _git(*args: str) -> str:
     repo = _repo_path()
     return subprocess.check_output(["git", "-C", repo, *args], text=True).strip()
+
+
+def _safe_prev_rev(default_rev: str) -> str:
+    try:
+        return _git("rev-parse", "HEAD~1")
+    except subprocess.CalledProcessError:
+        return default_rev
 
 
 def _list_changed_json_files(prev_rev: str, new_rev: str) -> list[str]:
@@ -124,8 +161,9 @@ def _upsert_cve_from_cvelist(record: dict, rel_path: str) -> datetime | None:
         doc = frappe.get_doc(
             {"doctype": "VNT CVE", "cve_id": cve_id, "first_seen_at": now_datetime()}
         )
+    source_primary = normalize_select_key(doc.source_primary)
 
-    if published and (not doc.published_date or doc.source_primary in (None, "CVELISTV5")):
+    if published and (not doc.published_date or source_primary == "CVELISTV5"):
         doc.published_date = published
 
     if modified:
@@ -135,11 +173,11 @@ def _upsert_cve_from_cvelist(record: dict, rel_path: str) -> datetime | None:
     if desc:
         doc.description = desc
 
-    if references and (not doc.references_json or doc.source_primary in (None, "CVELISTV5")):
+    if references and (not doc.references_json or source_primary == "CVELISTV5"):
         doc.references_json = frappe.as_json(references)
 
     if not doc.source_primary:
-        doc.source_primary = "CVELISTV5"
+        doc.source_primary = select_value("VNT CVE", "source_primary", "CVELISTV5")
 
     set_source_ids(doc, "CVELISTV5", rel_path)
     set_source_payload(doc, "CVELISTV5", record)
@@ -171,35 +209,79 @@ def sync_cvelistv5_incremental(source_doc) -> dict:
         _git("fetch", "--all", "--prune")
         _git("pull", "--ff-only")
         new_rev = _git("rev-parse", "HEAD")
-        prev_rev = source_doc.watermark_cursor or ""
     except subprocess.CalledProcessError as exc:
         frappe.logger("vnt_itsec").exception("cvelistV5 git sync failed")
         return {"source": "CVELISTV5", "skipped": True, "reason": "git_error", "error": str(exc)}
 
-    if source_doc.sync_mode == "FULL" and not prev_rev:
-        files = _walk_all_json_files()
+    raw_cursor = source_doc.watermark_cursor or ""
+    cursor_state = _parse_resume_cursor(raw_cursor)
+
+    mode = "DIFF"
+    base_rev = ""
+    target_rev = new_rev
+    start_index = 0
+
+    if cursor_state:
+        mode = (cursor_state.get("mode") or "DIFF").strip().upper()
+        base_rev = (cursor_state.get("base_rev") or "").strip()
+        target_rev = (cursor_state.get("target_rev") or "").strip() or new_rev
+        start_index = max(0, int(cursor_state.get("next_index") or 0))
     else:
-        if not prev_rev:
-            prev_rev = _git("rev-parse", "HEAD~1")
-        files = _list_changed_json_files(prev_rev, new_rev)
+        previous_cursor = raw_cursor.strip()
+        if source_doc.sync_mode == "FULL" and not previous_cursor:
+            mode = "FULL"
+            target_rev = new_rev
+        else:
+            base_rev = previous_cursor or _safe_prev_rev(new_rev)
+
+    if mode == "FULL":
+        files = sorted(_walk_all_json_files())
+    else:
+        if not base_rev:
+            base_rev = _safe_prev_rev(target_rev or new_rev)
+        files = _list_changed_json_files(base_rev, target_rev)
+    total_files = len(files)
 
     count = 0
     max_modified: datetime | None = None
-    for rel in files:
+    next_index = start_index
+    for idx in range(start_index, total_files):
+        rel = files[idx]
         data = _read_json(rel)
         if not data:
+            next_index = idx + 1
             continue
         if "cveMetadata" not in data and "containers" not in data:
+            next_index = idx + 1
             continue
         modified = _upsert_cve_from_cvelist(data, rel)
         max_modified = _max_datetime(max_modified, modified)
         count += 1
+        next_index = idx + 1
         if source_doc.max_per_run and count >= int(source_doc.max_per_run):
             break
 
+    partial = next_index < total_files
     if max_modified:
         source_doc.watermark_source_ts = max_modified
-    source_doc.watermark_cursor = new_rev
+
+    if partial:
+        source_doc.watermark_cursor = _build_resume_cursor(
+            mode=mode,
+            base_rev=base_rev if mode != "FULL" else None,
+            target_rev=target_rev,
+            next_index=next_index,
+        )
+    else:
+        source_doc.watermark_cursor = target_rev if target_rev else new_rev
+
     source_doc.save(ignore_permissions=True)
     frappe.db.commit()
-    return {"source": "CVELISTV5", "count": count, "scanned_files": len(files)}
+    return {
+        "source": "CVELISTV5",
+        "count": count,
+        "scanned_files": total_files,
+        "start_index": start_index,
+        "next_index": next_index,
+        "partial": partial,
+    }

@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "hash",
+ "autoname": "field:source_code",
  "creation": "2025-12-30 14:06:38.836297",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -32,8 +32,9 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "M\u00e3 ngu\u1ed3n",
-   "options": "NVD | NVD\nCVELISTV5 | CVELISTV5\nOSV | OSV\nCVE_ORG | CVE_ORG\nGLOBALCVE | GLOBALCVE",
-   "reqd": 1
+   "options": "NVD\nCVELISTV5\nOSV\nCVE_ORG\nGLOBALCVE",
+   "reqd": 1,
+   "unique": 1
   },
   {
    "default": "0",
@@ -51,18 +52,18 @@
   {
    "fieldname": "api_base_url",
    "fieldtype": "Data",
-   "label": "API Base URL"
+   "label": "\u0110\u1ecba ch\u1ec9 API g\u1ed1c"
   },
   {
    "fieldname": "auth_type",
    "fieldtype": "Select",
    "label": "Ki\u1ec3u x\u00e1c th\u1ef1c",
-   "options": "None | None\nApiKey | ApiKey\nToken | Token"
+   "options": "None\nApiKey\nToken"
   },
   {
    "fieldname": "api_key",
    "fieldtype": "Password",
-   "label": "API Key"
+   "label": "Kh\u00f3a API"
   },
   {
    "fieldname": "last_successful_sync_at",
@@ -84,7 +85,7 @@
    "fieldname": "sync_mode",
    "fieldtype": "Select",
    "label": "Ch\u1ebf \u0111\u1ed9 \u0111\u1ed3ng b\u1ed9",
-   "options": "FULL | FULL\nINCREMENTAL | INCREMENTAL"
+   "options": "FULL\nINCREMENTAL"
   },
   {
    "fieldname": "max_per_run",
@@ -164,5 +165,6 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "source_code"
 }

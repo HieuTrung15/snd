@@ -22,6 +22,7 @@
   "sb_network",
   "mgmt_ip",
   "public_ip",
+  "section_break_h3na",
   "mac_address",
   "network_zone",
   "sb_ip_addresses",
@@ -33,7 +34,6 @@
   "vendor",
   "product",
   "quick_vendor_name",
-  "quick_vendor_website",
   "quick_product_name",
   "quick_product_family",
   "quick_product_cpe_prefix",
@@ -56,9 +56,9 @@
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Chu\u1ed7i \u0111\u1eb7t t\u00ean",
-   "options": "ITAS-.YYYY.-.#### | ITAS-.YYYY.-.####",
-   "reqd": 1
+   "options": "ITAS-.YYYY.-.####"
   },
   {
    "fieldname": "company",
@@ -112,7 +112,7 @@
   {
    "fieldname": "model",
    "fieldtype": "Data",
-   "label": "Model"
+   "label": "M\u1eabu/Model"
   },
   {
    "fieldname": "environment",
@@ -204,16 +204,11 @@
    "label": "Nh\u00e0 cung c\u1ea5p"
   },
   {
-   "depends_on": "eval: !doc.vendor",
-   "fieldname": "quick_vendor_website",
-   "fieldtype": "Data",
-   "label": "Website nh\u00e0 cung c\u1ea5p "
-  },
-  {
    "depends_on": "eval: !doc.product",
    "description": "Nh\u1eadp n\u1ebfu ch\u01b0a c\u00f3 s\u1ea3n ph\u1ea9m, h\u1ec7 th\u1ed1ng s\u1ebd t\u1ef1 t\u1ea1o.",
    "fieldname": "quick_product_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "S\u1ea3n ph\u1ea9m"
   },
   {
@@ -226,7 +221,8 @@
    "depends_on": "eval: !doc.product",
    "fieldname": "quick_product_cpe_prefix",
    "fieldtype": "Data",
-   "label": "CPE Prefix"
+   "hidden": 1,
+   "label": "Ti\u1ec1n t\u1ed1 CPE"
   },
   {
    "fieldname": "col_quick_master_right",
@@ -243,8 +239,8 @@
    "depends_on": "eval: !doc.asset_type",
    "fieldname": "quick_asset_category",
    "fieldtype": "Select",
-   "label": "Nh\u00f3m lo\u1ea1i t\u00e0i s\u1ea3n ",
-   "options": "Hardware | Hardware\nSoftware | Software\nService | Service"
+   "label": "Nh\u00f3m lo\u1ea1i t\u00e0i s\u1ea3n",
+   "options": "Hardware\nSoftware\nService"
   },
   {
    "default": "0",
@@ -297,7 +293,7 @@
   {
    "fieldname": "sb_ownership",
    "fieldtype": "Section Break",
-   "label": "Danh m\u1ee5c t\u00e0i s\u1ea3n"
+   "label": "S\u1edf h\u1eefu"
   },
   {
    "fieldname": "col_vendor",
@@ -316,12 +312,16 @@
    "fieldname": "sb_software",
    "fieldtype": "Section Break",
    "label": "Ph\u1ea7n m\u1ec1m"
+  },
+  {
+   "fieldname": "section_break_h3na",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-30 10:43:20.887673",
+ "modified": "2026-03-18 17:02:28.507294",
  "modified_by": "Administrator",
  "module": "VNT IT Security",
  "name": "VNT IT Asset",
