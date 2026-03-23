@@ -2,7 +2,7 @@ import re
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint
+from frappe.utils import cint, get_url_to_form
 from frappe.utils.data import escape_html
 
 class VNTNewFeed(Document):
@@ -76,16 +76,18 @@ def _get_active_employee_users() -> list[str]:
 
 
 def _build_teams_message(doc: "VNTNewFeed") -> str:
+    doc_url = get_url_to_form(doc.doctype, doc.name)
     return "<br>".join([
         "Thông báo quan trọng Tập đoàn.",
         escape_html(doc.title or doc.name),
+        f'<a href="{escape_html(doc_url)}">Xem thông báo chi tiết</a>',
     ])
 
 
 @frappe.whitelist()
 def send_teams_notification(docname: str) -> dict:
     if not docname:
-        frappe.throw(_("CHưa có tên cho bản tin."))
+        frappe.throw(_("Chưa có tên cho bản tin."))
 
     doc = frappe.get_doc("VNT New Feed", docname)
     doc.check_permission("write")
