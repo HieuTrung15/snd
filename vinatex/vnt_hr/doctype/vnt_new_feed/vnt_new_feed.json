@@ -11,6 +11,8 @@
   "column_break_zjk3",
   "date",
   "title",
+  "gui_thong_bao",
+  "da_gui_thong_bao",
   "section_break_mjbw",
   "noidung",
   "attach",
@@ -74,12 +76,25 @@
    "fieldtype": "Data",
    "label": "Ph\u00f2ng/ban",
    "reqd": 1
+  },
+  {
+   "description": "Khi b\u1ea5m s\u1ebd g\u1eedi th\u00f4ng b\u00e1o \u0111\u1ebfn MS Teams cho to\u00e0n th\u1ec3 CBNV T\u1eadp \u0111o\u00e0n",
+   "fieldname": "gui_thong_bao",
+   "fieldtype": "Button",
+   "label": "G\u1eedi th\u00f4ng b\u00e1o"
+  },
+  {
+   "default": "0",
+   "fieldname": "da_gui_thong_bao",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "\u0110\u00e3 g\u1eedi th\u00f4ng b\u00e1o"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-10 16:30:49.509446",
+ "modified": "2026-03-23 13:51:12.385796",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT New Feed",
@@ -99,7 +114,16 @@
   },
   {
    "create": 1,
-   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "VNT New Feed",
+   "share": 1,
+   "write": 1
+  },
+  {
    "email": 1,
    "export": 1,
    "print": 1,
@@ -107,8 +131,7 @@
    "report": 1,
    "role": "Employee",
    "select": 1,
-   "share": 1,
-   "write": 1
+   "share": 1
   }
  ],
  "row_format": "Dynamic",

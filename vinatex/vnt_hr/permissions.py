@@ -6,6 +6,11 @@ HR_SALARY_USERS = {
     "thaottt@vinatex.com.vn",
 }
 
+VNT_NEW_FEED_EDITOR_ROLES = {
+    "System Manager",
+    "VNT New Feed",
+}
+
 
 def is_hr_salary_user(user: str | None) -> bool:
     """Return True if user is in HR salary list or Administrator."""
@@ -91,6 +96,43 @@ def vnt_13th_month_salary_has_permission(doc=None, user=None, ptype=None):
         return False
     if is_hr_salary_user(user):
         return True
+    return False
+
+
+def vnt_new_feed_has_permission(doc=None, user=None, ptype=None):
+    """Keep VNT New Feed read-only except for explicit editor cases."""
+    user = user or frappe.session.user
+
+    if not user or user == "Guest":
+        return False
+
+    if ptype not in {"create", "write", "delete", "submit", "cancel", "amend"}:
+        return None
+
+    is_role_editor = user == "Administrator" or bool(
+        VNT_NEW_FEED_EDITOR_ROLES.intersection(frappe.get_roles(user))
+    )
+    if is_role_editor:
+        return True
+
+    # Non-editor users only get write on records they created
+    # or when they are the employee selected in "Người lập phiếu".
+    if ptype == "write" and doc:
+        owner = (getattr(doc, "owner", None) or "").strip().lower()
+        if owner == user.lower():
+            return True
+
+        selected_employee = (getattr(doc, "employee", None) or "").strip()
+        if selected_employee:
+            user_employee = _user_employee(user)
+            if user_employee and user_employee == selected_employee:
+                return True
+
+            # Fallback when the field stores user id style value.
+            if selected_employee.lower() == user.lower():
+                return True
+
+    # Other users remain read-only.
     return False
 
 
