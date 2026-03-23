@@ -2,6 +2,9 @@ frappe.ui.form.on("VNT Vehicle Control", {
     date (frm) {
         loadTakenVehicle(frm)
     },
+    branch (frm) {
+        loadTakenVehicle(frm)
+    },
 	refresh (frm) {
 		loadTakenVehicle(frm)
         if (frm.is_new()) {
@@ -59,6 +62,7 @@ function loadTakenVehicle(frm) {
 		method: "vinatex.vnt_hr.doctype.vnt_vehicle_control.vnt_vehicle_control.get_taken_vehicles",
 		args: {
 			date: frm.doc.date,
+			branch: frm.doc.branch,
 	    },
 		callback(res) {
 			update_taken_table(res.message || []);

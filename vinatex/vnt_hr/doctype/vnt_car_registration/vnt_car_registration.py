@@ -320,20 +320,25 @@ def _notify_to_user_receive(doc: Document):
 			"user_id": ["in", all_users],
 			"branch": user_branch,
 		},
-		pluck="user_id",
+		fields=["user_id", "employee_name", "name"]
 	)
 
 	if not user_list:
 		return
-	# lấy ra người đầu tiên trong danh sách điều xe
-	employee_user = frappe.get_value('User', {'name': user_list[0]}, 'full_name')
+
+	# Lấy danh sách ID để gửi thông báo hàng loạt
+	user_ids = [u.user_id for u in user_list]
+	# Lấy tên người đầu tiên để gán vào bản ghi điều xe
+	employee_user_name = user_list[0].employee_name
+	employee_user_id = user_list[0].name
+
 	items = doc.get("items") or []
 	if items:
 		vehicle_control = frappe.new_doc("VNT Vehicle Control")
-		vehicle_control.employee_name = employee_user
+		vehicle_control.employee_name = employee_user_name
 		vehicle_control.date = nowdate()
 		vehicle_control.branch = user_branch
-		vehicle_control.employee = doc.employee_name
+		vehicle_control.employee = employee_user_id
 		vehicle_control.id_parent = doc.name
 		for item in items:
 			vehicle_control.append(
@@ -349,45 +354,49 @@ def _notify_to_user_receive(doc: Document):
 				},
 			)
 		vehicle_control.insert(ignore_permissions=True)
+		
 		if vehicle_control:
 			url = get_url_to_form("VNT Vehicle Control", vehicle_control.name)
+			msg_subject = _("Điều xe cho phiếu đăng ký xe của {0} ban {1}.").format(
+				doc.employee_name or _("(không rõ)"), 
+				doc.department or _("(không rõ)")
+			)
+			
+			# Gửi notification log hàng loạt
 			make_notification_logs({
 				"type": "Alert",
-				"subject": _("Điều xe cho phiếu đăng ký xe của {0} ban {1}.").format(doc.employee_name or _("(không rõ)"), doc.department or _("(không rõ)")),
+				"subject": msg_subject,
 				"document_type": 'VNT Vehicle Control',
 				"document_name": vehicle_control.name,
-			}, user_list)
-			# send_rocket_message(
-			# 	to_users=user_list,
-			# 	title=":bell: Thông báo",
-			# 	message=_("Điều xe cho phiếu đăng ký xe của {0}.").format(doc.employee_name or _("(không rõ)")),
-			# 	link=get_url_to_form(doc.doctype, doc.name)
-			# )
+			}, user_ids)
+
+			# Gửi Teams hàng loạt
 			frappe.enqueue(
 				"vinatex.integrations.teams_graph.notify_user",
-				queue="short",
-				timeout=30,
+				queue="default",
+				timeout=60,
 				is_async=True,
-				upn_or_email=user_list,
+				upn_or_email=user_ids,
 				content_type="html",
 				linkify=False,
 				message=_(
-					"🔔 Điều xe cho phiếu đăng ký xe của {0} ban {1}.<br>"
-					"<a href=\"{2}\">Xem chi tiết</a>"
-				).format(
-					doc.employee_name or _("(không rõ)"),
-					doc.department or _("(không rõ)"),
-					url
-				),
+					"🔔 {0}<br>"
+					"<a href=\"{1}\">Xem chi tiết</a>"
+				).format(msg_subject, url),
 			)
-			new_todo =  frappe.new_doc("ToDo")
-			new_todo.description = _("Điều xe cho phiếu đăng ký xe của {0} ban {1}.").format(doc.employee_name or _("(không rõ)"), doc.department or _("(không rõ)"))
-			new_todo.allocated_to = user_list[0]
-			new_todo.reference_type = 'VNT Vehicle Control'
-			new_todo.reference_name = vehicle_control.name
-			new_todo.priority = "Medium"
-			new_todo.status = "Open"
-			new_todo.save(ignore_permissions=True)
+
+			# Tạo ToDo cho từng người tương ứng để quản lý công việc
+			for user_record in user_list:
+				frappe.get_doc({
+					"doctype": "ToDo",
+					"description": msg_subject,
+					"allocated_to": user_record.user_id,
+					"reference_type": 'VNT Vehicle Control',
+					"reference_name": vehicle_control.name,
+					"priority": "Medium",
+					"status": "Open"
+				}).insert(ignore_permissions=True)
+			
 			frappe.db.commit()
 
 

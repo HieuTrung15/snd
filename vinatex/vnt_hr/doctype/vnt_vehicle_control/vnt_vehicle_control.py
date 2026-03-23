@@ -324,25 +324,21 @@ class VNTVehicleControl(Document):
 			# 	message=driver_msg,
 			# 	link=get_url_to_form(target_doctype, target_docname),
 			# )
-		# close todo của người điều xe
-		user_group_name = "Nhận thông báo điều xe"
-		user_list = frappe.get_all(
-			"User Group Member",
-			filters={"parent": user_group_name},
-			pluck="user",
-		)
-		names = frappe.get_all(
-		"ToDo",
-		filters={
-			"reference_type": self.doctype,
-			"reference_name": self.name,
-			"allocated_to": user_list[0],
-			"status": ["!=", "Cancelled"],
-		},
-		pluck="name",
-		)
-		for n in names:
-			frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
+		# close todo của người điều xe cụ thể
+		dispatcher_user = get_employee_user_id(self.employee)
+		if dispatcher_user:
+			todos = frappe.get_all(
+				"ToDo",
+				filters={
+					"reference_type": self.doctype,
+					"reference_name": self.name,
+					"allocated_to": dispatcher_user,
+					"status": ["not in", ["Closed", "Cancelled"]],
+				},
+				pluck="name",
+			)
+			for n in todos:
+				frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
 
 
 def get_employee_user_id(employee_name: str) -> str | None:
@@ -352,12 +348,11 @@ def get_employee_user_id(employee_name: str) -> str | None:
 
 
 @frappe.whitelist()
-def get_taken_vehicles(date):
+def get_taken_vehicles(date, branch=None):
 	if not date:
 		return []
 
-	return frappe.db.sql(
-		"""
+	query = """
 		SELECT
 			item.id_parent,
 			item.driver,
@@ -368,10 +363,17 @@ def get_taken_vehicles(date):
 			COALESCE(item.employee_name, parent.employee_name) AS employee_name
 		FROM `tabVNT Vehicle Control Item` item
 		INNER JOIN `tabVNT Vehicle Control` parent ON parent.name = item.parent
+		LEFT JOIN `tabVNT Vehicle` v ON v.name = item.driver
 		WHERE item.date = %(date)s
 		  AND COALESCE(item.driver, '') != ''
-		ORDER BY item.time, item.start, item.end
-		""",
-		{"date": date},
-		as_dict=True,
-	)
+	"""
+	
+	params = {"date": date}
+	
+	if branch:
+		query += " AND v.branch = %(branch)s"
+		params["branch"] = branch
+		
+	query += " ORDER BY item.time, item.start, item.end"
+
+	return frappe.db.sql(query, params, as_dict=True)

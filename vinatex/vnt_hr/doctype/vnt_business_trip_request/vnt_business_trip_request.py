@@ -175,29 +175,6 @@ class VNTBusinessTripRequest(Document):
 					formatdate(conflict.to_date, "dd-mm-yyyy"),
 				))
 
-# def get_leave_approver_level_2(employee: str):
-# 	# lấy approver trên Employee trước
-# 	emp = frappe.db.get_value("Employee", employee, ["leave_approver", "department"], as_dict=True)
-# 	if not emp:
-# 		return None
-
-# 	# nếu chưa có và có department → tìm trong Department Approver
-# 	# ƯU TIÊN custom flag custom_level_2 = 1
-# 	if emp:
-# 		approver = frappe.db.get_value(
-# 			"Department Approver",
-# 			{
-# 				"parent": emp.department,
-# 				"parentfield": "leave_approvers",
-# 				"custom_level_2": 1,      
-# 			},
-# 			["approver", "custom_approver_name"],
-# 		)
-# 	else :
-# 		approver = emp.leave_approver
-
-# 	return approver
-
 
 def _get_prev_and_curr_workflow_state(doc: Document) -> tuple[str | None, str]:
 	"""Trả về (previous_state, current_state) an toàn.
@@ -817,13 +794,18 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
 			"user_id": ["in", all_users],
 			"branch": user_branch,
 		},
-		pluck="user_id",
+		fields=["user_id", "employee_name", "name"]
 	)
 
 	if not user_list:
 		return
-	# lấy ra người đầu tiên trong danh sách điều xe
-	employee_user = frappe.get_value('User', {'name': user_list[0]}, 'full_name')
+
+	# Lấy danh sách ID để gửi thông báo hàng loạt
+	user_ids = [u.user_id for u in user_list]
+	# Lấy tên và ID nhân viên đầu tiên làm người điều xe đại diện
+	employee_user_name = user_list[0].employee_name
+	employee_user_id = user_list[0].name
+
 	vehicle_control_name = frappe.db.get_value(
 		"VNT Vehicle Control Item",
 		{"id_parent": vehicle_request.name},
@@ -838,8 +820,8 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
 		vehicle_control = frappe.new_doc("VNT Vehicle Control")
 		vehicle_control.set("date", nowdate())
 
-	vehicle_control.employee_name = employee_user
-	vehicle_control.employee = doc.employee_name
+	vehicle_control.employee_name = employee_user_name
+	vehicle_control.employee = employee_user_id
 	vehicle_control.id_parent = vehicle_request.name
 	vehicle_control.branch = user_branch
 
@@ -861,41 +843,50 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
 		vehicle_control.save(ignore_permissions=True)
 	else:
 		vehicle_control.insert(ignore_permissions=True)
-	url = get_url_to_form("VNT Vehicle Control", vehicle_control.name)
-	make_notification_logs({
-		"type": "Alert",
-		"subject": _("Điều xe cho phiếu đăng ký xe của {0} ban {1}.").format(doc.employee_name or _("(không rõ)"), doc.department or _("(không rõ)")),
-		"document_type": 'VNT Vehicle Control',
-		"document_name": vehicle_control.name,
-	}, user_list)
-	frappe.enqueue(
-		"vinatex.integrations.teams_graph.notify_user",
-		queue="short",
-		timeout=30,
-		is_async=True,
-		upn_or_email=user_list,
-		content_type="html",
-		linkify=False,
-		message=_(
-			"🔔 Điều xe cho phiếu đăng ký xe của {0} ban {1}.<br>"
-			"<a href=\"{2}\">Xem chi tiết</a>"
-		).format(
-			doc.employee_name or _("(không rõ)"),
-			doc.department or _("(không rõ)"),
-			url
-		),
-	)
-	# tạo todo cho người điều xe
-	description = _("Điều xe cho phiếu đăng ký xe của {0} ban {1}.").format(doc.employee_name or _("(không rõ)"), doc.department or _("(không rõ)"))
-	new_todo =  frappe.new_doc('ToDo')
-	new_todo.description = description
-	new_todo.allocated_to = user_list[0]
-	new_todo.reference_type = "VNT Vehicle Control"
-	new_todo.reference_name = vehicle_control.name
-	new_todo.priority = "Medium"
-	new_todo.status = "Open"
-	new_todo.save(ignore_permissions=True)
-	frappe.db.commit()
+	
+	if vehicle_control:
+		url = get_url_to_form("VNT Vehicle Control", vehicle_control.name)
+		msg_subject = _("Điều xe cho phiếu đăng ký xe của {0} ban {1}.").format(
+			doc.employee_name or _("(không rõ)"), 
+			doc.department or _("(không rõ)")
+		)
+
+		# Gửi notification log hàng loạt
+		make_notification_logs({
+			"type": "Alert",
+			"subject": msg_subject,
+			"document_type": 'VNT Vehicle Control',
+			"document_name": vehicle_control.name,
+		}, user_ids)
+
+		# Gửi Teams hàng loạt
+		frappe.enqueue(
+			"vinatex.integrations.teams_graph.notify_user",
+			queue="default",
+			timeout=60,
+			is_async=True,
+			upn_or_email=user_ids,
+			content_type="html",
+			linkify=False,
+			message=_(
+				"🔔 {0}<br>"
+				"<a href=\"{1}\">Xem chi tiết</a>"
+			).format(msg_subject, url),
+		)
+
+		# Tạo ToDo cho từng người tương ứng để quản lý công việc
+		for user_record in user_list:
+			frappe.get_doc({
+				"doctype": "ToDo",
+				"description": msg_subject,
+				"allocated_to": user_record.user_id,
+				"reference_type": "VNT Vehicle Control",
+				"reference_name": vehicle_control.name,
+				"priority": "Medium",
+				"status": "Open"
+			}).insert(ignore_permissions=True)
+		
+		frappe.db.commit()
 
 
 def cancel_attendance_for_trip(doc: Document):
