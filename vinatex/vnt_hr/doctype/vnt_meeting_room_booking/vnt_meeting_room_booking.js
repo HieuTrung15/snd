@@ -25,22 +25,13 @@ frappe.ui.form.on("VNT Meeting Room Booking", {
 						frm.set_value("employee", r.message.name);
 					}
 				});
-			frappe.call({
-                method: "vinatex.vnt_hr.doctype.vnt_meeting_room_booking.vnt_meeting_room_booking.get_reports_to",
-                args: {
-                    'user': frappe.session.user
-                },
-                callback: function (r) {
-                    if (r.message) {
-                        frm.set_value("approver_name", r.message);
-                    }
-                }
-            });
 			frm.set_value("date", frappe.datetime.get_today());
 		}
-		// setFollowerByRoom(frm);
-		// // frm.set_df_property("list_room", "read_only", 1);
-		// loadTakenRooms(frm);
+		refreshApprover(frm);
+		refreshRoomAssignmentUI(frm);
+	},
+	employee(frm) {
+		refreshApprover(frm);
 	},
 	room_name(frm) {
 		setFollowerByRoom(frm);
@@ -49,6 +40,29 @@ frappe.ui.form.on("VNT Meeting Room Booking", {
 		loadTakenRooms(frm);
 	},
 });
+
+const refreshApprover = (frm) => {
+	if (!frm.doc.employee) {
+		frm.set_value("approver", "");
+		frm.set_value("approver_name", "");
+		return;
+	}
+
+	frappe.call({
+		method: "vinatex.vnt_hr.doctype.vnt_meeting_room_booking.vnt_meeting_room_booking.get_reports_to",
+		args: {
+			employee: frm.doc.employee,
+			user: frappe.session.user,
+		},
+		callback(res) {
+			const approver = res && res.message ? res.message[0] : "";
+			const approverName = res && res.message ? res.message[1] : "";
+			frm.set_value("approver", approver || "");
+			frm.set_value("approver_name", approverName || "");
+		},
+	});
+};
+
 // lấy người theo dõi theo cấu hình phòng họp
 const setFollowerByRoom = (frm) => {
 	if (!frm.doc) {
@@ -82,17 +96,64 @@ const setFollowerByRoom = (frm) => {
 	});
 };
 
+const refreshRoomAssignmentUI = (frm) => {
+	setTakenRoomsVisibility(frm, frm.is_new());
+	frm.set_df_property("room_name", "read_only", 1);
+	frm.refresh_field("room_name");
+
+	frappe.call({
+		method: "vinatex.vnt_hr.doctype.vnt_meeting_room_booking.vnt_meeting_room_booking.get_room_assignment_context",
+		args: {
+			user: frappe.session.user,
+		},
+		callback(res) {
+			const canAssignRoom = Boolean(res && res.message && res.message.can_assign_room);
+			frm.__can_assign_room = canAssignRoom;
+
+			const showTakenRooms = shouldShowTakenRooms(frm);
+			setTakenRoomsVisibility(frm, showTakenRooms);
+			frm.set_df_property("room_name", "read_only", canAssignRoom ? 0 : 1);
+			frm.refresh_field("room_name");
+
+			if (showTakenRooms) {
+				loadTakenRooms(frm);
+				return;
+			}
+
+			clearTakenRooms(frm);
+		},
+	});
+};
+
+const shouldShowTakenRooms = (frm) => Boolean(frm.__can_assign_room) || frm.is_new();
+
+const setTakenRoomsVisibility = (frm, isVisible) => {
+	frm.toggle_display("section_break_gzd4", isVisible);
+	frm.toggle_display("list_room", isVisible);
+};
+
+const clearTakenRooms = (frm) => {
+	if (!frm.doc.list_room || !frm.doc.list_room.length) {
+		return;
+	}
+
+	frm.clear_table("list_room");
+	frm.refresh_field("list_room");
+	frm.doc.__unsaved = false;
+};
+
 const loadTakenRooms = (frm) => {
 	if (!frm.doc || frm.doc.docstatus > 0) {
 		return;
 	}
 
+	if (!shouldShowTakenRooms(frm)) {
+		clearTakenRooms(frm);
+		return;
+	}
+
 	if (!frm.doc.date) {
-		if (frm.doc.list_room && frm.doc.list_room.length) {
-			frm.clear_table("list_room");
-			frm.refresh_field("list_room");
-			frm.doc.__unsaved = false;
-		}
+		clearTakenRooms(frm);
 		return;
 	}
 

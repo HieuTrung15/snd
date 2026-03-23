@@ -18,10 +18,12 @@ from vinatex.vnt_hr.doctype.vnt_office_settings.vnt_office_settings import (
 
 
 MEETING_ROOM_NOTIFICATION_USER_GROUP = "Office Manager"
+SELF_APPROVER_ROLES = {"Manager", "Leave Approver", "Leave Approver L1", "Leave Approver L2"}
 
 
 class VNTMeetingRoomBooking(Document):
 	def validate(self):
+		_sync_approver_from_rules(self)
 		_sync_follower_from_settings(self)
 		self._validate_time_fields()
 		self._validate_room_availability()
@@ -95,15 +97,16 @@ def _handle_state_transition(doc):
 	# lấy ra người duyệt
 	approver = doc.get("approver")
 	approver_user = get_employee_user_id(approver)
+	employee = doc.get("employee")
+	employee_user = get_employee_user_id(employee)
 	if curr_state == "Chờ duyệt":
-		_notify_to_approver(doc, user=approver_user)
+		if not _is_self_approval(approver_user, employee_user):
+			_notify_to_approver(doc, user=approver_user)
 	if prev_state == "Chờ duyệt" and curr_state == "Đã duyệt":
 		# Đóng todo khi đã duyệt
 		_check_state_to_close_todo(doc, user=approver_user)
 		_handle_room_assignment_post_approval(doc)
 	# gửi thông báo cho người đăng ký
-	employee = doc.get("employee")
-	employee_user = get_employee_user_id(employee)
 	if prev_state == 'Chờ duyệt' and curr_state == 'Đã duyệt':
 		subject = _("Phiếu đăng ký phòng họp của {0} đã được duyệt").format(doc.employee_name or _("(không rõ)"))
 		message = _("Phiếu ngày {0} từ {1} đến {2} đã được duyệt.").format(
@@ -166,6 +169,89 @@ def get_employee_user_id(employee_name: str) -> str | None:
 	if not employee_name:
 		return None
 	return frappe.db.get_value("Employee", employee_name, "user_id")
+
+
+def _is_self_approval(approver_user: str | None, employee_user: str | None) -> bool:
+	return bool(approver_user and employee_user and approver_user == employee_user)
+
+
+def _is_self_approver_user(user: str | None) -> bool:
+	if not user:
+		return False
+	roles = set(frappe.get_roles(user))
+	return bool(SELF_APPROVER_ROLES.intersection(roles))
+
+
+def _get_employee_for_user(user: str | None):
+	if not user:
+		return None
+	return frappe.get_value(
+		"Employee",
+		{"user_id": user},
+		["name", "employee_name", "department"],
+		as_dict=True,
+	)
+
+
+def _get_default_approver_info(user: str | None = None, employee: str | None = None):
+	actor_user = (user or frappe.session.user or "").strip()
+	actor_employee = _get_employee_for_user(actor_user)
+
+	if _is_self_approver_user(actor_user) and actor_employee:
+		return actor_employee
+
+	employee_doc = None
+	if employee:
+		employee_doc = frappe.get_value(
+			"Employee",
+			employee,
+			["name", "employee_name", "department"],
+			as_dict=True,
+		)
+
+	if not employee_doc:
+		employee_doc = actor_employee
+	if not employee_doc:
+		return None
+
+	approver_users = frappe.get_all(
+		"Department Approver",
+		filters={
+			"parent": employee_doc.department,
+			"parentfield": "leave_approvers",
+			"custom_level_1": 1,
+		},
+		pluck="approver",
+	) or []
+
+	matched_user = next((approver for approver in approver_users if approver == actor_user), None)
+	target_user = matched_user or (approver_users[0] if approver_users else None)
+	if not target_user:
+		return None
+
+	return frappe.get_value(
+		"Employee",
+		{"user_id": target_user},
+		["name", "employee_name"],
+		as_dict=True,
+	)
+
+
+def _sync_approver_from_rules(doc: Document):
+	if not doc:
+		return
+
+	approver_info = _get_default_approver_info(user=frappe.session.user, employee=doc.get("employee"))
+	if not approver_info:
+		if doc.get("approver"):
+			doc.approver_name = frappe.db.get_value("Employee", doc.approver, "employee_name") or ""
+		return
+
+	if doc.get("approver") != approver_info.get("name"):
+		doc.approver = approver_info.get("name")
+
+	if doc.get("approver"):
+		doc.approver_name = frappe.db.get_value("Employee", doc.approver, "employee_name") or ""
 
 
 def ensure_todo(doc: Document, user: str):
@@ -541,14 +627,12 @@ def _time_ranges_overlap(start_a, end_a, start_b, end_b) -> bool:
 
 
 @frappe.whitelist()
-def get_reports_to(user):
-	employee_doc = frappe.get_value("Employee", {"user_id": user}, "department", as_dict=True)
-	if not employee_doc:
-		return
-	approver = frappe.get_value("Department Approver", {"parent": employee_doc.department, "custom_level_1": True}, "approver", as_dict=True)
-	if approver:
-		approver_name = frappe.get_value("Employee", {"user_id": approver.approver}, "employee_name")
-		return approver_name
+def get_reports_to(user: str | None = None, employee: str | None = None):
+	approver_info = _get_default_approver_info(user=user, employee=employee)
+	if not approver_info:
+		return ""
+
+	return [approver_info.get("name"), approver_info.get("employee_name")]
 
 
 @frappe.whitelist()
@@ -567,3 +651,14 @@ def get_taken_rooms(date: str | None):
 		fields=["date", "room_name", "start_time", "end_time", "employee","employee_name"],
 		order_by="room_name asc, start_time asc"
 	)
+
+
+@frappe.whitelist()
+def get_room_assignment_context(user: str | None = None) -> dict:
+	target_user = (user or frappe.session.user or "").strip()
+	if not target_user:
+		return {"can_assign_room": False}
+
+	return {
+		"can_assign_room": target_user in _get_office_manager_users(),
+	}
