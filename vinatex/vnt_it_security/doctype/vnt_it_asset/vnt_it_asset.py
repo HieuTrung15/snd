@@ -7,12 +7,17 @@ import frappe
 import requests
 from frappe.model.document import Document
 
+from vinatex.vnt_itsec.sync.common import normalize_select_key
+
 
 class VNTITAsset(Document):
 	def validate(self):
 		self._set_company_department_from_user()
 		self._ensure_quick_masters()
 		self._hydrate_software_components()
+
+	def on_update(self):
+		self._enqueue_itsec_automation(previous=self.get_doc_before_save())
 
 	def _set_company_department_from_user(self):
 		if self.company and self.owner_department:
@@ -114,6 +119,22 @@ class VNTITAsset(Document):
 			if suggested:
 				row.cpe_name = suggested
 
+	def _enqueue_itsec_automation(self, previous=None):
+		if normalize_select_key(self.lifecycle_status) != "Active":
+			return
+		current_snapshot = _software_snapshot(self.software_components)
+		if not current_snapshot:
+			return
+		previous_snapshot = _software_snapshot(getattr(previous, "software_components", None))
+		if previous and current_snapshot == previous_snapshot and self.company == getattr(previous, "company", None):
+			return
+		frappe.enqueue(
+			"vinatex.vnt_itsec.automation.run_asset_inventory_automation",
+			queue="long",
+			job_name=f"VNT ITSEC Asset Automation {self.name}",
+			asset_name=self.name,
+		)
+
 
 def _get_or_create_vendor(name: str):
 	existing = frappe.db.get_value("VNT IT Vendor", {"vendor_name": name}, "name")
@@ -178,6 +199,18 @@ def _build_cpe_name(prefix: str, version: str) -> str:
 		parts[5] = version
 		return ":".join(parts)
 	return f"{prefix}:{version}"
+
+
+def _software_snapshot(rows) -> tuple[tuple[str, str, str], ...]:
+	values = []
+	for row in rows or []:
+		cpe_name = (getattr(row, "cpe_name", "") or "").strip()
+		product = (getattr(row, "product", "") or "").strip()
+		version = (getattr(row, "version", "") or "").strip()
+		if not any((cpe_name, product, version)):
+			continue
+		values.append((cpe_name, product, version))
+	return tuple(sorted(values))
 
 
 def _normalize_cpe_fragment(value: str | None) -> str:

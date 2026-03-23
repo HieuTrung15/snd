@@ -3,12 +3,17 @@ from __future__ import annotations
 import frappe
 from frappe.utils import add_days, cint, now_datetime, nowdate
 
-from vinatex.vnt_itsec.matching.match import run_matching_for_active_advisories
+from vinatex.vnt_itsec.matching.match import (
+    find_candidate_cves_for_assets,
+    run_matching_for_active_advisories,
+    run_matching_for_advisory,
+)
 from vinatex.vnt_itsec.sync.common import normalize_select_key, select_value, select_values
 
 DEFAULT_ALERT_EMAIL = "sonph@vinatex.com.vn"
 _OPEN_AFFECTED_STATUS_KEYS = ("Open", "In Progress")
 _OPEN_TICKET_EXCLUDED_KEYS = ("Done", "Rejected")
+_AUTO_ADVISORY_TITLE_PREFIX = "[AUTO]"
 _SEVERITY_PRIORITY = {
     "Critical": 1,
     "High": 2,
@@ -100,6 +105,184 @@ def _create_ticket_for_affected(
     return ticket.name
 
 
+def _asset_filters_for_candidates(asset_names: list[str] | None = None) -> dict:
+    filters = {"lifecycle_status": "Active"}
+    if asset_names:
+        filters["name"] = ["in", sorted(set(asset_names))]
+    return filters
+
+
+def _asset_inventory_candidates(asset_names: list[str] | None = None) -> dict[str, dict]:
+    return find_candidate_cves_for_assets(asset_names=asset_names)
+
+
+def _open_advisories_for_cve(cve_id: str) -> list[dict]:
+    closed_value = select_value("VNT Vulnerability Advisory", "status", "Closed")
+    advisory_rows = frappe.get_all(
+        "VNT Advisory CVE",
+        filters={"cve": cve_id},
+        fields=["parent"],
+    )
+    advisory_names = [row.parent for row in advisory_rows if getattr(row, "parent", None)]
+    if not advisory_names:
+        return []
+
+    advisories = frappe.get_all(
+        "VNT Vulnerability Advisory",
+        filters={
+            "name": ["in", sorted(set(advisory_names))],
+            "status": ["not in", [closed_value, "Closed"]],
+        },
+        fields=["name", "title", "status", "severity", "sla_days"],
+        order_by="modified desc",
+    )
+    for advisory in advisories:
+        scope_rows = frappe.get_all(
+            "VNT Advisory Scope Unit",
+            filters={"parent": advisory.name, "parenttype": "VNT Vulnerability Advisory"},
+            fields=["company"],
+        )
+        advisory["scope_companies"] = {
+            row.company for row in scope_rows if getattr(row, "company", None)
+        }
+    return advisories
+
+
+def _covers_companies(advisory: dict, companies: set[str]) -> bool:
+    scope_companies = advisory.get("scope_companies") or set()
+    if not scope_companies:
+        return True
+    return companies.issubset(scope_companies)
+
+
+def _is_auto_advisory(advisory: dict | None) -> bool:
+    title = ((advisory or {}).get("title") or "").strip()
+    return title.startswith(f"{_AUTO_ADVISORY_TITLE_PREFIX} ")
+
+
+def _append_scope_companies(advisory_name: str, companies: set[str]) -> bool:
+    if not companies:
+        return False
+    advisory = frappe.get_doc("VNT Vulnerability Advisory", advisory_name)
+    existing = _advisory_company_scope(advisory)
+    changed = False
+    for company in sorted(companies):
+        if not company or company in existing:
+            continue
+        advisory.append("scope_units", {"company": company})
+        changed = True
+    if changed:
+        advisory.save(ignore_permissions=True)
+    return changed
+
+
+def _build_auto_advisory_payload(cve_id: str, companies: set[str]) -> dict:
+    cve_doc = frappe.get_value(
+        "VNT CVE",
+        cve_id,
+        ["severity", "description", "published_date", "cisa_kev"],
+        as_dict=True,
+    ) or {}
+    description = (cve_doc.get("description") or "").strip()
+    advisory = {
+        "doctype": "VNT Vulnerability Advisory",
+        "naming_series": "ADV-.YYYY.-.MM.-.####",
+        "title": f"{_AUTO_ADVISORY_TITLE_PREFIX} {cve_id} detected from asset inventory",
+        "advisory_type": select_value("VNT Vulnerability Advisory", "advisory_type", "Awareness"),
+        "status": select_value("VNT Vulnerability Advisory", "status", "Draft"),
+        "severity": select_value(
+            "VNT Vulnerability Advisory",
+            "severity",
+            normalize_select_key(cve_doc.get("severity")) or "Medium",
+        ),
+        "sla_days": 7,
+        "description": (
+            "Auto-generated from VNT IT Asset inventory because at least one active asset "
+            f"matched {cve_id} by CPE.\n\n{description[:1200]}"
+        ).strip(),
+        "guidance": (
+            "System-generated advisory. Review scope, affected assets, and remediation guidance "
+            "before publishing to operations teams."
+        ),
+        "publish_at": cve_doc.get("published_date") or now_datetime(),
+        "cve_list": [{"cve": cve_id, "note": "Auto-linked from nightly/asset automation"}],
+        "scope_units": [{"company": company} for company in sorted(companies) if company],
+    }
+    if cve_doc.get("cisa_kev"):
+        advisory["guidance"] += "\nKEV flagged: prioritize validation and remediation."
+    return advisory
+
+
+def ensure_candidate_advisories_from_assets(
+    asset_names: list[str] | None = None,
+    commit: int = 1,
+) -> dict:
+    candidates = _asset_inventory_candidates(asset_names=asset_names)
+    created = 0
+    updated = 0
+    reused = 0
+    advisory_names: list[str] = []
+    details: list[dict] = []
+
+    for cve_id, candidate in candidates.items():
+        companies = set(candidate.get("companies") or set())
+        advisories = _open_advisories_for_cve(cve_id)
+        advisory_name = ""
+        action = "skipped"
+
+        for advisory in advisories:
+            if _covers_companies(advisory, companies):
+                advisory_name = advisory["name"]
+                action = "reused"
+                reused += 1
+                break
+
+        if not advisory_name:
+            auto_advisory = next((row for row in advisories if _is_auto_advisory(row)), None)
+            if auto_advisory:
+                missing_companies = companies - (auto_advisory.get("scope_companies") or set())
+                if _append_scope_companies(auto_advisory["name"], missing_companies):
+                    updated += 1
+                    action = "updated"
+                else:
+                    reused += 1
+                    action = "reused"
+                advisory_name = auto_advisory["name"]
+
+        if not advisory_name:
+            advisory_doc = frappe.get_doc(
+                _build_auto_advisory_payload(cve_id, companies)
+            ).insert(ignore_permissions=True)
+            advisory_name = advisory_doc.name
+            created += 1
+            action = "created"
+
+        if advisory_name:
+            advisory_names.append(advisory_name)
+            details.append(
+                {
+                    "cve": cve_id,
+                    "advisory": advisory_name,
+                    "companies": sorted(companies),
+                    "assets": sorted(candidate.get("assets") or set()),
+                    "action": action,
+                }
+            )
+
+    if cint(commit):
+        frappe.db.commit()
+
+    return {
+        "ok": True,
+        "candidates": len(candidates),
+        "created": created,
+        "updated": updated,
+        "reused": reused,
+        "advisories": sorted(set(advisory_names)),
+        "details": details,
+    }
+
+
 def ensure_remediation_ticket_for_affected_asset(affected_name: str, commit: int = 1) -> dict:
     if not affected_name:
         return {"ok": False, "created": 0, "skipped": 1, "reason": "missing_affected_name"}
@@ -137,11 +320,20 @@ def ensure_remediation_ticket_for_affected_asset(affected_name: str, commit: int
     return {"ok": True, "created": 1, "skipped": 0, "ticket": ticket_name, "affected": affected_name}
 
 
-def ensure_remediation_tickets_for_open_affected(commit: int = 1) -> dict:
+def ensure_remediation_tickets_for_open_affected(
+    commit: int = 1,
+    advisory_names: list[str] | None = None,
+    asset_names: list[str] | None = None,
+) -> dict:
     open_statuses = select_values("VNT Affected Asset", "status", _OPEN_AFFECTED_STATUS_KEYS)
+    filters = {"status": ["in", open_statuses]}
+    if advisory_names:
+        filters["advisory"] = ["in", sorted(set(advisory_names))]
+    if asset_names:
+        filters["asset"] = ["in", sorted(set(asset_names))]
     rows = frappe.get_all(
         "VNT Affected Asset",
-        filters={"status": ["in", open_statuses]},
+        filters=filters,
         fields=["name", "advisory", "cve", "asset", "company", "due_date", "status"],
         order_by="modified desc",
     )
@@ -248,6 +440,7 @@ def run_post_sync_automation(
     alert_email: str | None = None,
     commit: int = 1,
 ) -> dict:
+    advisory_candidates = ensure_candidate_advisories_from_assets(commit=0)
     matching = run_matching_for_active_advisories(commit=0)
     tickets = ensure_remediation_tickets_for_open_affected(commit=0)
 
@@ -257,12 +450,58 @@ def run_post_sync_automation(
     summary = {
         "ok": True,
         "trigger": trigger,
+        "candidate_advisories": advisory_candidates,
         "matching": matching,
         "tickets": tickets,
     }
     should_send_email = bool(int(force_email) or int(tickets.get("created_tickets") or 0) > 0)
     if should_send_email:
         summary["email"] = _send_summary_email(summary, trigger=trigger, alert_email=alert_email)
+    else:
+        summary["email"] = {"ok": True, "skipped": True}
+    return summary
+
+
+@frappe.whitelist()
+def run_asset_inventory_automation(asset_name: str, force_email: int = 0) -> dict:
+    if not asset_name:
+        return {"ok": False, "reason": "missing_asset_name"}
+    if not frappe.db.exists("VNT IT Asset", asset_name):
+        return {"ok": False, "reason": "asset_not_found", "asset": asset_name}
+
+    advisory_candidates = ensure_candidate_advisories_from_assets(
+        asset_names=[asset_name],
+        commit=0,
+    )
+    advisory_names = advisory_candidates.get("advisories") or []
+    matching_results = []
+    total_matched = 0
+    for advisory_name in advisory_names:
+        result = run_matching_for_advisory(advisory_name, commit=0)
+        matching_results.append(result)
+        total_matched += int(result.get("matched") or 0)
+
+    tickets = ensure_remediation_tickets_for_open_affected(
+        commit=0,
+        advisory_names=advisory_names,
+        asset_names=[asset_name],
+    )
+    frappe.db.commit()
+
+    summary = {
+        "ok": True,
+        "trigger": f"asset:{asset_name}",
+        "asset": asset_name,
+        "candidate_advisories": advisory_candidates,
+        "matching": {
+            "advisories": len(advisory_names),
+            "matched": total_matched,
+            "results": matching_results,
+        },
+        "tickets": tickets,
+    }
+    if cint(force_email):
+        summary["email"] = _send_summary_email(summary, trigger=f"asset:{asset_name}")
     else:
         summary["email"] = {"ok": True, "skipped": True}
     return summary
