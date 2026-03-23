@@ -418,9 +418,11 @@ def get_department_calendar(year: int | None = None, month: int | None = None):
     leader_weekly_trip_sql = f"""
         SELECT
             t.name AS request_name,
+            t.creation AS parent_creation,
             t.from_date AS parent_from_date,
             t.to_date AS parent_to_date,
             i.trip_date,
+            i.idx AS row_idx,
             i.time_slot,
             i.destination,
             i.purpose,
@@ -436,7 +438,11 @@ def get_department_calendar(year: int | None = None, month: int | None = None):
             (i.trip_date IS NOT NULL AND i.trip_date BETWEEN %s AND %s)
             OR (i.trip_date IS NULL AND t.from_date <= %s AND t.to_date >= %s)
           )
-        ORDER BY COALESCE(i.trip_date, t.from_date) ASC, i.employee_name ASC
+        ORDER BY
+            COALESCE(i.trip_date, t.from_date) ASC,
+            t.creation ASC,
+            i.idx ASC,
+            i.creation ASC
     """
     try:
         leader_weekly_trip_rows = frappe.db.sql(
@@ -499,9 +505,6 @@ def get_department_calendar(year: int | None = None, month: int | None = None):
         )
 
     for trip in leader_weekly_trip_map.values():
-        trip["people"] = sorted(
-            trip["people"], key=lambda item: (item.get("employee_name") or "", item.get("employee") or "")
-        )
         fd = getdate(trip["from_date"])
         td = getdate(trip["to_date"])
         s = fd if fd > start else start

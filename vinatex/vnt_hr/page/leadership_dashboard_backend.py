@@ -20,6 +20,8 @@ except Exception:  # pragma: no cover - defensive for older stacks
 
 
 APPROVED_TRIP_STATES = {"Đã duyệt", "Duyệt"}
+LEADER_WEEKLY_TRIP_DOCTYPE = "VNT Leader Weekly Trip"
+LEADER_WEEKLY_TRIP_ITEM_DOCTYPE = "VNT Leader Weekly Trip Item"
 PRIORITY_NAME_ORDER = {
 	"Lê Tiến Trường": 0,
 	"Cao Hữu Hiếu": 1,
@@ -366,7 +368,7 @@ def build_turnover_chart(filters: dict[str, str]) -> dict:
 
 
 def build_activity_summary(filters: dict[str, str]) -> list[dict]:
-	"""Tóm tắt số người công tác / nghỉ hôm nay dựa trên Attendance."""
+	"""Tóm tắt số người công tác / nghỉ hôm nay."""
 	counts = count_attendance_movements(filters)
 	return [
 		{"kpi": _("Đang công tác"), "value": counts.get("trip", 0)},
@@ -375,7 +377,7 @@ def build_activity_summary(filters: dict[str, str]) -> list[dict]:
 
 
 def build_staff_movements(filters: dict[str, str]) -> list[dict]:
-	"""Danh sách nhân sự công tác / nghỉ hôm nay theo Attendance, sắp xếp theo custom_designation_group."""
+	"""Danh sách nhân sự công tác / nghỉ hôm nay, gồm Attendance và lịch tuần lãnh đạo."""
 	ordering = {"Người quản lý": 1, "Lãnh đạo cấp trung": 2, "Chuyên viên, Nhân viên": 3}
 	movements = get_attendance_movements(filters)
 	rows: list[dict] = []
@@ -390,15 +392,20 @@ def build_staff_movements(filters: dict[str, str]) -> list[dict]:
 				"group": group,
 				"status": mv.get("status"),
 				"note": mv.get("note") or mv.get("leave_type") or "",
+				"destination": mv.get("destination") or "",
 				"_order": ordering.get(group, 99),
 			}
 		)
 	trip_destination_map = _get_trip_destination_map(
-		{row["employee"] for row in rows if row.get("status") == _("Công tác")},
+		{
+			row["employee"]
+			for row in rows
+			if row.get("status") == _("Công tác") and row.get("employee") and not row.get("destination")
+		},
 		today_date,
 	)
 	for row in rows:
-		if row.get("status") == _("Công tác"):
+		if row.get("status") == _("Công tác") and not row.get("destination"):
 			row["destination"] = trip_destination_map.get(row.get("employee")) or ""
 	rows.sort(
 		key=lambda r: (
@@ -411,7 +418,7 @@ def build_staff_movements(filters: dict[str, str]) -> list[dict]:
 
 
 def get_attendance_movements(filters: dict[str, str]) -> list[dict]:
-	"""Lấy Attendance ngày hôm nay với status On Leave, phân loại công tác / nghỉ."""
+	"""Lấy nhân sự công tác / nghỉ hôm nay từ Attendance và lịch tuần lãnh đạo."""
 	company = filters.get("company")
 	department = filters.get("department")
 	today_date = getdate(today())
@@ -442,7 +449,7 @@ def get_attendance_movements(filters: dict[str, str]) -> list[dict]:
 		ignore_permissions=True,
 	)
 
-	rows: list[dict] = []
+	movement_by_employee: dict[str, dict] = {}
 	for att in attendances:
 		emp = emp_map.get(att.employee) or {}
 		if not emp:
@@ -452,17 +459,33 @@ def get_attendance_movements(filters: dict[str, str]) -> list[dict]:
 		status = _("Nghỉ")
 		if "công tác" in leave_lower or "business" in leave_lower:
 			status = _("Công tác")
-		rows.append(
-			{
-				"employee": att.employee,
-				"employee_name": att.employee_name or emp.get("employee_name"),
-				"designation": emp.get("designation"),
-				"group": emp.get("custom_designation_group") or "",
-				"status": status,
-				"leave_type": leave_type,
-				"note": leave_type,
-			}
-		)
+		movement_by_employee[att.employee] = {
+			"employee": att.employee,
+			"employee_name": att.employee_name or emp.get("employee_name"),
+			"designation": emp.get("designation"),
+			"group": emp.get("custom_designation_group") or "",
+			"status": status,
+			"leave_type": leave_type,
+			"note": leave_type,
+			"destination": "",
+		}
+
+	weekly_trip_destinations = _get_leader_weekly_trip_destination_map(today_date, set(emp_map.keys()))
+	for employee, destination in weekly_trip_destinations.items():
+		emp = emp_map.get(employee) or {}
+		if not emp:
+			continue
+		existing = movement_by_employee.get(employee) or {}
+		movement_by_employee[employee] = {
+			"employee": employee,
+			"employee_name": existing.get("employee_name") or emp.get("employee_name"),
+			"designation": existing.get("designation") or emp.get("designation"),
+			"group": existing.get("group") or emp.get("custom_designation_group") or "",
+			"status": _("Công tác"),
+			"leave_type": existing.get("leave_type") or "",
+			"note": existing.get("note") or _("Công tác"),
+			"destination": destination,
+		}
 	# Nếu không có dữ liệu, thêm mẫu cho dashboard (tránh rỗng UI)
 	# if not rows:
 	#     rows = [
@@ -488,7 +511,7 @@ def get_attendance_movements(filters: dict[str, str]) -> list[dict]:
 	#         },
 	#     ]
 
-	return rows
+	return list(movement_by_employee.values())
 
 
 def count_attendance_movements(filters: dict[str, str]) -> dict[str, int]:
@@ -844,10 +867,79 @@ def _get_trip_destination_map(employees: set[str], the_date) -> dict[str, str]:
 				if item.employee in employees:
 					dest_map[item.employee] = parent.get("destination") or ""
 
+		for employee, destination in _get_leader_weekly_trip_destination_map(the_date, employees).items():
+			if destination:
+				dest_map[employee] = destination
+
 		return dest_map
 	except Exception:
 		frappe.log_error(frappe.get_traceback(), "Leadership Dashboard - trip destinations")
 		return {}
+
+
+def _get_leader_weekly_trip_rows_on_date(the_date, employees: set[str] | None = None) -> list[dict]:
+	"""Danh sách dòng lịch tuần lãnh đạo đúng ngày cần hiển thị."""
+	if not the_date:
+		return []
+	if employees is not None and not employees:
+		return []
+	try:
+		parents = frappe.get_all(
+			LEADER_WEEKLY_TRIP_DOCTYPE,
+			filters={
+				"docstatus": ("<", 2),
+				"from_date": ("<=", the_date),
+				"to_date": (">=", the_date),
+			},
+			fields=["name"],
+			ignore_permissions=True,
+		)
+		parent_names = [row.name for row in parents if row.name]
+		if not parent_names:
+			return []
+
+		item_filters = {
+			"parent": ("in", parent_names),
+			"trip_date": the_date,
+		}
+		if employees:
+			item_filters["employee"] = ("in", list(employees))
+
+		return frappe.get_all(
+			LEADER_WEEKLY_TRIP_ITEM_DOCTYPE,
+			filters=item_filters,
+			fields=["parent", "employee", "employee_name", "destination", "purpose", "time_slot"],
+			ignore_permissions=True,
+		)
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "Leadership Dashboard - leader weekly trip rows")
+		return []
+
+
+def _format_leader_weekly_trip_destination(destination: str | None, time_slot: str | None) -> str:
+	destination_text = (destination or "").strip() or "(chưa có địa điểm)"
+	slot = (time_slot or "").strip() or "Cả ngày"
+	if slot in {"Sáng", "Chiều"}:
+		return f"[{slot}] {destination_text}"
+	return destination_text
+
+
+def _get_leader_weekly_trip_destination_map(the_date, employees: set[str] | None = None) -> dict[str, str]:
+	"""Gom địa điểm công tác từ lịch tuần lãnh đạo theo từng nhân sự trong ngày."""
+	trip_rows = _get_leader_weekly_trip_rows_on_date(the_date, employees)
+	if not trip_rows:
+		return {}
+
+	destination_map: dict[str, list[str]] = {}
+	for row in trip_rows:
+		employee = row.get("employee")
+		if not employee:
+			continue
+		destination_map.setdefault(employee, []).append(
+			_format_leader_weekly_trip_destination(row.get("destination"), row.get("time_slot"))
+		)
+
+	return {employee: " | ".join(dict.fromkeys(destinations)) for employee, destinations in destination_map.items()}
 
 
 def _get_trip_employees_on_date(the_date, employees: set[str] | None = None) -> set[str]:
@@ -888,6 +980,12 @@ def _get_trip_employees_on_date(the_date, employees: set[str] | None = None) -> 
 			for item in items:
 				if item.employee:
 					trip_emp.add(item.employee)
+
+		trip_emp.update(
+			row.get("employee")
+			for row in _get_leader_weekly_trip_rows_on_date(the_date, employees)
+			if row.get("employee")
+		)
 
 		if employees:
 			trip_emp = {emp for emp in trip_emp if emp in employees}

@@ -130,7 +130,6 @@
    "label": "Th\u00f4ng tin ph\u00f2ng h\u1ecdp"
   },
   {
-   "fetch_from": "employee.reports_to",
    "fieldname": "approver",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
@@ -246,6 +245,7 @@
   {
    "fieldname": "naming_series",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Naming series",
    "options": "\u0110KPH-.MM.YY.-.####"
   }
@@ -255,7 +255,7 @@
  "is_calendar_and_gantt": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-16 15:23:46.675273",
+ "modified": "2026-03-23 13:35:34.160930",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Meeting Room Booking",
