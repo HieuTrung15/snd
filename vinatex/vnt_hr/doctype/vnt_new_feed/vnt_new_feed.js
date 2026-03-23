@@ -43,8 +43,8 @@ frappe.ui.form.on("VNT New Feed", {
       const skipped = r?.message?.skipped_count || 0;
       frappe.show_alert({
         message: skipped > 0
-          ? __("Đã tạo tác vụ gửi MS Teams cho {0} nhân sự Active (bỏ qua {1} nhân sự chưa có tài khoản hợp lệ).", [total, skipped])
-          : __("Đã tạo tác vụ gửi MS Teams cho {0} nhân sự Active.", [total]),
+          ? __("Đã tạo tác vụ gửi MS Teams cho {0} nhân sự (bỏ qua {1} nhân sự chưa có tài khoản hợp lệ).", [total, skipped])
+          : __("Đã tạo tác vụ gửi MS Teams cho {0} nhân sự.", [total]),
         indicator: "green",
       });
       frm.reload_doc();
