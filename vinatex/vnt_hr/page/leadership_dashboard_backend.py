@@ -891,12 +891,14 @@ def _get_leader_weekly_trip_rows_on_date(the_date, employees: set[str] | None = 
 				"from_date": ("<=", the_date),
 				"to_date": (">=", the_date),
 			},
-			fields=["name"],
+			fields=["name", "creation"],
+			order_by="creation asc",
 			ignore_permissions=True,
 		)
 		parent_names = [row.name for row in parents if row.name]
 		if not parent_names:
 			return []
+		parent_order = {row.name: index for index, row in enumerate(parents) if row.name}
 
 		item_filters = {
 			"parent": ("in", parent_names),
@@ -904,13 +906,15 @@ def _get_leader_weekly_trip_rows_on_date(the_date, employees: set[str] | None = 
 		}
 		if employees:
 			item_filters["employee"] = ("in", list(employees))
-
-		return frappe.get_all(
+		rows = frappe.get_all(
 			LEADER_WEEKLY_TRIP_ITEM_DOCTYPE,
 			filters=item_filters,
-			fields=["parent", "employee", "employee_name", "destination", "purpose", "time_slot"],
+			fields=["parent", "idx", "employee", "employee_name", "destination", "purpose", "time_slot"],
+			order_by="idx asc",
 			ignore_permissions=True,
 		)
+		rows.sort(key=lambda row: (parent_order.get(row.parent, 9999), row.idx or 0))
+		return rows
 	except Exception:
 		frappe.log_error(frappe.get_traceback(), "Leadership Dashboard - leader weekly trip rows")
 		return []
