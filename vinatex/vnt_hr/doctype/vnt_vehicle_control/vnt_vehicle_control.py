@@ -184,24 +184,36 @@ class VNTVehicleControl(Document):
 				if len(parts) >= 2:
 					start_time = parts[0]
 			driver_label = row.driver
-			vehicle = frappe.db.get_value("VNT Vehicle", row.driver, ["driver_name", "car_id"], as_dict=True)
+			vehicle = frappe.db.get_value("VNT Vehicle", row.driver, ["driver_name", "car_id", "outside"], as_dict=True)
 			if vehicle and vehicle.get("driver_name"):
 				driver_label = vehicle.driver_name
 			car_plate = row.car_id or (vehicle.get("car_id") if vehicle else "")
+			is_outside = bool(vehicle and vehicle.get("outside"))
+
 			content = (car.note if car and car.note else None) or _("(không rõ)")
-			row_msg = "\n".join([
-				_("Nội dung:\n{0}.").format(content),
-				_("Thời gian: {0} {1}.").format(start_time, formatdate(date_text, "dd-MM-yyyy")),
-				_("Lộ trình: {0} - {1}.").format(row.start or _("(không rõ)"), row.end or _("(không rõ)")),
-				_("Phân xe: anh {0} / BKS: {1}.").format(driver_label or _("(không rõ)"), car_plate or _("(không rõ)")),
-			])
+			if is_outside:
+				row_msg = "\n".join([
+					_("Nội dung:\n{0}.").format(content),
+					_("Thời gian: {0} {1}.").format(start_time, formatdate(date_text, "dd-MM-yyyy")),
+					_("Lộ trình: {0} - {1}.").format(row.start or _("(không rõ)"), row.end or _("(không rõ)")),
+					_("Phân xe: {0}.").format(car_plate or _("(không rõ)")),
+				])
+			else:
+				row_msg = "\n".join([
+					_("Nội dung:\n{0}.").format(content),
+					_("Thời gian: {0} {1}.").format(start_time, formatdate(date_text, "dd-MM-yyyy")),
+					_("Lộ trình: {0} - {1}.").format(row.start or _("(không rõ)"), row.end or _("(không rõ)")),
+					_("Phân xe: anh {0} / BKS: {1}.").format(driver_label or _("(không rõ)"), car_plate or _("(không rõ)")),
+				])
+
 			# document link
 			target_docname = car.name if car and car.name else self.name
 			# gửi cho creator (1 người)
+			creator_subject = _("Bạn đã được điều xe cho chuyến đi. {0}").format(row_msg)
 			if row_creator:
 				make_notification_logs({
 					"type": "Alert",
-					"subject": _("Bạn đã được điều xe cho chuyến đi. {0}").format(row_msg),
+					"subject": creator_subject,
 					"document_type": target_doctype,
 					"document_name": target_docname,
 				}, [row_creator])
@@ -213,14 +225,15 @@ class VNTVehicleControl(Document):
 					upn_or_email=[row_creator],
 					content_type="html",
 					linkify=False,
-					message=_("🔔 Bạn đã được điều xe cho chuyến đi. {0}<br>").format(row_msg),
+					message=_("🔔 {0}<br>").format(creator_subject),
 				)
-				send_rocket_message(to_users=[row_creator], title=":bell: Thông báo", message=_("Bạn đã được điều xe cho chuyến đi. {0}.").format(row_msg), link=get_url_to_form(target_doctype, target_docname))
+				send_rocket_message(to_users=[row_creator], title=":bell: Thông báo", message=f"{creator_subject}.", link=get_url_to_form(target_doctype, target_docname))
 			# gửi cho recipients của dòng
+			recipient_subject = (_("Anh/Chị nằm trong danh sách chuyến đi. {0}") if is_outside else _("Anh/Chị nằm trong danh sách chuyến đi. {0}")).format(row_msg)
 			if row_recipients:
 				make_notification_logs({
 					"type": "Alert",
-					"subject": _("Anh/Chị nằm trong danh sách chuyến đi. {0}").format(row_msg),
+					"subject": recipient_subject,
 					"document_type": target_doctype,
 					"document_name": target_docname,
 				}, row_recipients)
@@ -232,9 +245,9 @@ class VNTVehicleControl(Document):
 					upn_or_email=row_recipients,
 					content_type="html",
 					linkify=False,
-					message=_("🔔 Anh/Chị nằm trong danh sách chuyến đi. {0}<br>").format(row_msg),
+					message=_("🔔 {0}<br>").format(recipient_subject),
 				)
-				send_rocket_message(to_users=row_recipients, title=":bell: Thông báo", message=_("Anh/Chị nằm trong danh sách chuyến đi. {0}.").format(row_msg), link=get_url_to_form(target_doctype, target_docname))
+				send_rocket_message(to_users=row_recipients, title=":bell: Thông báo", message=f"{recipient_subject}.", link=get_url_to_form(target_doctype, target_docname))
 		# Gửi thông báo tới các driver theo từng dòng items
 		for row in self.items:
 			if not (row.id_parent and row.id_child and row.driver):

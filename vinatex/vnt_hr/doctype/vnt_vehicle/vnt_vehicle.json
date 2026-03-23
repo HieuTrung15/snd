@@ -1,19 +1,21 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:{driver_name}",
+ "autoname": "format:{car_id}",
  "creation": "2025-10-29 14:24:27.970130",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "section_break_6kds",
   "car_id",
+  "type_car",
   "driver",
   "driver_name",
   "phone",
   "status",
   "column_break_zxky",
-  "branch"
+  "branch",
+  "outside"
  ],
  "fields": [
   {
@@ -24,26 +26,25 @@
    "fieldname": "car_id",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Bi\u1ec3n s\u1ed1 xe",
-   "reqd": 1
+   "label": "Bi\u1ec3n s\u1ed1 xe"
   },
   {
+   "depends_on": "eval: doc.outside == 0",
    "fieldname": "driver",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "T\u00e0i x\u1ebf",
-   "options": "Employee",
-   "reqd": 1
+   "options": "Employee"
   },
   {
    "default": "0",
    "fieldname": "status",
    "fieldtype": "Check",
    "in_list_view": 1,
-   "label": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
-   "reqd": 1
+   "label": "\u0110ang ho\u1ea1t \u0111\u1ed9ng"
   },
   {
+   "depends_on": "eval: doc.outside == 0",
    "fetch_from": "driver.employee_name",
    "fieldname": "driver_name",
    "fieldtype": "Data",
@@ -53,8 +54,7 @@
    "fetch_from": "driver.cell_number",
    "fieldname": "phone",
    "fieldtype": "Data",
-   "label": "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i",
-   "reqd": 1
+   "label": "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i"
   },
   {
    "fieldname": "column_break_zxky",
@@ -67,12 +67,24 @@
    "in_list_view": 1,
    "label": "Branch",
    "options": "Branch"
+  },
+  {
+   "depends_on": "eval: doc.outside == 1",
+   "fieldname": "type_car",
+   "fieldtype": "Data",
+   "label": "Lo\u1ea1i xe"
+  },
+  {
+   "default": "0",
+   "fieldname": "outside",
+   "fieldtype": "Check",
+   "label": "Thu\u00ea ngo\u00e0i"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-16 14:22:56.388021",
+ "modified": "2026-03-23 15:05:27.670836",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Vehicle",
