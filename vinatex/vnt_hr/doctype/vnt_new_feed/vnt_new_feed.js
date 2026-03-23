@@ -2,6 +2,9 @@
 
 frappe.ui.form.on("VNT New Feed", {
   refresh(frm) {
+    // Không có quyền sửa bài viết thì ẩn nút gửi thông báo
+    frm.toggle_display("gui_thong_bao", frm.has_perm("write"));
+
     // Luôn reset viewer mỗi lần refresh
     frm.trigger("render_attach");
 
