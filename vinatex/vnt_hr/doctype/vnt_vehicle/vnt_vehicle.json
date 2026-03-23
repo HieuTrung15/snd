@@ -29,7 +29,7 @@
    "label": "Bi\u1ec3n s\u1ed1 xe"
   },
   {
-   "depends_on": "eval: doc.outside == 0",
+   "depends_on": "eval: doc.outside == \"\"",
    "fieldname": "driver",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -44,7 +44,7 @@
    "label": "\u0110ang ho\u1ea1t \u0111\u1ed9ng"
   },
   {
-   "depends_on": "eval: doc.outside == 0",
+   "depends_on": "eval: doc.outside == \"\"",
    "fetch_from": "driver.employee_name",
    "fieldname": "driver_name",
    "fieldtype": "Data",
@@ -69,22 +69,22 @@
    "options": "Branch"
   },
   {
-   "depends_on": "eval: doc.outside == 1",
+   "depends_on": "eval: doc.outside == \"Thu\u00ea ngo\u00e0i\"",
    "fieldname": "type_car",
    "fieldtype": "Data",
    "label": "Lo\u1ea1i xe"
   },
   {
-   "default": "0",
    "fieldname": "outside",
-   "fieldtype": "Check",
-   "label": "Thu\u00ea ngo\u00e0i"
+   "fieldtype": "Select",
+   "label": "Thu\u00ea ngo\u00e0i",
+   "options": "\nThu\u00ea ngo\u00e0i\nH\u1ebft xe"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-23 15:05:27.670836",
+ "modified": "2026-03-23 16:07:48.284492",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Vehicle",

@@ -188,10 +188,19 @@ class VNTVehicleControl(Document):
 			if vehicle and vehicle.get("driver_name"):
 				driver_label = vehicle.driver_name
 			car_plate = row.car_id or (vehicle.get("car_id") if vehicle else "")
-			is_outside = bool(vehicle and vehicle.get("outside"))
+
+			outside_status = vehicle.get("outside") if vehicle else ""
+			is_outside = (outside_status == "Thuê ngoài")
+			is_out_of_car = (outside_status == "Hết xe")
 
 			content = (car.note if car and car.note else None) or _("(không rõ)")
-			if is_outside:
+			if is_out_of_car:
+				row_msg = "\n".join([
+					_("Nội dung:\n{0}.").format(content),
+					_("Thời gian: {0} {1}.").format(start_time, formatdate(date_text, "dd-MM-yyyy")),
+					_("Lộ trình: {0} - {1}.").format(row.start or _("(không rõ)"), row.end or _("(không rõ)")),
+				])
+			elif is_outside:
 				row_msg = "\n".join([
 					_("Nội dung:\n{0}.").format(content),
 					_("Thời gian: {0} {1}.").format(start_time, formatdate(date_text, "dd-MM-yyyy")),
@@ -209,7 +218,11 @@ class VNTVehicleControl(Document):
 			# document link
 			target_docname = car.name if car and car.name else self.name
 			# gửi cho creator (1 người)
-			creator_subject = _("Bạn đã được điều xe cho chuyến đi. {0}").format(row_msg)
+			if is_out_of_car:
+				creator_subject = _("Văn phòng không còn xe. CBNV tự chủ động cho chuyến đi. {0}").format(row_msg)
+			else:
+				creator_subject = _("Bạn đã được điều xe cho chuyến đi. {0}").format(row_msg)
+
 			if row_creator:
 				make_notification_logs({
 					"type": "Alert",
@@ -229,7 +242,11 @@ class VNTVehicleControl(Document):
 				)
 				send_rocket_message(to_users=[row_creator], title=":bell: Thông báo", message=f"{creator_subject}.", link=get_url_to_form(target_doctype, target_docname))
 			# gửi cho recipients của dòng
-			recipient_subject = (_("Anh/Chị nằm trong danh sách chuyến đi. {0}") if is_outside else _("Anh/Chị nằm trong danh sách chuyến đi. {0}")).format(row_msg)
+			if is_out_of_car:
+				recipient_subject = creator_subject
+			else:
+				recipient_subject = _("Anh/Chị nằm trong danh sách chuyến đi. {0}").format(row_msg)
+
 			if row_recipients:
 				make_notification_logs({
 					"type": "Alert",
