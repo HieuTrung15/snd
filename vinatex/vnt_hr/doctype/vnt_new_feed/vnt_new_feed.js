@@ -17,6 +17,42 @@ frappe.ui.form.on("VNT New Feed", {
     }
   },
 
+  gui_thong_bao(frm) {
+    if (frm.is_new() || !frm.doc.name) {
+      frappe.msgprint(__("Vui lòng lưu bản tin trước khi gửi thông báo."));
+      return;
+    }
+
+    if (frm.is_dirty()) {
+      frappe.msgprint(__("Vui lòng lưu thay đổi trước khi gửi thông báo."));
+      return;
+    }
+
+    if (frm.doc.da_gui_thong_bao) {
+      frappe.msgprint(__("Bản tin này đã gửi thông báo trước đó."));
+      return;
+    }
+
+    frappe.call({
+      method: "vinatex.vnt_hr.doctype.vnt_new_feed.vnt_new_feed.send_teams_notification",
+      args: { docname: frm.doc.name },
+      freeze: true,
+      freeze_message: __("Đang đưa tác vụ gửi MS Teams vào hàng chờ..."),
+    }).then((r) => {
+      const total = r?.message?.recipients_count || 0;
+      const skipped = r?.message?.skipped_count || 0;
+      frappe.show_alert({
+        message: skipped > 0
+          ? __("Đã tạo tác vụ gửi MS Teams cho {0} nhân sự Active (bỏ qua {1} nhân sự chưa có tài khoản hợp lệ).", [total, skipped])
+          : __("Đã tạo tác vụ gửi MS Teams cho {0} nhân sự Active.", [total]),
+        indicator: "green",
+      });
+      frm.reload_doc();
+    }).catch(() => {
+      frappe.msgprint(__("Không thể gửi thông báo MS Teams. Vui lòng kiểm tra cấu hình và thử lại."));
+    });
+  },
+
   // Khi trường attach đổi, render lại
   attach(frm) {
     frm.trigger("render_attach");

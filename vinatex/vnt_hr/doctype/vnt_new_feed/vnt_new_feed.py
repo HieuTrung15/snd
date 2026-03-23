@@ -2,6 +2,8 @@ import re
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import cint
+from frappe.utils.data import escape_html
 
 class VNTNewFeed(Document):
     def before_save(self):
@@ -50,3 +52,71 @@ class VNTNewFeed(Document):
             self.name = target
         finally:
             self.flags.in_rename = False
+
+
+def _get_active_employee_users() -> list[str]:
+    users = frappe.db.sql(
+        """
+        SELECT DISTINCT emp.user_id
+        FROM `tabEmployee` AS emp
+        INNER JOIN `tabUser` AS usr ON usr.name = emp.user_id
+        WHERE emp.status = 'Active'
+          AND IFNULL(emp.user_id, '') != ''
+          AND IFNULL(usr.enabled, 0) = 1
+        """,
+        as_dict=False,
+    )
+    return sorted(
+        {
+            (row[0] or "").strip()
+            for row in users
+            if row and (row[0] or "").strip() and (row[0] or "").strip().lower() != "guest"
+        }
+    )
+
+
+def _build_teams_message(doc: "VNTNewFeed") -> str:
+    return "<br>".join([
+        "Thông báo quan trọng Tập đoàn.",
+        escape_html(doc.title or doc.name),
+    ])
+
+
+@frappe.whitelist()
+def send_teams_notification(docname: str) -> dict:
+    if not docname:
+        frappe.throw(_("CHưa có tên cho bản tin."))
+
+    doc = frappe.get_doc("VNT New Feed", docname)
+    doc.check_permission("write")
+
+    if cint(doc.da_gui_thong_bao):
+        frappe.throw(_("Bản tin này đã gửi thông báo trước đó."))
+
+    recipients = _get_active_employee_users()
+    if not recipients:
+        frappe.throw(_("Không tìm thấy nhân sự có tài khoản phù hợp để gửi thông báo."))
+    total_active = frappe.db.count("Employee", {"status": "Active"}) or 0
+
+    message = _build_teams_message(doc)
+
+    frappe.enqueue(
+        "vinatex.integrations.teams_graph.notify_user",
+        queue="default",
+        timeout=1800,
+        is_async=True,
+        upn_or_email=recipients,
+        content_type="html",
+        linkify=False,
+        message=message,
+    )
+
+    doc.db_set("da_gui_thong_bao", 1, update_modified=True)
+
+    return {
+        "ok": True,
+        "active_total": total_active,
+        "skipped_count": max(total_active - len(recipients), 0),
+        "recipients_count": len(recipients),
+        "docname": doc.name,
+    }

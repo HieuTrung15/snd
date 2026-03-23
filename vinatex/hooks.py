@@ -184,6 +184,7 @@ has_permission = {
     "VNT Salary Slip": "vinatex.vnt_hr.permissions.salary_slip_has_permission",
     "VNT Monthly Payroll": "vinatex.vnt_hr.permissions.vnt_monthly_payroll_has_permission",
     "VNT 13th Month Salary": "vinatex.vnt_hr.permissions.vnt_13th_month_salary_has_permission",
+    "VNT New Feed": "vinatex.vnt_hr.permissions.vnt_new_feed_has_permission",
     "VNT Document Management": "vinatex.vnt_hr.permissions.vnt_document_management_has_permission",
 }
 
