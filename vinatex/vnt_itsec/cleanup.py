@@ -56,7 +56,7 @@ def cleanup_cves(retention_days: int | None = None, store_only_matched: int | No
         return {"ok": True, "skipped": True, "reason": "doctype_missing"}
 
     cfg_retention = frappe.conf.get("vnt_itsec_cve_retention_days")
-    cfg_store_only = frappe.conf.get("vnt_itsec_store_only_matched", 1)
+    cfg_store_only = frappe.conf.get("vnt_itsec_store_only_matched", 0)
 
     days = int(retention_days or cfg_retention or 0)
     only_matched = bool(store_only_matched if store_only_matched is not None else cfg_store_only)

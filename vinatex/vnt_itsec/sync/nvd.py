@@ -115,12 +115,25 @@ def _max_datetime(current: datetime | None, new_value: datetime | None) -> datet
     return max(current, new_value)
 
 
-def _upsert_cve_from_nvd(item: dict) -> datetime | None:
-    cve = item.get("cve", {})
-    cve_id = cve.get("id")
-    if not cve_id:
-        return None
+def _get_conf_int(key: str, default: int) -> int:
+    value = frappe.conf.get(key)
+    if value in (None, ""):
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
 
+
+def _iso(dt: datetime) -> str:
+    return dt.strftime("%Y-%m-%dT%H:%M:%S.000Z")
+
+
+def _page_size() -> int:
+    return max(1, min(_get_conf_int("vnt_itsec_nvd_page_size", 2000), 2000))
+
+
+def _apply_nvd_payload_to_doc(doc, cve: dict, item: dict) -> datetime | None:
     published = parse_source_datetime(cve.get("published"))
     modified = parse_source_datetime(cve.get("lastModified"))
 
@@ -140,12 +153,6 @@ def _upsert_cve_from_nvd(item: dict) -> datetime | None:
     metrics = cve.get("metrics") or {}
     severity, base_score, vector, cvss_version = _pick_cvss(metrics)
 
-    if frappe.db.exists("VNT CVE", cve_id):
-        doc = frappe.get_doc("VNT CVE", cve_id)
-    else:
-        doc = frappe.get_doc(
-            {"doctype": "VNT CVE", "cve_id": cve_id, "first_seen_at": now_datetime()}
-        )
     source_primary = normalize_select_key(doc.source_primary)
 
     if published and (not doc.published_date or source_primary == "NVD"):
@@ -173,42 +180,61 @@ def _upsert_cve_from_nvd(item: dict) -> datetime | None:
     if not doc.source_primary:
         doc.source_primary = select_value("VNT CVE", "source_primary", "NVD")
 
-    set_source_ids(doc, "NVD", cve_id)
+    set_source_ids(doc, "NVD", cve.get("id"))
     set_source_payload(doc, "NVD", item)
     maybe_set_raw_json(doc, "NVD", item)
 
     _upsert_affected_cpes_from_nvd(doc, cve)
-
-    doc.save(ignore_permissions=True)
     return modified
 
 
-def sync_nvd_incremental(source_doc) -> dict:
-    """
-    Incremental sync by lastModified window with overlap.
-    """
+def _upsert_cve_from_nvd(item: dict) -> datetime | None:
+    cve = item.get("cve", {})
+    cve_id = cve.get("id")
+    if not cve_id:
+        return None
+
+    is_existing = frappe.db.exists("VNT CVE", cve_id)
+    if is_existing:
+        doc = frappe.get_doc("VNT CVE", cve_id)
+    else:
+        doc = frappe.get_doc(
+            {"doctype": "VNT CVE", "cve_id": cve_id, "first_seen_at": now_datetime()}
+        )
+
+    modified = _apply_nvd_payload_to_doc(doc, cve, item)
+    try:
+        doc.save(ignore_permissions=True)
+    except frappe.DuplicateEntryError:
+        doc = frappe.get_doc("VNT CVE", cve_id)
+        _apply_nvd_payload_to_doc(doc, cve, item)
+        doc.save(ignore_permissions=True)
+
+    return modified
+
+
+def _sync_nvd_window(
+    source_doc,
+    start: datetime,
+    end: datetime,
+    *,
+    limit: int | None = None,
+) -> dict:
     base_url = (source_doc.api_base_url or "").rstrip("/")
     if not base_url:
         raise RuntimeError("NVD api_base_url is empty")
 
-    watermark = parse_source_datetime(source_doc.watermark_source_ts)
-    if not watermark:
-        watermark = add_days(now_datetime(), -3)
-    start = add_days(watermark, -2)
-    end = now_datetime()
-
-    def iso(dt: datetime) -> str:
-        return dt.strftime("%Y-%m-%dT%H:%M:%S.000Z")
-
     params = {
-        "lastModStartDate": iso(start),
-        "lastModEndDate": iso(end),
-        "resultsPerPage": 2000,
+        "lastModStartDate": _iso(start),
+        "lastModEndDate": _iso(end),
+        "resultsPerPage": _page_size(),
         "startIndex": 0,
     }
 
     total = 0
     max_modified: datetime | None = None
+    total_results = 0
+    hit_limit = False
     while True:
         resp = requests.get(
             base_url,
@@ -218,28 +244,111 @@ def sync_nvd_incremental(source_doc) -> dict:
         )
         resp.raise_for_status()
         data = resp.json()
+        total_results = max(total_results, int(data.get("totalResults") or 0))
         vulns = data.get("vulnerabilities") or []
         for vuln in vulns:
             modified = _upsert_cve_from_nvd(vuln)
             max_modified = _max_datetime(max_modified, modified)
             total += 1
-            if source_doc.max_per_run and total >= int(source_doc.max_per_run):
+            if limit and total >= int(limit):
+                hit_limit = True
                 break
 
-        if source_doc.max_per_run and total >= int(source_doc.max_per_run):
+        if hit_limit:
             break
 
         start_index = params["startIndex"]
         results_per_page = params["resultsPerPage"]
-        total_results = data.get("totalResults") or 0
         next_index = start_index + results_per_page
         if next_index >= total_results:
             break
         params["startIndex"] = next_index
         time.sleep(0.3)
 
-    if max_modified:
-        source_doc.watermark_source_ts = max_modified
+    return {
+        "count": total,
+        "max_modified": max_modified,
+        "hit_limit": hit_limit,
+        "total_results": total_results,
+        "window_start": start,
+        "window_end": end,
+    }
+
+
+def sync_nvd_incremental(source_doc) -> dict:
+    """
+    Incremental sync by lastModified window with overlap.
+    """
+    watermark = parse_source_datetime(source_doc.watermark_source_ts)
+    if not watermark:
+        watermark = add_days(now_datetime(), -3)
+    overlap_days = max(0, _get_conf_int("vnt_itsec_nvd_incremental_overlap_days", 2))
+    start = add_days(watermark, -overlap_days)
+    end = now_datetime()
+    limit = int(source_doc.max_per_run) if source_doc.max_per_run else None
+
+    result = _sync_nvd_window(source_doc, start, end, limit=limit)
+    if result["max_modified"]:
+        source_doc.watermark_source_ts = result["max_modified"]
     source_doc.save(ignore_permissions=True)
     frappe.db.commit()
-    return {"source": "NVD", "count": total}
+    return {
+        "source": "NVD",
+        "mode": "INCREMENTAL",
+        "count": result["count"],
+        "window_start": _iso(result["window_start"]),
+        "window_end": _iso(result["window_end"]),
+        "hit_limit": result["hit_limit"],
+        "total_results": result["total_results"],
+    }
+
+
+def backfill_nvd(source_doc) -> dict:
+    """
+    Backfill older NVD windows without disturbing the incremental watermark.
+    """
+    history_days = max(1, _get_conf_int("vnt_itsec_nvd_backfill_history_days", 730))
+    window_days = max(1, _get_conf_int("vnt_itsec_nvd_backfill_window_days", 90))
+    overlap_days = max(0, _get_conf_int("vnt_itsec_nvd_backfill_overlap_days", 2))
+    cutoff = add_days(now_datetime(), -history_days)
+
+    cursor = parse_source_datetime(source_doc.watermark_cursor)
+    if not cursor:
+        cursor = parse_source_datetime(source_doc.watermark_source_ts) or now_datetime()
+    cursor = min(cursor, now_datetime())
+    if cursor <= cutoff:
+        return {
+            "source": "NVD",
+            "mode": "BACKFILL",
+            "count": 0,
+            "skipped": True,
+            "reason": "backfill_complete",
+            "cursor": _iso(cursor),
+            "cutoff": _iso(cutoff),
+        }
+
+    end = cursor
+    start = add_days(end, -window_days)
+    if start < cutoff:
+        start = cutoff
+
+    result = _sync_nvd_window(source_doc, start, end, limit=None)
+
+    # watermark_cursor acts as the next backfill anchor so daily incremental can keep its own watermark.
+    next_cursor = add_days(start, overlap_days)
+    if next_cursor >= end:
+        next_cursor = start
+    source_doc.watermark_cursor = _iso(next_cursor)
+    source_doc.save(ignore_permissions=True)
+    frappe.db.commit()
+
+    return {
+        "source": "NVD",
+        "mode": "BACKFILL",
+        "count": result["count"],
+        "window_start": _iso(result["window_start"]),
+        "window_end": _iso(result["window_end"]),
+        "cursor": source_doc.watermark_cursor,
+        "cutoff": _iso(cutoff),
+        "total_results": result["total_results"],
+    }

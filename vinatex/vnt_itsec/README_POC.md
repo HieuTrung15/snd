@@ -35,8 +35,11 @@ Edit `sites/YOUR_SITE/site_config.json` and add:
   "vnt_itsec_osv_enabled": 1,
   "vnt_itsec_osv_queries": [],
   "vnt_itsec_alert_email": "sonph@vinatex.com.vn",
-  "vnt_itsec_store_only_matched": 1,
-  "vnt_itsec_cve_retention_days": 30
+  "vnt_itsec_store_only_matched": 0,
+  "vnt_itsec_cve_retention_days": 30,
+  "vnt_itsec_nvd_backfill_window_days": 90,
+  "vnt_itsec_nvd_backfill_history_days": 730,
+  "vnt_itsec_nvd_backfill_overlap_days": 2
 }
 ```
 
@@ -45,8 +48,11 @@ Notes:
 - The cvelistV5 repo path must be readable by the bench user.
 - `vnt_itsec_osv_queries` accepts JSON array for OSV querybatch payload (fallback uses POC sample packages).
 - `vnt_itsec_alert_email` receives automation summary emails.
-- When `vnt_itsec_store_only_matched=1`, cleanup removes CVEs not linked to affected assets.
+- Keep `vnt_itsec_store_only_matched=0` in production so cleanup does not delete unmatched CVEs before assets are onboarded.
 - `vnt_itsec_cve_retention_days` controls the cutoff for periodic cleanup (days).
+- `vnt_itsec_nvd_backfill_window_days` controls how many days each monthly NVD backfill run covers.
+- `vnt_itsec_nvd_backfill_history_days` controls how far back monthly backfill keeps walking.
+- `vnt_itsec_nvd_backfill_overlap_days` adds overlap between backfill windows to avoid boundary misses.
 
 ## 3) Clone cvelistV5 repo
 
@@ -60,6 +66,7 @@ git clone https://github.com/CVEProject/cvelistV5.git
 
 ```bash
 bench --site YOUR_SITE execute vinatex.vnt_itsec.sync.run.run_nightly
+bench --site YOUR_SITE execute vinatex.vnt_itsec.sync.run.run_monthly_backfill
 ```
 
 Expected:
@@ -68,9 +75,11 @@ Expected:
 - `first_seen_at` is the local ingest time
 - Matching + remediation ticket creation run automatically after nightly sync.
 
-## 5) Enable nightly scheduler
+## 5) Enable scheduler
 
-Scheduler is wired in `vinatex/hooks.py` (01:30 daily).
+Scheduler is wired in `vinatex/hooks.py`:
+- `run_nightly`: 01:30 daily
+- `run_monthly_backfill`: 03:00 on day 1 of each month
 
 ```bash
 bench --site YOUR_SITE enable-scheduler
@@ -83,6 +92,7 @@ bench restart
 - Dashboard page: `itsec-dashboard`
 - Buttons:
   - `VNT CVE Source`: Run Sync Now
+  - `VNT CVE Source` (NVD): Run Backfill Now
   - `VNT Vulnerability Advisory`: Run Matching
   - `VNT CVE`: Open NVD
 

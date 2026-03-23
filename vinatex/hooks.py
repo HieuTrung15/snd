@@ -224,6 +224,9 @@ scheduler_events = {
         "15 2 * * *": [
             "vinatex.vnt_itsec.cleanup.cleanup_cves",
         ],
+        "0 3 1 * *": [
+            "vinatex.vnt_itsec.sync.run.run_monthly_backfill",
+        ],
         "0 4 1 1 *": [
             "vinatex.vinatex.doctype.overrides.allocate_leave.allocate_leave"
         ],

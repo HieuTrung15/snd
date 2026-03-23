@@ -197,7 +197,7 @@ def _build_auto_advisory_payload(cve_id: str, companies: set[str]) -> dict:
         ),
         "sla_days": 7,
         "description": (
-            "Auto-generated from VNT IT Asset inventory because at least one active asset "
+            "At least one active asset "
             f"matched {cve_id} by CPE.\n\n{description[:1200]}"
         ).strip(),
         "guidance": (

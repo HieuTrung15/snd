@@ -7,7 +7,7 @@ from vinatex.vnt_itsec.automation import run_post_sync_automation
 from vinatex.vnt_itsec.sync.common import normalize_select_key, select_value
 from vinatex.vnt_itsec.sync.cvelistv5 import sync_cvelistv5_incremental
 from vinatex.vnt_itsec.sync.merge import merge_cve_records
-from vinatex.vnt_itsec.sync.nvd import sync_nvd_incremental
+from vinatex.vnt_itsec.sync.nvd import backfill_nvd, sync_nvd_incremental
 from vinatex.vnt_itsec.sync.osv import sync_osv_batch
 
 
@@ -26,23 +26,28 @@ def _get_source(code: str):
 
 def _run_single_source(
     source_code: str,
+    mode: str | None = None,
     run_post_actions: int = 1,
     force_email: int = 0,
     alert_email: str | None = None,
 ) -> dict:
     normalized_code = normalize_select_key(source_code)
+    normalized_mode = (mode or "INCREMENTAL").strip().upper()
     source = _get_source(normalized_code)
     if not source or not source.enabled:
-        return {"source": normalized_code, "skipped": True}
+        return {"source": normalized_code, "mode": normalized_mode, "skipped": True}
 
     if normalized_code == "CVELISTV5":
         result = sync_cvelistv5_incremental(source)
     elif normalized_code == "NVD":
-        result = sync_nvd_incremental(source)
+        if normalized_mode == "BACKFILL":
+            result = backfill_nvd(source)
+        else:
+            result = sync_nvd_incremental(source)
     elif normalized_code == "OSV":
         result = sync_osv_batch(source)
     else:
-        return {"source": normalized_code, "skipped": True}
+        return {"source": normalized_code, "mode": normalized_mode, "skipped": True}
 
     if result.get("skipped"):
         return result
@@ -150,19 +155,48 @@ def run_nightly(force_email: int = 0, alert_email: str | None = None) -> dict:
     return {"ok": True, "results": results, "automation": automation}
 
 
+def run_monthly_backfill(force_email: int = 0, alert_email: str | None = None) -> dict:
+    """Monthly NVD backfill for older CVEs outside the regular incremental window."""
+    ensure_default_sources()
+
+    result = _run_single_source(
+        "NVD",
+        mode="BACKFILL",
+        run_post_actions=0,
+        force_email=force_email,
+        alert_email=alert_email,
+    )
+    if result.get("skipped"):
+        return {"ok": True, "results": [result], "automation": None}
+
+    merge_cve_records()
+    automation = run_post_sync_automation(
+        trigger="monthly_backfill",
+        force_email=force_email,
+        alert_email=alert_email,
+        commit=0,
+    )
+
+    frappe.db.commit()
+    return {"ok": True, "results": [result], "automation": automation}
+
+
 @frappe.whitelist()
 def trigger_sync(
     source_code: str | None = None,
+    mode: str | None = None,
     run_now: int = 0,
     force_email: int = 0,
     alert_email: str | None = None,
 ) -> dict:
     """Queue a sync job from UI. Use run_now=1 to execute inline."""
     source_code = normalize_select_key(source_code)
+    normalized_mode = (mode or "INCREMENTAL").strip().upper()
     if source_code:
         if run_now:
             return _run_single_source(
                 source_code,
+                mode=normalized_mode,
                 run_post_actions=1,
                 force_email=force_email,
                 alert_email=alert_email,
@@ -170,22 +204,34 @@ def trigger_sync(
         frappe.enqueue(
             "vinatex.vnt_itsec.sync.run._run_single_source",
             queue="long",
-            job_name=f"VNT ITSEC Sync {source_code}",
+            job_name=f"VNT ITSEC {normalized_mode} {source_code}",
             source_code=source_code,
+            mode=normalized_mode,
             run_post_actions=1,
             force_email=force_email,
             alert_email=alert_email,
         )
-        return {"queued": True, "source": source_code}
+        return {"queued": True, "source": source_code, "mode": normalized_mode}
 
     if run_now:
+        if normalized_mode == "BACKFILL":
+            return run_monthly_backfill(force_email=force_email, alert_email=alert_email)
         return run_nightly(force_email=force_email, alert_email=alert_email)
 
+    method = (
+        "vinatex.vnt_itsec.sync.run.run_monthly_backfill"
+        if normalized_mode == "BACKFILL"
+        else "vinatex.vnt_itsec.sync.run.run_nightly"
+    )
     frappe.enqueue(
-        "vinatex.vnt_itsec.sync.run.run_nightly",
+        method,
         queue="long",
-        job_name="VNT ITSEC Nightly Sync",
+        job_name=(
+            "VNT ITSEC Monthly Backfill"
+            if normalized_mode == "BACKFILL"
+            else "VNT ITSEC Nightly Sync"
+        ),
         force_email=force_email,
         alert_email=alert_email,
     )
-    return {"queued": True, "source": "ALL"}
+    return {"queued": True, "source": "ALL", "mode": normalized_mode}
