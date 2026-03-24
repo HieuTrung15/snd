@@ -10,6 +10,67 @@ from vinatex.vnt_itsec.sync.merge import merge_cve_records
 from vinatex.vnt_itsec.sync.nvd import backfill_nvd, sync_nvd_incremental
 from vinatex.vnt_itsec.sync.osv import sync_osv_batch
 
+_BACKFILL_ACTIVE_KEY = "vnt_itsec:nvd_backfill_active_run"
+
+
+def _logger():
+    return frappe.logger("vnt_itsec", allow_site=True)
+
+
+def _log_info(message: str, **context) -> None:
+    if context:
+        message = f"{message} | {frappe.as_json(context)}"
+    _logger().info(message)
+    print(message)
+
+
+def _get_conf_int(key: str, default: int) -> int:
+    value = frappe.conf.get(key)
+    if value in (None, ""):
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _backfill_active_key() -> str:
+    return f"{frappe.local.site}:{_BACKFILL_ACTIVE_KEY}"
+
+
+def _get_active_backfill_run() -> str | None:
+    return frappe.cache().get_value(_backfill_active_key())
+
+
+def _set_active_backfill_run(run_id: str) -> None:
+    frappe.cache().set_value(
+        _backfill_active_key(),
+        run_id,
+        expires_in_sec=max(300, _get_conf_int("vnt_itsec_nvd_backfill_lock_ttl", 21600)),
+    )
+
+
+def _clear_active_backfill_run(run_id: str | None = None) -> None:
+    active_run_id = _get_active_backfill_run()
+    if run_id and active_run_id and active_run_id != run_id:
+        return
+    frappe.cache().delete_value(_backfill_active_key())
+
+
+def _enqueue_monthly_backfill(run_id: str, force_email: int = 0, alert_email: str | None = None) -> dict:
+    frappe.enqueue(
+        "vinatex.vnt_itsec.sync.run.run_monthly_backfill",
+        queue="long",
+        timeout=max(300, _get_conf_int("vnt_itsec_nvd_backfill_job_timeout", 1800)),
+        job_name=f"VNT ITSEC Monthly Backfill {run_id}",
+        run_id=run_id,
+        force_email=force_email,
+        alert_email=alert_email,
+    )
+    payload = {"queued": True, "run_id": run_id, "source": "NVD", "mode": "BACKFILL"}
+    _log_info("ITSEC monthly backfill chunk queued", **payload)
+    return payload
+
 
 def _get_source(code: str):
     normalized = normalize_select_key(code)
@@ -33,6 +94,7 @@ def _run_single_source(
 ) -> dict:
     normalized_code = normalize_select_key(source_code)
     normalized_mode = (mode or "INCREMENTAL").strip().upper()
+    _log_info("ITSEC source sync started", source=normalized_code, mode=normalized_mode)
     source = _get_source(normalized_code)
     if not source or not source.enabled:
         return {"source": normalized_code, "mode": normalized_mode, "skipped": True}
@@ -64,6 +126,7 @@ def _run_single_source(
             alert_email=alert_email,
             commit=1,
         )
+    _log_info("ITSEC source sync finished", source=normalized_code, mode=normalized_mode, result=result)
     return result
 
 
@@ -155,30 +218,78 @@ def run_nightly(force_email: int = 0, alert_email: str | None = None) -> dict:
     return {"ok": True, "results": results, "automation": automation}
 
 
-def run_monthly_backfill(force_email: int = 0, alert_email: str | None = None) -> dict:
-    """Monthly NVD backfill for older CVEs outside the regular incremental window."""
+def run_monthly_backfill(
+    force_email: int = 0,
+    alert_email: str | None = None,
+    run_id: str | None = None,
+) -> dict:
+    """Monthly NVD backfill orchestrator. Each invocation processes one resumable chunk."""
     ensure_default_sources()
+    run_id = run_id or frappe.generate_hash(length=10)
+    active_run_id = _get_active_backfill_run()
+    if active_run_id and active_run_id != run_id:
+        payload = {
+            "ok": False,
+            "skipped": True,
+            "reason": "backfill_already_running",
+            "active_run_id": active_run_id,
+            "requested_run_id": run_id,
+        }
+        _log_info("ITSEC monthly backfill skipped", result=payload)
+        return payload
 
-    result = _run_single_source(
-        "NVD",
-        mode="BACKFILL",
-        run_post_actions=0,
-        force_email=force_email,
-        alert_email=alert_email,
-    )
-    if result.get("skipped"):
-        return {"ok": True, "results": [result], "automation": None}
+    source = _get_source("NVD")
+    if not source or not source.enabled:
+        payload = {"ok": False, "skipped": True, "reason": "source_disabled", "run_id": run_id}
+        _log_info("ITSEC monthly backfill skipped", result=payload)
+        return payload
 
-    merge_cve_records()
-    automation = run_post_sync_automation(
-        trigger="monthly_backfill",
-        force_email=force_email,
-        alert_email=alert_email,
-        commit=0,
-    )
+    _set_active_backfill_run(run_id)
+    _log_info("ITSEC monthly backfill started", run_id=run_id)
+    try:
+        result = backfill_nvd(source, run_id=run_id)
+        source.last_successful_sync_at = now_datetime()
+        source.save(ignore_permissions=True)
+        frappe.db.commit()
 
-    frappe.db.commit()
-    return {"ok": True, "results": [result], "automation": automation}
+        if result.get("skipped"):
+            _clear_active_backfill_run(run_id)
+            payload = {"ok": True, "run_id": run_id, "results": [result], "automation": None}
+            _log_info("ITSEC monthly backfill finished", result=payload)
+            return payload
+
+        if result.get("has_more"):
+            queue_info = _enqueue_monthly_backfill(
+                run_id=run_id,
+                force_email=force_email,
+                alert_email=alert_email,
+            )
+            payload = {
+                "ok": True,
+                "run_id": run_id,
+                "results": [result],
+                "automation": None,
+                "queued_next": queue_info,
+            }
+            _log_info("ITSEC monthly backfill chunk finished", result=payload)
+            return payload
+
+        merge_cve_records()
+        automation = run_post_sync_automation(
+            trigger=f"monthly_backfill:{run_id}",
+            force_email=force_email,
+            alert_email=alert_email,
+            commit=0,
+        )
+        frappe.db.commit()
+        _clear_active_backfill_run(run_id)
+        payload = {"ok": True, "run_id": run_id, "results": [result], "automation": automation}
+        _log_info("ITSEC monthly backfill finished", result=payload)
+        return payload
+    except Exception:
+        _clear_active_backfill_run(run_id)
+        _logger().exception("ITSEC monthly backfill failed | %s", frappe.as_json({"run_id": run_id}))
+        raise
 
 
 @frappe.whitelist()
@@ -193,6 +304,25 @@ def trigger_sync(
     source_code = normalize_select_key(source_code)
     normalized_mode = (mode or "INCREMENTAL").strip().upper()
     if source_code:
+        if source_code == "NVD" and normalized_mode == "BACKFILL":
+            if run_now:
+                return run_monthly_backfill(force_email=force_email, alert_email=alert_email)
+            run_id = frappe.generate_hash(length=10)
+            active_run_id = _get_active_backfill_run()
+            if active_run_id:
+                payload = {
+                    "queued": False,
+                    "skipped": True,
+                    "reason": "backfill_already_running",
+                    "active_run_id": active_run_id,
+                }
+                _log_info("ITSEC monthly backfill trigger skipped", result=payload)
+                return payload
+            return _enqueue_monthly_backfill(
+                run_id=run_id,
+                force_email=force_email,
+                alert_email=alert_email,
+            )
         if run_now:
             return _run_single_source(
                 source_code,
@@ -223,15 +353,20 @@ def trigger_sync(
         if normalized_mode == "BACKFILL"
         else "vinatex.vnt_itsec.sync.run.run_nightly"
     )
-    frappe.enqueue(
-        method,
-        queue="long",
-        job_name=(
+    enqueue_kwargs = {
+        "queue": "long",
+        "job_name": (
             "VNT ITSEC Monthly Backfill"
             if normalized_mode == "BACKFILL"
             else "VNT ITSEC Nightly Sync"
         ),
-        force_email=force_email,
-        alert_email=alert_email,
+        "force_email": force_email,
+        "alert_email": alert_email,
+    }
+    if normalized_mode == "BACKFILL":
+        enqueue_kwargs["timeout"] = max(300, _get_conf_int("vnt_itsec_nvd_backfill_job_timeout", 1800))
+    frappe.enqueue(
+        method,
+        **enqueue_kwargs,
     )
     return {"queued": True, "source": "ALL", "mode": normalized_mode}
