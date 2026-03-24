@@ -76,6 +76,10 @@ def _normalize_version(value: str | None) -> str:
     return raw
 
 
+def _normalize_component_row_id(value: str | None) -> str:
+    return (value or "").strip()
+
+
 def _tokenize_version(value: str | None) -> list[str]:
     normalized = _normalize_version(value)
     if not normalized:
@@ -211,6 +215,18 @@ def _matching_cves_for_component(component_ctx: dict, indexed_cpes: dict) -> lis
         if not existing or existing["match_confidence"] == "Medium" and confidence == "High":
             matches_by_cve[cve_id] = {"cve": cve_id, "match_confidence": confidence}
     return list(matches_by_cve.values())
+
+
+def _existing_affected_asset_name(asset_name: str, cve_id: str, component_row_id: str | None) -> str | None:
+    return frappe.db.get_value(
+        "VNT Affected Asset",
+        {
+            "asset": asset_name,
+            "cve": cve_id,
+            "component_row_id": _normalize_component_row_id(component_row_id),
+        },
+        "name",
+    )
 
 
 def _iter_cve_context(adv_doc) -> tuple[dict[tuple[str, str], list[dict]], dict[str, dict]]:
@@ -377,36 +393,30 @@ def run_matching_for_advisory(advisory_name: str, commit: int = 1) -> dict:
                 continue
             for match in _matching_cves_for_component(component_ctx, indexed_cpes):
                 cve_id = match["cve"]
-                component_row_id = comp.name
-                base_filters = {"advisory": adv.name, "cve": cve_id, "asset": asset.name}
-                exists = frappe.db.exists(
-                    "VNT Affected Asset",
-                    {**base_filters, "component_row_id": component_row_id},
-                )
-                if not exists:
-                    exists = frappe.db.exists(
-                        "VNT Affected Asset",
-                        {**base_filters, "component_row_id": ["is", "not set"]},
-                    )
+                component_row_id = _normalize_component_row_id(comp.name)
+                exists = _existing_affected_asset_name(asset.name, cve_id, component_row_id)
                 if exists:
                     continue
-                frappe.get_doc(
-                    {
-                        "doctype": "VNT Affected Asset",
-                        "advisory": adv.name,
-                        "cve": cve_id,
-                        "company": asset.company,
-                        "asset": asset.name,
-                        "component_row_id": component_row_id,
-                        "match_type": select_value("VNT Affected Asset", "match_type", "CPE"),
-                        "match_confidence": select_value(
-                            "VNT Affected Asset", "match_confidence", match["match_confidence"]
-                        ),
-                        "risk_score": _build_risk_score(cve_context.get(cve_id) or {}, asset),
-                        "status": select_value("VNT Affected Asset", "status", "Open"),
-                        "due_date": due_date,
-                    }
-                ).insert(ignore_permissions=True)
+                try:
+                    frappe.get_doc(
+                        {
+                            "doctype": "VNT Affected Asset",
+                            "advisory": adv.name,
+                            "cve": cve_id,
+                            "company": asset.company,
+                            "asset": asset.name,
+                            "component_row_id": component_row_id,
+                            "match_type": select_value("VNT Affected Asset", "match_type", "CPE"),
+                            "match_confidence": select_value(
+                                "VNT Affected Asset", "match_confidence", match["match_confidence"]
+                            ),
+                            "risk_score": _build_risk_score(cve_context.get(cve_id) or {}, asset),
+                            "status": select_value("VNT Affected Asset", "status", "Open"),
+                            "due_date": due_date,
+                        }
+                    ).insert(ignore_permissions=True)
+                except frappe.DuplicateEntryError:
+                    continue
                 matched += 1
 
     if int(commit):
