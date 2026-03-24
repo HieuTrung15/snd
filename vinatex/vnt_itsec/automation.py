@@ -189,7 +189,7 @@ def _build_auto_advisory_payload(cve_id: str, companies: set[str]) -> dict:
         "naming_series": "ADV-.YYYY.-.MM.-.####",
         "title": f"{_AUTO_ADVISORY_TITLE_PREFIX} {cve_id} detected from asset inventory",
         "advisory_type": select_value("VNT Vulnerability Advisory", "advisory_type", "Awareness"),
-        "status": select_value("VNT Vulnerability Advisory", "status", "Draft"),
+        "status": select_value("VNT Vulnerability Advisory", "status", "Published"),
         "severity": select_value(
             "VNT Vulnerability Advisory",
             "severity",

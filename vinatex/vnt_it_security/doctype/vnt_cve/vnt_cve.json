@@ -47,7 +47,6 @@
   {
    "fieldname": "last_modified_date",
    "fieldtype": "Datetime",
-   "in_list_view": 1,
    "label": "C\u1eadp nh\u1eadt cu\u1ed1i (ngu\u1ed3n)"
   },
   {
@@ -72,7 +71,7 @@
    "default": "0",
    "fieldname": "cisa_kev",
    "fieldtype": "Check",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Trong KEV"
   },
   {
@@ -152,7 +151,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-18 17:21:43.035954",
+ "modified": "2026-03-24 13:32:22.747806",
  "modified_by": "Administrator",
  "module": "VNT IT Security",
  "name": "VNT CVE",

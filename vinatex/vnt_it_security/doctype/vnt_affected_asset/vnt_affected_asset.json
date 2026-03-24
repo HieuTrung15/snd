@@ -9,17 +9,17 @@
  "field_order": [
   "sb_match_context",
   "advisory",
-  "cve",
   "company",
-  "asset",
-  "col_match_context_right",
+  "cve",
+  "due_date",
   "component_row_id",
+  "last_update",
+  "col_match_context_right",
+  "asset",
+  "status",
   "match_type",
   "match_confidence",
   "risk_score",
-  "status",
-  "due_date",
-  "last_update",
   "sb_evidence",
   "evidence",
   "note"
@@ -60,8 +60,7 @@
   {
    "fieldname": "match_type",
    "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Lo\u1ea1i gh\u00e9p",
+   "label": "Lo\u1ea1i",
    "options": "CPE\nManual\nText",
    "reqd": 1
   },
@@ -101,7 +100,7 @@
   {
    "fieldname": "evidence",
    "fieldtype": "Attach",
-   "label": "B\u1eb1ng ch\u1ee9ng"
+   "label": "B\u1eb1ng ch\u1ee9ng \u0111\u00ednh k\u00e8m"
   },
   {
    "fieldname": "note",
@@ -111,6 +110,7 @@
   {
    "fieldname": "component_row_id",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "ID d\u00f2ng th\u00e0nh ph\u1ea7n"
   },
   {
@@ -131,10 +131,11 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-30 10:44:43.578859",
+ "modified": "2026-03-24 13:42:22.329458",
  "modified_by": "Administrator",
  "module": "VNT IT Security",
  "name": "VNT Affected Asset",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
