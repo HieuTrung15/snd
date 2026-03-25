@@ -273,9 +273,10 @@ class VNTVehicleControl(Document):
 			vehicle = frappe.db.get_value(
 				"VNT Vehicle",
 				row.driver,
-				["driver_name", "phone", "car_id", "driver"],
+				["driver_name", "phone", "car_id", "driver", "outside"],
 				as_dict=True,
 			)
+			is_out_of_car = (vehicle.get("outside") == "Hết xe") if vehicle else False
 			car = registrations.get(row.id_parent)
 			driver_user = None
 			if vehicle and vehicle.get("driver"):
@@ -336,7 +337,7 @@ class VNTVehicleControl(Document):
 					linkify=False,
 					message=driver_msg
 				)
-			if group_chat_target:
+			if group_chat_target and not is_out_of_car:
 				frappe.enqueue(
 					"vinatex.integrations.teams_graph.notify_chat",
 					queue="long",

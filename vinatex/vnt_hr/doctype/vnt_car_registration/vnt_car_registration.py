@@ -349,6 +349,7 @@ def _notify_to_user_receive(doc: Document):
 					"end": item.end,
 					"time": item.time,
 					"date": item.date,
+					"list_emp": doc.emp_list_name,
 					"id_parent": doc.name,
 					"id_child": item.name
 				},
@@ -518,7 +519,9 @@ def _validate_employee_schedule(doc: Document):
 
 
 def _set_people_count(doc: Document):
-	doc.people = len(doc.get("list_emp") or [])
+	list_emp = doc.get("list_emp") or []
+	doc.people = len(list_emp)
+	doc.emp_list_name = ", ".join([d.full_name for d in list_emp if d.full_name])
 
 
 def _notify_to_approver(doc: Document, user: str | None):

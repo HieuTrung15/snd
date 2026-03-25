@@ -67,6 +67,7 @@ frappe.ui.form.on("VNT Car Registration", {
             });
         }
         sync_list_emp_titles(frm);
+        update_emp_list_name(frm);
 	},
     employee(frm) {
         frappe.call({
@@ -103,6 +104,7 @@ frappe.ui.form.on("VNT Car Registration", {
     },
     list_emp (frm) {
         sync_list_emp_titles(frm);
+        update_emp_list_name(frm);
     }
 });
 
