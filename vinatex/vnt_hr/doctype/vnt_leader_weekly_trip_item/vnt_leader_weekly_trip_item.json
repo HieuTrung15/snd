@@ -11,6 +11,7 @@
   "time_slot",
   "employee",
   "employee_name",
+  "column_break_ssih",
   "designation",
   "destination",
   "purpose"
@@ -75,13 +76,17 @@
    "fieldname": "purpose",
    "fieldtype": "Small Text",
    "label": "N\u1ed9i dung \u0111i"
+  },
+  {
+   "fieldname": "column_break_ssih",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-03-13 16:28:29.088573",
+ "modified": "2026-03-26 11:33:29.361551",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Leader Weekly Trip Item",
