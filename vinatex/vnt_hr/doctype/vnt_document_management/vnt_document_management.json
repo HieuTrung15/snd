@@ -653,6 +653,7 @@
   {
    "fieldname": "vnt_type",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Lo\u1ea1i v\u0103n b\u1ea3n",
    "options": "VNT Document Type",
    "reqd": 1
@@ -662,6 +663,7 @@
    "fetch_from": "lead_depart.department",
    "fieldname": "lead_department",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Department",
    "options": "Department"
   },
@@ -709,7 +711,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-19 10:50:56.507979",
+ "modified": "2026-03-26 16:10:19.662034",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
