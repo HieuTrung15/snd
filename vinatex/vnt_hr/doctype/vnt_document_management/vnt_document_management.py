@@ -43,6 +43,28 @@ def _normalize_teams_recipients(user_ids: list[str] | tuple[str, ...] | set[str]
 			continue
 		seen.add(user)
 		recipients.append(user)
+
+	# Không gửi Teams cho Employee đã tick unsubscribed.
+	if recipients and frappe.db.has_column("Employee", "unsubscribed"):
+		try:
+			unsubscribed_users = set(
+				frappe.get_all(
+					"Employee",
+					filters={
+						"user_id": ["in", recipients],
+						"unsubscribed": 1,
+					},
+					pluck="user_id",
+					ignore_permissions=True,
+				)
+			)
+			if unsubscribed_users:
+				recipients = [user for user in recipients if user not in unsubscribed_users]
+		except Exception:
+			frappe.log_error(
+				frappe.get_traceback(),
+				"VNT Document Management - filter unsubscribed employees failed",
+			)
 	return recipients
 
 
