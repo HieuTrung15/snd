@@ -6,6 +6,7 @@ import frappe
 import re
 from datetime import date
 from frappe.utils import add_days, getdate, nowdate, get_url_to_form, get_first_day, get_last_day, cint
+from frappe.utils.data import escape_html
 from frappe.model.document import Document
 from vinatex.patches.utils.rocket_chat import send_rocket_message
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
@@ -19,6 +20,61 @@ SCIC_ROUND2_TODO_MARKER = "[SCIC_HDQT_ROUND2]"
 SCIC_ROUND2_DONE_TODO_MARKER = "[SCIC_HDQT_ROUND2_DONE]"
 SCIC_ROUND1_DONE_TODO_MARKER = "[SCIC_HDQT_ROUND1_DONE]"
 SCIC_MANUAL_PAIR_TODO_MARKER = "[SCIC_HDQT_FILL_PAIR]"
+
+
+def _normalize_teams_recipients(user_ids: list[str] | tuple[str, ...] | set[str] | None) -> list[str]:
+	"""Chuẩn hóa người nhận Teams theo user_id/email hợp lệ."""
+	recipients: list[str] = []
+	seen: set[str] = set()
+	for raw_user in user_ids or []:
+		user = (raw_user or "").strip()
+		if not user or user in {"Administrator", "Guest"}:
+			continue
+
+		# Frappe user thường là email. Nếu không phải email, cố map qua User.email.
+		if "@" not in user:
+			mapped_email = (frappe.db.get_value("User", user, "email") or "").strip()
+			if "@" in mapped_email:
+				user = mapped_email
+			else:
+				continue
+
+		if user in seen:
+			continue
+		seen.add(user)
+		recipients.append(user)
+	return recipients
+
+
+def _enqueue_teams_notify_for_users(
+	user_ids: list[str] | tuple[str, ...] | set[str] | None,
+	subject: str,
+	document_type: str,
+	document_name: str,
+):
+	"""Gửi thêm MS Teams cho cùng đối tượng nhận Notification/ToDo."""
+	recipients = _normalize_teams_recipients(user_ids)
+	if not recipients:
+		return
+
+	try:
+		url = get_url_to_form(document_type, document_name)
+		message_html = (
+			f"🔔 {escape_html(subject or '')}<br>"
+			f"<a href=\"{escape_html(url)}\">Xem chi tiết</a>"
+		)
+		frappe.enqueue(
+			"vinatex.integrations.teams_graph.notify_user",
+			queue="short",
+			timeout=60,
+			is_async=True,
+			upn_or_email=recipients,
+			content_type="html",
+			linkify=False,
+			message=message_html,
+		)
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "VNT Document Management - enqueue Teams notify failed")
 
 
 def _get_next_incoming_doc_name(
@@ -519,6 +575,7 @@ class VNTDocumentManagement(Document):
 			message=message,
 			link=get_url_to_form(self.doctype, self.name),
 		)
+		_enqueue_teams_notify_for_users([user_id], message, self.doctype, self.name)
 
 	def _maybe_notify_chair_on_specialist_done(self):
 		"""Khi chuyên viên xử lý hoàn thành, thông báo cho Người chủ trì."""
@@ -561,6 +618,7 @@ class VNTDocumentManagement(Document):
 			message=message,
 			link=get_url_to_form(self.doctype, self.name),
 		)
+		_enqueue_teams_notify_for_users([user_id], message, self.doctype, self.name)
 
 	def _maybe_notify_collab_specialists_assignment(self):
 		"""Lần đầu gắn chuyên viên xử lý và deadline trong bảng phối hợp -> gửi thông báo cho chuyên viên phối hợp."""
@@ -630,6 +688,7 @@ class VNTDocumentManagement(Document):
 				message=message,
 				link=get_url_to_form(self.doctype, self.name),
 			)
+			_enqueue_teams_notify_for_users([user_id], message, self.doctype, self.name)
 
 	def _maybe_notify_collab_on_spec_done(self):
 		"""Khi chuyên viên phối hợp (cv_xu_ly) hoàn thành, thông báo cho người phối hợp tương ứng."""
@@ -682,6 +741,7 @@ class VNTDocumentManagement(Document):
 				message=message,
 				link=get_url_to_form(self.doctype, self.name),
 			)
+			_enqueue_teams_notify_for_users([user_id], message, self.doctype, self.name)
 
 	def _notify_child_assignees(self):
 		"""Gửi noti/ToDo/Rocket.Chat cho các nhân sự ở bảng người xử lý chính."""
@@ -746,6 +806,7 @@ class VNTDocumentManagement(Document):
 				message=message,
 				link=get_url_to_form(self.doctype, self.name),
 			)
+			_enqueue_teams_notify_for_users(list(user_ids), message, self.doctype, self.name)
 
 		chairs = [row for row in items if row.chu_tri]
 		collabs = [row for row in items if row.phoi_hop]
@@ -815,6 +876,7 @@ class VNTDocumentManagement(Document):
 			message=content,
 			link=get_url_to_form(self.doctype, self.name),
 		)
+		_enqueue_teams_notify_for_users([user_id], content, self.doctype, self.name)
 
 	def _notify_incoming_to_lead_depart(self):
 		"""Gửi notification + tạo ToDo cho Lãnh đạo ban khi công văn đến nội bộ."""
@@ -862,6 +924,7 @@ class VNTDocumentManagement(Document):
 			message=content,
 			link=get_url_to_form(self.doctype, self.name),
 		)
+		_enqueue_teams_notify_for_users([user_id], content, self.doctype, self.name)
 
 	def _notify_office_group(self):
 		"""Gửi thông báo tới User Group 'Chánh VP nhận thông báo CV đến'."""
@@ -913,6 +976,7 @@ class VNTDocumentManagement(Document):
 			message=message,
 			link=get_url_to_form(self.doctype, self.name),
 		)
+		_enqueue_teams_notify_for_users(user_list, message, self.doctype, self.name)
 
 	def _notify_outgoing_department_members(self):
 		"""Gửi thông báo công văn đi tới toàn bộ nhân sự thuộc Ban gửi đi."""
@@ -952,6 +1016,7 @@ class VNTDocumentManagement(Document):
 			message=message,
 			link=get_url_to_form(self.doctype, self.name),
 		)
+		_enqueue_teams_notify_for_users(user_ids, message, self.doctype, self.name)
 	def _is_allowed_opinion(self, opinion: str | None) -> bool:
 		"""Opinion hợp lệ cho thành viên: chỉ Đồng ý / Không đồng ý."""
 		return (opinion or "").strip() in {"Đồng ý", "Không đồng ý"}
@@ -1030,6 +1095,7 @@ class VNTDocumentManagement(Document):
 				},
 				sent_users,
 			)
+			_enqueue_teams_notify_for_users(sent_users, message, self.doctype, self.name)
 
 	def _get_items6_user_ids(self) -> list[str]:
 		"""Lấy user_id của toàn bộ employee đang có trong items6."""
@@ -1159,15 +1225,17 @@ class VNTDocumentManagement(Document):
 			if should_notify_lead:
 				employee_name = _get_employee_name(row_employee)
 				doc_title = self._hdqt_notify_title()
+				subject = f"{employee_name} đã cho ý kiến về: {doc_title}."
 				make_notification_logs(
 					{
 						"type": "Alert",
-						"subject": f"{employee_name} đã cho ý kiến về: {doc_title}.",
+						"subject": subject,
 						"document_type": self.doctype,
 						"document_name": self.name,
 					},
 					[lead_user],
 				)
+				_enqueue_teams_notify_for_users([lead_user], subject, self.doctype, self.name)
 
 			# Nhóm 2: lead_depart giải trình cho dòng employee.
 			# Mỗi lần đổi explan hoặc attach_doc đều báo lại employee của đúng dòng.
@@ -1177,15 +1245,17 @@ class VNTDocumentManagement(Document):
 					continue
 				lead_depart_name = frappe.db.get_value("Employee", self.lead_depart, "employee_name") or self.lead_depart
 				doc_title = self._hdqt_notify_title()
+				subject = f"{lead_depart_name} đã giải trình về: {doc_title}."
 				make_notification_logs(
 					{
 						"type": "Alert",
-						"subject": f"{lead_depart_name} đã giải trình về: {doc_title}.",
+						"subject": subject,
 						"document_type": self.doctype,
 						"document_name": self.name,
 					},
 					[employee_user],
 				)
+				_enqueue_teams_notify_for_users([employee_user], subject, self.doctype, self.name)
 
 	def _is_items6_opinion_completed(self) -> bool:
 		"""Luồng scic_opinion = 0: tất cả dòng items6 hợp lệ đều đã nhập opinion."""
@@ -1583,6 +1653,7 @@ def notify_pending_hdqt_opinion_deadline():
 			},
 			[user_id],
 		)
+		_enqueue_teams_notify_for_users([user_id], subject, "VNT Document Management", doc_name)
 
 
 def _is_leader(user: str) -> bool:
