@@ -154,11 +154,11 @@ def _user_employee(user: str | None) -> str | None:
         return None
 
 
-def _is_tap_doan_leader(user: str | None) -> bool:
+def _is_vnt_qlvb(user: str | None) -> bool:
     if not user or user == "Guest":
         return False
     roles = {(r or "").strip().lower() for r in frappe.get_roles(user)}
-    return "lãnh đạo tập đoàn" in roles or "lanh dao tap doan" in roles
+    return "vnt qlvb" in roles
 
 
 def vnt_document_management_permission_query_conditions(user=None):
@@ -168,8 +168,12 @@ def vnt_document_management_permission_query_conditions(user=None):
 
     allow_empty_type = "ifnull(`tabVNT Document Management`.vnt_type, '') = ''"
 
-    # Cho Administrator/System Manager/Lãnh đạo tập đoàn view all
-    if user == "Administrator" or "System Manager" in frappe.get_roles(user) or _is_tap_doan_leader(user):
+    # Cho Administrator/System Manager/VNT QLVB view all
+    if (
+        user == "Administrator"
+        or "System Manager" in frappe.get_roles(user)
+        or _is_vnt_qlvb(user)
+    ):
         return ""
 
     emp = _user_employee(user)
@@ -241,7 +245,11 @@ def vnt_document_management_has_permission(doc=None, user=None, ptype=None):
     user = user or frappe.session.user
     if not user or user == "Guest":
         return False
-    if user == "Administrator" or "System Manager" in frappe.get_roles(user) or _is_tap_doan_leader(user):
+    if (
+        user == "Administrator"
+        or "System Manager" in frappe.get_roles(user)
+        or _is_vnt_qlvb(user)
+    ):
         return True
 
     # Khi doc=None (check cấp doctype), cho phép để còn áp dụng query_conditions

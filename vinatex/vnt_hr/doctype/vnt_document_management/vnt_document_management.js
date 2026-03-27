@@ -149,11 +149,67 @@ const ITEMS6_LEAD_GLOBAL_FIELDS = new Set(["explan", "attach_doc"]);
 const VNT_TYPE_NOI_BO_BAN = "Nội bộ ban";
 const LEAVE_APPROVER_L1_ROLE = "Leave Approver L1";
 const VNT_DOCUMENT_MANAGER_ROLE = "VNT Document Manager";
+const VNT_QLVB_ROLE = "VNT QLVB";
 const LEAD_HDQT_DEPARTMENTS = new Set([normalize_department_name("Văn phòng HĐQT - VGT")]);
 const MEMBER_HDQT_DEPARTMENTS = new Set([
   normalize_department_name("Hội đồng quản trị - VGT"),
   normalize_department_name("Hội đồng quản trị"),
 ]);
+
+const has_full_document_access_role = () => (
+  frappe.user.has_role("Administrator")
+  || frappe.user.has_role("System Manager")
+  || frappe.user.has_role(VNT_QLVB_ROLE)
+);
+
+const clear_scope_flags = (frm) => {
+  frm._is_chair_scope_active = false;
+  frm._is_handler_scope_active = false;
+  frm._is_specialist_scope_active = false;
+  frm._is_collab_scope_active = false;
+};
+
+const unlock_grid_for_full_access = (grid) => {
+  if (!grid) return;
+  grid.df.read_only = 0;
+  grid.df.in_place_edit = true;
+  (grid.docfields || []).forEach((df) => {
+    df.read_only = 0;
+    df.in_grid_editable_form = 1;
+    df.in_place_edit = true;
+  });
+  grid.cannot_add_rows = false;
+  grid.cannot_delete_rows = false;
+  grid.wrapper.find("input, select, textarea, button").prop("disabled", false);
+  grid.wrapper.find(".grid-add-row, .grid-remove-rows, .grid-remove-all-rows").show();
+  (grid.grid_rows || []).forEach((row) => {
+    if (typeof row.toggle_editable === "function") {
+      row.toggle_editable(true);
+    }
+  });
+  grid.refresh();
+};
+
+const apply_full_access_edit_override = (frm) => {
+  if (!has_full_document_access_role()) return;
+  clear_scope_flags(frm);
+
+  Object.keys(frm.fields_dict || {}).forEach((fieldname) => {
+    const field = frm.fields_dict[fieldname];
+    const df = field?.df;
+    if (!df) return;
+    if (["Column Break", "Section Break", "Tab Break"].includes(df.fieldtype)) return;
+
+    frm.set_df_property(fieldname, "read_only", 0);
+    frm.toggle_enable(fieldname, true);
+
+    if (df.fieldtype === "Table") {
+      unlock_grid_for_full_access(field.grid);
+    } else if (typeof field.refresh === "function") {
+      field.refresh();
+    }
+  });
+};
 
 const sync_summary_opinion = (frm) => {
   const rows = Array.isArray(frm.doc.items6) ? frm.doc.items6 : [];
@@ -303,7 +359,7 @@ const sync_hdqt_member_tables = async (frm, members = null) => {
 };
 
 const can_edit_items6_opinion = (row, currentEmp, leadEmp = "") => {
-  if (frappe.user.has_role("Administrator") || frappe.user.has_role("System Manager")) return true;
+  if (has_full_document_access_role()) return true;
   const employee = (row?.employee || "").trim();
   if (!employee || !currentEmp) return false;
   const isOwner = employee === currentEmp;
@@ -355,7 +411,7 @@ const is_items7_manual_pair_completed = (frm) => {
 };
 
 const can_edit_items7_opinion = (row, currentEmp, leadEmp, manualPairCompleted = false) => {
-  if (frappe.user.has_role("Administrator") || frappe.user.has_role("System Manager")) return true;
+  if (has_full_document_access_role()) return true;
   if (!row?.employee || !currentEmp) return false;
   // 2 mã cố định: chỉ lead_depart được sửa.
   if (SCIC_MANUAL_EMPLOYEES.has(row.employee)) {
@@ -441,6 +497,11 @@ const get_current_employee_department = async (frm, employee = null) => {
 const can_show_noi_bo_ban_for_current_user = async (frm) => {
   // Cache theo form để tránh gọi DB lặp lại nhiều lần khi refresh.
   if (frm._canShowNoiBoBanType !== undefined) return !!frm._canShowNoiBoBanType;
+
+  if (has_full_document_access_role()) {
+    frm._canShowNoiBoBanType = true;
+    return true;
+  }
 
   // Bắt buộc user có Employee để xác định phòng ban.
   const currentEmp = await get_current_employee(frm);
@@ -765,7 +826,7 @@ const can_view_handler_controls = async (frm) => {
   const handler = get_handler_owner(frm);
   if (!handler) return true; // chưa giao lãnh đạo -> cho xem để hiểu cần giao
 
-  if (frappe.user.has_role("Administrator") || frappe.user.has_role("System Manager")) {
+  if (has_full_document_access_role()) {
     return true;
   }
 
@@ -823,6 +884,12 @@ const set_handler_editable = (frm, enabled, opts = {}) => {
 };
 
 const enforce_chair_scope = async (frm) => {
+  if (has_full_document_access_role()) {
+    clear_scope_flags(frm);
+    apply_full_access_edit_override(frm);
+    return;
+  }
+
   const isIncoming = (frm.doc.vnt_type || "").trim() === "Công văn đến";
   if (!isIncoming) {
     frm._is_chair_scope_active = false;
@@ -882,6 +949,12 @@ const enforce_chair_scope = async (frm) => {
 };
 
 const enforce_handler_scope = async (frm) => {
+  if (has_full_document_access_role()) {
+    clear_scope_flags(frm);
+    apply_full_access_edit_override(frm);
+    return;
+  }
+
   if (frm._is_chair_scope_active) {
     frm._is_handler_scope_active = false;
     return; // Ưu tiên khóa của Chủ trì
@@ -974,6 +1047,12 @@ const enforce_handler_scope = async (frm) => {
 };
 
 const enforce_specialist_scope = async (frm) => {
+  if (has_full_document_access_role()) {
+    clear_scope_flags(frm);
+    apply_full_access_edit_override(frm);
+    return;
+  }
+
   if (frm._is_chair_scope_active || frm._is_handler_scope_active) {
     frm._is_specialist_scope_active = false;
     return; // Ưu tiên khóa của Chủ trì/Lãnh đạo
@@ -1048,6 +1127,12 @@ const enforce_specialist_scope = async (frm) => {
 };
 
 const enforce_collab_scope = async (frm) => {
+  if (has_full_document_access_role()) {
+    clear_scope_flags(frm);
+    apply_full_access_edit_override(frm);
+    return;
+  }
+
   if (frm._is_chair_scope_active || frm._is_handler_scope_active || frm._is_specialist_scope_active) {
     frm._is_collab_scope_active = false;
     return; // Ưu tiên khóa cao hơn
@@ -1154,6 +1239,19 @@ const enforce_collab_scope = async (frm) => {
 };
 
 const apply_handler_edit_lock = async (frm) => {
+  if (has_full_document_access_role()) {
+    clear_scope_flags(frm);
+    set_handler_editable(frm, true, {
+      allowItems: true,
+      allowItem2: true,
+      allowItems4: true,
+      allowItems5: true,
+      allowHdqtOpinion: true,
+    });
+    apply_full_access_edit_override(frm);
+    return;
+  }
+
   const isIncoming = (frm.doc.vnt_type || "").trim() === "Công văn đến";
   if (!isIncoming) {
     set_handler_editable(frm, true);
@@ -1174,11 +1272,18 @@ const apply_handler_edit_lock = async (frm) => {
 
 const set_creator_editable = (frm, enabled) => {
   if (frm._is_chair_scope_active || frm._is_handler_scope_active || frm._is_specialist_scope_active || frm._is_collab_scope_active) return; // Đang khóa form, bỏ qua
-  const fields = ["type", "sender", "handler", "document_date", "received_date", "deadline", "reference_number", "summary", "attach"];
+  const fields = ["type", "vnt_type", "sender", "handler", "document_date", "received_date", "deadline", "reference_number", "summary", "attach"];
   fields.forEach((field) => frm.toggle_enable(field, enabled));
 };
 
 const apply_creator_edit_lock = async (frm) => {
+  if (has_full_document_access_role()) {
+    clear_scope_flags(frm);
+    set_creator_editable(frm, true);
+    apply_full_access_edit_override(frm);
+    return;
+  }
+
   if (frappe.user.has_role(VNT_DOCUMENT_MANAGER_ROLE)) {
     set_creator_editable(frm, true);
     return;
@@ -1228,6 +1333,13 @@ const set_chair_editable = (frm, enabled, opts = {}) => {
 };
 
 const apply_chair_edit_lock = async (frm) => {
+  if (has_full_document_access_role()) {
+    clear_scope_flags(frm);
+    set_chair_editable(frm, true, { allowItems2: true, allowItem4: true });
+    apply_full_access_edit_override(frm);
+    return;
+  }
+
   const chair = frm.doc.nguoi_chu_tri || null;
   const specialist = frm.doc.cv_xu_ly || null;
   if (!chair && !specialist) {
@@ -1595,6 +1707,10 @@ frappe.ui.form.on("VNT Document Management", {
     frm.trigger("enforce_items6_opinion_scope");
     frm.trigger("enforce_items7_opinion_scope");
     frm.trigger("refresh_vnt_type_filter");
+
+    if (has_full_document_access_role()) {
+      apply_full_access_edit_override(frm);
+    }
     // apply_items7_visibility(frm);
 
     // Chỉ set mặc định khi là phiếu mới
@@ -1921,6 +2037,16 @@ frappe.ui.form.on("VNT Document Management", {
   },
 
   lock_items2_grid(frm) {
+    if (has_full_document_access_role()) {
+      const grid = frm.fields_dict.items2?.grid;
+      if (!grid) return;
+      grid.cannot_add_rows = false;
+      grid.cannot_delete_rows = false;
+      grid.wrapper.find(".grid-add-row, .grid-remove-rows, .grid-remove-all-rows").show();
+      grid.refresh();
+      return;
+    }
+
     const grid = frm.fields_dict.items2?.grid;
     if (!grid) return;
     grid.cannot_add_rows = true;
