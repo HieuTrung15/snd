@@ -40,6 +40,7 @@ app_include_js = [
     f"/assets/vinatex/js/custom_notification.js?v={version}",
     f"/assets/vinatex/js/hide_id_column.js?v={version}",
     f"/assets/vinatex/js/hide_connections.js?v={version}",
+    f"/assets/vinatex/js/hide_workflow_help.js?v={version}",
 ]
 
 # include js, css files in header of web template
