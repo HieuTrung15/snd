@@ -166,7 +166,7 @@ def vnt_document_management_permission_query_conditions(user=None):
     if not user or user == "Guest":
         return "1=0"
 
-    allow_empty_type = "ifnull(`tabVNT Document Management`.type, '') = ''"
+    allow_empty_type = "ifnull(`tabVNT Document Management`.vnt_type, '') = ''"
 
     # Cho Administrator/System Manager/Lãnh đạo tập đoàn view all
     if user == "Administrator" or "System Manager" in frappe.get_roles(user) or _is_tap_doan_leader(user):
@@ -183,7 +183,7 @@ def vnt_document_management_permission_query_conditions(user=None):
     if esc_dept:
         outgoing_clause = f"""
             OR (
-                `tabVNT Document Management`.type = 'Công văn đi'
+                `tabVNT Document Management`.vnt_type = 'Công văn đi'
                 AND (
                     `tabVNT Document Management`.employee = {esc}
                     OR `tabVNT Document Management`.nguoi_ky = {esc}
@@ -194,7 +194,7 @@ def vnt_document_management_permission_query_conditions(user=None):
     else:
         outgoing_clause = f"""
             OR (
-                `tabVNT Document Management`.type = 'Công văn đi'
+                `tabVNT Document Management`.vnt_type = 'Công văn đi'
                 AND (
                     `tabVNT Document Management`.employee = {esc}
                     OR `tabVNT Document Management`.nguoi_ky = {esc}
@@ -248,8 +248,14 @@ def vnt_document_management_has_permission(doc=None, user=None, ptype=None):
     if not doc:
         return True
 
+    doc_type = (
+        getattr(doc, "vnt_type", None)
+        or getattr(doc, "type", None)
+        or ""
+    ).strip()
+
     # Văn bản chưa chọn loại -> mở cho tất cả
-    if not (getattr(doc, "type", None) or "").strip():
+    if not doc_type:
         return True
 
     emp = _user_employee(user)
@@ -266,7 +272,7 @@ def vnt_document_management_has_permission(doc=None, user=None, ptype=None):
     }
     if emp in direct:
         return True
-    if getattr(doc, "type", "").strip() == "Công văn đi":
+    if doc_type == "Công văn đi":
         if emp_dept and getattr(doc, "department", None) == emp_dept:
             return True
         if getattr(doc, "nguoi_ky", None) == emp:
