@@ -2851,10 +2851,11 @@ def get_document_block_data_v2(
 		if type_doc == "Công văn đi":
 			post_filter = lambda d: (d.get("type_doc") or "").strip().upper() != "QĐ"
 
+	date_field = "received_date" if type_doc == "Công văn đến" else "document_date"
 	if from_date:
-		base_filters.append(["document_date", ">=", from_date])
+		base_filters.append([date_field, ">=", from_date])
 	if to_date:
-		base_filters.append(["document_date", "<=", to_date])
+		base_filters.append([date_field, "<=", to_date])
 
 	or_filters = None
 	if q:

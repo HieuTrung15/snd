@@ -711,7 +711,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-26 16:10:19.662034",
+ "modified": "2026-03-27 14:44:53.097247",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
@@ -766,6 +766,7 @@
    "write": 1
   },
   {
+   "delete": 1,
    "email": 1,
    "permlevel": 1,
    "print": 1,
