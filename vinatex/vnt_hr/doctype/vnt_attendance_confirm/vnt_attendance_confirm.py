@@ -739,7 +739,11 @@ def make_attendance_confirm():
 				_ensure_todo_for_confirmation(att, user, added_dates)
 				_notify_confirmation(att, user, added_dates)
 			results.append(att.name)
-	return results
+
+	# Trả về thống kê chi tiết cho Job Monitor
+	return {
+		"Số bản ghi đã tạo/cập nhật": len(results)
+	}
 
 
 @frappe.whitelist()

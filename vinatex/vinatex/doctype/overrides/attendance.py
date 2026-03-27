@@ -90,19 +90,18 @@ def create_attendance_from_checkin():
 			target[holiday.parent] = set()
 		target[holiday.parent].add(getdate(holiday.holiday_date))
 	
-	# Lấy tất cả checkin data trong khoảng thời gian
+	# Lấy tất cả checkin data (Dùng MIN/MAX để lấy log đầu/cuối ngày)
 	checkin_data = frappe.db.sql("""
 		SELECT 
 			employee,
 			DATE(time) as checkin_date,
-			MIN(CASE WHEN log_type = 'IN' THEN time END) as in_time,
-			MAX(CASE WHEN log_type = 'OUT' THEN time END) as out_time
+			MIN(time) as in_time,
+			MAX(time) as out_time
 		FROM `tabEmployee Checkin`
 		WHERE DATE(time) BETWEEN %s AND %s
-		AND log_type IN ('IN', 'OUT')
+		AND docstatus < 2
 		GROUP BY employee, DATE(time)
 	""", (start_date, date), as_dict=True)
-	# frappe.throw(F"{checkin_data}")
 	# Tạo dict checkin theo employee và date
 	employee_checkins = {}
 	for checkin in checkin_data:
@@ -132,7 +131,7 @@ def create_attendance_from_checkin():
 			if (emp_name, current_date) in existing_attendances:
 				continue
 			
-			# Skip nếu là ngày nghỉ lễ
+			# Skip nếu là ngày nghỉ lễ (emp_holidays are weekly_off=1)
 			if current_date in emp_holidays:
 				continue
 			
@@ -246,5 +245,6 @@ def create_attendance_from_checkin():
 						att.submit()
 					except Exception as individual_error:
 						frappe.log_error(f"Error creating attendance for {att_data.get('employee')} on {att_data.get('attendance_date')}: {str(individual_error)}", "Individual Attendance Error")
-	
-	return len(attendances_to_create)
+	return {
+		"Số bản ghi đã tạo": len(attendances_to_create)
+	}
