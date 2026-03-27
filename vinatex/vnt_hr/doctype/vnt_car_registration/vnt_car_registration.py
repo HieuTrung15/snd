@@ -173,14 +173,14 @@ def _handle_state_transition(doc: Document):
 	if prev_state == 'Chờ lãnh đạo duyệt' and curr_state == 'Từ chối':
 		make_notification_logs({
         "type": "Alert",
-        "subject": _("Phiếu đăng ký xe của {0} đã bị lãnh đạo từ chối.").format(doc.employee_name or _("(không rõ)")),
+        "subject": _("Phiếu đăng ký xe của {0} đã bị lãnh đạo từ chối vì lý do: {1}.").format(doc.employee_name or _("(không rõ)"), doc.reject_reason or _("(không rõ)")),
         "document_type": doc.doctype,
         "document_name": doc.name,
     }, [approver_user])
 		send_rocket_message(
 			to_users=approver_user,
 			title=":bell: Thông báo",
-			message=_("Phiếu đăng ký xe của {0} đã bị lãnh đạo từ chối.").format(doc.employee_name or _("(không rõ)")),
+			message=_("Phiếu đăng ký xe của {0} đã bị lãnh đạo từ chối vì lý do: {1}.").format(doc.employee_name or _("(không rõ)"), doc.reject_reason or _("(không rõ)")),
 			link=get_url_to_form(doc.doctype, doc.name)
 		)
 		frappe.enqueue(
@@ -192,10 +192,11 @@ def _handle_state_transition(doc: Document):
 			content_type="html",
 			linkify=False,
 			message=_(
-				"🔔 Phiếu đăng ký xe của {0} đã bị lãnh đạo từ chối.<br>"
-				"<a href=\"{1}\">Xem chi tiết</a>"
+				"🔔 Phiếu đăng ký xe của {0} đã bị lãnh đạo từ chối vì lý do: {1}.<br>"
+				"<a href=\"{2}\">Xem chi tiết</a>"
 			).format(
 				doc.employee_name or _("(không rõ)"),
+				doc.reject_reason or _("(không rõ)"),
 				url
 			),
 		)
@@ -203,14 +204,14 @@ def _handle_state_transition(doc: Document):
 	if prev_state == 'Chờ lãnh đạo tập đoàn duyệt' and curr_state == 'Từ chối':
 		make_notification_logs({
         "type": "Alert",
-        "subject": _("Phiếu đăng ký xe của {0} đã bị lãnh đạo tập đoàn từ chối.").format(doc.employee_name or _("(không rõ)")),
+        "subject": _("Phiếu đăng ký xe của {0} đã bị lãnh đạo tập đoàn từ chối vì lý do: {1}.").format(doc.employee_name or _("(không rõ)"), doc.reject_reason or _("(không rõ)")),
         "document_type": doc.doctype,
         "document_name": doc.name,
     }, [approver_user])
 		send_rocket_message(
 			to_users=approver_user,
 			title=":bell: Thông báo",
-			message=_("Phiếu đăng ký xe của {0} đã bị lãnh đạo tập đoàn từ chối.").format(doc.employee_name or _("(không rõ)")),
+			message=_("Phiếu đăng ký xe của {0} đã bị lãnh đạo tập đoàn từ chối vì lý do: {1}.").format(doc.employee_name or _("(không rõ)"), doc.reject_reason or _("(không rõ)")),
 			link=get_url_to_form(doc.doctype, doc.name)
 		)
 		frappe.enqueue(
@@ -222,10 +223,11 @@ def _handle_state_transition(doc: Document):
 			content_type="html",
 			linkify=False,
 			message=_(
-				"🔔 Phiếu đăng ký xe của {0} đã bị lãnh đạo tập đoàn từ chối.<br>"
-				"<a href=\"{1}\">Xem chi tiết</a>"
+				"🔔 Phiếu đăng ký xe của {0} đã bị lãnh đạo tập đoàn từ chối vì lý do: {1}.<br>"
+				"<a href=\"{2}\">Xem chi tiết</a>"
 			).format(
 				doc.employee_name or _("(không rõ)"),
+				doc.reject_reason or _("(không rõ)"),
 				url
 			),
 		)

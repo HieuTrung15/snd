@@ -1,9 +1,65 @@
 frappe.ui.form.on("Leave Application", {
 	validate (frm) {
 		// Khi chuyển về Rejected thì bắt buộc phải có lý do
-		if (frm.doc.workflow_state === 'Rejected' && !frm.doc.custom_reject_reason) {
+		if (["Rejected", "Từ chối"].includes(frm.doc.workflow_state) && !frm.doc.custom_reject_reason) {
 		frappe.throw(__('Vui lòng nhập "Lý do từ chối" trước khi từ chối.'));
 		}
+	},
+	before_workflow_action(frm) {
+		if (frm.selected_workflow_action !== "Từ chối") return;
+		// Workflow mặc định freeze trước khi trigger event, cần mở ra để thao tác popup
+		frappe.dom.unfreeze();
+
+		return new Promise((resolve, reject) => {
+			let confirmed = false;
+			const dialog = new frappe.ui.Dialog({
+				title: __("Lý do từ chối"),
+				fields: [
+					{
+						fieldname: "reject_reason",
+						fieldtype: "Small Text",
+						label: __("Lý do"),
+						reqd: 1,
+						default: frm.doc.custom_reject_reason || "",
+					},
+				],
+				primary_action_label: __("Từ chối"),
+				primary_action(values) {
+					const reject_reason = (values.reject_reason || "").trim();
+					if (!reject_reason) {
+						frappe.msgprint(__("Vui lòng nhập lý do từ chối."));
+						return;
+					}
+
+					// Freeze lại để tránh bấm lặp trong lúc ghi dữ liệu
+					frappe.dom.freeze();
+					frappe.db
+						.set_value(frm.doctype, frm.doc.name, "custom_reject_reason", reject_reason)
+						.then(() => {
+							confirmed = true;
+							frm.set_value("custom_reject_reason", reject_reason);
+							dialog.hide();
+							resolve();
+						})
+						.catch(() => {
+							frappe.dom.unfreeze();
+							frappe.msgprint(__("Không thể lưu lý do từ chối. Vui lòng thử lại."));
+						});
+					},
+				secondary_action_label: __("Quay lại"),
+				secondary_action() {
+					dialog.hide();
+				},
+			});
+
+			dialog.onhide = () => {
+				if (confirmed) return;
+				frm.selected_workflow_action = null;
+				reject();
+			};
+
+			dialog.show();
+		});
 	},
 	before_save (frm) {
 		// Set status cho document mới trước khi save
@@ -177,7 +233,6 @@ frappe.ui.form.on("Leave Application", {
 	},
 
 	onload(frm) {
-		toggle_reject_reason(frm);
 		frm.set_value("follow_via_email", 0);
 		// Ignore cancellation of doctype on cancel all.
 		frm.ignore_doctypes_on_cancel_all = ["Leave Ledger Entry"];
@@ -205,7 +260,6 @@ frappe.ui.form.on("Leave Application", {
             //     }
             // });
 		}
-		toggle_reject_reason(frm);
 		// gỡ nút View Ledger (kể cả có group "View" hay không)
 		frm.remove_custom_button(__('View Ledger'), __('View'));
 		frm.remove_custom_button(__('View Ledger'));
@@ -372,24 +426,4 @@ function set_leave_type_query(frm) {
       // tương đương: filters: [['custom_leave_group', '=', frm.doc.custom_leave_group]]
     };
   });
-}
-
-
-function toggle_reject_reason(frm) {
-  const isApprover =
-    (frappe.user_roles || []).includes('Leave Approver L1') ||
-    (frappe.user_roles || []).includes('Leave Approver L2');
-
-  const pending = frm.doc.workflow_state === 'Chờ LĐ phòng/ban duyệt';
-  const rejected = frm.doc.workflow_state === 'Từ chối';
-
-  // Hiện cho người duyệt khi đang chờ duyệt (để điền), 
-  // hoặc hiện cho tất cả khi đã Rejected (để xem lý do)
-  const showForApproverToEdit = isApprover && pending;
-  const showForEveryoneReadOnly = rejected;
-
-  const shouldShow = showForApproverToEdit || showForEveryoneReadOnly;
-
-  frm.toggle_display('custom_reject_reason', shouldShow);
-  frm.set_df_property('custom_reject_reason', 'read_only', !showForApproverToEdit);
 }

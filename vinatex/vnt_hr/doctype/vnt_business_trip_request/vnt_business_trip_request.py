@@ -937,10 +937,11 @@ def _notify_employees_rejected(doc: Document):
 		return
 	make_notification_logs({
 		"type": "Alert",
-		"subject": _("Phiếu công tác tại {0} từ ngày {1} đến ngày {2} đã bị từ chối.").format(
+		"subject": _("Phiếu công tác tại {0} từ ngày {1} đến ngày {2} đã bị từ chối vì lý do: {3}.").format(
 			doc.destination,
 			formatdate(doc.from_date, "dd-MM-yyyy"), 
-			formatdate(doc.to_date, "dd-MM-yyyy")
+			formatdate(doc.to_date, "dd-MM-yyyy"),
+			doc.reject_reason or _("(không rõ)")
 		),
 		"document_type": doc.doctype,
 		"document_name": doc.name,
@@ -955,12 +956,13 @@ def _notify_employees_rejected(doc: Document):
 		content_type="html",
 		linkify=False,
 		message=_(
-			"🔔 Phiếu công tác tại {0} từ ngày {1} đến ngày {2} đã bị từ chối.<br>"
-			"<a href=\"{3}\">Xem chi tiết</a>"
+			"🔔 Phiếu công tác tại {0} từ ngày {1} đến ngày {2} đã bị từ chối vì lý do: {3}.<br>"
+			"<a href=\"{4}\">Xem chi tiết</a>"
 		).format(
 			doc.destination, 
 			formatdate(doc.from_date, "dd-MM-yyyy"), 
 			formatdate(doc.to_date, "dd-MM-yyyy"), 
+			doc.reject_reason or _("(không rõ)"),
 			url
 		),
 	)

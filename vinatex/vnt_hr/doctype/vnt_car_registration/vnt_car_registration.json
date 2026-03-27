@@ -23,6 +23,7 @@
   "list_emp",
   "emp_list_name",
   "people",
+  "reject_reason",
   "section_break_xwlf",
   "items",
   "section_break_3tb8",
@@ -265,13 +266,19 @@
    "fieldtype": "Check",
    "hidden": 1,
    "label": "leave_approver_2"
+  },
+  {
+   "fieldname": "reject_reason",
+   "fieldtype": "Small Text",
+   "label": "L\u00fd do t\u1eeb ch\u1ed1i",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-30 09:46:26.015188",
+ "modified": "2026-03-27 14:17:58.990979",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Car Registration",

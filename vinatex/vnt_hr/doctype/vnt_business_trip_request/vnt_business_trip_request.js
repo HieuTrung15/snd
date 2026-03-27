@@ -61,6 +61,61 @@ frappe.ui.form.on('VNT Business Trip Request', {
     before_save(frm) {
 		ensure_initial_workflow_state(frm);
 	},
+    before_workflow_action(frm) {
+		if (frm.selected_workflow_action !== "Từ chối") return;
+		// Workflow mặc định freeze trước khi trigger event, cần mở ra để thao tác popup
+		frappe.dom.unfreeze();
+
+		return new Promise((resolve, reject) => {
+			let confirmed = false;
+			const dialog = new frappe.ui.Dialog({
+				title: __("Lý do từ chối"),
+				fields: [
+					{
+						fieldname: "reject_reason",
+						fieldtype: "Small Text",
+						label: __("Lý do"),
+						reqd: 1,
+						default: frm.doc.custom_reject_reason || "",
+					},
+				],
+				primary_action_label: __("Từ chối"),
+				primary_action(values) {
+					const reject_reason = (values.reject_reason || "").trim();
+					if (!reject_reason) {
+						frappe.msgprint(__("Vui lòng nhập lý do từ chối."));
+						return;
+					}
+					// Freeze lại để tránh bấm lặp trong lúc ghi dữ liệu
+					frappe.dom.freeze();
+					frappe.db
+						.set_value(frm.doctype, frm.doc.name, "reject_reason", reject_reason)
+						.then(() => {
+							confirmed = true;
+							frm.set_value("reject_reason", reject_reason);
+							dialog.hide();
+							resolve();
+						})
+						.catch(() => {
+							frappe.dom.unfreeze();
+							frappe.msgprint(__("Không thể lưu lý do từ chối. Vui lòng thử lại."));
+						});
+					},
+				secondary_action_label: __("Quay lại"),
+				secondary_action() {
+					dialog.hide();
+				},
+			});
+
+			dialog.onhide = () => {
+				if (confirmed) return;
+				frm.selected_workflow_action = null;
+				reject();
+			};
+
+			dialog.show();
+		});
+	},
 	refresh(frm) {
         if (frm._should_apply_initial_workflow && !frm.is_new()) {
             apply_initial_workflow_transition(frm);
