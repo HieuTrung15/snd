@@ -230,25 +230,18 @@ scheduler_events = {
         "0 4 1 1 *": [
             "vinatex.vinatex.doctype.overrides.allocate_leave.allocate_leave"
         ],
-		# Chạy chấm công 10p/lân từ 9h đến 10h sáng hàng ngày
+		# Đồng bộ dữ liệu chấm công (Chạy định kỳ sáng và đêm)
 		"*/30 9-10 * * *": [
-			"vinatex.vinatex.doctype.overrides.timekeeping.get_timekeeping_data_morning",
+			"vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper",
 		],
-		# Chạy chấm công lúc 1h sáng hàng ngày
         "5 0 * * *": [
-			"vinatex.vinatex.doctype.overrides.timekeeping.get_timekeeping_data_evening",
+			"vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper",
 		],
-        # "5 11 * * *": [
-		# 	"vinatex.vinatex.doctype.overrides.timekeeping.get_timekeeping_data_evening",
-		# ],
 		"15 0 * * *": [
-			"vinatex.vinatex.doctype.overrides.attendance.create_attendance_from_checkin",
+			"vinatex.vinatex.doctype.utils.job_monitor.monitor_create_attendance",
 		],
-        # "00 01 1 * *": [
-        #     "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.make_attendance_confirm",
-        # ],
         "0 7 * * *": [
-            "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.make_attendance_confirm",
+            "vinatex.vinatex.doctype.utils.job_monitor.monitor_attendance_confirm",
         ],
 		# Nhắc hạn điền opinion items6/items7 (D-1 và D0) mỗi ngày.
 		"30 7 * * *": [
@@ -316,7 +309,14 @@ scheduler_events = {
 # ----------------
 # before_request = ["vinatex.utils.before_request"]
 # after_request = ["vinatex.utils.after_request"]
-# boot_session = "vinatex.api.boot.boot_session"
+# boot_session: Chạy mỗi khi user đăng nhập vào hệ thống.
+# Dùng để thu hồi ủy quyền nhân sự đã hết hạn (lazy revocation, không cần scheduler job).
+# boot_session: Chạy mỗi khi user đăng nhập vào hệ thống.
+# Dùng để thu hồi ủy quyền nhân sự đã hết hạn (lazy revocation, không cần scheduler job).
+# Phải là list, và hàm phải nhận tham số bootinfo theo Frappe spec.
+# boot_session = ["vinatex.vinatex.doctype.overrides.leave_application.revoke_expired_authorizations"]
+
+
 
 # Job Events
 # ----------
