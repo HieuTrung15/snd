@@ -138,6 +138,18 @@ class VntLeaveApplication(LeaveApplication):
 
 def _handle_state_transition(doc: Document):
 	prev_state, curr_state = _get_prev_and_curr_workflow_state(doc)
+
+	# Tự động duyệt luôn nếu người duyệt 1 và 2 giống nhau, áp dụng cho văn phòng 2
+	if curr_state == "Chờ lãnh đạo tập đoàn duyệt" and \
+		doc.custom_approver and doc.custom_approver == doc.custom_second_approver:
+		doc.workflow_state = "Đã duyệt"
+		doc.db_set("workflow_state", "Đã duyệt")
+		# Nếu là bước duyệt cuối, cần đảm bảo docstatus và status cũng được cập nhật
+		doc.status = "Approved"
+		doc.db_set("status", "Approved")
+		doc.db_set("docstatus", 1)
+		curr_state = "Đã duyệt"
+
 	leave_type = doc.get("leave_type")
 	employee_user = doc.get("employee")
 	approver_user = get_employee_user_id(employee_user)
