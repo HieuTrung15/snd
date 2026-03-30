@@ -1,0 +1,138 @@
+{
+ "actions": [],
+ "autoname": "VNT-AUTH-.####",
+ "creation": "2026-03-25 00:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "leave_application",
+  "employee_from",
+  "employee_from_name",
+  "employee_to",
+  "employee_to_name",
+  "column_break_1",
+  "from_date",
+  "to_date",
+  "is_active",
+  "section_roles",
+  "roles_granted"
+ ],
+ "fields": [
+  {
+   "fieldname": "leave_application",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Leave Application",
+   "options": "Leave Application",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee_from",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Nh\u00e2n vi\u00ean \u1ee7y quy\u1ec1n (A)",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee_from.employee_name",
+   "fieldname": "employee_from_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean nh\u00e2n vi\u00ean \u1ee7y quy\u1ec1n",
+   "read_only": 1
+  },
+  {
+   "fieldname": "employee_to",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Ng\u01b0\u1eddi \u0111\u01b0\u1ee3c \u1ee7y quy\u1ec1n (B)",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee_to.employee_name",
+   "fieldname": "employee_to_name",
+   "fieldtype": "Data",
+   "label": "T\u00ean ng\u01b0\u1eddi \u0111\u01b0\u1ee3c \u1ee7y quy\u1ec1n",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "T\u1eeb ng\u00e0y",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "\u0110\u1ebfn ng\u00e0y",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_roles",
+   "fieldtype": "Section Break",
+   "label": "C\u00e1c Role \u0111\u00e3 c\u1ea5p"
+  },
+  {
+   "description": "Danh s\u00e1ch roles \u0111\u00e3 c\u1ea5p cho ng\u01b0\u1eddi \u0111\u01b0\u1ee3c \u1ee7y quy\u1ec1n, l\u01b0u d\u1ea1ng JSON list",
+   "fieldname": "roles_granted",
+   "fieldtype": "Small Text",
+   "label": "Roles \u0111\u00e3 c\u1ea5p (JSON)"
+  }
+ ],
+ "in_create": 1,
+ "links": [],
+ "modified": "2026-03-30 13:23:21.901882",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Employee Authorization",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
