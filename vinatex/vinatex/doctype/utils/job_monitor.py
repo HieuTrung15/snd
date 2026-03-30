@@ -45,7 +45,7 @@ def send_notification(job_name, status, message, body=None):
         "type": "Alert",
         "subject": subject,
         "message": msg_body,
-    }, ["hieutt@vinatex.com.vn", "tuandv@vinatex.com.vn", "sonph@vinatex.com.vn", "sontn@vinatex.com.vn"])
+    }, ["hieutt@vinatex.com.vn", "tuandv@vinatex.com.vn", "sonph@vinatex.com.vn"])
 
 # --- Các hàm Wrapper trỏ từ hooks.py ---
 
