@@ -284,6 +284,7 @@
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "label": "Chuy\u00ean vi\u00ean x\u1eed l\u00fd",
+   "link_filters": "[[\"Employee\",\"status\",\"=\",\"Active\"]]",
    "options": "Employee",
    "permlevel": 1
   },
@@ -472,7 +473,7 @@
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi k\u00fd",
-   "link_filters": "[[\"Employee\",\"custom_designation_group\",\"in\",[\"L\u00e3nh \u0111\u1ea1o c\u1ea5p trung\",\"Ng\u01b0\u1eddi qu\u1ea3n l\u00fd\"]]]",
+   "link_filters": "[[\"Employee\",\"custom_designation_group\",\"in\",[\"L\u00e3nh \u0111\u1ea1o c\u1ea5p trung\",\"Ng\u01b0\u1eddi qu\u1ea3n l\u00fd\"]],[\"Employee\",\"status\",\"=\",\"Active\"]]",
    "mandatory_depends_on": "eval: doc.vnt_type == \"C\u00f4ng v\u0103n \u0111i\" || doc.vnt_type == \"Quy\u1ebft \u0111\u1ecbnh\"",
    "options": "Employee"
   },
@@ -532,6 +533,7 @@
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "label": "L\u00e3nh \u0111\u1ea1o ban",
+   "link_filters": "[[\"Employee\",\"status\",\"=\",\"Active\"]]",
    "no_copy": 1,
    "options": "Employee"
   },
@@ -711,7 +713,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-27 14:44:53.097247",
+ "modified": "2026-03-30 09:27:47.933435",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
