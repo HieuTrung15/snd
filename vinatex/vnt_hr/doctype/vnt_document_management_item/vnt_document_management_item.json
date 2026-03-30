@@ -29,6 +29,7 @@
    "ignore_user_permissions": 1,
    "in_list_view": 1,
    "label": "Ng\u01b0\u1eddi ph\u1ed1i h\u1ee3p",
+   "link_filters": "[[\"Employee\",\"status\",\"=\",\"Active\"]]",
    "options": "Employee",
    "read_only": 1
   },
@@ -84,6 +85,7 @@
    "ignore_user_permissions": 1,
    "in_list_view": 1,
    "label": "Chuy\u00ean vi\u00ean x\u1eed l\u00fd",
+   "link_filters": "[[\"Employee\",\"status\",\"=\",\"Active\"]]",
    "options": "Employee"
   },
   {
@@ -135,7 +137,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-12-04 15:51:59.555878",
+ "modified": "2026-03-30 09:28:25.245584",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management Item",
