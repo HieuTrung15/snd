@@ -2753,10 +2753,35 @@ import frappe
 from frappe.utils import getdate, nowdate, cint
 
 _ALLOWED_BLOCK_TYPES = ("Công văn đến", "Công văn đi", "Quyết định", "Nội bộ ban")
+_BLOCK_ROLE_PARENTFIELDS = ("items", "item2", "items4")
 
 
 def _block_best_deadline(d: dict):
 	return d.get("deadline_chu_tri2") or d.get("deadline_cv_xu_ly") or d.get("deadline")
+
+
+def _block_get_role_assigned_parents(parent_names: list[str] | tuple[str, ...] | set[str] | None) -> set[str]:
+	parent_names = [name for name in (parent_names or []) if (name or "").strip()]
+	if not parent_names:
+		return set()
+
+	rows = frappe.get_all(
+		"VNT Document Management Item2",
+		filters={
+			"parent": ["in", parent_names],
+			"parentfield": ["in", list(_BLOCK_ROLE_PARENTFIELDS)],
+		},
+		fields=["parent", "employee", "chu_tri", "phoi_hop", "nhan_de_biet"],
+		ignore_permissions=True,
+	) or []
+
+	assigned_parents: set[str] = set()
+	for row in rows:
+		if not (row.get("employee") or "").strip():
+			continue
+		if cint(row.get("chu_tri")) or cint(row.get("phoi_hop")) or cint(row.get("nhan_de_biet")):
+			assigned_parents.add(row.get("parent"))
+	return assigned_parents
 
 
 def _block_normalize_status(raw: str) -> str:
@@ -2789,6 +2814,10 @@ def _block_compute_status(doc: dict, today=None) -> str:
 	if is_outgoing_or_qd:
 		return "Hoàn thành" if int(doc.get("docstatus") or 0) == 1 else "Đang xử lý"
 
+	has_role_assignment = doc.get("_has_role_assignment")
+	if vnt_type == "Công văn đến" and has_role_assignment is not None and not cint(has_role_assignment):
+		return "Chờ giao việc"
+
 	# Công văn đến: giữ logic cũ + quá hạn theo deadline
 	raw = (doc.get("chairperson_status") or doc.get("trang_thai_chuyen_vien_xu_ly") or "")
 	st = _block_normalize_status(raw)
@@ -2802,6 +2831,15 @@ def _block_compute_status(doc: dict, today=None) -> str:
 	if dl and dl < today and st not in ("Hoàn thành", "Trả lại"):
 		return "Quá hạn"
 	return st
+
+
+def _block_match_status_filter(computed_status: str, status_filter: str) -> bool:
+	status_filter = (status_filter or "").strip()
+	if not status_filter:
+		return True
+	if status_filter == "Đang xử lý":
+		return computed_status in ("Đang xử lý", "Chờ giao việc")
+	return computed_status == status_filter
 
 
 @frappe.whitelist()
@@ -2824,6 +2862,7 @@ def get_document_block_data_v2(
 	"""
 	page = max(1, cint(page or 1))
 	page_size = max(1, cint(page_size or 20))
+	today = getdate(nowdate())
 
 	type_doc = (type_doc or "").strip() or "Công văn đến"
 	if type_doc not in _ALLOWED_BLOCK_TYPES:
@@ -2831,6 +2870,8 @@ def get_document_block_data_v2(
 
 	q = (q or "").strip()
 	status_filter = (status_filter or "").strip()
+	from_date = from_date or date(today.year, 1, 1).isoformat()
+	to_date = to_date or date(today.year, 12, 31).isoformat()
 
 	# ===== Filters =====
 	post_filter = None
@@ -2892,7 +2933,6 @@ def get_document_block_data_v2(
 		"deadline_chu_tri2",
 	]
 
-	today = getdate(nowdate())
 	DOCTYPE_NAME = "VNT Document Management"
 
 	# ===== 1) KPI counts (không theo status_filter) =====
@@ -2906,6 +2946,7 @@ def get_document_block_data_v2(
 			filters=base_filters,
 			or_filters=or_filters,
 			fields=[
+				"name",
 				"vnt_type",
 				"type_doc",
 				"docstatus",
@@ -2925,16 +2966,23 @@ def get_document_block_data_v2(
 		if not chunk:
 			break
 
+		role_assigned_parents = set()
+		if type_doc == "Công văn đến":
+			role_assigned_parents = _block_get_role_assigned_parents(d.get("name") for d in chunk)
+
 		for d in chunk:
 			if post_filter and not post_filter(d):
 				continue
+
+			if type_doc == "Công văn đến":
+				d["_has_role_assignment"] = 1 if d.get("name") in role_assigned_parents else 0
 
 			kpis["total"] += 1
 			st = _block_compute_status(d, today=today)
 
 			if st == "Hoàn thành":
 				kpis["completed"] += 1
-			elif st == "Đang xử lý":
+			elif st in ("Đang xử lý", "Chờ giao việc"):
 				kpis["processing"] += 1
 			elif st == "Quá hạn":
 				kpis["overdue"] += 1
@@ -3004,12 +3052,19 @@ def get_document_block_data_v2(
 			if not chunk:
 				break
 
+			role_assigned_parents = set()
+			if type_doc == "Công văn đến":
+				role_assigned_parents = _block_get_role_assigned_parents(d.get("name") for d in chunk)
+
 			for d in chunk:
 				if post_filter and not post_filter(d):
 					continue
 
+				if type_doc == "Công văn đến":
+					d["_has_role_assignment"] = 1 if d.get("name") in role_assigned_parents else 0
+
 				st = _block_compute_status(d, today=today)
-				if status_filter and st != status_filter:
+				if not _block_match_status_filter(st, status_filter):
 					continue
 
 				matched_total += 1
@@ -3050,12 +3105,19 @@ def get_document_block_data_v2(
 			if not chunk:
 				break
 
+			role_assigned_parents = set()
+			if type_doc == "Công văn đến":
+				role_assigned_parents = _block_get_role_assigned_parents(d.get("name") for d in chunk)
+
 			for d in chunk:
 				if post_filter and not post_filter(d):
 					continue
 
+				if type_doc == "Công văn đến":
+					d["_has_role_assignment"] = 1 if d.get("name") in role_assigned_parents else 0
+
 				st = _block_compute_status(d, today=today)
-				if status_filter and st != status_filter:
+				if not _block_match_status_filter(st, status_filter):
 					continue
 
 				if skipped < want_start:
@@ -3097,5 +3159,7 @@ def get_document_block_data_v2(
 		"has_next": has_next,
 		"kpis": kpis,
 		"type_doc": type_doc,
+		"from_date": from_date,
+		"to_date": to_date,
 		"status_filter": status_filter or None,
 	}
