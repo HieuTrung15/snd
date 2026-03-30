@@ -37,6 +37,7 @@
   "opinion_next",
   "link_doc",
   "status_doc",
+  "is_complete",
   "column_break_frgm",
   "reference_number",
   "text_number",
@@ -708,12 +709,18 @@
    "fieldtype": "Data",
    "label": "S\u1ed1 v\u0103n b\u1ea3n",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_complete",
+   "fieldtype": "Check",
+   "label": "\u0110\u00e3 ho\u00e0n th\u00e0nh"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-30 09:27:47.933435",
+ "modified": "2026-03-30 13:25:39.739902",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",

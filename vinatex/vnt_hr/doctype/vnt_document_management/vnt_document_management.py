@@ -2777,6 +2777,9 @@ def _block_normalize_status(raw: str) -> str:
 def _block_compute_status(doc: dict, today=None) -> str:
 	today = today or getdate(nowdate())
 
+	if cint(doc.get("is_complete")):
+		return "Hoàn thành"
+
 	# Công văn đi + Quyết định:
 	# - Dữ liệu mới: vnt_type = "Quyết định"
 	# - Legacy: vnt_type = "Công văn đi" + type_doc = "QĐ"
@@ -2871,6 +2874,7 @@ def get_document_block_data_v2(
 		"vnt_type",
 		"type_doc",
 		"docstatus",
+		"is_complete",
 		"reference_number",
 		"summary",
 		"document_date",
@@ -2905,6 +2909,7 @@ def get_document_block_data_v2(
 				"vnt_type",
 				"type_doc",
 				"docstatus",
+				"is_complete",
 				"chairperson_status",
 				"trang_thai_chuyen_vien_xu_ly",
 				"deadline",
