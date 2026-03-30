@@ -483,6 +483,7 @@
    "fetch_if_empty": 1,
    "fieldname": "short_text_department",
    "fieldtype": "Data",
+   "hidden": 1,
    "ignore_user_permissions": 1,
    "label": "T\u00ean vi\u1ebft t\u1eaft Ph\u00f2ng/ban",
    "read_only": 1
@@ -680,6 +681,7 @@
   {
    "fieldname": "link_doc",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "V\u0103n b\u1ea3n g\u1ed1c",
    "options": "VNT Document Management",
    "read_only": 1
@@ -721,7 +723,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-30 13:34:06.875574",
+ "modified": "2026-03-30 14:30:43.736822",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Document Management",
