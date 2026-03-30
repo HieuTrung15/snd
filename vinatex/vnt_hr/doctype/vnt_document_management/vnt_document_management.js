@@ -853,6 +853,7 @@ const set_handler_editable = (frm, enabled, opts = {}) => {
   frm.toggle_enable("y_kien_ld_td", enabled);
   frm.toggle_enable("is_handler_status", enabled);
   frm.toggle_enable("hdqt_opinion", allowHdqtOpinion);
+  frm.toggle_enable("deadline", !!(allowItems || allowItem2));
   const grid = frm.fields_dict.items?.grid;
   frm.set_df_property("items", "read_only", allowItems ? 0 : 1);
   if (grid) {
@@ -984,7 +985,7 @@ const enforce_handler_scope = async (frm) => {
     "hdqt_opinion",
     ...HDQT_MEMBER_FIELDS,
     ...trinhDuyetFields,
-    ...(isInternal ? ["lead_depart", "send_boss", "items4", "items5"] : ["items", "item2"])
+    ...(isInternal ? ["lead_depart", "send_boss", "items4", "items5"] : ["items", "item2", "deadline"])
   ]);
   const leaderOwner = (frm.doc.lanh_dao_tap_doan || "").trim();
   const canEditLeaderFields = !!(currentEmp && leaderOwner && currentEmp === leaderOwner);
