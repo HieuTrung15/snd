@@ -103,8 +103,7 @@ def _handle_state_transition(doc):
 		if not _is_self_approval(approver_user, employee_user):
 			_notify_to_approver(doc, user=approver_user)
 	if prev_state == "Chờ duyệt" and curr_state == "Đã duyệt":
-		# Đóng todo khi đã duyệt
-		_check_state_to_close_todo(doc, user=approver_user)
+		_clear_pending_approval_artifacts(doc, extra_users=[approver_user])
 		_handle_room_assignment_post_approval(doc)
 	# gửi thông báo cho người đăng ký
 	if prev_state == 'Chờ duyệt' and curr_state == 'Đã duyệt':
@@ -118,6 +117,7 @@ def _handle_state_transition(doc):
 
 
 	if prev_state == 'Chờ duyệt' and curr_state == 'Từ chối':
+		_clear_pending_approval_artifacts(doc, extra_users=[approver_user])
 		date_label = _format_date_value(doc.date, _("(không rõ ngày đăng ký)"))
 		subject = _("Phiếu đăng ký phòng họp của {0} ngày {1} từ {2} đến {3} đã bị từ chối").format(
 			doc.employee_name or _("(không rõ)"),
@@ -126,7 +126,7 @@ def _handle_state_transition(doc):
 			doc.end_time or _("(không rõ thời gian kết thúc)"),
 		)
 		_notify_users(doc, [employee_user], subject, subject)
-	if curr_state == 'Từ chối' and prev_state != 'Từ chối':
+	if curr_state == 'Từ chối' and prev_state not in {'Từ chối', 'Chờ duyệt'}:
 		_close_all_todos_for_doc(doc)
 		_close_all_assignments(doc)
 
@@ -331,20 +331,14 @@ def _notify_users(doc: Document, users, subject: str, message: str | None = None
 	)
 
 
-def _check_state_to_close_todo(doc: Document, user: str):
-	"""Close open ToDos for the current approver on this document."""
-	names = frappe.get_all(
-	  "ToDo",
-	  filters={
-		  "reference_type": doc.doctype,
-		  "reference_name": doc.name,
-		  "allocated_to": user,
-		  "status": ["!=", "Cancelled"],
-	  },
-	  pluck="name",
-	)
-	for n in names:
-	  frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
+def _clear_pending_approval_artifacts(doc: Document, extra_users: list[str] | None = None):
+	"""Clear approval reminders when any eligible user completes the workflow step."""
+	pending_users = set(extra_users or [])
+	pending_users.update(_get_todo_allocated_users(doc))
+
+	_close_all_todos_for_doc(doc)
+	_close_all_assignments(doc)
+	_mark_doc_notifications_as_read(doc, pending_users)
 
 
 def _handle_room_assignment_post_approval(doc: Document):
@@ -455,6 +449,47 @@ def _close_all_todos_for_doc(doc: Document):
 	)
 	for name in names:
 		frappe.db.set_value("ToDo", name, "status", "Closed", update_modified=False)
+
+
+def _get_todo_allocated_users(doc: Document) -> set[str]:
+	return {
+		user
+		for user in frappe.get_all(
+			"ToDo",
+			filters={
+				"reference_type": doc.doctype,
+				"reference_name": doc.name,
+				"status": ["in", ["Open", "Overdue"]],
+			},
+			pluck="allocated_to",
+		)
+		if user
+	}
+
+
+def _mark_doc_notifications_as_read(doc: Document, users: set[str] | list[str] | tuple[str, ...]):
+	target_users = [user for user in set(users or []) if user]
+	if not target_users:
+		return
+
+	notification_names = frappe.get_all(
+		"Notification Log",
+		filters={
+			"document_type": doc.doctype,
+			"document_name": doc.name,
+			"for_user": ["in", target_users],
+			"read": 0,
+		},
+		pluck="name",
+	)
+	if notification_names:
+		frappe.db.set_value(
+			"Notification Log",
+			{"name": ["in", notification_names]},
+			"read",
+			1,
+			update_modified=False,
+		)
 
 
 def _close_all_assignments(doc: Document):

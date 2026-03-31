@@ -27,7 +27,9 @@ frappe.ui.form.on("VNT Meeting Room Booking", {
 				});
 			frm.set_value("date", frappe.datetime.get_today());
 		}
-		refreshApprover(frm);
+		if (shouldAutoSyncApprover(frm)) {
+			refreshApprover(frm);
+		}
 		refreshRoomAssignmentUI(frm);
 	},
 	employee(frm) {
@@ -43,8 +45,14 @@ frappe.ui.form.on("VNT Meeting Room Booking", {
 
 const refreshApprover = (frm) => {
 	if (!frm.doc.employee) {
-		frm.set_value("approver", "");
-		frm.set_value("approver_name", "");
+		if (frm.is_new() || frm.doc.docstatus === 0) {
+			if (frm.doc.approver) {
+				frm.set_value("approver", "");
+			}
+			if (frm.doc.approver_name) {
+				frm.set_value("approver_name", "");
+			}
+		}
 		return;
 	}
 
@@ -57,10 +65,26 @@ const refreshApprover = (frm) => {
 		callback(res) {
 			const approver = res && res.message ? res.message[0] : "";
 			const approverName = res && res.message ? res.message[1] : "";
-			frm.set_value("approver", approver || "");
-			frm.set_value("approver_name", approverName || "");
+			if (frm.doc.approver !== (approver || "")) {
+				frm.set_value("approver", approver || "");
+			}
+			if (frm.doc.approver_name !== (approverName || "")) {
+				frm.set_value("approver_name", approverName || "");
+			}
 		},
 	});
+};
+
+const shouldAutoSyncApprover = (frm) => {
+	if (frm.is_new()) {
+		return true;
+	}
+
+	if (frm.doc.docstatus !== 0) {
+		return false;
+	}
+
+	return !frm.doc.workflow_state || frm.doc.workflow_state === "Mới tạo";
 };
 
 // lấy người theo dõi theo cấu hình phòng họp
