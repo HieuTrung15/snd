@@ -100,16 +100,23 @@ def _enqueue_teams_notify_for_users(
 
 
 def _get_next_incoming_doc_name(
-	document_date: str | None = None, *, persist_series: bool = False
+	document_date: str | None = None,
+	*,
+	persist_series: bool = False,
+	vnt_type: str = "Công văn đến",
 ) -> str:
 	"""
-	Tính name kế tiếp cho Công văn đến theo format: CVĐEN-YY-####.
+	Tính name kế tiếp cho văn bản theo format:
+	- Công văn đến: CVĐEN-YY-####
+	- Công văn đi:  CVĐI-YY-####
 	- persist_series=False: chỉ preview (không cập nhật tabSeries).
 	- persist_series=True: lock tabSeries để tránh duplicate khi insert đồng thời.
 	"""
 	doc_date = getdate(document_date) if document_date else getdate(nowdate())
 	yy = doc_date.strftime("%y")
-	prefix = f"CVĐEN-{yy}-"
+	doc_type = (vnt_type or "").strip()
+	prefix_key = "CVĐI" if doc_type == "Công văn đi" else "CVĐEN"
+	prefix = f"{prefix_key}-{yy}-"
 	width = 4
 
 	if persist_series:
@@ -156,12 +163,16 @@ def _get_next_incoming_doc_name(
 
 class VNTDocumentManagement(Document):
 	def autoname(self):
-		"""Công văn đến: luôn sinh name theo số lớn nhất hiện có trong DB (CVĐEN-YY-####)."""
+		"""Công văn đến/đi: luôn sinh name theo số lớn nhất hiện có trong DB."""
 		doc_type = (self.vnt_type or "").strip()
-		if doc_type != "Công văn đến":
+		if doc_type not in ("Công văn đến", "Công văn đi"):
 			return
-		# Luôn gọi hàm lấy name mới nhất từ DB để tránh duplicate khi insert đồng thời nhiều doc.
-		self.name = _get_next_incoming_doc_name(document_date=nowdate(), persist_series=True)
+		document_date = self.document_date if doc_type == "Công văn đi" and self.document_date else nowdate()
+		self.name = _get_next_incoming_doc_name(
+			document_date=document_date,
+			persist_series=True,
+			vnt_type=doc_type,
+		)
 
 	def validate(self):
 		self._validate_handler_status_roles()
