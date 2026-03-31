@@ -366,7 +366,7 @@ class VNTDocumentManagement(Document):
 				and employee in SCIC_MANUAL_EMPLOYEES
 			)
 			if not (is_owner or is_lead_scic_override):
-				frappe.throw("Bạn chỉ được chọn Ý kiến của chính mình.")
+				frappe.throw("Anh/Chị chỉ được chọn Ý kiến của chính mình.")
 
 	def _validate_items7_opinion_owner(self):
 		"""
@@ -408,7 +408,7 @@ class VNTDocumentManagement(Document):
 
 			# Mỗi thành viên chỉ được nhập ý kiến của chính mình.
 			if not current_emp or employee != current_emp:
-				frappe.throw("Bạn chỉ được chọn Ý kiến của chính mình.")
+				frappe.throw("Anh/Chị chỉ được chọn Ý kiến của chính mình.")
 
 	def _close_todos_for_user(self, user_id: str | None):
 		"""Close open ToDos for this doc allocated to given user."""
@@ -576,7 +576,7 @@ class VNTDocumentManagement(Document):
 		if not user_id:
 			return
 
-		message = f"Bạn được giao xử lý CV đến số {self.reference_number}"
+		message = f"Anh/Chị được giao xử lý CV đến số {self.reference_number}"
 
 		frappe.get_doc(
 			{
@@ -689,7 +689,7 @@ class VNTDocumentManagement(Document):
 			if not user_id:
 				continue
 
-			message = f"Bạn được giao phối hợp với {chair_dept} xử lý CV đến số {self.name}"
+			message = f"Anh/Chị được giao phối hợp với {chair_dept} xử lý CV đến số {self.name}"
 
 			frappe.get_doc(
 				{
@@ -799,7 +799,7 @@ class VNTDocumentManagement(Document):
 			if not user_ids:
 				return
 
-			message = f"Bạn được giao {role_label} CV đến số {ref} {sender} {summary}"
+			message = f"Anh/Chị được giao {role_label} CV đến số {ref} {sender} {summary}"
 			for user in user_ids:
 				frappe.get_doc(
 					{
