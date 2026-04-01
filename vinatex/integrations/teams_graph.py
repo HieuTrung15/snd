@@ -10,7 +10,7 @@ from urllib.parse import urlencode, urlparse, unquote
 
 import frappe
 import requests
-from frappe.utils import get_url
+from frappe.utils import get_url, cint
 from frappe.utils.password import set_encrypted_password
 from frappe.utils.data import escape_html
 
@@ -692,11 +692,15 @@ def notify_user(
     content_type: str = "text",
     linkify: bool = False,
     linkify_mode: str = "full",
+    continue_on_error: bool = False,
 ) -> Dict[str, Any] | list[Dict[str, Any]]:
     """
     High-level: email/UPN -> user_id -> chat_id -> send message.
     Gửi tin nhắn qua Teams chat tới 1 hoặc nhiều user xác định bởi email/UPN.
+    - continue_on_error=False (mặc định): gặp lỗi ở bất kỳ recipient nào sẽ dừng và raise.
+    - continue_on_error=True: lỗi recipient nào thì bỏ qua recipient đó và gửi tiếp.
     """
+    continue_on_error = bool(cint(continue_on_error))
     recipients = _normalize_recipients(upn_or_email)
     if not recipients:
         frappe.throw("Chưa cung cấp user Teams để gửi tin nhắn.")
@@ -736,6 +740,7 @@ def notify_user(
             chat_id = get_or_create_one_on_one_chat(target_id, settings=settings, token=token)
             chat_ms = int((time.time() - t2) * 1000)
         except Exception:
+            error_traceback = frappe.get_traceback()
             _log_message_send(
                 to_upn_or_email=recipient,
                 chat_id=None,
@@ -744,27 +749,48 @@ def notify_user(
                 status="Failure",
                 total_ms=int((time.time() - total_start) * 1000),
                 token_ms=token_ms,
-                error=frappe.get_traceback(),
+                error=error_traceback,
             )
+            if continue_on_error:
+                responses.append(
+                    {
+                        "status": "failure",
+                        "recipient": recipient,
+                        "error": error_traceback,
+                    }
+                )
+                continue
             raise
 
-        responses.append(
-            send_chat_message(
-                chat_id,
-                message,
-                settings=settings,
-                to_upn_or_email=recipient,
-                settings_docname=settings.name,
-                content_type=content_type,
-                linkify=linkify,
-                linkify_mode=linkify_mode,
-                token=token,
-                token_ms=token_ms,
-                user_lookup_ms=user_lookup_ms,
-                chat_ms=chat_ms,
-                total_start=total_start,
+        try:
+            responses.append(
+                send_chat_message(
+                    chat_id,
+                    message,
+                    settings=settings,
+                    to_upn_or_email=recipient,
+                    settings_docname=settings.name,
+                    content_type=content_type,
+                    linkify=linkify,
+                    linkify_mode=linkify_mode,
+                    token=token,
+                    token_ms=token_ms,
+                    user_lookup_ms=user_lookup_ms,
+                    chat_ms=chat_ms,
+                    total_start=total_start,
+                )
             )
-        )
+        except Exception:
+            if continue_on_error:
+                responses.append(
+                    {
+                        "status": "failure",
+                        "recipient": recipient,
+                        "error": frappe.get_traceback(),
+                    }
+                )
+                continue
+            raise
 
     return responses[0] if len(responses) == 1 else responses
 
@@ -833,6 +859,7 @@ def notify_user_api(
     content_type: str = "text",
     linkify: bool = False,
     linkify_mode: str = "full",
+    continue_on_error: bool = False,
 ) -> Dict[str, Any] | list[Dict[str, Any]]:
     """
     Whitelisted wrapper: call from client/script.
@@ -845,6 +872,7 @@ def notify_user_api(
         content_type=content_type,
         linkify=linkify,
         linkify_mode=linkify_mode,
+        continue_on_error=continue_on_error,
     )
 
 # gửi tin nhắn vào nhóm teams
@@ -878,6 +906,7 @@ def enqueue_notify_user(
     content_type: str = "text",
     linkify: bool = False,
     linkify_mode: str = "full",
+    continue_on_error: bool = False,
 ) -> str:
     """
     Background job: tránh chậm UI.
@@ -893,6 +922,7 @@ def enqueue_notify_user(
         content_type=content_type,
         linkify=linkify,
         linkify_mode=linkify_mode,
+        continue_on_error=continue_on_error,
     )
     return str(job) if job else "enqueued"
 
