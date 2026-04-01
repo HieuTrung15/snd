@@ -111,6 +111,7 @@ def send_teams_notification(docname: str) -> dict:
         content_type="html",
         linkify=False,
         message=message,
+        continue_on_error=True,
     )
 
     doc.db_set("da_gui_thong_bao", 1, update_modified=True)
