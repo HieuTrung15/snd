@@ -727,7 +727,7 @@ def get_leave_details_with_year(employee, date, to_date=None):
 	
 	from_dt, to_dt = getdate(date), getdate(to_date or date)
 	precision = cint(frappe.db.get_single_value("System Settings", "float_precision")) or 2
-	today = getdate(nowdate())
+	effective_date = to_dt
 
 	# 1. Xác định các năm cần hiển thị
 	years = list(range(from_dt.year, to_dt.year + 1))
@@ -844,7 +844,7 @@ def get_leave_details_with_year(employee, date, to_date=None):
 		# Nếu là năm cũ (< năm nay), và hiện tại đã qua 31/03 năm nay -> Hết hạn
 		# Hoặc chính xác hơn: Phép năm Y hết hạn vào 31/03/Y+1.
 		expiry_date = getdate(f"{y+1}-03-31")
-		if today > expiry_date:
+		if effective_date > expiry_date:
 			remaining = max(0.0, total - taken - pending)
 			expired = remaining # Toàn bộ số dư còn lại coi như mất
 		
