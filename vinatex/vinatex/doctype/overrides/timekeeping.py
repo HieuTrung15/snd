@@ -40,9 +40,13 @@ def sync_timekeeper_data():
     thời điểm quẹt thẻ đầu tiên và cuối cùng trong ngày.
     """
     d_today = getdate(today())
-    d_month_start = d_today.replace(day=1)
+    # Mặc định lấy từ đầu tháng. Nếu chạy vào ngày 01,
+    # cần kéo thêm ngày cuối tháng trước để tránh mất dữ liệu.
+    start_date = d_today.replace(day=1)
+    if d_today.day == 1:
+        start_date = d_today - timedelta(days=1)
 
-    start_dt = datetime.combine(d_month_start, time.min)
+    start_dt = datetime.combine(start_date, time.min)
     end_dt   = datetime.combine(d_today, time.max)
 
     rows = _collect_unique_rows(start_dt=start_dt, end_dt=end_dt)
