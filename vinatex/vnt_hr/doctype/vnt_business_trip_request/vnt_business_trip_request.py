@@ -836,6 +836,7 @@ def create_vehicle_request_for_business_trip(doc: Document, transportation_rows:
 				"date": item.date,
 				"id_parent": vehicle_request.name,
 				"id_child": item.name,
+				"list_emp": vehicle_request.emp_list_name
 			},
 		)
 
