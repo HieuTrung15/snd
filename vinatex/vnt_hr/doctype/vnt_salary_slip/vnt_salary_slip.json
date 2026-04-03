@@ -32,12 +32,17 @@
   "luong_cbcv",
   "pc_dang2",
   "pc_kiem_nhiem2",
+  "pc_dac_thu",
+  "pc_chuyen_doi_so",
+  "pc_bch_quan_su",
   "cong_tac_phi",
   "column_break_sexp",
   "luong_ngay_phep",
   "luong_ngay_nghi_co_huong_luong",
   "truy_linh",
   "tien_an_ca",
+  "tien_khoan_pc_dien_thoai",
+  "duoc_hoan_lai",
   "tong_thu_nhap",
   "c\u00e1c_kho\u1ea3n_tr\u1eeb_v\u00e0o_l\u01b0\u01a1ng_section",
   "xh_yt_tn",
@@ -229,6 +234,24 @@
    "precision": "3"
   },
   {
+   "fieldname": "pc_dac_thu",
+   "fieldtype": "Currency",
+   "label": "PC \u0110\u1eb7c th\u00f9",
+   "precision": "3"
+  },
+  {
+   "fieldname": "pc_chuyen_doi_so",
+   "fieldtype": "Currency",
+   "label": "PC Chuy\u1ec3n \u0111\u1ed5i s\u1ed1",
+   "precision": "3"
+  },
+  {
+   "fieldname": "pc_bch_quan_su",
+   "fieldtype": "Currency",
+   "label": "PC BCH Qu\u00e2n s\u1ef1",
+   "precision": "3"
+  },
+  {
    "fieldname": "luong_ngay_phep",
    "fieldtype": "Currency",
    "label": "L\u01b0\u01a1ng ng\u00e0y ph\u00e9p",
@@ -256,6 +279,18 @@
    "fieldname": "tien_an_ca",
    "fieldtype": "Currency",
    "label": "Ti\u1ec1n \u0103n ca",
+   "precision": "3"
+  },
+  {
+   "fieldname": "tien_khoan_pc_dien_thoai",
+   "fieldtype": "Currency",
+   "label": "Ti\u1ec1n kho\u00e1n CP \u0111i\u1ec7n tho\u1ea1i",
+   "precision": "3"
+  },
+  {
+   "fieldname": "duoc_hoan_lai",
+   "fieldtype": "Currency",
+   "label": "Thu\u1ebf TNCN \u0111\u01b0\u1ee3c ho\u00e0n l\u1ea1i (40)",
    "precision": "3"
   },
   {
