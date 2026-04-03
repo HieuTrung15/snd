@@ -1351,6 +1351,7 @@ def _build_bang_luong_thang_workbook(doc):
         {"title": "Thu nhập tính thuế", "field": "thu_nhap_tinh_thue", "group": "Thuế TNCN", "width": 16, "sum": True, "format": "currency"},
         {"title": "Thuế TNCN tạm thu", "field": "tncn_tam_thu", "group": "Thuế TNCN", "width": 16, "sum": True, "format": "currency"},
         {"title": "Truy thu thuế TNCN", "field": "truy_thu", "group": "Thuế TNCN", "width": 18, "sum": True, "format": "currency"},
+        {"title": "Thuế TNCN được hoàn", "field": "duoc_hoan_lai", "group": "Thuế TNCN", "width": 18, "sum": True, "format": "currency"},
         {"title": "Khác", "field": "khac", "width": 12, "sum": True, "format": "currency"},
         {"title": "Thu nhập thực lĩnh", "field": "thuc_linh", "width": 16, "sum": True, "format": "currency"},
         {"title": "Ghi chú", "field": "note", "width": 18, "format": "text"},
