@@ -1304,8 +1304,12 @@ def _build_bang_luong_thang_workbook(doc):
         {"title": "Tiền lương CBCV", "field": "tien_luong_hqcv", "group": "Lương CBCV", "width": 16, "sum": True, "format": "currency"},
         {"title": "PC Đảng", "field": "pc_dang2", "group": "Lương CBCV", "width": 12, "sum": True, "format": "currency"},
         {"title": "PC kiêm nhiệm", "field": "pc_kiem_nhiem2", "group": "Lương CBCV", "width": 14, "sum": True, "format": "currency"},
+        {"title": "PC đặc thù", "field": "pc_dac_thu", "group": "Lương CBCV", "width": 12, "sum": True, "format": "currency", "fill": "yellow"},
+        {"title": "PC Chuyển đổi số", "field": "pc_chuyen_doi_so", "group": "Lương CBCV", "width": 12, "sum": True, "format": "currency", "fill": "yellow"},
+        {"title": "PC BCH Quân sự", "field": "pc_bch_quan_su", "group": "Lương CBCV", "width": 12, "sum": True, "format": "currency", "fill": "yellow"},
         {"title": "Tiền lương CQĐH", "field": "tien_luong_hqcv_cu", "fallback_field": "tien_luong_hqcv", "width": 16, "sum": True, "format": "currency"},
         {"title": "Thù lao HDQT, BKS", "field": "thu_lao_hdqt", "width": 16, "sum": True, "format": "currency"},
+        {"title": "Tiền khoán CP điện thoại", "field": "tien_khoan_pc_dien_thoai", "width": 14, "sum": True, "format": "currency", "fill": "olive"},
         {"title": "Tiền ăn ca", "field": "tien_an", "width": 18, "sum": True, "format": "currency"},
         {"title": "Tiền khoán công tác phí", "field": "tien_khoan_ct", "width": 18, "sum": True, "format": "currency"},
         {"title": "Truy lĩnh", "field": "truylinh", "width": 12, "sum": True, "format": "currency"},
@@ -1339,6 +1343,8 @@ def _build_bang_luong_thang_workbook(doc):
     header_fill = PatternFill("solid", fgColor="D9EAD3")
     total_fill = PatternFill("solid", fgColor="E2EFDA")
     section_fill = PatternFill("solid", fgColor="F2F2F2")
+    yellow_fill = PatternFill("solid", fgColor="FFF200")
+    olive_fill = PatternFill("solid", fgColor="C9C900")
     thin_side = Side(style="thin", color="000000")
     thin_border = Border(left=thin_side, right=thin_side, top=thin_side, bottom=thin_side)
     center_wrap = Alignment(horizontal="center", vertical="center", wrap_text=True)
@@ -1377,6 +1383,23 @@ def _build_bang_luong_thang_workbook(doc):
     group_row = 6
     header_row = 7
 
+    def _resolve_column_highlight_fill(col):
+        fill_key = col.get("fill")
+        if fill_key == "yellow":
+            return yellow_fill
+        if fill_key == "olive":
+            return olive_fill
+        return None
+
+    def _resolve_header_cell_fill(col, row_idx):
+        highlighted = _resolve_column_highlight_fill(col)
+        if not highlighted:
+            return header_fill
+        if row_idx == header_row:
+            return highlighted
+        # Dòng group_row chỉ tô vàng với cột không thuộc group (ví dụ: tiền khoán điện thoại)
+        return highlighted if not col.get("group") else header_fill
+
     for label, span in group_spans.items():
         start_col, end_col = span
         ws.merge_cells(start_row=group_row, start_column=start_col, end_row=group_row, end_column=end_col)
@@ -1394,11 +1417,11 @@ def _build_bang_luong_thang_workbook(doc):
         cell.value = col["title"]
 
     for row_idx in (group_row, header_row):
-        for col_idx in range(1, len(columns) + 1):
+        for col_idx, col in enumerate(columns, start=1):
             cell = ws.cell(row=row_idx, column=col_idx)
             cell.font = Font(bold=True, size=11)
             cell.alignment = center_wrap
-            cell.fill = header_fill
+            cell.fill = _resolve_header_cell_fill(col, row_idx)
             cell.border = thin_border
 
     ws.row_dimensions[group_row].height = 36
@@ -1489,10 +1512,10 @@ def _build_bang_luong_thang_workbook(doc):
     running_index = 0
 
     for grp in group_defs:
-        for col_idx in range(1, len(columns) + 1):
+        for col_idx, col in enumerate(columns, start=1):
             cell = ws.cell(row=current_row, column=col_idx)
             cell.border = thin_border
-            cell.fill = section_fill
+            cell.fill = _resolve_column_highlight_fill(col) or section_fill
         ws.cell(row=current_row, column=1).value = grp["roman"]
         ws.cell(row=current_row, column=1).alignment = Alignment(horizontal="center", vertical="center")
         ws.cell(row=current_row, column=1).font = Font(bold=True)
@@ -1511,6 +1534,9 @@ def _build_bang_luong_thang_workbook(doc):
 
                     cell = ws.cell(row=current_row, column=col_idx, value=value)
                     cell.border = thin_border
+                    highlight_fill = _resolve_column_highlight_fill(col)
+                    if highlight_fill:
+                        cell.fill = highlight_fill
 
                     alignment = Alignment(horizontal="right", vertical="center")
                     if fmt == "text":
@@ -1536,7 +1562,7 @@ def _build_bang_luong_thang_workbook(doc):
 
             for dept_label in sorted(dept_map.keys()):
                 dept_items = sorted(dept_map[dept_label], key=_salary_cbcv_value, reverse=True)
-                for col_idx in range(1, len(columns) + 1):
+                for col_idx, col in enumerate(columns, start=1):
                     cell = ws.cell(row=current_row, column=col_idx)
                     cell.border = thin_border
                     if col_idx == 2:
@@ -1544,7 +1570,7 @@ def _build_bang_luong_thang_workbook(doc):
                         cell.font = Font(bold=True, italic=True)
                     elif col_idx == 1:
                         cell.value = ""
-                    cell.fill = section_fill
+                    cell.fill = _resolve_column_highlight_fill(col) or section_fill
                 current_row += 1
 
                 for item in dept_items:
@@ -1557,6 +1583,9 @@ def _build_bang_luong_thang_workbook(doc):
 
                         cell = ws.cell(row=current_row, column=col_idx, value=value)
                         cell.border = thin_border
+                        highlight_fill = _resolve_column_highlight_fill(col)
+                        if highlight_fill:
+                            cell.fill = highlight_fill
 
                         alignment = Alignment(horizontal="right", vertical="center")
                         if fmt == "text":
@@ -1603,7 +1632,7 @@ def _build_bang_luong_thang_workbook(doc):
             cell.alignment = Alignment(horizontal="center", vertical="center")
 
         cell.border = thin_border
-        cell.fill = total_fill
+        cell.fill = _resolve_column_highlight_fill(col) or total_fill
         cell.font = Font(bold=True)
 
     ws.freeze_panes = f"A{data_start_row}"
