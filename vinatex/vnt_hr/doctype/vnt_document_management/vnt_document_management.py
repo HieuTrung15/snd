@@ -199,6 +199,7 @@ class VNTDocumentManagement(Document):
 		self._maybe_close_collab_todos_on_done()
 
 	def after_insert(self):
+		self._sync_bidirectional_related_documents()
 		doc_type = (self.vnt_type or "").strip()
 		if doc_type == "Công văn đến":
 			self._notify_incoming_to_handler()
@@ -214,6 +215,7 @@ class VNTDocumentManagement(Document):
 		self._maybe_close_doc_todos_on_status_done()
 
 	def on_update(self):
+		self._sync_bidirectional_related_documents()
 		self._maybe_notify_items6_round_1()
 		self._maybe_notify_lead_depart_on_items6_completed()
 		self._maybe_notify_lead_depart_to_fill_scic_pair()
@@ -221,6 +223,145 @@ class VNTDocumentManagement(Document):
 		self._maybe_notify_lead_depart_on_items7_completed()
 		self._maybe_notify_items6_feedback_flow()
 		self._maybe_close_doc_todos_on_status_done()
+
+	def _sync_bidirectional_related_documents(self):
+		"""Đồng bộ link 2 chiều giữa 'Công văn đến tương ứng' và 'Công văn đi tương ứng'."""
+		if not self.name:
+			return
+
+		# Trên Công văn đi (vnt_doc_mng) -> cập nhật ngược vào cong_van_di của Công văn đến
+		self._sync_reverse_links(
+			source_rows=self.get("vnt_doc_mng") or [],
+			source_link_field="incoming_document",
+			target_child_doctype="VNT Document Management Outgoing Link",
+			target_parentfield="cong_van_di",
+			target_link_field="outgoing_document",
+		)
+
+		# Trên Công văn đến (cong_van_di) -> cập nhật ngược vào vnt_doc_mng của Công văn đi
+		self._sync_reverse_links(
+			source_rows=self.get("cong_van_di") or [],
+			source_link_field="outgoing_document",
+			target_child_doctype="VNT Document Management Incoming Link",
+			target_parentfield="vnt_doc_mng",
+			target_link_field="incoming_document",
+		)
+
+	def _sync_reverse_links(
+		self,
+		*,
+		source_rows: list | tuple,
+		source_link_field: str,
+		target_child_doctype: str,
+		target_parentfield: str,
+		target_link_field: str,
+	):
+		"""Đảm bảo các target docs có row link ngược về self.name theo cấu hình child table."""
+		desired_targets = self._extract_link_targets(source_rows, source_link_field)
+		current_targets = set(
+			frappe.get_all(
+				target_child_doctype,
+				filters={
+					"parenttype": self.doctype,
+					"parentfield": target_parentfield,
+					target_link_field: self.name,
+				},
+				pluck="parent",
+				ignore_permissions=True,
+			)
+		)
+
+		to_add = desired_targets - current_targets
+		to_remove = current_targets - desired_targets
+
+		for target_docname in to_add:
+			if not frappe.db.exists(self.doctype, target_docname):
+				continue
+			self._insert_child_link_row(
+				child_doctype=target_child_doctype,
+				parent=target_docname,
+				parentfield=target_parentfield,
+				link_field=target_link_field,
+				link_value=self.name,
+			)
+
+		for target_docname in to_remove:
+			frappe.db.delete(
+				target_child_doctype,
+				{
+					"parent": target_docname,
+					"parenttype": self.doctype,
+					"parentfield": target_parentfield,
+					target_link_field: self.name,
+				},
+			)
+
+	def _extract_link_targets(self, rows: list | tuple, fieldname: str) -> set[str]:
+		"""Chuẩn hóa tập docname từ các row của Table MultiSelect."""
+		targets: set[str] = set()
+		for row in rows or []:
+			value = ""
+			if hasattr(row, "get"):
+				value = (row.get(fieldname) or "").strip()
+			else:
+				value = (getattr(row, fieldname, None) or "").strip()
+			if not value or value == self.name:
+				continue
+			targets.add(value)
+		return targets
+
+	def _insert_child_link_row(
+		self,
+		*,
+		child_doctype: str,
+		parent: str,
+		parentfield: str,
+		link_field: str,
+		link_value: str,
+	):
+		"""Insert child row nếu chưa tồn tại."""
+		exists = frappe.db.exists(
+			child_doctype,
+			{
+				"parent": parent,
+				"parenttype": self.doctype,
+				"parentfield": parentfield,
+				link_field: link_value,
+			},
+		)
+		if exists:
+			return
+
+		next_idx = (
+			frappe.db.sql(
+				f"""
+				select ifnull(max(idx), 0)
+				from `tab{child_doctype}`
+				where parent = %s and parenttype = %s and parentfield = %s
+				""",
+				(parent, self.doctype, parentfield),
+			)[0][0]
+			or 0
+		) + 1
+
+		frappe.db.sql(
+			f"""
+			insert into `tab{child_doctype}`
+				(name, creation, modified, modified_by, owner, docstatus, idx, parent, parentfield, parenttype, `{link_field}`)
+			values
+				(%s, now(), now(), %s, %s, 0, %s, %s, %s, %s, %s)
+			""",
+			(
+				frappe.generate_hash(length=10),
+				frappe.session.user or "Administrator",
+				frappe.session.user or "Administrator",
+				next_idx,
+				parent,
+				parentfield,
+				self.doctype,
+				link_value,
+			),
+		)
 
 	def _validate_handler_status_roles(self):
 		"""Yêu cầu phải có ít nhất 1 dòng Chủ trì/Phối hợp/Nhận để biết khi đặt trạng thái lãnh đạo."""
