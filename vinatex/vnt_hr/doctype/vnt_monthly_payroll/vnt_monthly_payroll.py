@@ -1504,7 +1504,24 @@ def _build_bang_luong_thang_workbook(doc):
         if col_idx == 1:
             return row_data.get("_row_number")
         if col.get("field"):
+            bhxh_flag = (row_data.get("bhxh") or "").strip()
+            no_bhxh_and_no_union = "Không đóng BHXH & ĐPCĐ"
+            no_bhxh_but_union = "Không đóng BHXH, đóng ĐPCĐ"
+
             raw_value = row_data.get(col["field"])
+
+            # Quy tắc hiển thị riêng cho mẫu BL tháng:
+            # - Nếu "Không đóng BHXH & ĐPCĐ": cột E, F, G về 0
+            # - Nếu "Không đóng BHXH, đóng ĐPCĐ": cột E, F về 0
+            if col.get("field") == "pc_kiem_nhiem1" and bhxh_flag in {no_bhxh_and_no_union, no_bhxh_but_union}:
+                raw_value = 0
+            elif col.get("field") == "tong_luong_cb":
+                title = (col.get("title") or "").strip()
+                if title == "Lương tính đóng BHXH" and bhxh_flag in {no_bhxh_and_no_union, no_bhxh_but_union}:
+                    raw_value = 0
+                elif title == "Lương tính đóng CĐP" and bhxh_flag == no_bhxh_and_no_union:
+                    raw_value = 0
+
             if (raw_value in (None, "", 0)) and col.get("fallback_field"):
                 fallback_val = row_data.get(col["fallback_field"])
                 raw_value = fallback_val if fallback_val not in (None, "") else raw_value
