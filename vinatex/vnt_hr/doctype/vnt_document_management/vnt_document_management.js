@@ -2243,9 +2243,24 @@ frappe.ui.form.on("VNT Document Management", {
       grid2._vnt_flow_bound = true;
     }
 
+    const get_outgoing_doc_names = () => {
+      const raw = frm.doc.cong_van_di;
+      return [
+        ...new Set(
+          Array.isArray(raw)
+            ? raw
+                .map((row) => (row?.outgoing_document || "").trim())
+                .filter(Boolean)
+            : (typeof raw === "string" && raw.trim() ? [raw.trim()] : [])
+        )
+      ];
+    };
+
     // Chuẩn bị cache tên đầy đủ Employee
     frm._empNameCache = frm._empNameCache || {};
+    frm._docRefCache = frm._docRefCache || {};
     const nameCache = frm._empNameCache;
+    const docRefCache = frm._docRefCache;
     const ids = new Set();
     const addId = (val) => {
       if (val) ids.add(val);
@@ -2268,6 +2283,7 @@ frappe.ui.form.on("VNT Document Management", {
       addId(r.nguoi_phoi_hop);
       addId(r.cv_xu_ly);
     });
+    const outgoingDocNames = get_outgoing_doc_names();
 
     const missing = [...ids].filter((id) => id && !nameCache[id]);
     if (missing.length && !frm._empNameLoading) {
@@ -2288,6 +2304,48 @@ frappe.ui.form.on("VNT Document Management", {
       return;
     }
     if (frm._empNameLoading) return;
+
+    const missingDocNames = outgoingDocNames.filter((name) => name && !Object.prototype.hasOwnProperty.call(docRefCache, name));
+    if (missingDocNames.length && !frm._docRefLoading) {
+      frm._docRefLoading = true;
+      frappe.call({
+        method: "frappe.client.get_list",
+        args: {
+          doctype: "VNT Document Management",
+          filters: [["VNT Document Management", "name", "in", missingDocNames]],
+          fields: ["name", "reference_number"],
+          limit_page_length: Math.max(20, missingDocNames.length),
+        },
+        callback: (r) => {
+          const rows = Array.isArray(r?.message) ? r.message : [];
+          const fetched = new Set();
+          rows.forEach((row) => {
+            const docname = (row?.name || "").trim();
+            if (!docname) return;
+            fetched.add(docname);
+            docRefCache[docname] = (row?.reference_number || "").trim();
+          });
+          missingDocNames.forEach((docname) => {
+            if (!fetched.has(docname)) {
+              docRefCache[docname] = "";
+            }
+          });
+          frm._docRefLoading = false;
+          frm._docRefCache = docRefCache;
+          frm.trigger("render_process_flow");
+        },
+        error: () => {
+          missingDocNames.forEach((docname) => {
+            docRefCache[docname] = "";
+          });
+          frm._docRefLoading = false;
+          frm._docRefCache = docRefCache;
+          frm.trigger("render_process_flow");
+        }
+      });
+      return;
+    }
+    if (frm._docRefLoading) return;
 
     const displayEmployee = (id) => {
       if (!id) return "Chưa chọn";
@@ -2520,6 +2578,8 @@ frappe.ui.form.on("VNT Document Management", {
     baseSize.height = Math.max(420, lastStackEnd + 60);
 
     const nodeSize = { width: 200, height: 112 };
+    const nodeWidth = (node) => node?.width || nodeSize.width;
+    const nodeHeight = (node) => node?.height || nodeSize.height;
 
     const nodes = [
       {
@@ -2606,27 +2666,40 @@ frappe.ui.form.on("VNT Document Management", {
     nodes.push(...roleNodes);
     let incomingDocKey = null;
     const isIncoming = (frm.doc.vnt_type || "").trim() === "Công văn đến";
-    const outgoingDocValue = (frm.doc.cong_van_di || "").trim();
-    if (isIncoming && outgoingDocValue) {
+    const outgoingDocValues = outgoingDocNames;
+    if (isIncoming && outgoingDocValues.length) {
       const employeeNode = nodes.find((node) => node.key === "employee") || null;
       if (employeeNode) {
+        const incomingDocLinks = outgoingDocValues.map((docname) => {
+          const refNo = (docRefCache[docname] || "").trim();
+          return {
+            text: refNo || docname,
+            docname,
+          };
+        });
+        const incomingNodeWidth = nodeSize.width;
+        const incomingNodeHeight = Math.max(112, 74 + incomingDocLinks.length * 18);
+        const employeeCenterX = employeeNode.x + nodeWidth(employeeNode) / 2;
         nodes.push({
           key: "incoming_doc",
           label: "Công văn đi tương ứng",
-          value: frappe.utils.escape_html(outgoingDocValue),
+          value: frappe.utils.escape_html(`${outgoingDocValues.length} công văn`),
           stroke: "#f9a8d4",
           fill: fillByStroke("#f9a8d4"),
           hideTimes: true,
-          x: employeeNode.x,
-          y: employeeNode.y + nodeSize.height + 60
+          docLinks: incomingDocLinks,
+          width: incomingNodeWidth,
+          height: incomingNodeHeight,
+          x: Math.max(12, employeeCenterX - incomingNodeWidth / 2),
+          y: employeeNode.y + nodeHeight(employeeNode) + 44
         });
         incomingDocKey = "incoming_doc";
       }
     }
 
     // Tính chiều rộng bám sát nút xa nhất để tránh vùng trống dư
-    const maxNodeRight = nodes.reduce((max, n) => Math.max(max, n.x + nodeSize.width), 0);
-    const maxNodeBottom = nodes.reduce((max, n) => Math.max(max, n.y + nodeSize.height), 0);
+    const maxNodeRight = nodes.reduce((max, n) => Math.max(max, n.x + nodeWidth(n)), 0);
+    const maxNodeBottom = nodes.reduce((max, n) => Math.max(max, n.y + nodeHeight(n)), 0);
     baseSize.width = Math.max(maxNodeRight + 80, 480);
     baseSize.height = Math.max(baseSize.height, maxNodeBottom + 60);
     const scaledSize = {
@@ -2636,19 +2709,42 @@ frappe.ui.form.on("VNT Document Management", {
 
     const nodeByKey = Object.fromEntries(nodes.map((n) => [n.key, n]));
     const anchorRight = (node) => ({
-      x: node.x + nodeSize.width,
-      y: node.y + nodeSize.height / 2
+      x: node.x + nodeWidth(node),
+      y: node.y + nodeHeight(node) / 2
     });
     const anchorLeft = (node) => ({
       x: node.x,
-      y: node.y + nodeSize.height / 2
+      y: node.y + nodeHeight(node) / 2
     });
+    const anchorTop = (node) => ({
+      x: node.x + nodeWidth(node) / 2,
+      y: node.y
+    });
+    const anchorBottom = (node) => ({
+      x: node.x + nodeWidth(node) / 2,
+      y: node.y + nodeHeight(node)
+    });
+    const getAnchor = (node, anchorName, fallbackAnchor) => {
+      const name = anchorName || fallbackAnchor;
+      if (name === "top") return anchorTop(node);
+      if (name === "bottom") return anchorBottom(node);
+      if (name === "left") return anchorLeft(node);
+      return anchorRight(node);
+    };
 
     const connections = [
       { from: "employee", to: "handler", color: "#22c55e", dashed: false }
     ];
     if (incomingDocKey) {
-      connections.push({ from: "employee", to: incomingDocKey, color: "#f9a8d4", dashed: false });
+      connections.push({
+        from: "employee",
+        to: incomingDocKey,
+        color: "#f9a8d4",
+        dashed: false,
+        fromAnchor: "bottom",
+        toAnchor: "top",
+        route: "vertical"
+      });
     }
     roleNodes.forEach((node) => {
       const isInfo = node.key.startsWith("info_recipient");
@@ -2708,10 +2804,17 @@ frappe.ui.form.on("VNT Document Management", {
       const endNode = nodeByKey[conn.to];
       if (!startNode || !endNode) return "";
 
-      const start = anchorRight(startNode);
-      const end = anchorLeft(endNode);
-      const midX = (start.x + end.x) / 2;
-      const path = `M ${start.x} ${start.y} L ${midX} ${start.y} L ${midX} ${end.y} L ${end.x} ${end.y}`;
+      const start = getAnchor(startNode, conn.fromAnchor, "right");
+      const end = getAnchor(endNode, conn.toAnchor, "left");
+      const path = conn.route === "vertical"
+        ? (() => {
+            const midY = (start.y + end.y) / 2;
+            return `M ${start.x} ${start.y} L ${start.x} ${midY} L ${end.x} ${midY} L ${end.x} ${end.y}`;
+          })()
+        : (() => {
+            const midX = (start.x + end.x) / 2;
+            return `M ${start.x} ${start.y} L ${midX} ${start.y} L ${midX} ${end.y} L ${end.x} ${end.y}`;
+          })();
 
       const color = colorForConn(conn);
       const arrowId = `vnt-arrow-${color.slice(1)}`;
@@ -2722,6 +2825,9 @@ frappe.ui.form.on("VNT Document Management", {
     const nodeTemplate = (node) => {
       const stroke = colorForNode(node);
       const fill = fillByStroke(stroke);
+      const width = nodeWidth(node);
+      const height = nodeHeight(node);
+      const tooltip = node.tooltip ? `<title>${frappe.utils.escape_html(node.tooltip)}</title>` : "";
       const receivedText = `Nhận: ${formatTimeValue(node.receivedAt) || "-"}`;
       const completedLabel = node.completedLabel || "Hoàn thành";
       const completedText = `${completedLabel}: ${formatTimeValue(node.completedAt) || "-"}`;
@@ -2738,6 +2844,14 @@ frappe.ui.form.on("VNT Document Management", {
           ${showDeadline ? `<text x="${node.x + 12}" y="${node.y + 78}" class="vnt-node-time">${deadlineText}</text>` : ""}
           ${showCompleted ? `<text x="${node.x + 12}" y="${completedY}" class="vnt-node-time">${completedText}</text>` : ""}
         `;
+      const docLinks = Array.isArray(node.docLinks) && node.docLinks.length && node.hideTimes
+        ? node.docLinks.map((row, idx) => {
+          const safeLabel = frappe.utils.escape_html(row?.text || "");
+          const encodedDocname = encodeURIComponent(row?.docname || "");
+          const y = node.y + 62 + idx * 16;
+          return `<text x="${node.x + 12}" y="${y}" class="vnt-node-extra vnt-node-link" data-docname="${encodedDocname}">${safeLabel}</text>`;
+        }).join("")
+        : "";
       const extraLines = Array.isArray(node.extraLines) && node.extraLines.length && node.hideTimes
         ? node.extraLines.map((line, idx) => {
           const safeLine = frappe.utils.escape_html(line || "");
@@ -2748,11 +2862,13 @@ frappe.ui.form.on("VNT Document Management", {
 
       return `
         <g class="vnt-node" data-role="${node.key}">
-          <rect x="${node.x}" y="${node.y}" rx="10" ry="10" width="${nodeSize.width}" height="${nodeSize.height}"
+          ${tooltip}
+          <rect x="${node.x}" y="${node.y}" rx="10" ry="10" width="${width}" height="${height}"
             fill="${fill}" stroke="${stroke}" stroke-width="1.5" />
           <text x="${node.x + 12}" y="${node.y + 22}" class="vnt-node-label">${node.label}</text>
           <text x="${node.x + 12}" y="${node.y + 42}" class="vnt-node-value">${node.value}</text>
           ${timeLines}
+          ${docLinks}
           ${extraLines}
         </g>
       `;
@@ -2788,6 +2904,8 @@ frappe.ui.form.on("VNT Document Management", {
           .vnt-node-status { font-size: 12px; font-weight: 600; }
           .vnt-node-time { font-size: 11px; fill: #64748b; }
           .vnt-node-extra { font-size: 11px; fill: #334155; font-weight: 600; }
+          .vnt-node-link { fill: #1d4ed8; cursor: pointer; text-decoration: underline; }
+          .vnt-node-link:hover { fill: #1e40af; }
           .vnt-flow-note { margin-top: 6px; font-size: 12px; color: #64748b; }
         </style>
         <div class="vnt-flow-legend">
@@ -2801,6 +2919,15 @@ frappe.ui.form.on("VNT Document Management", {
         
       </div>
     `);
+
+    $wrap.find(".vnt-node-link").on("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const encodedDocname = $(event.currentTarget).attr("data-docname") || "";
+      const docname = encodedDocname ? decodeURIComponent(encodedDocname) : "";
+      if (!docname) return;
+      frappe.set_route("Form", "VNT Document Management", docname);
+    });
   }
 });
 
