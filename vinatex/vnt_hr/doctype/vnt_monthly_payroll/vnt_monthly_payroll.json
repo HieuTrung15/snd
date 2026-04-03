@@ -65,6 +65,7 @@
    "reqd": 1
   },
   {
+   "fetch_from": "employee.branch",
    "fieldname": "branch",
    "fieldtype": "Link",
    "label": "Chi nh\u00e1nh",
@@ -130,7 +131,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-02 08:22:39.886150",
+ "modified": "2026-04-03 14:03:31.014083",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Monthly Payroll",

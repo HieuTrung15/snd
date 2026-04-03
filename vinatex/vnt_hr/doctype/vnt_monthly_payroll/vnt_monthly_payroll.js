@@ -599,12 +599,12 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 	const referenceSalary = toNumber(payload.reference_salary);
 
 
-	if (luongCb + pcDang1 + pcKiemNhiem1 + pcDacthu + pcCDS > 20 * referenceSalary) 
+	if (luongCb + pcDang1 + pcKiemNhiem1  > 20 * referenceSalary) 
 		{
 			frappe.model.set_value(row.doctype, row.name, "tong_luong_cb", 20 * referenceSalary);
 		} 
 	else {
-		frappe.model.set_value(row.doctype, row.name, "tong_luong_cb", luongCb + pcDang1 + pcKiemNhiem1 + pcDacthu + pcCDS );
+		frappe.model.set_value(row.doctype, row.name, "tong_luong_cb", luongCb + pcDang1 + pcKiemNhiem1 );
 	}
 	row.tong_luong_cb = toNumber(row.tong_luong_cb);
 

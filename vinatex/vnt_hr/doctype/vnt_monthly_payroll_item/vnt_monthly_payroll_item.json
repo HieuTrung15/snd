@@ -168,8 +168,9 @@
   },
   {
    "fieldname": "sophep",
-   "fieldtype": "Int",
+   "fieldtype": "Float",
    "label": "S\u1ed1 ph\u00e9p (13)",
+   "precision": "1",
    "read_only": 1
   },
   {
