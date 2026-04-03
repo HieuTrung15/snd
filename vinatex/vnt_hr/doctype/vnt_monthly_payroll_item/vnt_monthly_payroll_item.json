@@ -26,6 +26,9 @@
   "column_break_tlb6",
   "hs_pc_kiem_nhiem1",
   "pc_kiem_nhiem1",
+  "pc_dac_thu",
+  "pc_chuyen_doi_so",
+  "pc_bch_quan_su",
   "section_break_hsfp",
   "sophep",
   "so_ngay_nghi_vr",
@@ -48,6 +51,7 @@
   "truylinh",
   "column_break_awyc",
   "tien_an",
+  "tien_khoan_pc_dien_thoai",
   "tien_khoan_ct",
   "tien_gui_xe",
   "tong_thu_nhap",
@@ -519,13 +523,37 @@
    "fieldname": "get_salary_employee",
    "fieldtype": "Button",
    "label": "T\u00ednh l\u1ea1i l\u01b0\u01a1ng"
+  },
+  {
+   "fieldname": "pc_dac_thu",
+   "fieldtype": "Currency",
+   "label": "PC \u0110\u1eb7c th\u00f9 (11-1)",
+   "precision": "0"
+  },
+  {
+   "fieldname": "pc_chuyen_doi_so",
+   "fieldtype": "Currency",
+   "label": "PC Chuy\u1ec3n \u0111\u1ed5i s\u1ed1 (11-2)",
+   "precision": "0"
+  },
+  {
+   "fieldname": "pc_bch_quan_su",
+   "fieldtype": "Currency",
+   "label": "PC BCH Qu\u00e2n s\u1ef1 (11-3)",
+   "precision": "0"
+  },
+  {
+   "fieldname": "tien_khoan_pc_dien_thoai",
+   "fieldtype": "Currency",
+   "label": "Ti\u1ec1n kho\u00e1n CP \u0110i\u1ec7n tho\u1ea1i (22-1)",
+   "precision": "0"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-03-04 13:16:08.965320",
+ "modified": "2026-04-03 10:00:02.087798",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Monthly Payroll Item",

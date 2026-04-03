@@ -239,23 +239,15 @@ frappe.ui.form.on("VNT Monthly Payroll Item", {
 	},
 	truylinh(frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
-		if (!row || !row.employee) return;
-		if (row._current_payroll_payload) {
-			applyPayrollPayload(frm, row, row._current_payroll_payload);
-			return;
-		}
-		if (!frm.doc.month || !frm.doc.year) return;
-		frm.events.compute_row(frm, row, { freeze: false });
+		recomputeRowPayroll(frm, row);
 	},
 	cho_phep_dong_bhxh(frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
-		if (!row || !row.employee) return;
-		if (row._current_payroll_payload) {
-			applyPayrollPayload(frm, row, row._current_payroll_payload);
-			return;
-		}
-		if (!frm.doc.month || !frm.doc.year) return;
-		frm.events.compute_row(frm, row, { freeze: false });
+		recomputeRowPayroll(frm, row);
+	},
+	tien_khoan_pc_dien_thoai(frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		recomputeRowPayroll(frm, row);
 	},
 	khac(frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
@@ -329,6 +321,16 @@ function add_download_button(frm) {
 		const fullUrl = frappe.urllib.get_full_url(url);
 		window.open(fullUrl);
 	});
+}
+
+function recomputeRowPayroll(frm, row) {
+	if (!row || !row.employee) return;
+	if (row._current_payroll_payload) {
+		applyPayrollPayload(frm, row, row._current_payroll_payload);
+		return;
+	}
+	if (!frm.doc.month || !frm.doc.year) return;
+	frm.events.compute_row(frm, row, { freeze: false });
 }
 
 
@@ -570,18 +572,39 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		regionalMinWage * toNumber(row.hs_pc_kiem_nhiem1)
 	);
 
+	const pcDacThuValue = Object.prototype.hasOwnProperty.call(payload, "pc_dac_thu")
+		? toNumber(payload.pc_dac_thu)
+		: toNumber(row.pc_dac_thu);
+	frappe.model.set_value(row.doctype, row.name, "pc_dac_thu", pcDacThuValue);
+	row.pc_dac_thu = pcDacThuValue;
+
+	const pcChuyenDoiSoValue = Object.prototype.hasOwnProperty.call(payload, "pc_chuyen_doi_so")
+		? toNumber(payload.pc_chuyen_doi_so)
+		: toNumber(row.pc_chuyen_doi_so);
+	frappe.model.set_value(row.doctype, row.name, "pc_chuyen_doi_so", pcChuyenDoiSoValue);
+	row.pc_chuyen_doi_so = pcChuyenDoiSoValue;
+
+	const pcBchQuanSuValue = Object.prototype.hasOwnProperty.call(payload, "pc_bch_quan_su")
+		? toNumber(payload.pc_bch_quan_su)
+		: toNumber(row.pc_bch_quan_su);
+	frappe.model.set_value(row.doctype, row.name, "pc_bch_quan_su", pcBchQuanSuValue);
+	row.pc_bch_quan_su = pcBchQuanSuValue;
+
 	const luongCb = toNumber(row.luong_cb);
 	const pcDang1 = toNumber(pcDang1Value);
 	const pcKiemNhiem1 = toNumber(row.pc_kiem_nhiem1);
+	const pcDacthu = toNumber(pcDacThuValue);
+	const pcCDS = toNumber(pcChuyenDoiSoValue);
+	const pcBCHQS = toNumber(pcBchQuanSuValue);
 	const referenceSalary = toNumber(payload.reference_salary);
 
 
-	if (luongCb + pcDang1 + pcKiemNhiem1 > 20 * referenceSalary) 
+	if (luongCb + pcDang1 + pcKiemNhiem1 + pcDacthu + pcCDS > 20 * referenceSalary) 
 		{
 			frappe.model.set_value(row.doctype, row.name, "tong_luong_cb", 20 * referenceSalary);
 		} 
 	else {
-		frappe.model.set_value(row.doctype, row.name, "tong_luong_cb", luongCb + pcDang1 + pcKiemNhiem1);
+		frappe.model.set_value(row.doctype, row.name, "tong_luong_cb", luongCb + pcDang1 + pcKiemNhiem1 + pcDacthu + pcCDS );
 	}
 	row.tong_luong_cb = toNumber(row.tong_luong_cb);
 
@@ -614,7 +637,7 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		if (!typeNowExcluded && (totalDays >= 14 || allowOverride)) {
 			amount = (num(row.tong_luong_cb) * 0.08); // 8% lương cơ bản
 			bhyt = (num(row.tong_luong_cb) * 0.015)
-			bhtn = (num(row.luong_cb + row.pc_dang1 + row.pc_kiem_nhiem1) * 0.01)
+			bhtn = (num(row.tong_luong_cb) * 0.01)
 		} 
 		else {
 			amount = 0;
@@ -706,6 +729,7 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 	frappe.model.set_value(row.doctype, row.name, "tien_gui_xe", tienGuiXe);
 	row.tien_gui_xe = tienGuiXe;
 
+	const khoandienthoai = toNumber(row.tien_khoan_pc_dien_thoai);
 	const pcDang2 = toNumber(pcDang2Value);
 	const tongThuNhap =
 		pcDang2 +
@@ -716,7 +740,11 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		toNumber(row.tien_khoan_ct) +
 		toNumber(row.truylinh) +
 		toNumber(row.tien_luong_hqcv_cu) +
-		toNumber(row.tien_gui_xe);
+		toNumber(row.tien_gui_xe) + 
+		pcDacthu +
+		pcCDS +
+		pcBCHQS +
+		khoandienthoai;
 	frappe.model.set_value(row.doctype, row.name, "tong_thu_nhap", tongThuNhap);
 
 	const tongThuNhapChiuThue = tongThuNhap - toNumber(row.tien_an) - toNumber(row.tien_khoan_ct) - toNumber(row.tien_gui_xe);
