@@ -233,10 +233,10 @@ scheduler_events = {
         ],
 		# Đồng bộ dữ liệu chấm công (Chạy định kỳ sáng và đêm)
 		"*/30 9-10 * * *": [
-			"vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper",
+			"vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_morning",
 		],
         "5 0 * * *": [
-			"vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper",
+			"vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_evening",
 		],
 		"15 0 * * *": [
 			"vinatex.vinatex.doctype.utils.job_monitor.monitor_create_attendance",
