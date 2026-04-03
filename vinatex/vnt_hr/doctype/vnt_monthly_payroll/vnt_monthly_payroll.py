@@ -375,6 +375,86 @@ def get_employee_salary_history(employee):
     )
 
 
+def _normalize_allowance_type_key(value):
+    raw = (value or "").strip()
+    if not raw:
+        return ""
+
+    raw = raw.replace("Đ", "D").replace("đ", "d")
+    text = unicodedata.normalize("NFD", raw)
+    text = "".join(ch for ch in text if unicodedata.category(ch) != "Mn")
+    return " ".join(text.upper().split())
+
+
+def _allowance_effective_in_period(row, period_start, period_end):
+    if not period_start or not period_end:
+        return True
+
+    from_raw = row.get("from_date")
+    to_raw = row.get("to_date")
+    from_date = getdate(from_raw) if from_raw else getdate("1900-01-01")
+    to_date = getdate(to_raw) if to_raw and str(to_raw) != "0000-00-00" else getdate("2999-12-31")
+    return from_date <= period_start and to_date >= period_end
+
+
+def get_employee_profile_allowances(employee, period_start=None, period_end=None):
+    """Get fixed allowance amount from Employee.custom_phu_cap by allowance type."""
+    values = {
+        "pc_dac_thu": 0.0,
+        "pc_chuyen_doi_so": 0.0,
+        "pc_bch_quan_su": 0.0,
+    }
+    if not employee:
+        return values
+
+    allowance_rows = frappe.get_all(
+        "VNT Employee Allowance Type",
+        filters={
+            "parent": employee,
+            "parenttype": "Employee",
+            "parentfield": "custom_phu_cap",
+        },
+        fields=["type", "so_tien_phu_cap", "from_date", "to_date", "creation"],
+        order_by="from_date desc, creation desc",
+        limit_page_length=0,
+    )
+    if not allowance_rows:
+        return values
+
+    target_type_map = {
+        "pc_dac_thu": {"PC DAC THU", "PC DT"},
+        "pc_chuyen_doi_so": {"PC CDS", "PC CHUYEN DOI SO"},
+        "pc_bch_quan_su": {
+            "PC BAN CHQS",
+            "PC CHQS",
+            "PC BCH QUAN SU",
+            "PC BCHQS",
+        },
+    }
+    resolved_fields = set()
+
+    for row in allowance_rows:
+        if not _allowance_effective_in_period(row, period_start, period_end):
+            continue
+
+        allowance_key = _normalize_allowance_type_key(row.get("type"))
+        if not allowance_key:
+            continue
+
+        for fieldname, accepted_keys in target_type_map.items():
+            if fieldname in resolved_fields:
+                continue
+            if allowance_key in accepted_keys:
+                values[fieldname] = flt(row.get("so_tien_phu_cap") or 0)
+                resolved_fields.add(fieldname)
+                break
+
+        if len(resolved_fields) == len(values):
+            break
+
+    return values
+
+
 @frappe.whitelist()
 def compute_item(employee, company=None, month=None, year=None, docname=None):
     """Tính các tham số dùng cho bảng lương theo kỳ (month, year) và employee."""
@@ -399,6 +479,7 @@ def compute_item(employee, company=None, month=None, year=None, docname=None):
     month_str = str(int(month)).zfill(2)
     period_start = getdate(f"{year}-{month_str}-01")
     period_end = get_last_day(period_start)
+    allowance_values = get_employee_profile_allowances(employee, period_start, period_end)
 
     # 2) Lấy tham số lương đang hiệu lực (ưu tiên from_date mới nhất trong khoảng)
     salary_param = frappe.get_all(
@@ -699,6 +780,9 @@ def compute_item(employee, company=None, month=None, year=None, docname=None):
         "custom_allowance_coefficient_1": employee_info.get("custom_allowance_coefficient_1"),
         "custom_allowance_coefficient_2": employee_info.get("custom_allowance_coefficient_2"),
         "custom_basic_salary_coefficient": employee_info.get("custom_basic_salary_coefficient"),
+        "pc_dac_thu": flt(allowance_values.get("pc_dac_thu") or 0),
+        "pc_chuyen_doi_so": flt(allowance_values.get("pc_chuyen_doi_so") or 0),
+        "pc_bch_quan_su": flt(allowance_values.get("pc_bch_quan_su") or 0),
         "so_npt": flt(employee_info.get("custom_relation_number") or 0),
         "previous_truy_thu": get_latest_truy_thu(employee, month=month, year=year, exclude_doc=docname),
     }
