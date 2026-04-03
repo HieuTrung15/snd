@@ -154,10 +154,10 @@ def _create_outgoing_document(payload: Mapping[str, object], attachment: tuple[s
 			"department": department,
 			"nguoi_ky": signer_employee,
 			"summary": summary,
-			"vnt_doc_mng": incoming_document,
 			"noi_nhan": recipient,
 		}
 	)
+	doc.append("vnt_doc_mng", {"incoming_document": incoming_document})
 	if creator_employee:
 		doc.employee = creator_employee
 	if deadline:
