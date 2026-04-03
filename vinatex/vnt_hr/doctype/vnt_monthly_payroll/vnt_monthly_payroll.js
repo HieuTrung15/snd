@@ -637,7 +637,7 @@ function applyPayrollPayload(frm, row, payload, opts = {}) {
 		if (!typeNowExcluded && (totalDays >= 14 || allowOverride)) {
 			amount = (num(row.tong_luong_cb) * 0.08); // 8% lương cơ bản
 			bhyt = (num(row.tong_luong_cb) * 0.015)
-			bhtn = (num(row.tong_luong_cb) * 0.01)
+			bhtn = (num(luongCb + pcDang1 + pcKiemNhiem1) * 0.01)
 		} 
 		else {
 			amount = 0;
