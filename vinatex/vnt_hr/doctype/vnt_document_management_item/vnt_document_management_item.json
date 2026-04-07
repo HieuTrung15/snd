@@ -85,7 +85,6 @@
    "ignore_user_permissions": 1,
    "in_list_view": 1,
    "label": "Chuy\u00ean vi\u00ean x\u1eed l\u00fd",
-   "link_filters": "[[\"Employee\",\"status\",\"=\",\"Active\"]]",
    "options": "Employee"
   },
   {
