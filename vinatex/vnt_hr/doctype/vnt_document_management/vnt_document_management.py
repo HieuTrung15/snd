@@ -180,6 +180,7 @@ class VNTDocumentManagement(Document):
 		self._validate_chair_vs_specialist_status()
 		self._validate_specialist_deadline()
 		self._validate_items2_deadlines()
+		self._validate_items2_specialist_department_match()
 		self._validate_hdqt_deadlines()
 		self._validate_items6_opinion_owner()
 		self._validate_items7_opinion_owner()
@@ -423,6 +424,46 @@ class VNTDocumentManagement(Document):
 		for row in self.get("items2") or []:
 			if row.deadline2 and row.deadline1 and getdate(row.deadline2) > getdate(row.deadline1):
 				frappe.throw("Thời hạn Chuyên viên xử lý không được muộn hơn thời hạn Người phối hợp.")
+
+	def _validate_items2_specialist_department_match(self):
+		"""Chuyên viên xử lý trong items2 phải cùng phòng/ban với Người phối hợp."""
+		rows = self.get("items2") or []
+		employee_ids: set[str] = set()
+
+		for row in rows:
+			collab = (row.nguoi_phoi_hop or "").strip()
+			specialist = (row.cv_xu_ly or "").strip()
+			if collab:
+				employee_ids.add(collab)
+			if specialist:
+				employee_ids.add(specialist)
+
+		if not employee_ids:
+			return
+
+		departments = {
+			r.name: (r.department or "").strip()
+			for r in frappe.get_all(
+				"Employee",
+				filters={"name": ["in", list(employee_ids)]},
+				fields=["name", "department"],
+				ignore_permissions=True,
+			)
+		}
+
+		for line_no, row in enumerate(rows, start=1):
+			collab = (row.nguoi_phoi_hop or "").strip()
+			specialist = (row.cv_xu_ly or "").strip()
+			if not collab or not specialist:
+				continue
+
+			collab_department = departments.get(collab, "")
+			specialist_department = departments.get(specialist, "")
+			if collab_department and specialist_department and collab_department != specialist_department:
+				row_idx = row.idx or line_no
+				frappe.throw(
+					f"Dòng {row_idx}: Chuyên viên xử lý phải cùng phòng/ban với Người phối hợp."
+				)
 
 	def _validate_hdqt_deadlines(self):
 		"""Deadline trong items6/items7 không được muộn hơn deadline chung của văn bản."""
@@ -2168,6 +2209,41 @@ def filter_cv_xu_ly_by_collab(doctype, txt, searchfield, start, page_len, filter
 		SELECT name, employee_name
 		FROM `tabEmployee`
 		WHERE department = %(department)s
+			AND status = 'Active'
+			AND (name LIKE %(txt)s OR employee_name LIKE %(txt)s)
+		ORDER BY employee_name ASC
+		LIMIT %(page_len)s OFFSET %(start)s
+		""",
+		{
+			"department": department,
+			"txt": like_txt,
+			"page_len": page_len,
+			"start": start,
+		},
+	)
+	return rows
+
+
+@frappe.whitelist()
+def filter_cv_xu_ly_by_chair(doctype, txt, searchfield, start, page_len, filters):
+	"""
+	Trả về nhân viên Active cùng phòng/ban với Người chủ trì (nguoi_chu_tri).
+	"""
+	chair = (filters or {}).get("nguoi_chu_tri")
+	if not chair:
+		return []
+
+	department = frappe.db.get_value("Employee", chair, "department")
+	if not department:
+		return []
+
+	like_txt = f"%{txt or ''}%"
+	rows = frappe.db.sql(
+		"""
+		SELECT name, employee_name
+		FROM `tabEmployee`
+		WHERE department = %(department)s
+			AND status = 'Active'
 			AND (name LIKE %(txt)s OR employee_name LIKE %(txt)s)
 		ORDER BY employee_name ASC
 		LIMIT %(page_len)s OFFSET %(start)s

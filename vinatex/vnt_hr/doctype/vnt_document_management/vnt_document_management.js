@@ -1,16 +1,6 @@
 // Copyright (c) 2025, vinatex and contributors
 // For license information, please see license.txt
 
-// Tìm phòng/ban của người chủ trì từ bảng người xử lý chính
-const get_chair_department = (frm) => {
-  const rows = [];
-  if (Array.isArray(frm.doc.items)) rows.push(...frm.doc.items);
-  if (Array.isArray(frm.doc.item2)) rows.push(...frm.doc.item2);
-  if (Array.isArray(frm.doc.items4)) rows.push(...frm.doc.items4);
-  const chairRow = rows.find((r) => r.chu_tri);
-  return chairRow?.department || null;
-};
-
 // Không cho phép thời hạn dòng vượt quá thời hạn chung của văn bản
 const item_role_label = (row) => {
   if (!row) return "nhân sự";
@@ -2005,17 +1995,20 @@ frappe.ui.form.on("VNT Document Management", {
 
   setup_cv_xu_ly_query(frm) {
     frm.set_query("cv_xu_ly", () => {
-      const department = get_chair_department(frm);
-      if (!department) {
+      const chair = (frm.doc.nguoi_chu_tri || "").trim();
+      if (!chair) {
         if (!frm._cvXuLyMissingDeptWarned) {
-          frappe.msgprint("Vui lòng chọn Người chủ trì (có phòng/ban) trước khi chọn Chuyên viên xử lý.");
+          frappe.msgprint("Vui lòng chọn Người chủ trì trước khi chọn Chuyên viên xử lý.");
           frm._cvXuLyMissingDeptWarned = true;
         }
-        // Trả về filter vô hiệu để tránh chọn sai khi chưa có phòng/ban
+        // Trả về filter vô hiệu để tránh chọn sai khi chưa có Người chủ trì
         return { filters: { name: "__no_chair_department__" } };
       }
       frm._cvXuLyMissingDeptWarned = false;
-      return { filters: { department } };
+      return {
+        query: "vinatex.vnt_hr.doctype.vnt_document_management.vnt_document_management.filter_cv_xu_ly_by_chair",
+        filters: { nguoi_chu_tri: chair }
+      };
     });
   },
 
