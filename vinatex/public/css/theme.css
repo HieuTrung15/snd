@@ -6,6 +6,14 @@ body {
 	background-color: #f3f6f9;
 }
 
+/* Giữ page head luôn neo ngay dưới navbar (không trượt lên khi cuộn) */
+.page-head {
+	position: sticky !important;
+	top: var(--navbar-height) !important;
+	z-index: 12 !important;
+	transition: none !important;
+}
+
 /* css cho html block full width */
 .custom-block-widget-box {
 	padding: 0px;
@@ -1019,6 +1027,43 @@ input[type=file]::-webkit-file-upload-button {
 
 /* Hiển thị chữ Actions trên Mobile và cân đối Header */
 @media (max-width: 767px) {
+    /* Giữ vùng trạng thái + actions luôn neo trên cùng khi cuộn ở form VNT Document Management */
+    .vnt-doc-management-form .layout-main-section.frappe-card {
+        overflow: visible !important;
+    }
+
+    .vnt-doc-management-form .page-head {
+        position: sticky !important;
+        top: var(--navbar-height) !important;
+        z-index: 12 !important;
+        margin-bottom: 0 !important;
+        transition: none !important;
+        background: var(--bg-color) !important;
+    }
+
+    .vnt-doc-management-form .page-head .page-head-content {
+        background: var(--card-bg) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+    }
+
+    .page-actions .menu-btn-group {
+        display: none !important;
+    }
+
+    .vnt-doc-management-form .page-actions .menu-btn-group {
+        display: none !important;
+    }
+
+    /* Ẩn nút menu 3 chấm ở Form VNT Document Management trên mobile */
+    body[data-route^="Form/VNT Document Management"] .page-actions .menu-btn-group,
+    body[data-route^="Form/VNT Document Management"] .page-actions button.icon-btn[aria-label="Menu"],
+    body[data-route^="Form/VNT%20Document%20Management"] .page-actions .menu-btn-group,
+    body[data-route^="Form/VNT%20Document%20Management"] .page-actions button.icon-btn[aria-label="Menu"],
+    body[data-route*="VNT Document Management"] .page-actions .standard-actions > button.btn.btn-default.icon-btn,
+    body[data-route*="VNT%20Document%20Management"] .page-actions .standard-actions > button.btn.btn-default.icon-btn {
+        display: none !important;
+    }
+
     /* 1. Hiện chữ Actions (vốn bị class hidden-xs của Frappe ẩn đi) */
     .actions-btn-group .actions-btn-group-label.hidden-xs {
         display: inline-block !important;
