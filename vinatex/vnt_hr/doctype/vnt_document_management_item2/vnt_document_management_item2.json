@@ -38,6 +38,7 @@
    "reqd": 1
   },
   {
+   "columns": 1,
    "default": "0",
    "fieldname": "chu_tri",
    "fieldtype": "Check",
@@ -45,6 +46,7 @@
    "label": "Ch\u1ee7 tr\u00ec"
   },
   {
+   "columns": 1,
    "default": "0",
    "fieldname": "phoi_hop",
    "fieldtype": "Check",
@@ -52,6 +54,7 @@
    "label": "Ph\u1ed1i h\u1ee3p"
   },
   {
+   "columns": 1,
    "default": "0",
    "fieldname": "nhan_de_biet",
    "fieldtype": "Check",
