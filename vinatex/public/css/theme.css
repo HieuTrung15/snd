@@ -14,12 +14,7 @@ body {
 	transition: none !important;
 }
 
-/* Ổn định layout bảng con riêng cho VNT Document Management */
-.vnt-doc-management-form .form-grid .grid-heading-row .grid-row,
-.vnt-doc-management-form .form-grid .grid-body .grid-row .data-row {
-	min-width: 100% !important;
-}
-
+/* Giữ box model ổn định cho grid của VNT Document Management, nhưng không ép width. */
 .vnt-doc-management-form .form-grid .grid-row > .row > .col,
 .vnt-doc-management-form .form-grid .grid-static-col {
 	box-sizing: border-box !important;

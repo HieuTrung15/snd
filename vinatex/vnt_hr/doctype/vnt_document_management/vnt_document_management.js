@@ -569,6 +569,14 @@ const realign_doctype_grids = (frm) => {
     if (field?.df?.fieldtype !== "Table") return;
     const grid = field.grid;
     if (!grid || typeof grid.refresh !== "function") return;
+
+    // Chuẩn hóa 1 chế độ render cho tất cả dòng để tránh lệch cột
+    // khi in_place_edit bị bật/tắt không đồng bộ theo từng role/scope.
+    grid.df.in_place_edit = false;
+    (grid.docfields || []).forEach((df) => {
+      df.in_place_edit = false;
+    });
+
     grid.refresh();
   });
 };
@@ -578,6 +586,63 @@ const schedule_realign_doctype_grids = (frm) => {
   clearTimeout(frm._gridRealignTimer2);
   frm._gridRealignTimer1 = setTimeout(() => realign_doctype_grids(frm), 0);
   frm._gridRealignTimer2 = setTimeout(() => realign_doctype_grids(frm), 180);
+};
+
+const GRID_COLUMN_PROFILES = {
+  // VNT Document Management Item2
+  items: { employee: 2, department: 3, deadline: 2, chu_tri: 1, phoi_hop: 1, nhan_de_biet: 1 },
+  item2: { employee: 2, department: 3, deadline: 2, chu_tri: 1, phoi_hop: 1, nhan_de_biet: 1 },
+  items4: { employee: 2, department: 3, deadline: 2, chu_tri: 1, phoi_hop: 1, nhan_de_biet: 1 },
+  // VNT Document Management Item
+  items2: {
+    nguoi_phoi_hop: 2,
+    deadline1: 1,
+    trang_thai_nguoi_phoi_hop: 1,
+    y_kien_nguoi_phoi_hop: 1,
+    cv_xu_ly: 2,
+    deadline2: 1,
+    trang_thai_cv_xu_ly: 1,
+    y_kien_chuyen_vien_xu_ly: 1,
+  },
+  // VNT Document Management Item3
+  items3: { file_name: 2, attach: 3, user: 2, note: 3 },
+  item4: { file_name: 2, attach: 3, user: 2, note: 3 },
+  items5: { file_name: 2, attach: 3, user: 2, note: 3 },
+  // VNT Document Management Item6
+  items6: { employee: 2, opinion: 1, attach: 1, other: 2, deadline: 1, explan: 2, attach_doc: 1 },
+  items7: { employee: 2, opinion: 1, attach: 1, other: 2, deadline: 1, explan: 2, attach_doc: 1 },
+};
+
+const apply_grid_column_profile = (frm, tableFieldname, profile) => {
+  if (!tableFieldname || !profile) return;
+  const grid = frm.fields_dict?.[tableFieldname]?.grid;
+  if (!grid) return;
+
+  let changed = false;
+  Object.entries(profile).forEach(([fieldname, columns]) => {
+    if (!fieldname || !Number.isFinite(columns)) return;
+    const current = (grid.docfields || []).find((df) => df.fieldname === fieldname);
+    if (!current) return;
+    const currentCols = Number(current.columns || 0);
+    if (currentCols === columns) return;
+
+    if (typeof grid.update_docfield_property === "function") {
+      grid.update_docfield_property(fieldname, "columns", columns);
+    } else {
+      current.columns = columns;
+    }
+    changed = true;
+  });
+
+  if (changed && typeof grid.refresh === "function") {
+    grid.refresh();
+  }
+};
+
+const normalize_doctype_grid_columns = (frm) => {
+  Object.entries(GRID_COLUMN_PROFILES).forEach(([tableFieldname, profile]) => {
+    apply_grid_column_profile(frm, tableFieldname, profile);
+  });
 };
 
 const pin_mobile_page_head = (frm) => {
@@ -1267,6 +1332,13 @@ const enforce_collab_scope = async (frm) => {
   }
 };
 
+const enforce_scope_chain = async (frm) => {
+  await enforce_chair_scope(frm);
+  await enforce_handler_scope(frm);
+  await enforce_specialist_scope(frm);
+  await enforce_collab_scope(frm);
+};
+
 const apply_handler_edit_lock = async (frm) => {
   if (has_full_document_access_role()) {
     clear_scope_flags(frm);
@@ -1709,7 +1781,7 @@ frappe.ui.form.on("VNT Document Management", {
     frm.trigger("enforce_chair_edit_permission");
   },
 
-  refresh(frm) {
+  async refresh(frm) {
     frm.set_df_property("items6", "cannot_add_rows", true);
     if (frm._handlerStatusLastSaved === undefined) {
       set_handler_status_prev(frm, frm.doc.handler_status || null);
@@ -1723,17 +1795,15 @@ frappe.ui.form.on("VNT Document Management", {
     frm.trigger("sync_chair_from_items");
     frm.trigger("sync_collab_from_items");
     frm.trigger("render_process_flow");
-    frm.trigger("enforce_handler_edit_permission");
-    frm.trigger("enforce_creator_edit_permission");
-    frm.trigger("enforce_chair_edit_permission");
+    await frm.trigger("enforce_handler_edit_permission");
+    await frm.trigger("enforce_creator_edit_permission");
+    await frm.trigger("enforce_chair_edit_permission");
     frm.trigger("setup_cv_xu_ly_query");
     frm.trigger("setup_cv_xu_ly_query_items2");
     frm.trigger("lock_items2_grid");
-    // Đặt khóa sau cùng để ghi đè mọi toggle khác (không chờ async)
-    enforce_chair_scope(frm);
-    enforce_handler_scope(frm);
-    enforce_specialist_scope(frm);
-    enforce_collab_scope(frm);
+    normalize_doctype_grid_columns(frm);
+    // Đặt khóa sau cùng theo thứ tự cố định để tránh race-condition khi render grid.
+    await enforce_scope_chain(frm);
     refresh_handler_controls_visibility(frm);
     toggle_process_section(frm);
     hide_legacy_fields(frm);
@@ -1819,9 +1889,10 @@ frappe.ui.form.on("VNT Document Management", {
     }
 
     // === 2. Áp dụng các quy tắc chỉnh sửa quyền hạn & UI ===
-    frm.trigger("enforce_handler_edit_permission");
-    frm.trigger("enforce_creator_edit_permission");
-    frm.trigger("enforce_chair_edit_permission");
+    await frm.trigger("enforce_handler_edit_permission");
+    await frm.trigger("enforce_creator_edit_permission");
+    await frm.trigger("enforce_chair_edit_permission");
+    await enforce_scope_chain(frm);
     toggle_process_section(frm);
     
     // === 3. Điền sẵn Level 1 Approver cho "Công văn đến" ===
@@ -1865,11 +1936,12 @@ frappe.ui.form.on("VNT Document Management", {
     frm.trigger("render_process_flow");
   },
 
-  handler(frm) {
+  async handler(frm) {
     frm.trigger("render_process_flow");
-    frm.trigger("enforce_handler_edit_permission");
-    frm.trigger("enforce_creator_edit_permission");
-    frm.trigger("enforce_chair_edit_permission");
+    await frm.trigger("enforce_handler_edit_permission");
+    await frm.trigger("enforce_creator_edit_permission");
+    await frm.trigger("enforce_chair_edit_permission");
+    await enforce_scope_chain(frm);
     refresh_handler_controls_visibility(frm);
   },
 
@@ -1998,7 +2070,7 @@ frappe.ui.form.on("VNT Document Management", {
     frm.trigger("render_process_flow");
   },
 
-  cv_xu_ly(frm) {
+  async cv_xu_ly(frm) {
     if (frm.doc.cv_xu_ly && !frm.doc.cv_xu_ly_assigned_at) {
       const now = frappe.datetime.now_datetime();
       if (frm.get_field("cv_xu_ly_assigned_at")) {
@@ -2014,9 +2086,9 @@ frappe.ui.form.on("VNT Document Management", {
       }
     }
     frm.trigger("render_process_flow");
-    frm.trigger("enforce_chair_edit_permission");
-    enforce_specialist_scope(frm);
-    enforce_collab_scope(frm);
+    await frm.trigger("enforce_chair_edit_permission");
+    await enforce_specialist_scope(frm);
+    await enforce_collab_scope(frm);
   },
 
   trang_thai_chuyen_vien_xu_ly(frm) {
