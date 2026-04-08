@@ -14,6 +14,17 @@ body {
 	transition: none !important;
 }
 
+/* Ổn định layout bảng con riêng cho VNT Document Management */
+.vnt-doc-management-form .form-grid .grid-heading-row .grid-row,
+.vnt-doc-management-form .form-grid .grid-body .grid-row .data-row {
+	min-width: 100% !important;
+}
+
+.vnt-doc-management-form .form-grid .grid-row > .row > .col,
+.vnt-doc-management-form .form-grid .grid-static-col {
+	box-sizing: border-box !important;
+}
+
 /* css cho html block full width */
 .custom-block-widget-box {
 	padding: 0px;
