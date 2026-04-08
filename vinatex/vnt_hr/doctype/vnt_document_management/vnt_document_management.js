@@ -563,67 +563,26 @@ const toggle_mobile_menu_button = (frm) => {
   pageActions.find(".menu-btn-group").remove();
 };
 
+const realign_doctype_grids = (frm) => {
+  const fields = Object.values(frm.fields_dict || {});
+  fields.forEach((field) => {
+    if (field?.df?.fieldtype !== "Table") return;
+    const grid = field.grid;
+    if (!grid || typeof grid.refresh !== "function") return;
+    grid.refresh();
+  });
+};
+
+const schedule_realign_doctype_grids = (frm) => {
+  clearTimeout(frm._gridRealignTimer1);
+  clearTimeout(frm._gridRealignTimer2);
+  frm._gridRealignTimer1 = setTimeout(() => realign_doctype_grids(frm), 0);
+  frm._gridRealignTimer2 = setTimeout(() => realign_doctype_grids(frm), 180);
+};
+
 const pin_mobile_page_head = (frm) => {
-  const wrapper = frm.page?.wrapper;
-  const pageHead = wrapper?.find(".page-head").first();
-  const pageHeadContent = pageHead?.find(".page-head-content").first();
-  if (!wrapper?.length || !pageHead?.length || !pageHeadContent?.length) return;
-
-  const resetPinned = () => {
-    $(window).off("scroll.vnt_doc_mgmt_pin resize.vnt_doc_mgmt_pin orientationchange.vnt_doc_mgmt_pin");
-    pageHead.each((_, el) => {
-      el.style.removeProperty("height");
-      el.style.removeProperty("top");
-      el.style.removeProperty("position");
-      el.style.removeProperty("margin-bottom");
-      el.style.removeProperty("z-index");
-    });
-    pageHeadContent.each((_, el) => {
-      el.style.removeProperty("position");
-      el.style.removeProperty("top");
-      el.style.removeProperty("left");
-      el.style.removeProperty("right");
-      el.style.removeProperty("width");
-      el.style.removeProperty("z-index");
-      el.style.removeProperty("margin");
-      el.style.removeProperty("background");
-      el.style.removeProperty("border-bottom");
-    });
-  };
-
-  const applyPinned = () => {
-    const rect = pageHead[0].getBoundingClientRect();
-    const headHeight = pageHeadContent.outerHeight() || 60;
-    const navbarHeight = (getComputedStyle(document.documentElement)
-      .getPropertyValue("--navbar-height") || "40px").trim();
-
-    pageHead.each((_, el) => {
-      el.style.setProperty("height", `${Math.round(headHeight)}px`, "important");
-      el.style.setProperty("top", "auto", "important");
-      el.style.setProperty("position", "relative", "important");
-      el.style.setProperty("margin-bottom", "0", "important");
-      el.style.setProperty("z-index", "12", "important");
-    });
-
-    pageHeadContent.each((_, el) => {
-      el.style.setProperty("position", "fixed", "important");
-      el.style.setProperty("top", navbarHeight, "important");
-      el.style.setProperty("left", `${Math.round(rect.left)}px`, "important");
-      el.style.setProperty("right", "auto", "important");
-      el.style.setProperty("width", `${Math.round(rect.width)}px`, "important");
-      el.style.setProperty("z-index", "12", "important");
-      el.style.setProperty("margin", "0", "important");
-      el.style.setProperty("background", "var(--card-bg)", "important");
-      el.style.setProperty("border-bottom", "1px solid var(--border-color)", "important");
-    });
-  };
-
-  applyPinned();
+  // Không pin cứng bằng JS để tránh che tab section; sticky được xử lý bằng CSS chung.
   $(window).off("scroll.vnt_doc_mgmt_pin resize.vnt_doc_mgmt_pin orientationchange.vnt_doc_mgmt_pin");
-  const reapply = frappe.utils.throttle(() => {
-    applyPinned();
-  }, 50);
-  $(window).on("scroll.vnt_doc_mgmt_pin resize.vnt_doc_mgmt_pin orientationchange.vnt_doc_mgmt_pin", reapply);
 };
 
 // Tự động điền số công văn đến tiếp theo khi chọn loại "Công văn đến" nếu docu_number đang trống.
@@ -1564,6 +1523,7 @@ frappe.ui.form.on("VNT Document Management", {
     await apply_items6_opinion_scope(frm);
     await apply_items7_opinion_scope(frm);
     apply_items7_visibility(frm);
+    schedule_realign_doctype_grids(frm);
   },
   async scic_opinion(frm) {
     await sync_hdqt_member_tables(frm);
@@ -1572,6 +1532,7 @@ frappe.ui.form.on("VNT Document Management", {
     await apply_items6_opinion_scope(frm);
     await apply_items7_opinion_scope(frm);
     apply_items7_visibility(frm);
+    schedule_realign_doctype_grids(frm);
     // Cập nhật mốc giá trị hợp lệ mới nhất để phục vụ rollback khi user không đủ quyền.
   },
   opinion_next(frm) {
@@ -1661,19 +1622,23 @@ frappe.ui.form.on("VNT Document Management", {
     sync_summary_opinion(frm);
     frm.trigger("enforce_items6_opinion_scope");
     apply_items7_visibility(frm);
+    schedule_realign_doctype_grids(frm);
   },
   items6_remove(frm) {
     sync_summary_opinion(frm);
     frm.trigger("enforce_items6_opinion_scope");
     apply_items7_visibility(frm);
+    schedule_realign_doctype_grids(frm);
   },
   items7_add(frm) {
     // Dòng mới của items7 mặc định lấy deadline cha (nếu có), vẫn cho sửa tay.
     sync_hdqt_deadline_from_parent(frm, { overwrite: false });
     frm.trigger("enforce_items7_opinion_scope");
+    schedule_realign_doctype_grids(frm);
   },
   items7_remove(frm) {
     frm.trigger("enforce_items7_opinion_scope");
+    schedule_realign_doctype_grids(frm);
   },
   setup(frm) {
     patch_scroll_to_field(frm);
@@ -1780,12 +1745,11 @@ frappe.ui.form.on("VNT Document Management", {
     frm.trigger("refresh_vnt_type_filter");
     pin_mobile_page_head(frm);
     toggle_mobile_menu_button(frm);
-    setTimeout(() => pin_mobile_page_head(frm), 0);
-    setTimeout(() => pin_mobile_page_head(frm), 100);
     setTimeout(() => toggle_mobile_menu_button(frm), 0);
     setTimeout(() => toggle_mobile_menu_button(frm), 100);
     setTimeout(() => toggle_mobile_menu_button(frm), 200);
     setTimeout(() => toggle_mobile_menu_button(frm), 500);
+    schedule_realign_doctype_grids(frm);
     if (!frm._mobileMenuObserver && frm.page?.page_actions?.length) {
       frm._mobileMenuObserver = new MutationObserver(() => {
         toggle_mobile_menu_button(frm);
