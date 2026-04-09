@@ -1,22 +1,46 @@
-// ✅ Bật chế độ init càng sớm càng tốt để ẩn badge gốc
-document.documentElement.classList.add('vnt-notif-init');
-document.addEventListener('DOMContentLoaded', () => {
-  document.body.classList.add('vnt-notif-init');
-});
-
-$(document).on('shown.bs.dropdown', '.dropdown-notifications', function () {
-    const $dd = $(this);
-
-    $dd.find('#todays_events').hide();
-    $dd.find('#changelog_feed').hide();
-
-    $dd.find('#notifications').show();
-    $dd.find('.notifications-settings, .notification-settings, .btn-settings').hide();
-    $(this).find('.full-log-btn').hide();
-});
-
-
 (function () {
+    const INIT_CLASS = "vnt-notif-init";
+    const WAIT_TIMEOUT_MS = 10000;
+    const WAIT_STEP_MS = 100;
+    const waitStartAt = Date.now();
+
+    // ✅ Bật chế độ init càng sớm càng tốt để ẩn badge gốc
+    document.documentElement.classList.add(INIT_CLASS);
+    document.addEventListener("DOMContentLoaded", () => {
+        if (document.body) document.body.classList.add(INIT_CLASS);
+    });
+
+    function releaseInitClass() {
+        document.documentElement.classList.remove(INIT_CLASS);
+        if (document.body) document.body.classList.remove(INIT_CLASS);
+    }
+
+    function whenDeskReady(callback) {
+        if (window.frappe && window.$) {
+            callback();
+            return;
+        }
+
+        if (Date.now() - waitStartAt >= WAIT_TIMEOUT_MS) {
+            releaseInitClass();
+            return;
+        }
+
+        setTimeout(() => whenDeskReady(callback), WAIT_STEP_MS);
+    }
+
+    whenDeskReady(() => {
+        $(document).on("shown.bs.dropdown", ".dropdown-notifications", function () {
+            const $dd = $(this);
+
+            $dd.find("#todays_events").hide();
+            $dd.find("#changelog_feed").hide();
+
+            $dd.find("#notifications").show();
+            $dd.find(".notifications-settings, .notification-settings, .btn-settings").hide();
+            $(this).find(".full-log-btn").hide();
+        });
+
     const OPTIMISTIC_GUARD_MS = 4000;
 
     // ✅ localStorage key cho “cách 2”
@@ -37,8 +61,7 @@ $(document).on('shown.bs.dropdown', '.dropdown-notifications', function () {
     function $btn() { return $('.notifications-icon'); }
 
     function finishInitUI() {
-        document.documentElement.classList.remove('vnt-notif-init');
-        if (document.body) document.body.classList.remove('vnt-notif-init');
+        releaseInitClass();
     }
 
     function saveLocalCount(count) {
@@ -244,13 +267,16 @@ $(document).on('shown.bs.dropdown', '.dropdown-notifications', function () {
     }
 
     $(document).ready(setup_custom_notifications);
-})();
 
-// Tắt popup "Version Updated"
-$(document).ready(function () {
-    if (frappe.realtime && frappe.realtime.off) {
-        frappe.realtime.off("version-update");
+    // Tắt popup "Version Updated"
+    $(document).ready(function () {
+        if (frappe.realtime && frappe.realtime.off) {
+            frappe.realtime.off("version-update");
+        }
+    });
+
+    if (frappe.assets) {
+        frappe.assets.check = function () {};
     }
-});
-
-frappe.assets.check = function () {};
+    });
+})();

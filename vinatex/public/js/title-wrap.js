@@ -14,9 +14,18 @@
     t.style.maxWidth = '100%';
   }
 
-  // chạy mỗi lần đổi màn (Desk re-render header khi đổi route)
-  frappe.router.on('change', () => setTimeout(applyTitleWrap, 0));
+  function bindRouteEvents() {
+    if (window.frappe?.router?.on) {
+      // Desk re-render header khi đổi route
+      window.frappe.router.on("change", () => setTimeout(applyTitleWrap, 0));
+      return;
+    }
+
+    // Fallback an toàn khi frappe/router chưa sẵn sàng
+    window.addEventListener("hashchange", () => setTimeout(applyTitleWrap, 0));
+  }
 
   // chạy lúc vừa load
   document.addEventListener('DOMContentLoaded', () => setTimeout(applyTitleWrap, 0));
+  bindRouteEvents();
 })();
