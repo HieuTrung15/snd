@@ -10,6 +10,7 @@ from frappe.utils.data import escape_html
 from frappe.model.document import Document
 from vinatex.patches.utils.rocket_chat import send_rocket_message
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
+from vinatex.vinatex.doctype.utils.todo_notification_sync import close_todos_and_mark_notifications
 
 # Cặp thành viên đặc biệt do lead_depart nhập ý kiến thay ở vòng 1 khi scic_opinion = 1.
 SCIC_MANUAL_EMPLOYEES = {"VGT00068", "VGT00072"}
@@ -609,10 +610,12 @@ class VNTDocumentManagement(Document):
 			ignore_permissions=True,
 		)
 
-		for row in todos:
-			if (row.status or "").strip().lower() == "closed":
-				continue
-			frappe.db.set_value("ToDo", row.name, "status", "Closed", update_modified=False)
+		todo_names = [
+			row.name
+			for row in todos
+			if (row.status or "").strip().lower() != "closed"
+		]
+		close_todos_and_mark_notifications(todo_names)
 
 	def _maybe_close_doc_todos_on_status_done(self):
 		"""
@@ -636,8 +639,7 @@ class VNTDocumentManagement(Document):
 			fields=["name"],
 			ignore_permissions=True,
 		)
-		for row in open_todos:
-			frappe.db.set_value("ToDo", row.name, "status", "Closed", update_modified=False)
+		close_todos_and_mark_notifications([row.name for row in open_todos])
 
 	def _maybe_close_handler_todo_on_transfer(self):
 		"""

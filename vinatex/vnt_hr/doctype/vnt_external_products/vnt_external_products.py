@@ -11,6 +11,7 @@ from frappe.model.workflow import apply_workflow
 from frappe.utils import cint, cstr, flt, formatdate, get_url_to_form
 from frappe.utils.data import escape_html
 from vinatex.patches.utils.rocket_chat import send_rocket_message
+from vinatex.vinatex.doctype.utils.todo_notification_sync import close_todos_and_mark_notifications
 from vinatex.vnt_hr.doctype.vnt_office_settings.vnt_office_settings import (
 	get_approver_lv2_employee,
 	get_gift_handler_employee,
@@ -239,8 +240,7 @@ def _check_state_to_close_todo(doc: Document, user: str | None):
 		},
 		pluck="name",
 	)
-	for name in names:
-		frappe.db.set_value("ToDo", name, "status", "Closed", update_modified=False)
+	close_todos_and_mark_notifications(names)
 
 
 def _get_prev_and_curr_workflow_state(doc: Document) -> tuple[str | None, str]:

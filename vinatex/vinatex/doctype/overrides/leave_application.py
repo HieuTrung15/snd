@@ -33,6 +33,7 @@ from frappe.utils.data import get_url_to_form
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.model.workflow import get_workflow_name
 from vinatex.patches.utils.rocket_chat import send_rocket_message
+from vinatex.vinatex.doctype.utils.todo_notification_sync import close_todos_and_mark_notifications
 
 # from eupapp.eup_hr.doctype.xac_nhan_cham_cong.xac_nhan_cham_cong import update_event
 # from eupapp.eupapp.doctype.overrides.workflow import gen_approve_channel
@@ -635,8 +636,7 @@ def _check_state_to_close_todo(doc: Document, user: str):
 	  },
 	  pluck="name",
 	)
-	for n in names:
-	  frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
+	close_todos_and_mark_notifications(names)
 
 
 @frappe.whitelist()

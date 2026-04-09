@@ -7,6 +7,7 @@ import unicodedata
 from frappe.model.workflow import get_workflow
 from vinatex.patches.utils.rocket_chat import send_rocket_message
 from hrms.hr.utils import get_holiday_dates_for_employee
+from vinatex.vinatex.doctype.utils.todo_notification_sync import close_todos_and_mark_notifications
 
 # ---------------- Utils ----------------
 def _norm(s: str) -> str:
@@ -357,8 +358,7 @@ def close_todos_for_doc(doc: Document):
 		filters={"reference_type": doc.doctype, "reference_name": doc.name, "status": ["!=", "Cancelled"]},
 		pluck="name",
 	)
-	for n in names:
-		frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
+	close_todos_and_mark_notifications(names)
 
 def delete_todos_for_doc(doc: Document):
 	names = frappe.get_all(
