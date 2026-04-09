@@ -11,6 +11,7 @@ from frappe.model.document import Document
 from frappe.utils import formatdate, get_url_to_form
 from frappe.utils.data import escape_html
 from vinatex.patches.utils.rocket_chat import send_rocket_message
+from vinatex.vinatex.doctype.utils.todo_notification_sync import close_todos_and_mark_notifications
 from vinatex.vnt_hr.doctype.vnt_office_settings.vnt_office_settings import (
 	get_office_manager_employee,
 	get_room_follower,
@@ -433,8 +434,7 @@ def _close_todos_for_users(doc: Document, users: list[str]):
 		},
 		pluck="name",
 	)
-	for name in names:
-		frappe.db.set_value("ToDo", name, "status", "Closed", update_modified=False)
+	close_todos_and_mark_notifications(names)
 
 
 def _close_all_todos_for_doc(doc: Document):
@@ -447,8 +447,7 @@ def _close_all_todos_for_doc(doc: Document):
 		},
 		pluck="name",
 	)
-	for name in names:
-		frappe.db.set_value("ToDo", name, "status", "Closed", update_modified=False)
+	close_todos_and_mark_notifications(names)
 
 
 def _get_todo_allocated_users(doc: Document) -> set[str]:

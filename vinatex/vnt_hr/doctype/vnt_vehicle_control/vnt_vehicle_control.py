@@ -7,6 +7,7 @@ from frappe.model.document import Document
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.utils import formatdate, get_url_to_form
 from vinatex.patches.utils.rocket_chat import send_rocket_message
+from vinatex.vinatex.doctype.utils.todo_notification_sync import close_todos_and_mark_notifications
 
 
 class VNTVehicleControl(Document):
@@ -368,8 +369,7 @@ class VNTVehicleControl(Document):
 				},
 				pluck="name",
 			)
-			for n in todos:
-				frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
+			close_todos_and_mark_notifications(todos)
 
 
 def get_employee_user_id(employee_name: str) -> str | None:

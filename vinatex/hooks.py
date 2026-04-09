@@ -211,7 +211,10 @@ has_permission = {
 doc_events = {
 	"Job Applicant": {
 		"validate": "vinatex.vnt_hr.job_applicant_rating.validate_job_applicant_rating",
-	}
+	},
+	"ToDo": {
+		"on_update": "vinatex.vinatex.doctype.utils.todo_notification_sync.sync_notification_state_on_todo_update",
+	},
 }
 
 # Scheduled Tasks

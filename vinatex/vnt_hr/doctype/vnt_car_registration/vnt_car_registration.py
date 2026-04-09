@@ -11,6 +11,7 @@ from vinatex.patches.utils.rocket_chat import send_rocket_message
 from vinatex.patches.utils.rocket_chat import send_rocket_message_async as send_rocket_message
 from frappe.model.workflow import apply_workflow
 from vinatex.integrations.teams_graph import notify_user
+from vinatex.vinatex.doctype.utils.todo_notification_sync import close_todos_and_mark_notifications
 
 
 class VNTCarRegistration(Document):
@@ -680,8 +681,7 @@ def _check_state_to_close_todo(doc: Document, user: str):
       },
       pluck="name",
     )
-    for n in names:
-      frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
+    close_todos_and_mark_notifications(names)
 
 
 def _get_prev_and_curr_workflow_state(doc: Document) -> tuple[str | None, str]:

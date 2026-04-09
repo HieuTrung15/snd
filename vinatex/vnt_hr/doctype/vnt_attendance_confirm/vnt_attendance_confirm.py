@@ -11,6 +11,7 @@ from frappe.model.document import Document
 from frappe.utils import getdate, get_url_to_form
 # from hrms.hr.utils import get_holiday_list_for_employee(employee)
 from vinatex.patches.utils.rocket_chat import send_rocket_message
+from vinatex.vinatex.doctype.utils.todo_notification_sync import close_todos_and_mark_notifications
 
 
 class VNTAttendanceConfirm(Document):
@@ -472,8 +473,7 @@ def _close_employee_todos(doc: Document):
 		},
 		pluck="name",
 	)
-	for n in names:
-		frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
+	close_todos_and_mark_notifications(names)
 
 
 def _close_approver_todos(doc: Document):
@@ -490,8 +490,7 @@ def _close_approver_todos(doc: Document):
 		},
 		pluck="name",
 	)
-	for n in names:
-		frappe.db.set_value("ToDo", n, "status", "Closed", update_modified=False)
+	close_todos_and_mark_notifications(names)
 
 
 def _notify_cancel_employee_result(doc: Document):
