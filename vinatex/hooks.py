@@ -209,6 +209,9 @@ has_permission = {
 # 	}
 # }
 doc_events = {
+	"Employee": {
+		"before_insert": "vinatex.vinatex.doctype.overrides.employee.sync_employee_naming_series_by_company_abbr",
+	},
 	"Job Applicant": {
 		"validate": "vinatex.vnt_hr.job_applicant_rating.validate_job_applicant_rating",
 	},

@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 
+import re
 import frappe
 from datetime import date
 import calendar
@@ -10,12 +11,97 @@ from erpnext.setup.doctype.employee.employee import (
     Employee
 )
 
+# sửa lấy abbr theo company
+EMPLOYEE_NAME_PADDING = 5
 
+
+def _get_custom_abbr(doc) -> str:
+    company_abbr = ""
+    if doc.get("company"):
+        company_abbr = (frappe.db.get_value("Company", doc.company, "abbr") or "").strip()
+
+    # Luôn ưu tiên abbr theo company để tránh giữ giá trị custom_abbr cũ trên form.
+    custom_abbr = company_abbr or (doc.get("custom_abbr") or "").strip()
+    if custom_abbr and (doc.get("custom_abbr") or "").strip() != custom_abbr:
+        doc.custom_abbr = custom_abbr
+
+    if not custom_abbr:
+        frappe.throw(frappe._("Thiếu mã viết tắt công ty (custom_abbr) để tạo mã nhân sự."))
+
+    return custom_abbr
+
+
+def _get_next_employee_name(custom_abbr: str) -> str:
+    lock_key = f"EMPLOYEE-{custom_abbr}"
+    plain_prefix = custom_abbr
+
+    # Lock theo từng custom_abbr để tránh sinh trùng mã khi tạo đồng thời.
+    frappe.db.sql(
+        "insert ignore into `tabSeries` (`name`, `current`) values (%s, 0)",
+        (lock_key,),
+    )
+    frappe.db.sql(
+        "select `current` from `tabSeries` where `name` = %s for update",
+        (lock_key,),
+    )
+
+    plain_pattern = re.compile(rf"^{re.escape(plain_prefix)}(\d+)$")
+    dotted_pattern = re.compile(rf"^\.{re.escape(plain_prefix)}\.(\d+)$")
+
+    rows = frappe.db.sql(
+        """
+        select `name`
+        from `tabEmployee`
+        where `name` like %s or `name` like %s
+        """,
+        (f"{plain_prefix}%", f".{plain_prefix}.%"),
+        as_dict=True,
+    )
+
+    max_num = 0
+    width = EMPLOYEE_NAME_PADDING
+
+    for row in rows:
+        current_name = (row.get("name") or "").strip()
+        matched = dotted_pattern.match(current_name) or plain_pattern.match(current_name)
+        if not matched:
+            continue
+
+        number_raw = matched.group(1)
+        max_num = max(max_num, int(number_raw))
+        width = max(width, len(number_raw))
+
+    next_num = max_num + 1
+    frappe.db.sql(
+        "update `tabSeries` set `current` = %s where `name` = %s",
+        (next_num, lock_key),
+    )
+
+    return f"{plain_prefix}{str(next_num).zfill(width)}"
+
+
+def sync_employee_naming_series_by_company_abbr(doc, method=None):
+    custom_abbr = _get_custom_abbr(doc)
+    doc.naming_series = f"{custom_abbr}.#####"
+    doc.name = _get_next_employee_name(custom_abbr)
+    doc.employee = doc.name
+    doc.flags.name_set = True
+# sửa lấy abbr theo company
 
 
 class VntEmployee(Employee):
+    def autoname(self):
+        custom_abbr = _get_custom_abbr(self)
+        self.naming_series = f"{custom_abbr}.#####"
+        self.name = _get_next_employee_name(custom_abbr)
+        self.employee = self.name
+
     # điền fullname cho khi tạo employee loại bỏ khoảng trắng thừa
     def on_update(self):
+        self.employee_name = f"{self.first_name or ''} {self.middle_name or ''} {self.last_name or ''}".strip()
+
+
+    def after_insert(self):
         self.employee_name = f"{self.first_name or ''} {self.middle_name or ''} {self.last_name or ''}".strip()
 
 
