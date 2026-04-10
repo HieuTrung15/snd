@@ -180,6 +180,32 @@ const unlock_grid_for_full_access = (grid) => {
   grid.refresh();
 };
 
+const set_grid_editable_state = (grid, enabled) => {
+  if (!grid) return;
+  const canEdit = !!enabled;
+  grid.df.read_only = canEdit ? 0 : 1;
+  grid.df.in_place_edit = canEdit;
+  (grid.docfields || []).forEach((df) => {
+    df.read_only = canEdit ? 0 : 1;
+    df.in_grid_editable_form = canEdit ? 1 : 0;
+    df.in_place_edit = canEdit;
+  });
+  grid.cannot_add_rows = !canEdit;
+  grid.cannot_delete_rows = !canEdit;
+  grid.wrapper.find("input, select, textarea, button").prop("disabled", !canEdit);
+  if (canEdit) {
+    grid.wrapper.find(".grid-add-row, .grid-remove-rows, .grid-remove-all-rows").show();
+  } else {
+    grid.wrapper.find(".grid-add-row, .grid-remove-rows, .grid-remove-all-rows").hide();
+  }
+  (grid.grid_rows || []).forEach((row) => {
+    if (typeof row.toggle_editable === "function") {
+      row.toggle_editable(canEdit);
+    }
+  });
+  grid.refresh();
+};
+
 const apply_full_access_edit_override = (frm) => {
   if (!has_full_document_access_role()) return;
   clear_scope_flags(frm);
@@ -1040,6 +1066,7 @@ const enforce_chair_scope = async (frm) => {
   lockGrid(frm.fields_dict.item2?.grid);
   lockGrid(frm.fields_dict.items2?.grid);
   lockGrid(frm.fields_dict.item4?.grid);
+  set_grid_editable_state(frm.fields_dict.items3?.grid, true);
 };
 
 const enforce_handler_scope = async (frm) => {
@@ -1122,11 +1149,7 @@ const enforce_handler_scope = async (frm) => {
         });
       }
     } else {
-      grid.df.read_only = 0;
-      grid.cannot_add_rows = false;
-      grid.cannot_delete_rows = false;
-      grid.wrapper.find("input, select, textarea, button").prop("disabled", false);
-      grid.wrapper.find(".grid-add-row, .grid-remove-rows, .grid-remove-all-rows").show();
+      set_grid_editable_state(grid, true);
     }
     grid.refresh();
   };
@@ -1184,12 +1207,7 @@ const enforce_specialist_scope = async (frm) => {
   const lockGrid = (grid, isAllowedGrid) => {
     if (!grid) return;
     if (isAllowedGrid) {
-      grid.df.read_only = 0;
-      grid.df.in_place_edit = true;
-      grid.cannot_add_rows = false;
-      grid.cannot_delete_rows = false;
-      grid.wrapper.find("input, select, textarea, button").prop("disabled", false);
-      grid.wrapper.find(".grid-add-row, .grid-remove-rows, .grid-remove-all-rows").show();
+      set_grid_editable_state(grid, true);
     } else {
       grid.df.read_only = 1;
       grid.df.in_place_edit = false;
@@ -1293,13 +1311,7 @@ const enforce_collab_scope = async (frm) => {
   // items4: cho phép sửa
   const gridItem4 = frm.fields_dict.item4?.grid;
   if (gridItem4) {
-    gridItem4.df.read_only = 0;
-    gridItem4.df.in_place_edit = true;
-    gridItem4.cannot_add_rows = false;
-    gridItem4.cannot_delete_rows = false;
-    gridItem4.wrapper.find("input, select, textarea, button").prop("disabled", false);
-    gridItem4.wrapper.find(".grid-add-row, .grid-remove-rows, .grid-remove-all-rows").show();
-    gridItem4.refresh();
+    set_grid_editable_state(gridItem4, true);
   }
 
   // items2: chỉ cho chỉnh trường được phép và chỉ trên dòng của mình
@@ -1403,15 +1415,14 @@ const apply_creator_edit_lock = async (frm) => {
 const set_chair_editable = (frm, enabled, opts = {}) => {
   const allowItems2 = opts.allowItems2 !== undefined ? opts.allowItems2 : enabled;
   const allowItem4 = opts.allowItem4 !== undefined ? opts.allowItem4 : enabled;
+  const allowItems3 = opts.allowItems3 !== undefined ? opts.allowItems3 : enabled;
   const fields = ["chairperson_status", "cong_van_di", "y_kien_chu_tri", "deadline_cv_xu_ly", "cv_xu_ly"];
   fields.forEach((field) => frm.toggle_enable(field, enabled));
 
   const grid = frm.fields_dict.items3?.grid;
-  frm.set_df_property("items3", "read_only", enabled ? 0 : 1);
+  frm.set_df_property("items3", "read_only", allowItems3 ? 0 : 1);
   if (grid) {
-    grid.cannot_add_rows = !enabled;
-    grid.cannot_delete_rows = !enabled;
-    grid.refresh();
+    set_grid_editable_state(grid, allowItems3);
   }
 
   const gridCollab = frm.fields_dict.items2?.grid;
@@ -1426,10 +1437,7 @@ const set_chair_editable = (frm, enabled, opts = {}) => {
   const gridItem4 = frm.fields_dict.item4?.grid;
   frm.set_df_property("item4", "read_only", allowItem4 ? 0 : 1);
   if (gridItem4) {
-    gridItem4.df.read_only = allowItem4 ? 0 : 1;
-    gridItem4.cannot_add_rows = !allowItem4;
-    gridItem4.cannot_delete_rows = !allowItem4;
-    gridItem4.refresh();
+    set_grid_editable_state(gridItem4, allowItem4);
   }
 };
 
@@ -1450,11 +1458,13 @@ const apply_chair_edit_lock = async (frm) => {
   }
   const currentEmp = await get_current_employee(frm);
   const isChairUser = currentEmp && chair === currentEmp;
+  const isSpecialistUser = currentEmp && specialist === currentEmp;
   const canEditHeader = currentEmp && chair === currentEmp;
   const isCollabUser = await is_collab_user(frm, currentEmp);
+  const allowItems3 = canEditHeader ? true : !!isSpecialistUser;
   const allowItems2 = canEditHeader ? false : !!isCollabUser; // Người chủ trì chỉ được sửa các field cho phép, không sửa bảng phối hợp
   const allowItem4 = canEditHeader ? false : false; // Không cho sửa item4 khi là chủ trì/chuyên viên chính
-  set_chair_editable(frm, !!canEditHeader, { allowItems2, allowItem4 });
+  set_chair_editable(frm, !!canEditHeader, { allowItems2, allowItem4, allowItems3 });
   if (isChairUser) {
     await enforce_chair_scope(frm);
   } else {
@@ -3091,6 +3101,7 @@ frappe.ui.form.on("VNT Document Management Item", {
   cv_xu_ly(frm, cdt, cdn) {
     const row = (locals[cdt] && locals[cdt][cdn]) || null;
     const hasAssignedField = !!frappe.get_meta(cdt)?.fields?.some((df) => df.fieldname === "cv_xu_ly_assigned_at");
+    const hasCompletedField = !!frappe.get_meta(cdt)?.fields?.some((df) => df.fieldname === "cv_xu_ly_completed_at");
     if (!row) return;
     if (row.cv_xu_ly) {
       const now = frappe.datetime.now_datetime();
@@ -3104,6 +3115,17 @@ frappe.ui.form.on("VNT Document Management Item", {
         frappe.model.set_value(cdt, cdn, "cv_xu_ly_assigned_at", null);
       } else {
         row.cv_xu_ly_assigned_at = null;
+      }
+    }
+    // Khi bỏ Chuyên viên xử lý thì reset luôn trạng thái để tránh dữ liệu không hợp lệ.
+    if (!row.cv_xu_ly && row.trang_thai_cv_xu_ly) {
+      frappe.model.set_value(cdt, cdn, "trang_thai_cv_xu_ly", null);
+    }
+    if (!row.cv_xu_ly && row.cv_xu_ly_completed_at) {
+      if (hasCompletedField) {
+        frappe.model.set_value(cdt, cdn, "cv_xu_ly_completed_at", null);
+      } else {
+        row.cv_xu_ly_completed_at = null;
       }
     }
     frm.trigger("render_process_flow");
@@ -3132,6 +3154,21 @@ frappe.ui.form.on("VNT Document Management Item", {
   trang_thai_cv_xu_ly(frm, cdt, cdn) {
     const row = (locals[cdt] && locals[cdt][cdn]) || null;
     const hasCompletedField = !!frappe.get_meta(cdt)?.fields?.some((df) => df.fieldname === "cv_xu_ly_completed_at");
+    if (row && !row.cv_xu_ly) {
+      if (row.trang_thai_cv_xu_ly) {
+        frappe.msgprint("Vui lòng chọn Chuyên viên xử lý trước khi chọn Trạng thái chuyên viên xử lý.");
+      }
+      frappe.model.set_value(cdt, cdn, "trang_thai_cv_xu_ly", null);
+      if (row.cv_xu_ly_completed_at) {
+        if (hasCompletedField) {
+          frappe.model.set_value(cdt, cdn, "cv_xu_ly_completed_at", null);
+        } else {
+          row.cv_xu_ly_completed_at = null;
+        }
+      }
+      frm.trigger("render_process_flow");
+      return;
+    }
     if (row) {
       if (is_done(row.trang_thai_cv_xu_ly) && !row.cv_xu_ly_completed_at) {
         if (hasCompletedField) {
