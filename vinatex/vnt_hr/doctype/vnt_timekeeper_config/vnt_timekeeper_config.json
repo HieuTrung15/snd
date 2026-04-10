@@ -78,7 +78,7 @@
  "modified": "2026-04-10 10:52:09.665626",
  "modified_by": "Administrator",
  "module": "VNT HR",
- "name": "Timekeeper Config",
+ "name": "VNT Timekeeper Config",
  "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [

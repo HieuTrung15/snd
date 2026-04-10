@@ -5,7 +5,7 @@
 from frappe.model.document import Document
 
 
-class TimekeeperConfig(Document):
+class VNTTimekeeperConfig(Document):
 	pass
 
 

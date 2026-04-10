@@ -123,7 +123,7 @@ def sync_timekeeper_data():
 
 
 def _device_list():
-    return frappe.get_all('Timekeeper Config', filters={'is_active': 1}, fields=['ip', 'port', 'comm_key', 'name', 'branch'])
+    return frappe.get_all('VNT Timekeeper Config', filters={'is_active': 1}, fields=['ip', 'port', 'comm_key', 'name', 'branch'])
 
 
 def _collect_unique_rows(start_dt: datetime, end_dt: datetime):
