@@ -238,14 +238,15 @@ scheduler_events = {
 		"*/30 9-10 * * *": [
 			"vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_morning",
 		],
-        # Chạy từ 22:00 đến 03:00, mỗi 1 tiếng.
-        "0 22-23 * * *": [
+        # Chạy từ 21:00 đến 23:00, mỗi 1 tiếng.
+        "0 21-23 * * *": [
             "vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_evening_first",
         ],
+        # Chạy từ 00:00 đến 03:00, mỗi 1 tiếng.
         "0 0-3 * * *": [
             "vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_evening_second",
         ],
-        # Chạy lúc 00:15 và 00:45 hàng ngày để tạo attendance trong ngày.
+        # Chạy lúc 4h15 hàng ngày để tạo attendance trong ngày.
 		"15 4 * * *": [
 			"vinatex.vinatex.doctype.utils.job_monitor.monitor_create_attendance",
 		],
