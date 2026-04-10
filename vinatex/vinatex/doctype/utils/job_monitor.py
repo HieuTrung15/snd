@@ -56,7 +56,13 @@ def monitor_sync_timekeeper_morning():
     return log_and_notify("Đồng bộ máy chấm công", sync_timekeeper_data, notify_on_success=notify)
 
 
-def monitor_sync_timekeeper_evening():
+def monitor_sync_timekeeper_evening_first():
+    from vinatex.vinatex.doctype.overrides.timekeeping import sync_timekeeper_data
+    # Chỉ gửi thông báo vào 9:30 và 10:30
+    notify = datetime.now().strftime("%H:%M") in ["09:30", "10:30"]
+    return log_and_notify("Đồng bộ máy chấm công", sync_timekeeper_data, notify_on_success=notify)
+
+def monitor_sync_timekeeper_evening_second():
     from vinatex.vinatex.doctype.overrides.timekeeping import sync_timekeeper_data
     # Chỉ gửi thông báo vào 9:30 và 10:30
     notify = datetime.now().strftime("%H:%M") in ["09:30", "10:30"]

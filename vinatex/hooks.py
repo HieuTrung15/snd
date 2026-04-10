@@ -238,13 +238,19 @@ scheduler_events = {
 		"*/30 9-10 * * *": [
 			"vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_morning",
 		],
-        "5 0 * * *": [
-			"vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_evening",
-		],
-		"15 0 * * *": [
+        # Chạy từ 22:00 đến 03:00, mỗi 1 tiếng.
+        "0 22-23 * * *": [
+            "vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_evening_first",
+        ],
+        "0 0-3 * * *": [
+            "vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_evening_second",
+        ],
+        # Chạy lúc 00:15 và 00:45 hàng ngày để tạo attendance trong ngày.
+		"15 4 * * *": [
 			"vinatex.vinatex.doctype.utils.job_monitor.monitor_create_attendance",
 		],
-        "0 7 * * *": [
+        # chạy lúc 09:00 hàng ngày để monitor việc confirm attendance
+        "0 9 * * *": [
             "vinatex.vinatex.doctype.utils.job_monitor.monitor_attendance_confirm",
         ],
 		# Nhắc hạn điền opinion items6/items7 (D-1 và D0) mỗi ngày.
