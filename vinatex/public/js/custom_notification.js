@@ -42,6 +42,7 @@
         });
 
     const OPTIMISTIC_GUARD_MS = 4000;
+    const MARK_ALL_SYNC_DELAY_MS = 250;
 
     // ✅ localStorage key cho “cách 2”
     const LS_KEY = "vnt_notif_unread_count";
@@ -57,6 +58,7 @@
     const POINTER_GAP = 200;
 
     let optimisticGuard = null;
+    let markAllSyncTimer = null;
 
     function $btn() { return $('.notifications-icon'); }
 
@@ -166,6 +168,14 @@
         return false;
     }
 
+    function scheduleBadgeResync(delayMs = 0) {
+        if (markAllSyncTimer) clearTimeout(markAllSyncTimer);
+        markAllSyncTimer = setTimeout(() => {
+            markAllSyncTimer = null;
+            updateBadgeFromServer(true);
+        }, delayMs);
+    }
+
     // ✅ Trừ badge ngay khi pointerdown
     function bindInstantDecrement() {
         document.addEventListener('pointerdown', function (e) {
@@ -197,8 +207,23 @@
                     renderBadge(next, { save: true });
                 }
                 invalidateCacheSafe();
-                setTimeout(() => updateBadgeFromServer(true), 400);
+                scheduleBadgeResync(400);
             }, 700);
+        }, { capture: true });
+    }
+
+    function bindMarkAllAsReadOptimistic() {
+        document.addEventListener('click', function (e) {
+            const trigger = e.target.closest(
+                '.dropdown-notifications .mark-all-read, .dropdown-notifications .vnt-mark-all-read, .dropdown-notifications [data-action="mark_all_as_read"]'
+            );
+            if (!trigger) return;
+
+            const beforeMark = getBadgeCount();
+            activateOptimisticGuard({ ignoreValue: beforeMark });
+            renderBadge(0, { save: true });
+            invalidateCacheSafe();
+            scheduleBadgeResync(MARK_ALL_SYNC_DELAY_MS);
         }, { capture: true });
     }
 
@@ -224,6 +249,7 @@
         $b.find('.notifications-unseen').append(customSvg);
 
         bindInstantDecrement();
+        bindMarkAllAsReadOptimistic();
 
         // ✅ CÁCH 2: render từ localStorage NGAY LẬP TỨC (để user thấy 12 luôn)
         const cached = loadLocalCount();
@@ -248,22 +274,6 @@
             updateBadgeFromServer(true);
         });
 
-        // Mark all as read
-        $(document).on('click', '.dropdown-notifications .vnt-mark-all-read', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            const beforeMark = getBadgeCount();
-            frappe.call({
-                method: 'frappe.desk.doctype.notification_log.notification_log.mark_all_as_read',
-                callback() {
-                    activateOptimisticGuard({ ignoreValue: beforeMark });
-                    renderBadge(0, { save: true });
-                    invalidateCacheSafe();
-                    setTimeout(() => updateBadgeFromServer(true), 200);
-                }
-            });
-        });
     }
 
     $(document).ready(setup_custom_notifications);
