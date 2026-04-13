@@ -194,16 +194,16 @@ def _send_notification(doc: Document, user: str | list[str] | tuple[str, ...], s
 		"message": message_with_link,
 		"link": url,
 	}, recipients)
-	frappe.enqueue(
-		"vinatex.integrations.teams_graph.notify_user",
-		queue="long",
-		timeout=900,
-		is_async=True,
-		upn_or_email=recipients,
-		content_type="html",
-		linkify=False,
-		message=message_with_link,
-	)
+	# frappe.enqueue(
+	# 	"vinatex.integrations.teams_graph.notify_user",
+	# 	queue="long",
+	# 	timeout=900,
+	# 	is_async=True,
+	# 	upn_or_email=recipients,
+	# 	content_type="html",
+	# 	linkify=False,
+	# 	message=message_with_link,
+	# )
 	# send_rocket_message(
 	# 	to_users=recipients,
 	# 	title=":bell: Thông báo",
@@ -645,12 +645,12 @@ def make_attendance_confirm():
 					existing_by_date.pop(d, None)
 					changed = True
 				continue
-			# xóa nếu đã có attendance thực tế để tránh trùng với item tạo ra từ confirm
+			# xóa/bỏ qua nếu đã có attendance thực tế để tránh trùng với item tạo ra từ confirm
 			if key in attendance_set:
-				if row:
-					att.remove(row)
-					existing_by_date.pop(d, None)
-					changed = True
+				# if row:
+				# 	att.remove(row)
+				# 	existing_by_date.pop(d, None)
+				# 	changed = True
 				continue
 			# Tính status + thời gian vào/ra
 			if key in leaves_set:
