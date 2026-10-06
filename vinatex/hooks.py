@@ -29,7 +29,8 @@ version = conf.get("asset_version") or 1
 # app_include_css = "/assets/vinatex/css/chart.css"
 app_include_css = [
     f"/assets/vinatex/css/theme.css?v={version}",
-    f"/assets/vinatex/css/custom_notification.css?v={version}"
+    f"/assets/vinatex/css/custom_notification.css?v={version}",
+    f"/assets/vinatex/css/workspace_hub.css?v={version}"
 ]
 app_include_js = [
     f"/assets/vinatex/js/global_header.js?v={version}",
@@ -37,6 +38,7 @@ app_include_js = [
 	f"/assets/vinatex/js/report_actions_override.js?v={version}",
 	f"/assets/vinatex/js/fullWidth.js?v={version}",
     f"/assets/vinatex/js/workspace_redirects.js?v={version}",
+    f"/assets/vinatex/js/workspace_hub.js?v={version}",
     f"/assets/vinatex/js/custom_notification.js?v={version}",
     f"/assets/vinatex/js/hide_id_column.js?v={version}",
     f"/assets/vinatex/js/hide_connections.js?v={version}",
@@ -211,6 +213,45 @@ has_permission = {
 doc_events = {
 	"Employee": {
 		"before_insert": "vinatex.vinatex.doctype.overrides.employee.sync_employee_naming_series_by_company_abbr",
+		"on_update": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+		"on_trash": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+	},
+	"Leave Application": {
+		"on_update": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+		"on_update_after_submit": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+		"on_cancel": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+		"on_trash": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+	},
+	"Attendance": {
+		"on_update": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+		"on_update_after_submit": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+		"on_cancel": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+		"on_trash": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+	},
+	"Employee Checkin": {
+		"after_insert": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+		"on_update": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+		"on_trash": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+	},
+	"VNT Contract": {
+		"on_update": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+		"on_trash": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+	},
+	"VNT Salary Slip": {
+		"on_update": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+		"on_update_after_submit": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+		"on_cancel": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+		"on_trash": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+	},
+	"VNT Business Trip Request": {
+		"on_update": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+		"on_update_after_submit": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+		"on_cancel": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+		"on_trash": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+	},
+	"VNT Leader Weekly Trip": {
+		"on_update": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+		"on_trash": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
 	},
 	"Job Applicant": {
 		"validate": "vinatex.vnt_hr.job_applicant_rating.validate_job_applicant_rating",

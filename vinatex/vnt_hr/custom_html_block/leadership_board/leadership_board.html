@@ -1,0 +1,133 @@
+<main class="executive-dashboard" aria-label="Bảng tin lãnh đạo">
+  <section class="executive-filter" aria-labelledby="executive-filter-title">
+    <div class="executive-filter__intro">
+      <span class="executive-filter__icon" aria-hidden="true"><i class="fa fa-home"></i></span>
+      <div>
+        <h2 id="executive-filter-title">Phạm vi điều hành</h2>
+        <p>Bộ lọc áp dụng đồng nhất cho toàn bộ bảng tin</p>
+      </div>
+    </div>
+    <div class="executive-filter__controls">
+      <label for="executive-data-date">Ngày dữ liệu</label>
+      <div class="executive-filter__date-wrap">
+        <input id="executive-data-date" type="date" data-date-input aria-label="Ngày dữ liệu">
+      </div>
+      <span class="executive-filter__field-label" id="executive-branch-label">Chi nhánh</span>
+      <div class="executive-filter__select-wrap" data-branch-picker>
+        <button class="executive-filter__trigger" type="button" data-branch-trigger aria-haspopup="true" aria-expanded="false" aria-labelledby="executive-branch-label">
+          <span data-branch-summary>Tất cả chi nhánh</span>
+          <i class="fa fa-chevron-down" aria-hidden="true"></i>
+        </button>
+        <div class="executive-filter__menu" data-branch-menu hidden>
+          <label class="executive-filter__option executive-filter__option--all">
+            <input type="checkbox" data-all-branches checked><span>Tất cả chi nhánh</span>
+          </label>
+          <div class="executive-filter__options" data-branch-options></div>
+        </div>
+      </div>
+      <button type="button" class="executive-filter__clear" data-clear hidden>Xóa lọc</button>
+    </div>
+  </section>
+
+  <div class="executive-error" data-error hidden role="alert"></div>
+
+  <section class="executive-section executive-section--overview" aria-labelledby="executive-overview-title">
+    <header class="executive-section__header">
+      <div>
+        <h2 id="executive-overview-title">Tổng quan buổi sáng</h2>
+        <p>Quy mô, hiện diện và biến động tại ngày được chọn</p>
+      </div>
+      <div class="executive-section__actions">
+        <span class="executive-meta" data-updated>Đang cập nhật…</span>
+        <button class="executive-refresh" type="button" data-refresh aria-label="Tải lại dữ liệu" title="Tải lại dữ liệu">
+          <img src="/assets/vinatex/images/refresh.svg" alt="" aria-hidden="true">
+        </button>
+      </div>
+    </header>
+    <div class="executive-kpis" data-kpis aria-live="polite"></div>
+  </section>
+
+  <section class="executive-section" aria-labelledby="executive-attention-title">
+    <header class="executive-section__header">
+      <div>
+        <h2 id="executive-attention-title">Việc cần lưu ý</h2>
+        <p>Các mốc nhân sự cần theo dõi hoặc xử lý</p>
+      </div>
+      <span class="executive-pill">Theo ngày đã chọn</span>
+    </header>
+    <div class="executive-attention" data-attention></div>
+  </section>
+
+  <div class="executive-grid executive-grid--two">
+    <section class="executive-section executive-panel" aria-labelledby="executive-attendance-title">
+      <header class="executive-section__header">
+        <div>
+          <h2 id="executive-attendance-title">Tình hình nhân sự trong ngày</h2>
+          <p>Trạng thái ghi nhận theo ngày dữ liệu</p>
+        </div>
+        <span class="executive-pill executive-pill--blue"><strong data-coverage>–</strong>% đã có trạng thái</span>
+      </header>
+      <div class="executive-status-list" data-attendance></div>
+      <p class="executive-note">“Chưa ghi nhận” là số nhân sự chưa có chấm công, nghỉ phép hoặc lịch công tác tại thời điểm tải dữ liệu.</p>
+    </section>
+
+    <section class="executive-section executive-panel" aria-labelledby="executive-branches-title">
+      <header class="executive-section__header">
+        <div>
+          <h2 id="executive-branches-title">Quy mô theo chi nhánh</h2>
+          <p>Phân bổ nhân sự đang làm việc</p>
+        </div>
+        <span class="executive-pill executive-pill--violet"><strong data-branch-count>–</strong> chi nhánh</span>
+      </header>
+      <div class="executive-branch-list" data-branches></div>
+    </section>
+  </div>
+
+  <div class="executive-grid executive-grid--two">
+    <section class="executive-section executive-panel" aria-labelledby="executive-turnover-title">
+      <header class="executive-section__header">
+        <div>
+          <h2 id="executive-turnover-title">Tuyển mới và nghỉ việc</h2>
+          <p>Biến động nhân sự trong 12 tháng gần nhất</p>
+        </div>
+        <div class="executive-turnover-summary">
+          <span><strong data-hiring-total>–</strong> tuyển mới</span>
+          <span class="is-violet"><strong data-attrition-total>–</strong> nghỉ việc</span>
+        </div>
+      </header>
+      <div class="executive-chart" data-turnover-chart></div>
+      <div class="executive-state" data-turnover-state>Đang tải dữ liệu…</div>
+    </section>
+
+    <section class="executive-section executive-panel" aria-labelledby="executive-leaders-title">
+      <header class="executive-section__header">
+        <div>
+          <h2 id="executive-leaders-title">Lãnh đạo và quản lý trong ngày</h2>
+          <p>Tình trạng có mặt, nghỉ hoặc công tác</p>
+        </div>
+        <span class="executive-pill"><strong data-leader-count>–</strong> người</span>
+      </header>
+      <div class="executive-leader-list" data-leaders></div>
+    </section>
+  </div>
+
+  <section class="executive-section executive-finance" data-finance-section aria-labelledby="executive-finance-title">
+    <header class="executive-section__header">
+      <div>
+        <h2 id="executive-finance-title">Tình hình quỹ lương</h2>
+        <p>Số liệu từ các bảng lương đã chốt trong năm</p>
+      </div>
+      <span class="executive-pill executive-pill--green">Dữ liệu phân quyền</span>
+    </header>
+    <div class="executive-finance__state" data-finance-state hidden></div>
+    <div class="executive-finance__content" data-finance-content>
+      <div class="executive-finance__kpis" data-finance-kpis></div>
+      <div class="executive-chart executive-chart--salary" data-salary-chart></div>
+    </div>
+  </section>
+
+  <footer class="executive-footer">
+    <span><i class="fa fa-database" aria-hidden="true"></i> Nguồn dữ liệu trực tiếp từ hồ sơ nhân sự, chấm công, nghỉ phép, hợp đồng và bảng lương.</span>
+    <span data-scope-label>Tất cả chi nhánh</span>
+  </footer>
+</main>

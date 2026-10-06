@@ -1,0 +1,102 @@
+<main class="vnt-home" aria-label="Trang chủ nhân viên">
+  <section class="vnt-home__kpis" aria-label="Tổng quan công và phép trong tháng">
+    <button class="vnt-home__kpi" type="button" data-kpi-key="work_days" data-tone="indigo">
+      <span class="vnt-home__kpi-label">Số ngày công trong tháng</span>
+      <strong class="vnt-home__kpi-value" data-kpi-value>–</strong>
+    </button>
+    <button class="vnt-home__kpi" type="button" data-kpi-key="leave_days" data-tone="cyan">
+      <span class="vnt-home__kpi-label">Số ngày công tác, nghỉ phép trong tháng</span>
+      <strong class="vnt-home__kpi-value" data-kpi-value>–</strong>
+    </button>
+    <button class="vnt-home__kpi" type="button" data-kpi-key="abnormal_days" data-tone="indigo">
+      <span class="vnt-home__kpi-label">Số ngày chấm công bất thường</span>
+      <strong class="vnt-home__kpi-value" data-kpi-value>–</strong>
+    </button>
+    <button class="vnt-home__kpi" type="button" data-kpi-key="remaining_leave" data-tone="cyan">
+      <span class="vnt-home__kpi-label">Số ngày phép còn lại</span>
+      <strong class="vnt-home__kpi-value" data-kpi-value>–</strong>
+    </button>
+  </section>
+
+  <div class="vnt-home__grid vnt-home__grid--upper">
+    <section class="vnt-home__panel vnt-home__panel--feed" data-panel="todos">
+      <header class="vnt-home__panel-header">
+        <span class="vnt-home__section-icon" aria-hidden="true"><i class="fa fa-square-o"></i></span>
+        <h2>Công việc cần thực hiện</h2>
+      </header>
+      <div class="vnt-home__feed" data-todo-list></div>
+      <div class="vnt-home__empty" data-todo-empty>Đang tải danh sách công việc…</div>
+      <button class="vnt-home__view-all" type="button" data-action="todos-all">Xem danh sách</button>
+    </section>
+
+    <section class="vnt-home__panel vnt-home__panel--feed" data-panel="news">
+      <header class="vnt-home__panel-header">
+        <span class="vnt-home__section-icon" aria-hidden="true"><i class="fa fa-square-o"></i></span>
+        <h2>Thông tin quan trọng Tổng công ty</h2>
+      </header>
+      <div class="vnt-home__feed" data-news-list></div>
+      <div class="vnt-home__empty" data-news-empty>Đang tải bản tin…</div>
+      <button class="vnt-home__view-all" type="button" data-action="news-all">Xem danh sách</button>
+    </section>
+  </div>
+
+  <div class="vnt-home__grid vnt-home__grid--lower">
+    <section class="vnt-home__shortcut-shell" aria-label="Tiện ích cá nhân và văn phòng số">
+      <div class="vnt-home__shortcut-columns">
+        <section class="vnt-home__shortcut-card">
+          <header class="vnt-home__shortcut-header">
+            <span>Cá nhân</span>
+            <h2>Thông tin chung</h2>
+            <p>Dữ liệu nhân sự, thu nhập và hành trình phát triển của bạn.</p>
+          </header>
+          <nav class="vnt-home__shortcut-list" aria-label="Thông tin cá nhân">
+            <a href="#" data-route-template="/app/employee/{{employee}}"><span class="vnt-home__shortcut-icon"><i class="fa fa-user-o"></i></span><span>Hồ sơ của tôi</span><i class="fa fa-angle-right"></i></a>
+            <a href="#" data-route-template="/app/query-report/Tổng hợp chấm công tháng?employee={{employee}}&amp;month={{month}}&amp;year={{year}}&amp;from_date={{from_date}}&amp;to_date={{to_date}}"><span class="vnt-home__shortcut-icon"><i class="fa fa-clock-o"></i></span><span>Dữ liệu chấm công</span><i class="fa fa-angle-right"></i></a>
+            <a href="#" data-route-template="/app/vnt-salary-slip?employee={{employee}}"><span class="vnt-home__shortcut-icon"><i class="fa fa-credit-card"></i></span><span>Bảng lương cá nhân</span><i class="fa fa-angle-right"></i></a>
+            <a href="#" data-route-template="/app/vnt-salary-slip?employee={{employee}}&amp;year={{year}}"><span class="vnt-home__shortcut-icon"><i class="fa fa-bar-chart"></i></span><span>Tổng hợp thu nhập năm</span><i class="fa fa-angle-right"></i></a>
+            <a href="/app/training-event"><span class="vnt-home__shortcut-icon"><i class="fa fa-book"></i></span><span>Đào tạo &amp; Phát triển</span><i class="fa fa-angle-right"></i></a>
+            <a href="/app/appraisal"><span class="vnt-home__shortcut-icon"><i class="fa fa-bullseye"></i></span><span>Đánh giá</span><i class="fa fa-angle-right"></i></a>
+            <a href="/app/employee-benefit-application"><span class="vnt-home__shortcut-icon"><i class="fa fa-heart-o"></i></span><span>Phúc lợi</span><i class="fa fa-angle-right"></i></a>
+          </nav>
+        </section>
+
+        <section class="vnt-home__shortcut-card">
+          <header class="vnt-home__shortcut-header">
+            <span>E-Office</span>
+            <h2>Văn phòng số</h2>
+            <p>Các tác vụ hành chính và tiện ích nội bộ thường dùng.</p>
+          </header>
+          <nav class="vnt-home__shortcut-list" aria-label="Văn phòng số">
+            <a href="/app/vnt-business-trip-request"><span class="vnt-home__shortcut-icon"><i class="fa fa-briefcase"></i></span><span>Đăng ký đi công tác</span><i class="fa fa-angle-right"></i></a>
+            <a href="/app/leave-application"><span class="vnt-home__shortcut-icon"><i class="fa fa-calendar-minus-o"></i></span><span>Đơn xin nghỉ</span><i class="fa fa-angle-right"></i></a>
+            <a href="/app/vnt-car-registration"><span class="vnt-home__shortcut-icon"><i class="fa fa-car"></i></span><span>Đăng ký xin xe</span><i class="fa fa-angle-right"></i></a>
+            <a href="/app/vnt-meeting-room-booking"><span class="vnt-home__shortcut-icon"><i class="fa fa-building-o"></i></span><span>Đặt phòng họp</span><i class="fa fa-angle-right"></i></a>
+            <a href="/app/vnt-external-products"><span class="vnt-home__shortcut-icon"><i class="fa fa-cube"></i></span><span>Sản phẩm đối ngoại</span><i class="fa fa-angle-right"></i></a>
+            <a href="/app/danh-bạ-công-ty"><span class="vnt-home__shortcut-icon"><i class="fa fa-address-book-o"></i></span><span>Danh bạ công ty</span><i class="fa fa-angle-right"></i></a>
+            <a href="/app/vnt-task?subject=%5B%22like%22%2C%225S%22%5D"><span class="vnt-home__shortcut-icon"><i class="fa fa-magic"></i></span><span>Chấm điểm 5S</span><i class="fa fa-angle-right"></i></a>
+          </nav>
+        </section>
+      </div>
+    </section>
+
+    <section class="vnt-home__calendar" aria-label="Lịch công tác">
+      <header class="vnt-home__calendar-header">
+        <h2 data-calendar-title>Tháng</h2>
+        <div class="vnt-home__calendar-controls">
+          <div class="vnt-home__calendar-tabs" role="tablist" aria-label="Loại lịch">
+            <button class="is-active" type="button" data-calendar-tab="common" role="tab" aria-selected="true">Lịch chung</button>
+            <button type="button" data-calendar-tab="personal" role="tab" aria-selected="false">Lịch cá nhân</button>
+          </div>
+          <button class="vnt-home__calendar-nav" type="button" data-calendar-action="prev" aria-label="Tháng trước"><i class="fa fa-angle-left"></i></button>
+          <button class="vnt-home__calendar-today" type="button" data-calendar-action="today">Tháng hiện tại</button>
+          <button class="vnt-home__calendar-nav" type="button" data-calendar-action="next" aria-label="Tháng sau"><i class="fa fa-angle-right"></i></button>
+        </div>
+      </header>
+      <div class="vnt-home__calendar-grid" data-calendar-grid aria-live="polite"></div>
+      <footer class="vnt-home__calendar-legend">
+        <span><i class="vnt-home__legend-box vnt-home__legend-box--today"></i>Hôm nay</span>
+        <span><i class="vnt-home__legend-box vnt-home__legend-box--event"></i>Có công tác / họp</span>
+      </footer>
+    </section>
+  </div>
+</main>

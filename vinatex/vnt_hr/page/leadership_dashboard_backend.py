@@ -1,6 +1,7 @@
 import frappe
 from frappe import _
-from frappe.utils import add_days, get_datetime, get_first_day, get_last_day, getdate, nowdate, today
+from frappe.utils import add_days, cint, get_datetime, get_first_day, get_last_day, getdate, now_datetime, nowdate, today
+from frappe.utils.caching import redis_cache
 from vinatex.vnt_hr.report.tổng_lương_cả_năm.tổng_lương_cả_năm import (
 	get_company_salary_kpi,
 	get_company_salary_chart,
@@ -32,6 +33,7 @@ PRIORITY_NAME_ORDER = {
 	"Nguyễn Thị Thu Hiền": 6,
 }
 DESIGNATION_PRIORITY = {"trưởng ban": 0, "chánh văn phòng": 1}
+LIVE_SECTIONS = {"today_leaves", "early_late"}
 
 
 def _percent(part: float, total: float) -> float:
@@ -45,16 +47,10 @@ def _safe_int(value) -> int:
 		return 0
 
 
-@frappe.whitelist()
-def get_dashboard_data(company: str | None = None, department: str | None = None):
-	"""
-	Return a lightweight snapshot for the leadership HR dashboard.
-	Data is kept intentionally small to keep the page responsive.
-	"""
+@redis_cache(ttl=300)
+def _get_dashboard_snapshot(company: str | None, department: str | None, date_key: str) -> dict:
 	filters = {k: v for k, v in {"company": company, "department": department}.items() if v}
-
 	return {
-		"cards": build_cards(filters),
 		"charts": {
 			"salary": build_salary_chart(filters),
 			"education": build_education_chart(filters),
@@ -62,14 +58,60 @@ def get_dashboard_data(company: str | None = None, department: str | None = None
 			"turnover": build_turnover_chart(filters),
 		},
 		"tables": {
-			"activity_summary": build_activity_summary(filters),
-			"staff_movements": build_staff_movements(filters),
 			"hr_reports": build_hr_reports_from_reminders(),
 			"salary_cards": build_salary_cards(filters),
-			"early_late": build_early_late_lists(filters),
-			"present_managers": build_present_managers(filters),
 		},
-		"meta": {"filters": filters},
+		"meta": {"filters": filters, "date": date_key},
+	}
+
+
+@frappe.whitelist()
+def get_dashboard_data(company: str | None = None, department: str | None = None, force: int = 0):
+	"""
+	Return the heavier, slow-changing dashboard data from a five-minute cache.
+	Live sections are served separately by ``get_live_dashboard_data`` so a
+	realtime event never rebuilds salary and headcount reports.
+	"""
+	if cint(force):
+		_get_dashboard_snapshot.clear_cache()
+	return _get_dashboard_snapshot(company or None, department or None, nowdate())
+
+
+def _normalize_live_sections(sections) -> list[str]:
+	if isinstance(sections, str):
+		sections = [part.strip() for part in sections.split(",") if part.strip()]
+	requested = [section for section in (sections or LIVE_SECTIONS) if section in LIVE_SECTIONS]
+	return list(dict.fromkeys(requested)) or sorted(LIVE_SECTIONS)
+
+
+@redis_cache(ttl=15)
+def _get_live_section(section: str, company: str | None, department: str | None, date_key: str):
+	filters = {k: v for k, v in {"company": company, "department": department}.items() if v}
+	if section == "today_leaves":
+		return build_today_leaves(filters)
+	if section == "early_late":
+		return build_early_late_lists(filters)
+	return {}
+
+
+@frappe.whitelist()
+def get_live_dashboard_data(
+	company: str | None = None,
+	department: str | None = None,
+	sections: str | list[str] | None = None,
+	force: int = 0,
+):
+	"""Return only requested realtime sections, each cached for 15 seconds."""
+	requested = _normalize_live_sections(sections)
+	if cint(force):
+		_get_live_section.clear_cache()
+	date_key = nowdate()
+	return {
+		"tables": {
+			section: _get_live_section(section, company or None, department or None, date_key)
+			for section in requested
+		},
+		"meta": {"sections": requested, "generated_at": str(now_datetime())},
 	}
 
 
@@ -541,19 +583,92 @@ def _filter_by_days(items: list[dict], field: str, max_days: int) -> list[dict]:
 	return filtered
 
 
+def _is_business_trip_leave(leave_type: str | None) -> bool:
+	leave_name = (leave_type or "").strip().casefold()
+	return "công tác" in leave_name or "business trip" in leave_name
+
+
+def build_today_leaves(filters: dict[str, str]) -> dict:
+	"""Return today's approved leave list in one indexed, deduplicated query."""
+	today_date = getdate(nowdate())
+	conditions = ["e.status = 'Active'"]
+	params = {"today": today_date}
+	if filters.get("company"):
+		conditions.append("e.company = %(company)s")
+		params["company"] = filters["company"]
+	if filters.get("department"):
+		conditions.append("e.department = %(department)s")
+		params["department"] = filters["department"]
+	employee_conditions = " AND ".join(conditions)
+
+	rows = frappe.db.sql(
+		f"""
+		SELECT live.employee, live.employee_name, live.department, live.designation,
+		       live.leave_type, live.half_day, live.source_order
+		FROM (
+			SELECT la.employee,
+			       COALESCE(NULLIF(la.employee_name, ''), e.employee_name, la.employee) AS employee_name,
+			       e.department, e.designation, la.leave_type, la.half_day, 1 AS source_order
+			FROM `tabLeave Application` la
+			INNER JOIN `tabEmployee` e ON e.name = la.employee
+			WHERE la.docstatus = 1
+			  AND la.from_date <= %(today)s
+			  AND la.to_date >= %(today)s
+			  AND {employee_conditions}
+
+			UNION ALL
+
+			SELECT att.employee,
+			       COALESCE(NULLIF(att.employee_name, ''), e.employee_name, att.employee) AS employee_name,
+			       e.department, e.designation, att.leave_type, 0 AS half_day, 2 AS source_order
+			FROM `tabAttendance` att
+			INNER JOIN `tabEmployee` e ON e.name = att.employee
+			WHERE att.docstatus = 1
+			  AND att.status = 'On Leave'
+			  AND att.attendance_date = %(today)s
+			  AND {employee_conditions}
+		) live
+		ORDER BY live.source_order, live.employee_name
+		""",
+		params,
+		as_dict=True,
+	)
+
+	items: list[dict] = []
+	seen: set[str] = set()
+	for row in rows:
+		employee = row.get("employee")
+		leave_type = (row.get("leave_type") or "").strip()
+		if not employee or employee in seen or _is_business_trip_leave(leave_type):
+			continue
+		seen.add(employee)
+		status = leave_type or _("Nghỉ")
+		if cint(row.get("half_day")):
+			status = _("{0} · Nửa ngày").format(status)
+		items.append(
+			{
+				"employee": employee,
+				"label": row.get("employee_name") or employee,
+				"detail": row.get("department") or row.get("designation") or "",
+				"status": status,
+			}
+		)
+
+	return {"count": len(items), "items": items, "date": str(today_date)}
+
+
 def build_hr_reports_from_reminders() -> dict:
 	"""
-	Chia 3 nhóm: Hợp đồng hết hạn (30 ngày tới), Sinh nhật (30 ngày tới), Nghỉ hưu (60 ngày tới)
-	và trả về tổng số + danh sách gọn cho UI mới.
+	Return slow-changing HR reminders. Today's leave is loaded independently
+	through ``get_live_dashboard_data`` for fast realtime refreshes.
 	"""
-	reminders = safe_get_hr_reminders(days_ahead=90, limit=50)
+	reminders = safe_get_hr_reminders(days_ahead=30, limit=50, include_retirements=False)
 	stats = _get_avg_age_tenure()
 
 	contracts = _filter_by_days(reminders.get("contracts_expiring", []), "end_date", 30)
 	birthdays = _filter_by_days(reminders.get("birthdays", []), "next_birthday", 30)
-	retirements = _filter_by_days(reminders.get("retirements", []), "date_of_retirement", 60)
 	emp_status_map = _get_employee_status_map(
-		{row.get("employee") for row in contracts + retirements if row.get("employee")}
+		{row.get("employee") for row in contracts if row.get("employee")}
 	)
 
 	def _map(rows, date_field: str, status_func) -> list[dict]:
@@ -589,26 +704,12 @@ def build_hr_reports_from_reminders() -> dict:
 				pass
 		return _("Sắp hết hạn")
 
-	def retirement_status(row, emp_status: str | None):
-		retire_date = row.get("date_of_retirement")
-		if retire_date:
-			try:
-				if getdate(retire_date) < today_date and (emp_status or "").lower() == "active":
-					return _("Đã nghỉ hưu")
-			except Exception:
-				pass
-		return _("Sắp tới")
-
 	def birthday_status(row, emp_status: str | None):
 		return ""
 
 	return {
 		"contracts": {"count": len(contracts), "items": _map(contracts, "end_date", contract_status)},
 		"birthdays": {"count": len(birthdays), "items": _map(birthdays, "next_birthday", birthday_status)},
-		"retirements": {
-			"count": len(retirements),
-			"items": _map(retirements, "date_of_retirement", retirement_status),
-		},
 		"stats": stats,
 	}
 
@@ -626,34 +727,24 @@ def _get_employee_status_map(emp_names: set[str]) -> dict[str, str]:
 
 
 def _get_avg_age_tenure() -> dict:
-	employees = frappe.get_all(
-		"Employee",
-		filters={"status": "Active"},
-		fields=["name", "date_of_birth", "date_of_joining"],
-	)
 	today_date = getdate(nowdate())
-	ages = []
-	tenures = []
-
-	def _years_between(dt_val):
-		return max((today_date - getdate(dt_val)).days / 365.25, 0)
-
-	for emp in employees:
-		if emp.date_of_birth:
-			try:
-				ages.append(_years_between(emp.date_of_birth))
-			except Exception:
-				pass
-		if emp.date_of_joining:
-			try:
-				tenures.append(_years_between(emp.date_of_joining))
-			except Exception:
-				pass
-
-	def _avg(lst: list[float]) -> float:
-		return round(sum(lst) / len(lst), 1) if lst else 0
-
-	return {"avg_age": _avg(ages), "avg_tenure": _avg(tenures)}
+	row = frappe.db.sql(
+		"""
+		SELECT
+			ROUND(AVG(CASE WHEN date_of_birth IS NOT NULL
+				THEN GREATEST(DATEDIFF(%(today)s, date_of_birth) / 365.25, 0) END), 1) AS avg_age,
+			ROUND(AVG(CASE WHEN date_of_joining IS NOT NULL
+				THEN GREATEST(DATEDIFF(%(today)s, date_of_joining) / 365.25, 0) END), 1) AS avg_tenure
+		FROM `tabEmployee`
+		WHERE status = 'Active'
+		""",
+		{"today": today_date},
+		as_dict=True,
+	)[0]
+	return {
+		"avg_age": float(row.get("avg_age") or 0),
+		"avg_tenure": float(row.get("avg_tenure") or 0),
+	}
 
 
 def count_employees_between(fieldname: str, start_date, end_date, company: str | None, department: str | None) -> int:
@@ -699,9 +790,13 @@ def get_present_today(the_date, company: str | None, department: str | None) -> 
 	return len(rows)
 
 
-def safe_get_hr_reminders(days_ahead: int = 60, limit: int = 5) -> dict:
+def safe_get_hr_reminders(days_ahead: int = 60, limit: int = 5, include_retirements: bool = True) -> dict:
 	try:
-		return frappe.get_attr("vinatex.api.hr_reminders.get_hr_reminders")(days_ahead=days_ahead, limit=limit)
+		return frappe.get_attr("vinatex.api.hr_reminders.get_hr_reminders")(
+			days_ahead=days_ahead,
+			limit=limit,
+			include_retirements=include_retirements,
+		)
 	except Exception:
 		frappe.log_error(frappe.get_traceback(), "Leadership Dashboard - hr_reminders")
 		return {}
@@ -1055,3 +1150,49 @@ def _leader_sort_key(row: dict, group_code: str | None = None) -> tuple:
 	name_order = PRIORITY_NAME_ORDER.get(name, 99)
 	designation_order = DESIGNATION_PRIORITY.get(designation, 99) if group_code == "department" else 99
 	return (name_order, designation_order, time_val, name)
+
+
+def notify_leadership_dashboard_update(doc, method: str | None = None):
+	"""Publish one after-commit refresh event for the affected dashboard regions."""
+	section_map = {
+		"Leave Application": {"today_leaves"},
+		"Attendance": {"today_leaves", "early_late"},
+		"Employee Checkin": {"early_late"},
+		"Employee": {"dashboard", "today_leaves"},
+		"VNT Contract": {"dashboard"},
+		"VNT Salary Slip": {"dashboard"},
+		"VNT Business Trip Request": {"dashboard"},
+		"VNT Leader Weekly Trip": {"dashboard"},
+	}
+	sections = section_map.get(getattr(doc, "doctype", ""), set())
+	if not sections:
+		return
+
+	pending = getattr(frappe.flags, "leadership_dashboard_sections", None)
+	if pending is None:
+		pending = set()
+		frappe.flags.leadership_dashboard_sections = pending
+	pending.update(sections)
+
+	if getattr(frappe.flags, "leadership_dashboard_event_scheduled", False):
+		return
+	frappe.flags.leadership_dashboard_event_scheduled = True
+
+	def publish_update():
+		changed_sections = sorted(frappe.flags.leadership_dashboard_sections)
+		try:
+			if "dashboard" in changed_sections:
+				_get_dashboard_snapshot.clear_cache()
+			if LIVE_SECTIONS.intersection(changed_sections):
+				_get_live_section.clear_cache()
+			# Bảng tin lãnh đạo mới dùng một snapshot chung cho toàn bộ khối.
+			frappe.get_attr("vinatex.api.leadership_dashboard.clear_cache")()
+			frappe.publish_realtime(
+				"leadership_dashboard_update",
+				{"sections": changed_sections, "doctype": getattr(doc, "doctype", "")},
+			)
+		finally:
+			frappe.flags.leadership_dashboard_sections = set()
+			frappe.flags.leadership_dashboard_event_scheduled = False
+
+	frappe.db.after_commit.add(publish_update)

@@ -43,9 +43,9 @@ APPROVED_STATES = {"Đã duyệt", "Duyệt"}
 REJECT_STATES   = {"Từ chối", "Hủy", "Huỷ", "Đã hủy"}
 
 create_car_regis = [
-	"Ô tô TĐ (trên 40 km)",
-	"Ô tô TĐ (dưới 40 km)",
-	"Ô tô (TĐ chịu chi phí)",
+	"Ô tô công ty (trên 40 km)",
+	"Ô tô công ty (dưới 40 km)",
+	"Ô tô (Cty chịu chi phí)",
 ]
 
 
@@ -671,7 +671,7 @@ def replace_attendance_for_business_trip(doc: Document):
 		create_vehicle_request_for_business_trip(doc, transportation_rows)
 
 	list_vehicle = [row.as_dict() for row in doc.vehicle]
-	result = any(r.get("vehicle_type") == "Máy bay (TĐ trả chi phí)" for r in list_vehicle)
+	result = any(r.get("vehicle_type") == "Máy bay (Đơn vị trả chi phí)" for r in list_vehicle)
 
 	# nếu có máy báy gửi thông báo đến quản lý văn phòng
 	if result:

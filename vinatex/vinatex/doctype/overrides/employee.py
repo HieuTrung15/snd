@@ -3,9 +3,9 @@ from __future__ import unicode_literals
 
 import re
 import frappe
-from datetime import date
+from datetime import date, datetime
 import calendar
-from frappe.utils import getdate, now_datetime
+from frappe.utils import getdate, now_datetime, today
 from dateutil.relativedelta import relativedelta
 from erpnext.setup.doctype.employee.employee import (
     Employee
@@ -96,23 +96,50 @@ class VntEmployee(Employee):
         self.name = _get_next_employee_name(custom_abbr)
         self.employee = self.name
 
-    # điền fullname cho khi tạo employee loại bỏ khoảng trắng thừa
+    # Giữ nguyên các xử lý sau khi lưu của Employee chuẩn (nested set,
+    # User Permission, đồng bộ User...).
     def on_update(self):
-        self.employee_name = f"{self.first_name or ''} {self.middle_name or ''} {self.last_name or ''}".strip()
-
+        super().on_update()
 
     def after_insert(self):
-        self.employee_name = f"{self.first_name or ''} {self.middle_name or ''} {self.last_name or ''}".strip()
+        super().after_insert()
 
+    def validate_date(self):
+        """Validate Employee dates without comparing joining and retirement dates."""
+        if self.date_of_birth and getdate(self.date_of_birth) > getdate(today()):
+            frappe.throw(frappe._("Date of Birth cannot be greater than today."))
+
+        self.validate_from_to_dates("date_of_birth", "date_of_joining")
+        self.validate_from_to_dates("date_of_joining", "relieving_date")
+        self.validate_from_to_dates("date_of_joining", "contract_end_date")
 
     # hàm khi validate sẽ tính toán số lượng người phụ thuộc khi có tick is_dependent trong bảng custom_vnt_employee_tax, sau đó gán vào trường custom_relation_number
     def validate(self):
+        # Employee chuẩn ghép employee_name và thực hiện các kiểm tra
+        # trước khi document được ghi vào database.
+        super().validate()
+        self.employee_name = " ".join(
+            part.strip()
+            for part in (self.first_name, self.middle_name, self.last_name)
+            if part and part.strip()
+        )
         self._validate_contract_terms()
+        self._set_retirement_date()
         total_dependent = 0
         for row in self.get("custom_vnt_employee_tax"):
             if row.is_dependent:
                 total_dependent += 1
         self.custom_relation_number = total_dependent
+
+    def _set_retirement_date(self):
+        if not self.date_of_birth or not self.gender:
+            return
+
+        gender = (self.gender or "").strip().lower()
+        if gender not in ("male", "nam", "m", "female", "nu", "nữ", "f"):
+            return
+
+        self.date_of_retirement = get_retirement_date(self.date_of_birth, self.gender)
 
 
     def _validate_contract_terms(self):
@@ -139,7 +166,7 @@ def get_approver_by_department(department):
 
 # Cập nhật tuổi theo luật VN
 @frappe.whitelist()
-def get_retirement_date(dob: str, gender: str | None = None, extra_months: int = 0) -> str:
+def get_retirement_date(dob: str | date | datetime, gender: str | None = None, extra_months: int = 0) -> str:
     """
     Tính NGÀY nghỉ hưu theo lộ trình VN, KHÓA THEO NĂM ĐỦ TUỔI (không dựa năm hiện tại).
     - Nam: 60y3m (2021) +3m/năm, trần 62y (>=2028).

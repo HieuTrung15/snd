@@ -1,0 +1,766 @@
+/* =============================================================
+   VNT Workspace Hub — giao diện "trung tâm tiện ích" cho workspace
+   -------------------------------------------------------------
+   Font   : Plus Jakarta Sans (Google Fonts, có subset vietnamese)
+   Icon   : Lucide (MIT) — nhúng sẵn trong workspace_hub.js
+   Scope  : toàn bộ rule nằm trong .vnt-hub / .vnt-hub-on
+            => không đụng tới bất kỳ màn hình nào khác.
+
+   Kích thước/màu lấy theo bản thiết kế "Trung tâm Hồ sơ Nhân sự":
+   hub padding 18, gap 14, panel radius 18, item cao tối thiểu 63,
+   icon 38, tiêu đề chàm #34378c, icon/eyebrow xanh mòng két #216579.
+   ============================================================= */
+
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
+/* Ẩn editorjs gốc khi hub đang bật (data vẫn nguyên, chỉ đổi cách hiển thị) */
+.layout-main-section.vnt-hub-on > .editor-js-container {
+	display: none !important;
+}
+
+.vnt-hub {
+	--vnt-indigo: #34378c;
+	--vnt-indigo-soft: #4a4ea6;
+	--vnt-teal: #216579;
+	--vnt-blue: #2f6fd0;
+	--vnt-blue-ink: #1d4ed8;
+	--vnt-blue-soft: #eaf2ff;
+	--vnt-blue-line: #c7ddff;
+	--vnt-ink: #273246;
+	--vnt-ink-2: #67728a;
+	--vnt-muted: #8593a8;
+	--vnt-line: #d8e1ed;
+	--vnt-line-soft: #e9eef4;
+	--vnt-hero-line: #dfe4ec;
+	--vnt-panel-line: #cddffe;
+	--vnt-item-line: #e3e9f3;
+	--vnt-icon-line: #d5eaf5;
+	--vnt-surface: #ffffff;
+	--vnt-surface-2: #f7f9fd;
+	--vnt-item-bg: linear-gradient(180deg, #fdfeff 0%, #fafcff 100%);
+	--vnt-icon-bg: linear-gradient(180deg, #fbfeff 0%, #edf7fe 100%);
+	--vnt-deco: #e6f0fe;
+	--vnt-amber-bg: #fdf6d8;
+	--vnt-amber-ink: #8a6512;
+	--vnt-r-xl: 20px;
+	--vnt-r-lg: 18px;
+	--vnt-r-md: 14px;
+	--vnt-r-sm: 12px;
+	--vnt-hover-line: #b4cdf6;
+	--vnt-hover-bg: linear-gradient(180deg, #eef5ff 0%, #f2f7ff 100%);
+	--vnt-hover-icon: linear-gradient(140deg, #4a6fb3 0%, #2a6788 100%);
+	--vnt-soon-bg: #fffdf6;
+	--vnt-soon-line: #e2d7b6;
+	--vnt-arrow: #7d93b5;
+	--vnt-gap: 14px;
+	--vnt-pad: 18px;
+	/* body.full-width bỏ giới hạn bề ngang của desk -> tự chặn ở đây để trên màn
+	   2K/4K khối nội dung không bị kéo dãn, giữ đúng tỉ lệ của bản thiết kế. */
+	--vnt-max: 1760px;
+
+	position: relative;
+	max-width: var(--vnt-max);
+	margin-left: auto;
+	margin-right: auto;
+	overflow: hidden;
+	font-family: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont,
+		"Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+	font-size: 14px;
+	line-height: 1.45;
+	color: var(--vnt-ink);
+	background: var(--vnt-surface);
+	border: 1px solid var(--vnt-line);
+	border-radius: var(--vnt-r-xl);
+	padding: 0 var(--vnt-pad) var(--vnt-pad);
+	margin-bottom: 18px;
+	box-shadow: 0 18px 30px -24px rgba(24, 49, 97, 0.35);
+	/* nền chấm rất nhạt như trong thiết kế */
+	background-image: radial-gradient(var(--vnt-line-soft) 1px, transparent 1px);
+	background-size: 12px 12px;
+	background-position: 1px 3px;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+	/* tách layer để cuộn/hover không repaint cả trang */
+	contain: layout style;
+}
+
+.vnt-hub *,
+.vnt-hub *::before,
+.vnt-hub *::after {
+	box-sizing: border-box;
+}
+
+/* ---------- Eyebrow / tiêu đề chung ---------- */
+.vnt-eyebrow {
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+	color: var(--vnt-teal);
+	margin-bottom: 4px;
+}
+
+/* ============================ HERO ============================ */
+.vnt-hero {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 20px 0 18px;
+	border-bottom: 1px solid var(--vnt-hero-line);
+}
+
+/* Mảng nền xanh nhạt ở góc trên bên phải (bám theo .vnt-hub) */
+.vnt-hero__deco {
+	position: absolute;
+	top: -186px;
+	right: -382px;
+	width: 580px;
+	height: 322px;
+	border-radius: 50%;
+	background: var(--vnt-deco);
+	pointer-events: none;
+}
+
+.vnt-hero__icon {
+	position: relative;
+	flex: 0 0 auto;
+	width: 48px;
+	height: 48px;
+	border-radius: var(--vnt-r-md);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--vnt-icon-bg);
+	color: var(--vnt-teal);
+	border: 1px solid var(--vnt-icon-line);
+}
+
+.vnt-hero__icon svg {
+	width: 24px;
+	height: 24px;
+}
+
+.vnt-hero__text {
+	position: relative;
+	min-width: 0;
+	flex: 1 1 auto;
+}
+
+.vnt-hero__title {
+	margin: 0 0 4px;
+	font-size: 28px;
+	line-height: 1.2;
+	font-weight: 800;
+	letter-spacing: -0.015em;
+	color: var(--vnt-indigo);
+}
+
+.vnt-hero__sub {
+	margin: 0;
+	font-size: 13.5px;
+	line-height: 1.45;
+	font-weight: 500;
+	color: var(--vnt-ink-2);
+}
+
+.vnt-hero__badge {
+	position: relative;
+	flex: 0 0 auto;
+	padding: 6px 15px;
+	border-radius: 999px;
+	border: 1px solid var(--vnt-icon-line);
+	background: var(--vnt-surface);
+	font-size: 12px;
+	font-weight: 700;
+	color: var(--vnt-teal);
+	white-space: nowrap;
+}
+
+/* ====================== KHỐI THỐNG KÊ ====================== */
+.vnt-stat {
+	position: relative;
+	margin-top: var(--vnt-gap);
+	padding: var(--vnt-pad);
+	border: 1px solid var(--vnt-panel-line);
+	border-radius: var(--vnt-r-lg);
+	background: var(--vnt-surface);
+	box-shadow: 0 10px 22px -18px rgba(24, 49, 97, 0.45);
+	/* giữ chỗ sẵn để nạp số liệu không làm nhảy layout */
+	min-height: 168px;
+}
+
+.vnt-stat__head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.vnt-stat__title {
+	margin: 0;
+	font-size: 17px;
+	font-weight: 800;
+	letter-spacing: -0.01em;
+	color: var(--vnt-indigo);
+}
+
+.vnt-btn-ghost {
+	flex: 0 0 auto;
+	appearance: none;
+	border: 1px solid var(--vnt-icon-line);
+	background: var(--vnt-surface);
+	color: var(--vnt-teal);
+	font-family: inherit;
+	font-size: 12px;
+	font-weight: 700;
+	padding: 6px 15px;
+	border-radius: 999px;
+	cursor: pointer;
+	transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.vnt-btn-ghost:hover {
+	background: var(--vnt-blue-soft);
+	border-color: var(--vnt-blue-line);
+	color: var(--vnt-blue-ink);
+}
+
+.vnt-stat__body {
+	display: grid;
+	grid-template-columns: minmax(150px, 210px) 1fr;
+	gap: 26px;
+	align-items: center;
+}
+
+.vnt-stat__figure {
+	position: relative;
+	padding-right: 26px;
+}
+
+.vnt-stat__figure::after {
+	content: "";
+	position: absolute;
+	right: 0;
+	top: 4px;
+	bottom: 4px;
+	width: 1px;
+	background: var(--vnt-item-line);
+}
+
+.vnt-stat__num {
+	font-size: 46px;
+	line-height: 1;
+	font-weight: 800;
+	letter-spacing: -0.03em;
+	color: var(--vnt-indigo);
+	font-variant-numeric: tabular-nums;
+}
+
+.vnt-stat__unit {
+	margin-top: 8px;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--vnt-ink-2);
+}
+
+.vnt-stat__note {
+	margin-top: 2px;
+	font-size: 11.5px;
+	font-weight: 500;
+	color: var(--vnt-muted);
+}
+
+.vnt-bar {
+	display: flex;
+	width: 100%;
+	height: 26px;
+	border-radius: 6px;
+	overflow: hidden;
+	background: var(--vnt-line-soft);
+}
+
+.vnt-bar > span {
+	display: block;
+	height: 100%;
+	min-width: 3px;
+}
+
+.vnt-legend {
+	list-style: none;
+	margin: 14px 0 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+	gap: 6px 22px;
+}
+
+.vnt-legend li {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 12px;
+	color: var(--vnt-ink-2);
+}
+
+.vnt-legend i {
+	flex: 0 0 auto;
+	width: 9px;
+	height: 9px;
+	border-radius: 3px;
+}
+
+.vnt-legend .vnt-legend__k {
+	font-weight: 500;
+}
+
+.vnt-legend .vnt-legend__v {
+	margin-left: auto;
+	font-weight: 600;
+	color: var(--vnt-ink);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+/* skeleton khi đang nạp số liệu */
+.vnt-stat.is-loading .vnt-stat__body {
+	opacity: 0;
+}
+
+.vnt-stat__skeleton {
+	display: none;
+	height: 96px;
+	border-radius: var(--vnt-r-md);
+	background: linear-gradient(90deg, #f3f6fb 25%, #eaeff7 37%, #f3f6fb 63%);
+	background-size: 400% 100%;
+	animation: vnt-shimmer 1.3s ease-in-out infinite;
+}
+
+.vnt-stat.is-loading .vnt-stat__skeleton {
+	display: block;
+}
+
+.vnt-stat.is-loading .vnt-stat__body {
+	display: none;
+}
+
+@keyframes vnt-shimmer {
+	0% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0 50%;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.vnt-stat__skeleton {
+		animation: none;
+	}
+}
+
+/* ========================== PANEL ========================== */
+.vnt-rows {
+	position: relative;
+	margin-top: var(--vnt-pad);
+	display: flex;
+	flex-direction: column;
+	gap: var(--vnt-gap);
+}
+
+.vnt-row {
+	display: grid;
+	gap: var(--vnt-gap);
+	align-items: stretch;
+}
+
+.vnt-row--1 {
+	grid-template-columns: 1fr;
+}
+
+.vnt-row--2 {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* một cột chứa nhiều panel xếp chồng */
+.vnt-col {
+	display: flex;
+	flex-direction: column;
+	gap: var(--vnt-gap);
+	min-width: 0;
+	height: 100%;
+}
+
+.vnt-panel {
+	position: relative;
+	background: var(--vnt-surface);
+	border: 1px solid var(--vnt-panel-line);
+	border-radius: var(--vnt-r-lg);
+	padding: var(--vnt-pad);
+	height: 100%;
+	box-shadow: 0 10px 22px -18px rgba(24, 49, 97, 0.45);
+}
+
+.vnt-col > .vnt-panel {
+	height: auto;
+}
+
+.vnt-panel__title {
+	margin: 0;
+	font-size: 17px;
+	line-height: 1.25;
+	font-weight: 800;
+	letter-spacing: -0.01em;
+	color: var(--vnt-indigo);
+}
+
+.vnt-panel__desc {
+	margin: 8px 0 0;
+	font-size: 12.5px;
+	font-weight: 500;
+	line-height: 18px;
+	color: var(--vnt-ink-2);
+}
+
+/* layout "split": mô tả bên trái, danh sách bên phải.
+   min(px, %) -> rộng đúng thiết kế khi panel đủ rộng, tự co lại khi hẹp dần,
+   nên không cần media query riêng cho từng mốc bề ngang. */
+.vnt-panel--split {
+	display: grid;
+	grid-template-columns: minmax(0, min(var(--vnt-aside, 150px), 26%)) minmax(0, 1fr);
+	gap: var(--vnt-pad);
+}
+
+.vnt-panel--split .vnt-panel__aside {
+	padding-top: 0;
+}
+
+/* layout "stack": mô tả ở trên, danh sách ở dưới */
+.vnt-panel--stack .vnt-panel__aside {
+	margin-bottom: 14px;
+}
+
+.vnt-panel__items {
+	display: grid;
+	grid-template-columns: repeat(var(--vnt-cols, 1), minmax(0, 1fr));
+	gap: 10px;
+	align-content: start;
+}
+
+/* =========================== ITEM =========================== */
+.vnt-item {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 63px;
+	padding: 10px 12px;
+	border: 1px solid var(--vnt-item-line);
+	border-radius: var(--vnt-r-md);
+	background: var(--vnt-item-bg);
+	text-decoration: none !important;
+	color: inherit;
+	cursor: pointer;
+	/* chỉ animate thuộc tính rẻ => không giật */
+	transition: border-color 0.15s ease, background-color 0.15s ease,
+		box-shadow 0.15s ease, transform 0.15s ease;
+	will-change: auto;
+}
+
+.vnt-item:hover,
+.vnt-item:focus-visible {
+	border-color: var(--vnt-hover-line);
+	background: var(--vnt-hover-bg);
+	box-shadow: 0 6px 16px -8px rgba(37, 86, 160, 0.45);
+	text-decoration: none !important;
+	outline: none;
+}
+
+.vnt-item:focus-visible {
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+.vnt-item__icon {
+	flex: 0 0 auto;
+	width: 38px;
+	height: 38px;
+	border-radius: var(--vnt-r-sm);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--vnt-icon-bg);
+	border: 1px solid var(--vnt-icon-line);
+	color: var(--vnt-teal);
+	transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.vnt-item__icon svg {
+	width: 19px;
+	height: 19px;
+}
+
+.vnt-item:hover .vnt-item__icon,
+.vnt-item:focus-visible .vnt-item__icon {
+	background: var(--vnt-hover-icon);
+	border-color: transparent;
+	color: #ffffff;
+}
+
+.vnt-item__body {
+	min-width: 0;
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+
+.vnt-item__title {
+	font-size: 13px;
+	font-weight: 700;
+	line-height: 1.32;
+	color: var(--vnt-ink);
+	/* tối đa 2 dòng, không vỡ khung */
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	overflow-wrap: anywhere;
+}
+
+.vnt-item__sub {
+	font-size: 10.5px;
+	font-weight: 500;
+	line-height: 1.5;
+	color: var(--vnt-muted);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.vnt-item__arrow {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	color: var(--vnt-arrow);
+	transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.vnt-item__arrow svg {
+	width: 18px;
+	height: 18px;
+}
+
+.vnt-item:hover .vnt-item__arrow {
+	color: var(--vnt-blue);
+	transform: translateX(2px);
+}
+
+.vnt-item__badge {
+	position: absolute;
+	top: 7px;
+	right: 9px;
+	padding: 2px 7px;
+	border-radius: 7px;
+	background: var(--vnt-amber-bg);
+	color: var(--vnt-amber-ink);
+	font-size: 9.5px;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+	line-height: 1.5;
+	white-space: nowrap;
+}
+
+.vnt-item.is-soon {
+	cursor: default;
+}
+
+.vnt-item.is-soon:hover,
+.vnt-item.is-soon:focus-visible {
+	border-color: var(--vnt-soon-line);
+	background: var(--vnt-soon-bg);
+	box-shadow: none;
+}
+
+.vnt-item.is-soon:hover .vnt-item__icon,
+.vnt-item.is-soon:focus-visible .vnt-item__icon {
+	background: var(--vnt-icon-bg);
+	border-color: var(--vnt-icon-line);
+	color: var(--vnt-teal);
+}
+
+.vnt-item.is-soon:hover .vnt-item__arrow {
+	color: var(--vnt-arrow);
+	transform: none;
+}
+
+/* ========================= RESPONSIVE =========================
+   Mốc gập:
+     > 1100px : đúng bố cục thiết kế — panel full width, mô tả trái, ô 2 cột.
+     <= 1100px: hàng 2 panel (workspace khác) xuống còn 1 panel mỗi hàng.
+     <= 860px : mô tả lên trên, ô xuống 1 cột.
+     <= 560px : thu gọn padding/cỡ chữ cho điện thoại.
+   ============================================================= */
+@media (max-width: 1280px) {
+	.vnt-panel--split {
+		gap: 14px;
+	}
+}
+
+@media (max-width: 1100px) {
+	.vnt-row--2 {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 860px) {
+	.vnt-hub {
+		padding: 0 14px 14px;
+		border-radius: var(--vnt-r-lg);
+	}
+
+	.vnt-hero {
+		flex-wrap: wrap;
+		padding: 16px 0 14px;
+	}
+
+	.vnt-hero__title {
+		font-size: 22px;
+	}
+
+	.vnt-hero__badge {
+		order: 3;
+	}
+
+	.vnt-stat__body {
+		grid-template-columns: 1fr;
+		gap: 16px;
+	}
+
+	.vnt-stat__figure {
+		padding-right: 0;
+		padding-bottom: 14px;
+	}
+
+	.vnt-stat__figure::after {
+		left: 0;
+		right: 0;
+		top: auto;
+		bottom: 0;
+		width: auto;
+		height: 1px;
+	}
+
+	/* mô tả lên trên, danh sách ô xuống 1 cột */
+	.vnt-panel--split {
+		grid-template-columns: 1fr;
+		gap: 0;
+	}
+
+	.vnt-panel--split .vnt-panel__aside {
+		margin-bottom: 12px;
+	}
+
+	.vnt-panel__items {
+		grid-template-columns: 1fr !important;
+	}
+
+	/* ô hẹp lại -> chừa chỗ cho nhãn "Sắp ra mắt" ở góc phải trên */
+	.vnt-item.is-soon .vnt-item__body {
+		padding-right: 62px;
+	}
+}
+
+@media (max-width: 560px) {
+	.vnt-hub {
+		--vnt-gap: 10px;
+		--vnt-pad: 14px;
+		padding: 0 12px 12px;
+		margin-bottom: 12px;
+	}
+
+	.vnt-hero {
+		gap: 12px;
+	}
+
+	.vnt-hero__icon {
+		width: 40px;
+		height: 40px;
+	}
+
+	.vnt-hero__icon svg {
+		width: 20px;
+		height: 20px;
+	}
+
+	.vnt-hero__title {
+		font-size: 19px;
+	}
+
+	.vnt-hero__sub {
+		font-size: 12.5px;
+	}
+
+	.vnt-panel__title {
+		font-size: 16px;
+	}
+
+	.vnt-item {
+		min-height: 58px;
+		padding: 9px 10px;
+		gap: 9px;
+	}
+
+	.vnt-item__icon {
+		width: 34px;
+		height: 34px;
+	}
+
+	.vnt-item__icon svg {
+		width: 17px;
+		height: 17px;
+	}
+
+	/* bỏ mũi tên: ở bề ngang này chỗ cho tiêu đề quan trọng hơn */
+	.vnt-item__arrow {
+		display: none;
+	}
+
+	.vnt-stat__num {
+		font-size: 36px;
+	}
+
+	.vnt-legend {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ======================= DARK MODE (an toàn) ======================= */
+[data-theme="dark"] .vnt-hub {
+	--vnt-indigo: #cfd6ff;
+	--vnt-indigo-soft: #b9c1f5;
+	--vnt-teal: #8fd3e6;
+	--vnt-blue-soft: #1b2a45;
+	--vnt-blue-line: #33456b;
+	--vnt-ink: #e6ebf3;
+	--vnt-ink-2: #a9b5c9;
+	--vnt-muted: #7e8ba3;
+	--vnt-line: #2a3348;
+	--vnt-line-soft: #232b3d;
+	--vnt-hero-line: #2a3348;
+	--vnt-panel-line: #2c3a56;
+	--vnt-item-line: #2a3348;
+	--vnt-icon-line: #2d4353;
+	--vnt-surface: #171e2d;
+	--vnt-surface-2: #1b2232;
+	--vnt-item-bg: linear-gradient(180deg, #1b2333 0%, #182030 100%);
+	--vnt-icon-bg: linear-gradient(180deg, #1d2b38 0%, #1a2632 100%);
+	--vnt-deco: #1b2740;
+	--vnt-amber-bg: #3c3320;
+	--vnt-amber-ink: #e6c477;
+	--vnt-hover-line: #3a5380;
+	--vnt-hover-bg: linear-gradient(180deg, #1d2740 0%, #1b2438 100%);
+	--vnt-hover-icon: linear-gradient(140deg, #3f639f 0%, #235a77 100%);
+	--vnt-soon-bg: #22283a;
+	--vnt-soon-line: #4a4025;
+	--vnt-arrow: #5d6b85;
+}

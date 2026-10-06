@@ -22,7 +22,6 @@
   "sign_status",
   "column_break_bcjg",
   "employee_name",
-  "employee",
   "salutation",
   "designation",
   "validity",
@@ -101,12 +100,6 @@
    "fieldname": "place_of_contract",
    "fieldtype": "Data",
    "label": "N\u01a1i t\u1ea1o H\u0110"
-  },
-  {
-   "fetch_from": "employee_name.employee_name",
-   "fieldname": "employee",
-   "fieldtype": "Data",
-   "label": "T\u00ean ng\u01b0\u1eddi \u0111\u1ea1i di\u1ec7n"
   },
   {
    "fetch_from": "employee_name.salutation",
@@ -208,7 +201,7 @@
   {
    "default": "VGT00069",
    "fieldname": "employee_name",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "ignore_user_permissions": 1,
    "label": "Ng\u01b0\u1eddi \u0111\u1ea1i di\u1ec7n",
    "options": "Employee"
@@ -235,7 +228,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-12-10 10:26:40.633277",
+ "modified": "2026-09-14 16:41:03.421025",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Contract",

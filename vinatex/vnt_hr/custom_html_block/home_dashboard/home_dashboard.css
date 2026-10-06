@@ -1,0 +1,714 @@
+:host {
+	display: block;
+	width: 100%;
+	min-width: 0;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+button,
+a {
+	font: inherit;
+}
+
+.vnt-home {
+	--home-navy: #1d247c;
+	--home-ink: #18233b;
+	--home-muted: #6b7890;
+	--home-cyan: #0e7898;
+	--home-line: #d6e1ed;
+	--home-blue-line: #b9d8f7;
+	--home-soft-blue: #f4faff;
+	--home-page: #f5f8fb;
+	display: grid;
+	gap: 12px;
+	min-width: 0;
+	color: var(--home-ink);
+	font-family: var(--font-stack), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	font-size: 12px;
+	-webkit-font-smoothing: antialiased;
+}
+
+.vnt-home__kpis,
+.vnt-home__panel,
+.vnt-home__shortcut-shell,
+.vnt-home__calendar {
+	background-color: #fbfdff;
+	background-image: radial-gradient(#e7eff7 0.7px, transparent 0.7px);
+	background-position: 8px 8px;
+	background-size: 12px 12px;
+	border: 1px solid var(--home-line);
+	border-radius: 16px;
+	box-shadow: 0 3px 12px rgba(32, 54, 86, 0.035);
+}
+
+/* KPI row */
+.vnt-home__kpis {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 9px;
+	padding: 12px 14px;
+}
+
+.vnt-home__kpi {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	min-width: 0;
+	height: 74px;
+	padding: 11px 14px;
+	overflow: hidden;
+	text-align: left;
+	background: #f5fbff;
+	border: 1px solid #b8d7f8;
+	border-radius: 12px;
+	box-shadow: 0 2px 8px rgba(70, 118, 169, 0.055);
+	cursor: pointer;
+	transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.vnt-home__kpi::after {
+	position: absolute;
+	top: -27px;
+	right: -12px;
+	width: 62px;
+	height: 62px;
+	background: #e4f0ff;
+	border-radius: 50%;
+	content: "";
+}
+
+.vnt-home__kpi:hover,
+.vnt-home__kpi:focus-visible {
+	border-color: #72b9ef;
+	box-shadow: 0 4px 12px rgba(48, 116, 178, 0.13);
+	outline: none;
+	transform: translateY(-1px);
+}
+
+.vnt-home__kpi-label {
+	position: relative;
+	z-index: 1;
+	max-width: calc(100% - 30px);
+	color: #617089;
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: 0.075em;
+	line-height: 1.35;
+	text-transform: uppercase;
+}
+
+.vnt-home__kpi-value {
+	position: relative;
+	z-index: 1;
+	margin-top: 5px;
+	color: #29358e;
+	font-size: 24px;
+	font-weight: 750;
+	font-variant-numeric: tabular-nums;
+	line-height: 1;
+}
+
+.vnt-home__kpi[data-tone="cyan"] .vnt-home__kpi-value {
+	color: #126b86;
+}
+
+.vnt-home__kpi.is-loading .vnt-home__kpi-value {
+	opacity: 0.45;
+}
+
+/* Two-column rows */
+.vnt-home__grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px;
+	min-width: 0;
+}
+
+/* Todo and news */
+.vnt-home__panel {
+	display: grid;
+	grid-template-rows: 49px minmax(0, 1fr) 31px;
+	min-width: 0;
+	height: 306px;
+	padding: 0 16px 16px;
+	overflow: hidden;
+}
+
+.vnt-home__panel-header {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+	border-bottom: 1px solid #d7e3ef;
+}
+
+.vnt-home__panel-header h2 {
+	margin: 0;
+	color: var(--home-navy);
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 1.35;
+}
+
+.vnt-home__section-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	color: #06789c;
+	background: #f4fcff;
+	border: 1px solid #b8def1;
+	border-radius: 9px;
+	font-size: 14px;
+}
+
+.vnt-home__feed,
+.vnt-home__empty {
+	margin: 14px 0 10px;
+	overflow-y: auto;
+	background: rgba(255, 255, 255, 0.58);
+	border: 1px dashed #bfd9ee;
+	border-radius: 14px;
+	scrollbar-color: #cbd9e7 transparent;
+	scrollbar-width: thin;
+}
+
+.vnt-home__feed {
+	display: grid;
+	align-content: start;
+	gap: 4px;
+	padding: 8px;
+}
+
+.vnt-home__feed:empty {
+	display: none;
+}
+
+.vnt-home__empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+	color: #68758c;
+	font-size: 11px;
+	text-align: center;
+}
+
+.vnt-home__empty[hidden] {
+	display: none;
+}
+
+.vnt-home__feed-item {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 10px;
+	min-height: 42px;
+	padding: 7px 9px;
+	color: inherit;
+	background: #ffffff;
+	border: 1px solid #e1eaf3;
+	border-radius: 9px;
+	text-align: left;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.vnt-home__feed-item:hover,
+.vnt-home__feed-item:focus-visible {
+	color: inherit;
+	background: #f3f9ff;
+	border-color: #b8d8f7;
+	outline: none;
+	text-decoration: none;
+}
+
+.vnt-home__feed-copy {
+	min-width: 0;
+}
+
+.vnt-home__feed-title {
+	display: block;
+	overflow: hidden;
+	color: #24314a;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1.3;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.vnt-home__feed-meta {
+	display: block;
+	margin-top: 2px;
+	color: #8794a8;
+	font-size: 9px;
+	line-height: 1.2;
+}
+
+.vnt-home__feed-state {
+	padding: 3px 8px;
+	color: #1f6c8a;
+	background: #eaf8fc;
+	border-radius: 999px;
+	font-size: 9px;
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.vnt-home__view-all {
+	width: 100%;
+	height: 31px;
+	padding: 0 10px;
+	color: #0a5f82;
+	background: rgba(255, 255, 255, 0.84);
+	border: 1px solid #b8dff0;
+	border-radius: 10px;
+	font-size: 11px;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.vnt-home__view-all:hover,
+.vnt-home__view-all:focus-visible {
+	background: #eefaff;
+	border-color: #79c5e5;
+	outline: none;
+}
+
+/* Shortcut cards */
+.vnt-home__shortcut-shell,
+.vnt-home__calendar {
+	height: 376px;
+}
+
+.vnt-home__shortcut-shell {
+	padding: 12px;
+	overflow: hidden;
+}
+
+.vnt-home__shortcut-columns {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 9px;
+	height: 100%;
+}
+
+.vnt-home__shortcut-card {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	padding: 10px;
+	background: rgba(255, 255, 255, 0.93);
+	border: 1px solid #a9d1f3;
+	border-radius: 14px;
+	box-shadow: 0 2px 8px rgba(51, 104, 157, 0.045);
+}
+
+.vnt-home__shortcut-header {
+	flex: 0 0 58px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid #dae5ef;
+}
+
+.vnt-home__shortcut-header > span {
+	display: block;
+	margin-bottom: 2px;
+	color: #0b6389;
+	font-size: 8px;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	line-height: 1.2;
+	text-transform: uppercase;
+}
+
+.vnt-home__shortcut-header h2 {
+	margin: 0;
+	color: var(--home-navy);
+	font-size: 14px;
+	font-weight: 750;
+	line-height: 1.25;
+}
+
+.vnt-home__shortcut-header p {
+	margin: 3px 0 0;
+	overflow: hidden;
+	color: #738198;
+	font-size: 8.5px;
+	line-height: 1.25;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.vnt-home__shortcut-list {
+	display: grid;
+	gap: 4px;
+	padding-top: 7px;
+}
+
+.vnt-home__shortcut-list a {
+	display: grid;
+	grid-template-columns: 29px minmax(0, 1fr) 10px;
+	align-items: center;
+	gap: 7px;
+	min-width: 0;
+	height: 34px;
+	padding: 2px 7px 2px 3px;
+	color: #20314a;
+	background: #f8fbfe;
+	border: 1px solid #d5e5f2;
+	border-radius: 8px;
+	font-size: 10.5px;
+	font-weight: 600;
+	text-decoration: none;
+	transition: background-color 130ms ease, border-color 130ms ease, transform 130ms ease;
+}
+
+.vnt-home__shortcut-list a:hover,
+.vnt-home__shortcut-list a:focus-visible {
+	color: #152467;
+	background: #eef8ff;
+	border-color: #8cc8ed;
+	outline: none;
+	text-decoration: none;
+	transform: translateX(1px);
+}
+
+.vnt-home__shortcut-list a > span:nth-child(2) {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.vnt-home__shortcut-list a > .fa-angle-right {
+	color: #5686bd;
+	font-size: 11px;
+	text-align: right;
+}
+
+.vnt-home__shortcut-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 29px;
+	height: 29px;
+	color: #0d7797;
+	background: #f0fbff;
+	border: 1px solid #b9e0ee;
+	border-radius: 8px;
+	font-size: 12px;
+}
+
+/* Calendar */
+.vnt-home__calendar {
+	display: grid;
+	grid-template-rows: 59px minmax(0, 1fr) 37px;
+	min-width: 0;
+	padding: 12px;
+	overflow: visible;
+	background-color: rgba(255, 255, 255, 0.97);
+	background-image: none;
+}
+
+.vnt-home__calendar-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	min-width: 0;
+	border-bottom: 1px solid #d8e2eb;
+}
+
+.vnt-home__calendar-header h2 {
+	margin: 0;
+	color: var(--home-navy);
+	font-size: 14px;
+	font-weight: 750;
+	white-space: nowrap;
+}
+
+.vnt-home__calendar-controls,
+.vnt-home__calendar-tabs {
+	display: flex;
+	align-items: center;
+}
+
+.vnt-home__calendar-controls {
+	gap: 5px;
+}
+
+.vnt-home__calendar-tabs {
+	gap: 2px;
+	margin-right: 6px;
+}
+
+.vnt-home__calendar-tabs button,
+.vnt-home__calendar-nav,
+.vnt-home__calendar-today {
+	height: 32px;
+	color: #3a4962;
+	background: transparent;
+	border: 1px solid transparent;
+	border-radius: 8px;
+	font-size: 10px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.vnt-home__calendar-tabs button {
+	padding: 0 10px;
+}
+
+.vnt-home__calendar-tabs button.is-active {
+	color: #0a668a;
+	background: #f8fdff;
+	border-color: #8ed5ee;
+}
+
+.vnt-home__calendar-nav {
+	width: 30px;
+	padding: 0;
+	color: #2b5f9c;
+	font-size: 13px;
+}
+
+.vnt-home__calendar-today {
+	padding: 0 10px;
+}
+
+.vnt-home__calendar-tabs button:hover,
+.vnt-home__calendar-nav:hover,
+.vnt-home__calendar-today:hover,
+.vnt-home__calendar-tabs button:focus-visible,
+.vnt-home__calendar-nav:focus-visible,
+.vnt-home__calendar-today:focus-visible {
+	background: #f0f8ff;
+	outline: none;
+}
+
+.vnt-home__calendar-grid {
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	grid-auto-rows: 1fr;
+	gap: 5px;
+	min-height: 0;
+	padding: 10px 0;
+}
+
+.vnt-home__weekday,
+.vnt-home__day {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 0;
+	font-variant-numeric: tabular-nums;
+}
+
+.vnt-home__weekday {
+	color: #111827;
+	font-size: 10px;
+	font-weight: 700;
+}
+
+.vnt-home__weekday.is-weekend {
+	color: #d12727;
+}
+
+.vnt-home__day {
+	position: relative;
+	min-height: 35px;
+	color: #1d2838;
+	background: #f6f6f7;
+	border: 1px solid transparent;
+	border-radius: 10px;
+	font-size: 12px;
+	cursor: default;
+}
+
+.vnt-home__day.is-empty {
+	background: transparent;
+}
+
+.vnt-home__day.is-weekend {
+	color: #dc2929;
+}
+
+.vnt-home__day.is-today {
+	color: #101a32;
+	background: #dff3ff;
+	border-color: #28a9f0;
+	font-weight: 800;
+}
+
+.vnt-home__day.has-event {
+	background: #f5f0ff;
+	border-color: #c8a7f6;
+	cursor: pointer;
+}
+
+.vnt-home__event-dot {
+	position: absolute;
+	right: 5px;
+	bottom: 4px;
+	width: 5px;
+	height: 5px;
+	background: #8f57e8;
+	border-radius: 50%;
+}
+
+.vnt-home__event-popover {
+	position: absolute;
+	left: 50%;
+	bottom: calc(100% + 7px);
+	z-index: 10;
+	display: none;
+	width: 230px;
+	max-height: 190px;
+	padding: 9px;
+	overflow-y: auto;
+	color: #27344a;
+	background: #ffffff;
+	border: 1px solid #d6e2ed;
+	border-radius: 10px;
+	box-shadow: 0 12px 28px rgba(24, 48, 78, 0.16);
+	transform: translateX(-50%);
+}
+
+.vnt-home__day.has-event:hover .vnt-home__event-popover,
+.vnt-home__day.has-event:focus .vnt-home__event-popover,
+.vnt-home__day.has-event.is-open .vnt-home__event-popover {
+	display: block;
+}
+
+.vnt-home__event-popover strong {
+	display: block;
+	margin-bottom: 5px;
+	color: var(--home-navy);
+	font-size: 10px;
+}
+
+.vnt-home__event-popover span {
+	display: block;
+	padding: 4px 0;
+	border-top: 1px solid #edf2f6;
+	font-size: 9px;
+	line-height: 1.35;
+}
+
+.vnt-home__calendar-legend {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	border-top: 1px solid #dbe4ec;
+	color: #8290a4;
+	font-size: 9px;
+}
+
+.vnt-home__calendar-legend span {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.vnt-home__legend-box {
+	display: inline-block;
+	width: 9px;
+	height: 9px;
+	border-radius: 3px;
+}
+
+.vnt-home__legend-box--today {
+	background: #dff3ff;
+	border: 1px solid #bde8fb;
+}
+
+.vnt-home__legend-box--event {
+	background: #f5f0ff;
+	border: 1px solid #d5c1fa;
+}
+
+@media (max-width: 1100px) {
+	.vnt-home__kpis {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.vnt-home__grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.vnt-home__shortcut-shell,
+	.vnt-home__calendar {
+		height: auto;
+		min-height: 376px;
+	}
+}
+
+@media (max-width: 680px) {
+	.vnt-home {
+		gap: 10px;
+	}
+
+	.vnt-home__kpis {
+		grid-template-columns: minmax(0, 1fr);
+		padding: 10px;
+	}
+
+	.vnt-home__kpi {
+		height: 68px;
+	}
+
+	.vnt-home__panel {
+		height: 296px;
+		padding-inline: 12px;
+	}
+
+	.vnt-home__shortcut-columns {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.vnt-home__shortcut-shell {
+		max-height: none;
+	}
+
+	.vnt-home__calendar {
+		grid-template-rows: auto minmax(260px, 1fr) 37px;
+	}
+
+	.vnt-home__calendar-header {
+		align-items: flex-start;
+		flex-direction: column;
+		padding-bottom: 8px;
+	}
+
+	.vnt-home__calendar-controls {
+		flex-wrap: wrap;
+		width: 100%;
+	}
+
+	.vnt-home__calendar-tabs {
+		flex: 1 1 auto;
+	}
+
+	.vnt-home__calendar-tabs button {
+		flex: 1 1 auto;
+	}
+
+	.vnt-home__day {
+		min-height: 33px;
+	}
+
+	.vnt-home__event-popover {
+		position: fixed;
+		right: 12px;
+		bottom: 12px;
+		left: 12px;
+		width: auto;
+		max-height: 50vh;
+		transform: none;
+	}
+}

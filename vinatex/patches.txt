@@ -5,4 +5,5 @@
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
 vinatex.patches.vnt_document_management_convert_link_to_multiselect
-
+vinatex.patches.create_leadership_board_block
+vinatex.patches.create_home_dashboard_block

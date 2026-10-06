@@ -1,6 +1,16 @@
 frappe.ui.form.on("Employee", {
   refresh(frm) {
     toggle_salary_tables_visibility(frm);
+    add_contract_docx_buttons(frm);
+  },
+  first_name(frm) {
+    update_employee_name(frm);
+  },
+  middle_name(frm) {
+    update_employee_name(frm);
+  },
+  last_name(frm) {
+    update_employee_name(frm);
   },
   department(frm) {
     if (frm.doc.department) {
@@ -42,6 +52,19 @@ frappe.ui.form.on("Employee", {
     bind_contract_grid_events_once(frm);
   }
 });
+
+function update_employee_name(frm) {
+  const employee_name = [frm.doc.first_name, frm.doc.middle_name, frm.doc.last_name]
+    .map((part) => (part || "").trim())
+    .filter(Boolean)
+    .join(" ");
+
+  if ((frm.doc.employee_name || "") !== employee_name) {
+    frm.set_value("employee_name", employee_name).then(() => frm.refresh_header());
+  } else {
+    frm.refresh_header();
+  }
+}
 
 const HR_SALARY_USERS = new Set([
   "tult@vinatex.com.vn",
@@ -176,3 +199,49 @@ frappe.ui.form.on("VNT Employee Salary History", {
     }
   }
 })
+
+
+// ===== Xuất HĐLĐ ra file Word (.docx) theo đúng print format =====
+const CONTRACT_DOCX_OPTIONS = [
+  ["6_thang", "HĐLĐ 6 tháng"],
+  ["3_nam", "HĐLĐ 3 năm"],
+  ["khoan_viec", "HĐLĐ khoán việc"],
+  ["thu_viec", "HĐLĐ thử việc"],
+  ["kxd", "HĐLĐ KXĐ thời hạn"],
+];
+
+function add_contract_docx_buttons(frm) {
+  if (frm.is_new()) return;
+  CONTRACT_DOCX_OPTIONS.forEach(([contract_type, label]) => {
+    // frm.add_custom_button(label, () => download_contract_docx(frm, contract_type), __("Xuất HĐLĐ Word"));
+  });
+}
+
+async function download_contract_docx(frm, contract_type) {
+  const params = new URLSearchParams({ employee: frm.doc.name, contract_type });
+  frappe.dom.freeze(__("Đang tạo file Word..."));
+  try {
+    const res = await fetch(`/api/method/vinatex.vnt_hr.contract_docx.download_contract_docx?${params}`, {
+      headers: { "X-Frappe-CSRF-Token": frappe.csrf_token },
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const msgs = data._server_messages
+        ? JSON.parse(data._server_messages).map((m) => JSON.parse(m).message)
+        : [];
+      frappe.msgprint(msgs.join("<br>") || __("Không tạo được file Word."));
+      return;
+    }
+    const blob = await res.blob();
+    const match = (res.headers.get("Content-Disposition") || "").match(/filename\*=UTF-8''([^;]+)/i);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = match ? decodeURIComponent(match[1]) : `${contract_type}.docx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  } finally {
+    frappe.dom.unfreeze();
+  }
+}

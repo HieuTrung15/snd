@@ -28,6 +28,15 @@
   "status",
   "date_sign",
   "decision_content",
+  "issue_place",
+  "issuing_organization",
+  "signing_authority_title",
+  "legal_basis",
+  "article_2_content",
+  "article_3_content",
+  "article_4_content",
+  "effective_until_text",
+  "recipients",
   "check",
   "approver",
   "approver_name",
@@ -174,6 +183,60 @@
    "reqd": 1
   },
   {
+   "fieldname": "issue_place",
+   "fieldtype": "Data",
+   "label": "\u0110\u1ecba danh ban h\u00e0nh"
+  },
+  {
+   "description": "M\u1ed7i d\u00f2ng s\u1ebd \u0111\u01b0\u1ee3c in th\u00e0nh m\u1ed9t d\u00f2ng ri\u00eang \u1edf ph\u1ea7n ti\u00eau ng\u1eef.",
+   "fieldname": "issuing_organization",
+   "fieldtype": "Small Text",
+   "label": "T\u00ean \u0111\u01a1n v\u1ecb ban h\u00e0nh tr\u00ean v\u0103n b\u1ea3n"
+  },
+  {
+   "description": "Ch\u1ee9c danh v\u00e0 \u0111\u01a1n v\u1ecb c\u1ee7a ng\u01b0\u1eddi ra quy\u1ebft \u0111\u1ecbnh, m\u1ed7i d\u00f2ng s\u1ebd \u0111\u01b0\u1ee3c in ri\u00eang.",
+   "fieldname": "signing_authority_title",
+   "fieldtype": "Small Text",
+   "label": "Th\u1ea9m quy\u1ec1n ra quy\u1ebft \u0111\u1ecbnh"
+  },
+  {
+   "description": "Nh\u1eadp m\u1ed7i c\u0103n c\u1ee9 tr\u00ean m\u1ed9t d\u00f2ng v\u00e0 gi\u1eef nguy\u00ean d\u1ea5u ch\u1ea5m ph\u1ea9y cu\u1ed1i d\u00f2ng.",
+   "fieldname": "legal_basis",
+   "fieldtype": "Long Text",
+   "label": "C\u0103n c\u1ee9 ban h\u00e0nh"
+  },
+  {
+   "fieldname": "article_2_content",
+   "fieldtype": "Long Text",
+   "label": "N\u1ed9i dung"
+  },
+  {
+   "description": "Ph\u1ea7n n\u1ed9i dung sau nh\u00e3n \u201c\u0110i\u1ec1u 3.\u201d",
+   "fieldname": "article_3_content",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "N\u1ed9i dung \u0110i\u1ec1u 3"
+  },
+  {
+   "description": "Ph\u1ea7n n\u1ed9i dung sau nh\u00e3n \u201c\u0110i\u1ec1u 4.\u201d",
+   "fieldname": "article_4_content",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "N\u1ed9i dung \u0110i\u1ec1u 4"
+  },
+  {
+   "description": "Ph\u1ea7n n\u1ed9i dung sau ng\u00e0y b\u1eaft \u0111\u1ea7u hi\u1ec7u l\u1ef1c, v\u00ed d\u1ee5: \u0111\u1ebfn khi c\u00f3 quy\u1ebft \u0111\u1ecbnh ti\u1ebfp theo.",
+   "fieldname": "effective_until_text",
+   "fieldtype": "Data",
+   "label": "Hi\u1ec7u l\u1ef1c \u0111\u1ebfn"
+  },
+  {
+   "description": "Nh\u1eadp m\u1ed7i n\u01a1i nh\u1eadn tr\u00ean m\u1ed9t d\u00f2ng, kh\u00f4ng c\u1ea7n th\u00eam d\u1ea5u g\u1ea1ch \u0111\u1ea7u d\u00f2ng.",
+   "fieldname": "recipients",
+   "fieldtype": "Small Text",
+   "label": "N\u01a1i nh\u1eadn"
+  },
+  {
    "default": "0",
    "depends_on": "eval: doc.decision_type != \"Quy\u1ebft \u0111\u1ecbnh khen th\u01b0\u1edfng\"",
    "description": "Tick v\u00e0o \u0111\u00e2y trong tr\u01b0\u1eddng h\u1ee3p Q\u0110 n\u00e0y c\u1ea7n k\u00fd l\u1ea1i khi h\u1ebft hi\u1ec7u l\u1ef1c.",
@@ -302,11 +365,11 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-29 16:51:52.975565",
- "modified_by": "Administrator",
+ "modified": "2026-09-15 11:26:01.898372",
+ "modified_by": "tult@vinatex.com.vn",
  "module": "VNT HR",
  "name": "VNT Decision",
- "naming_rule": "Expression",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {

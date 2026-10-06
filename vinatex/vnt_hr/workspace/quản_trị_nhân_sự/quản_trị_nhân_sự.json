@@ -1,52 +1,51 @@
 {
- "charts": [
-  {
-   "chart_name": "S\u1ed1 l\u01b0\u1ee3ng nh\u00e2n s\u1ef1 theo nh\u00f3m ch\u1ee9c danh",
-   "label": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo nh\u00f3m ch\u1ee9c danh"
-  },
-  {
-   "chart_name": "Bi\u1ec3u \u0111\u1ed3 S\u1ed1 l\u01b0\u1ee3ng nh\u00e2n vi\u00ean theo ph\u00f2ng ban v3",
-   "label": "Bi\u1ec3u \u0111\u1ed3 s\u1ed1 nh\u00e2n s\u1ef1 theo ph\u00f2ng ban"
-  },
-  {
-   "chart_name": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo tr\u00ecnh \u0111\u1ed9 h\u1ecdc v\u1ea5n",
-   "label": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo tr\u00ecnh \u0111\u1ed9 h\u1ecdc v\u1ea5n"
-  },
-  {
-   "chart_name": "Bi\u1ec3u \u0111\u1ed3 s\u1ed1 nh\u00e2n s\u1ef1 h\u00e0ng th\u00e1ng",
-   "label": "Bi\u1ec3u \u0111\u1ed3 s\u1ed1 nh\u00e2n s\u1ef1 h\u00e0ng th\u00e1ng"
-  },
-  {
-   "chart_name": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo gi\u1edbi t\u00ednh",
-   "label": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo gi\u1edbi t\u00ednh"
-  },
-  {
-   "chart_name": "NS tuy\u1ec3n m\u1edbi vs NS ngh\u1ec9 vi\u1ec7c",
-   "label": "NS tuy\u1ec3n m\u1edbi v\u1edbi NS ngh\u1ec9 vi\u1ec7c"
-  },
-  {
-   "chart_name": "Bi\u1ec3u \u0111\u1ed3 th\u00e2m ni\u00ean l\u00e0m vi\u1ec7c",
-   "label": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo th\u00e2m ni\u00ean l\u00e0m vi\u1ec7c"
-  },
-  {
-   "chart_name": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo \u0111\u1ed9 tu\u1ed5i",
-   "label": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo \u0111\u1ed9 tu\u1ed5i"
-  },
-  {
-   "chart_name": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo lo\u1ea1i h\u1ee3p \u0111\u1ed3ng",
-   "label": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo lo\u1ea1i h\u1ee3p \u0111\u1ed3ng"
-  },
-  {
-   "chart_name": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo chi nh\u00e1nh",
-   "label": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo chi nh\u00e1nh"
-  }
- ],
- "content": "[{\"id\":\"qfd88DmQ2W\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Nh\u00e2n s\u1ef1 \u0111ang l\u00e0m vi\u1ec7c\",\"col\":3}},{\"id\":\"B-5C8p4Kqu\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"nh\u00e2n s\u1ef1 m\u1edbi trong th\u00e1ng\",\"col\":3}},{\"id\":\"MfsEeNraWn\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"nh\u00e2n s\u1ef1 ngh\u1ec9 trong th\u00e1ng\",\"col\":3}},{\"id\":\"CQquzhJ9Lb\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"tu\u1ed5i b\u00ecnh qu\u00e2n\",\"col\":3}},{\"id\":\"Qlhppytezp\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"HR Reminders\",\"col\":12}},{\"id\":\"M-ESQF4o4-\",\"type\":\"chart\",\"data\":{\"chart_name\":\"NS tuy\u1ec3n m\u1edbi v\u1edbi NS ngh\u1ec9 vi\u1ec7c\",\"col\":12}},{\"id\":\"r0tjZOCRnQ\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo gi\u1edbi t\u00ednh\",\"col\":6}},{\"id\":\"fjxagn5t2F\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo chi nh\u00e1nh\",\"col\":6}},{\"id\":\"A5WcDhogbU\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo nh\u00f3m ch\u1ee9c danh\",\"col\":6}},{\"id\":\"j_FL_u5GeL\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n vi\u00ean theo lo\u1ea1i h\u1ee3p \u0111\u1ed3ng\",\"col\":6}},{\"id\":\"lV14FKunpc\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo \u0111\u1ed9 tu\u1ed5i\",\"col\":12}},{\"id\":\"VB8KKNVB-y\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo th\u00e2m ni\u00ean l\u00e0m vi\u1ec7c\",\"col\":12}},{\"id\":\"yFr-dWF13k\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 s\u1ed1 nh\u00e2n s\u1ef1 theo ph\u00f2ng ban\",\"col\":12}},{\"id\":\"7lD7vzEFdP\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 s\u1ed1 nh\u00e2n s\u1ef1 h\u00e0ng th\u00e1ng\",\"col\":12}},{\"id\":\"vEsRjAaPe-\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo tr\u00ecnh \u0111\u1ed9 h\u1ecdc v\u1ea5n\",\"col\":12}}]",
+ "charts": [],
+ "content": "[{\"id\":\"VNTBRANCH1\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bộ lọc Chi nhánh - Quản trị nhân sự\",\"col\":12}},{\"id\":\"qfd88DmQ2W\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Tổng quan nhân sự - KPI\",\"col\":12}},{\"id\":\"Qlhppytezp\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"HR Reminders\",\"col\":12}},{\"id\":\"iDyaHNHIEa\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Nhân sự tuyển mới và nghỉ việc - Đường\",\"col\":6}},{\"id\":\"Q7TQwv4FFC\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Biểu đồ nhân sự theo trình độ học vấn - Thanh ngang\",\"col\":6}},{\"id\":\"r0tjZOCRnQ\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Biểu đồ nhân sự theo giới tính - Donut cân đối\",\"col\":6}},{\"id\":\"fjxagn5t2F\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Biểu đồ nhân sự theo chi nhánh - Thanh ngang\",\"col\":6}},{\"id\":\"A5WcDhogbU\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Biểu đồ nhân sự theo nhóm chức danh - Thanh ngang\",\"col\":6}},{\"id\":\"j_FL_u5GeL\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Biểu đồ nhân sự theo loại hợp đồng - Thanh ngang\",\"col\":6}},{\"id\":\"lV14FKunpc\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Biểu đồ nhân sự theo độ tuổi - Donut cân đối\",\"col\":6}},{\"id\":\"oSD2Uga9Z3\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Biểu đồ nhân sự theo thâm niên - Waffle\",\"col\":6}}]",
  "creation": "2025-09-18 14:06:49.771864",
  "custom_blocks": [
   {
+   "custom_block_name": "Bộ lọc Chi nhánh - Quản trị nhân sự",
+   "label": "Bộ lọc Chi nhánh - Quản trị nhân sự"
+  },
+  {
+   "custom_block_name": "Tổng quan nhân sự - KPI",
+   "label": "Tổng quan nhân sự - KPI"
+  },
+  {
    "custom_block_name": "HR Reminders",
    "label": "HR Reminders"
+  },
+  {
+   "custom_block_name": "Nhân sự tuyển mới và nghỉ việc - Đường",
+   "label": "Nhân sự tuyển mới và nghỉ việc - Đường"
+  },
+  {
+   "custom_block_name": "Biểu đồ nhân sự theo chi nhánh - Thanh ngang",
+   "label": "Biểu đồ nhân sự theo chi nhánh - Thanh ngang"
+  },
+  {
+   "custom_block_name": "Biểu đồ nhân sự theo nhóm chức danh - Thanh ngang",
+   "label": "Biểu đồ nhân sự theo nhóm chức danh - Thanh ngang"
+  },
+  {
+   "custom_block_name": "Biểu đồ nhân sự theo loại hợp đồng - Thanh ngang",
+   "label": "Biểu đồ nhân sự theo loại hợp đồng - Thanh ngang"
+  },
+  {
+   "custom_block_name": "Biểu đồ nhân sự theo độ tuổi - Donut cân đối",
+   "label": "Biểu đồ nhân sự theo độ tuổi - Donut cân đối"
+  },
+  {
+   "custom_block_name": "Biểu đồ nhân sự theo thâm niên - Waffle",
+   "label": "Biểu đồ nhân sự theo thâm niên - Waffle"
+  },
+  {
+   "custom_block_name": "Biểu đồ nhân sự theo trình độ học vấn - Thanh ngang",
+   "label": "Biểu đồ nhân sự theo trình độ học vấn - Thanh ngang"
+  },
+  {
+   "custom_block_name": "Biểu đồ nhân sự theo giới tính - Donut cân đối",
+   "label": "Biểu đồ nhân sự theo giới tính - Donut cân đối"
   }
  ],
  "docstatus": 0,
@@ -57,36 +56,19 @@
  "idx": 0,
  "indicator_color": "",
  "is_hidden": 0,
- "label": "Qu\u1ea3n tr\u1ecb nh\u00e2n s\u1ef1",
+ "label": "Quản trị nhân sự",
  "links": [],
- "modified": "2025-11-19 15:53:21.127605",
+ "modified": "2026-09-24 02:31:00.000000",
  "modified_by": "Administrator",
  "module": "VNT HR",
- "name": "Qu\u1ea3n tr\u1ecb nh\u00e2n s\u1ef1",
- "number_cards": [
-  {
-   "label": "Nh\u00e2n s\u1ef1 \u0111ang l\u00e0m vi\u1ec7c",
-   "number_card_name": "Nh\u00e2n vi\u00ean \u0111ang l\u00e0m vi\u1ec7c"
-  },
-  {
-   "label": "nh\u00e2n s\u1ef1 m\u1edbi trong th\u00e1ng",
-   "number_card_name": "Nh\u00e2n vi\u00ean m\u1edbi(Trong qu\u00fd)"
-  },
-  {
-   "label": "nh\u00e2n s\u1ef1 ngh\u1ec9 trong th\u00e1ng",
-   "number_card_name": "Nh\u00e2n vi\u00ean ngh\u1ec9 vi\u1ec7c(Trong th\u00e1ng)"
-  },
-  {
-   "label": "tu\u1ed5i b\u00ecnh qu\u00e2n",
-   "number_card_name": "Tu\u1ed5i trung b\u00ecnh"
-  }
- ],
+ "name": "Quản trị nhân sự",
+ "number_cards": [],
  "owner": "Administrator",
  "parent_page": "",
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 44.0,
+ "sequence_id": 36,
  "shortcuts": [],
- "title": "Qu\u1ea3n tr\u1ecb nh\u00e2n s\u1ef1"
+ "title": "Quản trị nhân sự"
 }

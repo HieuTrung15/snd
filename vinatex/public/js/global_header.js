@@ -70,7 +70,7 @@
 		return userProfilePromise;
 	};
 
-	const TITLE = "TẬP ĐOÀN DỆT MAY VIỆT NAM";
+	const TITLE = "NHÀ MÁY SỢI VINATEX NAM ĐỊNH";
 	const getSubtitleText = async () => {
 		const name = getUserFullName();
 		if (!name) return "";

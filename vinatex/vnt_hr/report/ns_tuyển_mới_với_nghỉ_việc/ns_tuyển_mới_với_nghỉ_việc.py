@@ -1,5 +1,7 @@
 import frappe
-from frappe.utils import getdate, nowdate, add_months, get_first_day, get_last_day
+from frappe.utils import add_months, get_first_day, getdate, nowdate
+
+from vinatex.api.hr_dashboard import _normalize_branches
 
 # key nội bộ để gom & sort (YYYY-MM)
 def _month_key(d): 
@@ -21,13 +23,14 @@ def _month_keys(start_date, end_date):
 def _normalize_period(filters):
     to_date = getdate(filters.get("to_date") or nowdate())
     from_date = getdate(filters.get("from_date") or add_months(to_date, -11))
-    return get_first_day(from_date), get_last_day(to_date)
+    return get_first_day(from_date), to_date
 
 def execute(filters=None):
     filters = frappe._dict(filters or {})
     from_date, to_date = _normalize_period(filters)
     company = filters.get("company")
     department = filters.get("department")
+    branches = _normalize_branches(filters.get("branches") or filters.get("branch"))
 
     where_join = ["date_of_joining BETWEEN %s AND %s"]
     where_left = ["relieving_date BETWEEN %s AND %s"]
@@ -40,6 +43,9 @@ def execute(filters=None):
     if department:
         where_join.append("department = %s"); params_join.append(department)
         where_left.append("department = %s"); params_left.append(department)
+    if branches:
+        where_join.append("branch IN %s"); params_join.append(branches)
+        where_left.append("branch IN %s"); params_left.append(branches)
 
     # Dùng YYYY-MM làm key nhóm trong SQL (ổn định cho ORDER/GROUP)
     hiring_rows = frappe.db.sql(

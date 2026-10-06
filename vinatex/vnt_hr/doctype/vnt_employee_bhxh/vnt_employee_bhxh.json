@@ -87,6 +87,7 @@
   {
    "fieldname": "job_basic_salary_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Job Basic Salary"
   },
   {
@@ -116,6 +117,7 @@
   {
    "fieldname": "qu\u00e1_tr\u00ecnh_l\u01b0\u01a1ng_c\u01a1_b\u1ea3n_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Qu\u00e1 tr\u00ecnh l\u01b0\u01a1ng c\u01a1 b\u1ea3n"
   },
   {
@@ -146,6 +148,7 @@
   {
    "fieldname": "qu\u00e1_tr\u00ecnh_h\u1ee3p_\u0111\u1ed3ng_lao_\u0111\u1ed9ng_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Qu\u00e1 tr\u00ecnh h\u1ee3p \u0111\u1ed3ng lao \u0111\u1ed9ng"
   },
   {
@@ -173,7 +176,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-04 15:48:29.099684",
+ "modified": "2026-09-15 10:43:42.938277",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Employee BHXH",

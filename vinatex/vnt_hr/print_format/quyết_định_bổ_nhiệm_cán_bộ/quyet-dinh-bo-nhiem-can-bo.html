@@ -1,0 +1,300 @@
+{#
+  ============================================================================
+  QUYẾT ĐỊNH BỔ NHIỆM CÁN BỘ - dựng đúng theo bản mẫu "Quyết định bổ nhiệm.docx"
+  ============================================================================
+  Thông số lấy trực tiếp từ word/document.xml của file mẫu:
+    - Khổ giấy A4: 11907 x 16839 twips
+    - Lề (w:pgMar): trên 794tw = 14mm | dưới 794tw = 14mm
+                    trái 1531tw = 27mm | phải 964tw = 17mm
+    - Vùng chữ (text width) = 11907 - 1531 - 964 = 9412tw = 166.09mm
+    - Quy đổi: 1 twip = 0.0176389mm ; w:sz tính bằng nửa point
+               sz24 = 12pt | sz26 = 13pt | sz32 = 16pt
+    - Giãn dòng Word (w:line, lineRule=auto) -> chiều cao dòng thực tế:
+        cỡ chữ * (w:line / 240) * 1.15   (1.15 = line-height tự nhiên của Times New Roman)
+        line-height ghi thẳng bằng pt (bội của 0.5pt) để với zoom 1.5 luôn ra
+        số nguyên pixel, tránh WebKit làm cụt dòng ~2%:
+          12pt: 240 -> 14pt   | 276 -> 16pt
+          13pt: 240 -> 15pt   | 312 -> 19.5pt | 360 -> 22.5pt
+          16pt: 240 -> 18.5pt
+        "atLeast 23" -> dùng chiều cao dòng tự nhiên (như w:line 240)
+
+  ---------------------------------------------------------------------------
+  LƯU Ý QUAN TRỌNG VỀ LỀ PHẢI VÀ HỆ SỐ "zoom"
+  ---------------------------------------------------------------------------
+  1) Bảng quốc hiệu trong file .docx rộng 9922tw (175.02mm) và thụt trái
+     -176tw (-3.11mm), tức là tràn sang lề phải 5.82mm (Word cho phép).
+     Để tái hiện đúng vị trí đó, Print Format khai báo margin_right = 11mm
+     (thay vì 17mm) và bù lại bằng padding-right 5.91mm trên khối .qd,
+     nên chữ trong thân bài vẫn kết thúc đúng ở mốc 17mm như bản Word.
+        vùng in vật lý = 210 - 27 - 11 = 172mm  ( = chiều rộng của .qd )
+        vùng chữ       = 172 - 5.91   = 166.09mm ( = 9412tw của Word )
+
+  2) wkhtmltopdf 0.12.6 trên máy chủ này là bản "unpatched qt" nên tham số
+     --disable-smart-shrinking bị bỏ qua: nội dung luôn bị co lại cho vừa
+     bề rộng vùng in. Khi nội dung hẹp hơn khung nhìn tối thiểu của trình
+     duyệt nhúng, mọi kích thước bị thu nhỏ khoảng 23% (hệ số 0.768).
+     Cách khử: cho .qd rộng đúng bằng vùng in vật lý rồi phóng to bằng
+     `zoom` để bề rộng nội dung vượt khung nhìn tối thiểu; khi đó
+     wkhtmltopdf co lại đúng tỉ lệ 1:1 và mm/pt trong CSS = mm/pt trên giấy.
+     zoom = 1.5 được chọn vì 12pt/13pt/16pt quy ra đúng số nguyên pixel
+     (24 / 26 / 32 px) nên sai số chỉ còn ~0.17%.
+     `zoom` chỉ đặt trong @media print để bản xem trước trên màn hình
+     vẫn đúng tỉ lệ thật.
+     >>> Nếu sau này cài wkhtmltopdf bản "with patched qt" (hoặc đổi sang
+         PDF generator khác) thì phải đổi zoom về 1 và margin_right về 17mm
+         nếu bỏ phần tràn lề của bảng quốc hiệu.
+
+  3) MÁY CHỦ PHẢI CÓ FONT metric của Times New Roman, nếu không mọi tính toán
+     ngắt dòng ở trên sai và văn bản tràn sang trang 2.
+     Đã cài Liberation Serif (metric trùng Times New Roman) tại ~/.fonts/liberation
+     của user chạy bench; kiểm tra bằng:  fc-match "Times New Roman"
+     (phải trả về LiberationSerif-Regular.ttf, không phải DejaVuSerif.ttf).
+     Muốn dùng đúng font gốc thì cài thêm:  sudo apt install ttf-mscorefonts-installer
+#}
+<style>
+  /* ---- Gỡ khung bao mặc định của Frappe để chỉ còn lề của Print Format ---- */
+  html body .print-format {
+    width: auto !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: none !important;
+  }
+  /* Frappe thêm margin-left/right 1px cho <p> khi in */
+  @media print {
+    html body .print-format .qd p { margin-left: 0 !important; margin-right: 0 !important; }
+    .qd { zoom: 1.5; }                    /* xem ghi chú (2) ở đầu file */
+  }
+
+  .qd,
+  .qd * {
+    box-sizing: border-box;
+    font-family: "Times New Roman", "Liberation Serif", "Tinos", Times, serif !important;
+    color: #000 !important;
+  }
+
+  .qd {
+    width: 172mm;                          /* = vùng in vật lý (210 - 27 - 11) */
+    padding-right: 5.91mm;                 /* -> vùng chữ 166.09mm = 9412tw */
+    font-size: 13pt;                       /* thân bài: sz26 */
+    line-height: 15pt;
+    text-align: left;
+    word-wrap: break-word;                 /* không để chuỗi dài làm giãn khổ trang */
+  }
+
+  .qd p { margin: 0; padding: 0; orphans: 2; widows: 2; }
+
+  .qd table { border: 0; border-collapse: collapse; table-layout: fixed; }
+
+  .qd td {
+    border: 0 !important;
+    padding: 0 1.9mm !important;           /* w:tblCellMar mặc định 108tw mỗi bên */
+    vertical-align: top !important;
+    text-align: left;
+  }
+
+  /* ===== 1. Quốc hiệu - Tiêu ngữ (bảng 9922tw, w:tblInd -176tw) ============ */
+  .qd .hdr      { width: 175.02mm; margin-left: -3.11mm; }
+  .qd .hdr .c1  { width: 82.51mm; }        /* 4678tw */
+  .qd .hdr .c2  { width: 92.51mm; }        /* 5244tw */
+  .qd .hdr p    { font-size: 12pt; text-align: center; }   /* sz24 */
+
+  .qd .org      { font-weight: bold; line-height: 14pt; }  /* w:line 240 */
+  .qd .org-last { margin-bottom: 6pt !important; }         /* w:after 120tw */
+  .qd .nation   { font-weight: bold; line-height: 16pt; }  /* w:line 276 */
+  .qd .motto    { line-height: 16pt; }                     /* không in đậm trong bản gốc */
+
+  .qd .no-doc     { line-height: 16pt; }
+  .qd .no-gap     { display: inline-block; width: 8.5mm; } /* 8 dấu cách cỡ 12pt */
+  .qd .place-date {
+    font-style: italic;
+    line-height: 16pt;
+    text-align: left !important;
+    text-indent: 19mm;                     /* 18 dấu cách cỡ 12pt = 54pt */
+  }
+
+  /* ===== 2. Tên loại văn bản + trích yếu ================================== */
+  .qd .doc-title {
+    margin-top: 14pt !important;           /* w:beforeAutospacing */
+    font-size: 16pt;                       /* sz32 */
+    font-weight: bold;                     /* pStyle Heading4 */
+    text-align: center;
+    line-height: 18.5pt;
+  }
+  .qd .doc-subject {
+    font-size: 12pt;                       /* sz24, không nghiêng - đúng bản gốc */
+    text-align: center;
+    line-height: 14pt;
+  }
+
+  /* ===== 3. Thẩm quyền ban hành (Heading4: đậm, canh giữa, 13pt) ========== */
+  .qd .blank-h4        { line-height: 15pt; }              /* dòng trống 13pt */
+  .qd .authority       { font-weight: bold; text-align: center; line-height: 15pt; }
+  .qd .authority-first { padding-top: 6pt; }               /* w:before 120tw */
+  .qd .authority-next  { line-height: 22.5pt; }            /* w:line 360 */
+
+  /* ===== 4. Các căn cứ ==================================================== */
+  .qd .basis {
+    text-align: justify;
+    text-indent: 5.01mm;                   /* w:firstLine 284tw */
+    line-height: 19.5pt;                   /* w:line 312 */
+    padding: 3pt 0;                        /* w:before/after 60tw (dùng padding
+                                              để hai đoạn liền nhau không gộp lề) */
+  }
+
+  /* ===== 5. Chữ "QUYẾT ĐỊNH" (Heading1 + sz32) =========================== */
+  .qd .decide {
+    font-size: 16pt;
+    font-weight: bold;
+    text-align: center;
+    line-height: 18.5pt;
+    padding-bottom: 6pt;                   /* w:after 120tw */
+  }
+
+  /* ===== 6. Các điều và hiệu lực ========================================== */
+  .qd .art {
+    text-align: justify;
+    text-indent: 5.01mm;                   /* w:firstLine 284tw */
+    line-height: 22.5pt;                   /* w:line 360 */
+    padding: 4pt 0;                        /* w:before/after 80tw */
+  }
+  .qd .art-no { font-weight: bold; }
+
+  /* ===== 7. Nơi nhận - Chữ ký ============================================= */
+  .qd .sign     { width: 161.32mm; page-break-inside: avoid; }
+  .qd .sign .s1 { width: 80.15mm; }        /* 4544tw */
+  .qd .sign .s2 { width: 81.17mm; }        /* 4602tw */
+
+  .qd .lead-12  { font-size: 12pt; line-height: 14pt; }    /* đoạn trống đầu ô trái */
+  .qd .lead-13  { font-size: 13pt; line-height: 15pt; }    /* đoạn trống đầu ô phải */
+
+  .qd .recv-title {
+    font-size: 12pt;
+    font-weight: bold;
+    font-style: italic;
+    text-decoration: underline;
+    line-height: 14pt;
+    text-indent: 10mm;                     /* w:firstLine 567tw */
+    padding: 6pt 0;                        /* w:before/after 120tw */
+  }
+  .qd .recv {
+    font-size: 12pt;
+    font-style: italic;
+    line-height: 14pt;
+    text-indent: 12.5mm;                   /* w:firstLine 709tw */
+  }
+
+  .qd .signer-title {
+    font-size: 13pt;
+    font-weight: bold;
+    text-align: center;
+    text-transform: uppercase;
+    line-height: 22.5pt;                   /* w:line 360 */
+    padding: 6pt 0;                        /* w:before/after 120tw */
+  }
+  .qd .sign-space { height: 57pt; }        /* 2 đoạn trống 13pt, w:line 360 + w:before 120tw */
+  .qd .signer-name {
+    font-size: 13pt;
+    font-weight: bold;
+    text-align: center;
+    line-height: 22.5pt;
+    padding-top: 6pt;                      /* w:before 120tw */
+  }
+</style>
+
+{% set signed_date     = frappe.utils.getdate(doc.date_sign or doc.date) %}
+{% set effective_date  = frappe.utils.getdate(doc.from_date) %}
+{% set issuer_lines    = (doc.issuing_organization or "").split("\n") %}
+{% set authority_lines = (doc.signing_authority_title or "").split("\n") %}
+{% set legal_lines     = (doc.legal_basis or "").split("\n") %}
+{% set recv_lines      = (doc.recipients or "").split("\n") %}
+{% set first_item      = doc.items[0] if doc.items else none %}
+{% set article_3       = doc.article_3_content or "" %}
+{% set a3_open         = article_3.split("(", 1) %}
+{% set a3_close        = a3_open[1].split(")", 1) if a3_open | length > 1 else [] %}
+
+<div class="qd">
+
+  {# ---------- Quốc hiệu / Tiêu ngữ / Số - Ngày tháng ---------- #}
+  <table class="hdr">
+    <tbody>
+      <tr>
+        <td class="c1">
+          {%- for line in issuer_lines %}{% if line | trim %}
+            <p class="org{% if loop.last %} org-last{% endif %}">{{ line | trim | e }}</p>
+          {%- endif %}{% endfor %}
+        </td>
+        <td class="c2">
+          <p class="nation">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+          <p class="motto">Độc lập - Tự do - Hạnh phúc</p>
+        </td>
+      </tr>
+      <tr>
+        <td class="c1">
+          <p class="no-doc">
+            {%- if doc.decision_number and doc.decision_number[0] == "/" -%}
+              Số:<span class="no-gap"></span>{{ doc.decision_number | e }}
+            {%- else -%}
+              Số: {{ doc.decision_number | e }}
+            {%- endif -%}
+          </p>
+        </td>
+        <td class="c2">
+          <p class="place-date">{{ doc.issue_place | e }}, ngày {{ signed_date.strftime("%d") }} tháng {{ signed_date.strftime("%m") }} năm {{ signed_date.strftime("%Y") }}</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  {# ---------- Tên loại văn bản + trích yếu ---------- #}
+  <p class="doc-title">QUYẾT ĐỊNH</p>
+  <p class="doc-subject">V/v {{ doc.decision_content | e }}</p>
+
+  {# ---------- Thẩm quyền ban hành ---------- #}
+  <p class="blank-h4">&nbsp;</p>
+  {%- for line in authority_lines %}{% if line | trim %}
+    <p class="authority {% if loop.first %}authority-first{% else %}authority-next{% endif %}">{{ line | trim | e }}</p>
+  {%- endif %}{% endfor %}
+
+  {# ---------- Các căn cứ ---------- #}
+  {%- for line in legal_lines %}{% if line | trim %}
+    <p class="basis">{{ line | trim | e }}</p>
+  {%- endif %}{% endfor %}
+
+  {# ---------- QUYẾT ĐỊNH ---------- #}
+  <p class="decide">QUYẾT ĐỊNH</p>
+
+  <p class="art"><span class="art-no">Điều 1.</span> Bổ nhiệm {{ (first_item.salutation if first_item and first_item.salutation else "Ông") | e }} <strong>{{ (first_item.employee_name if first_item else "") | e }}</strong> giữ chức vụ {{ (first_item.designation if first_item else "") | e }}.</p>
+
+  <p class="art"><span class="art-no">Điều 2.</span> {{ (doc.article_2_content or "") | e }}</p>
+
+  <p class="art"><span class="art-no">Điều 3.</span> {% if a3_open | length > 1 and a3_close | length > 1 %}{{ a3_open[0] | e }}<em>({{ a3_close[0] | e }})</em>{{ a3_close[1] | e }}{% else %}{{ article_3 | e }}{% endif %}</p>
+
+  <p class="art"><span class="art-no">Điều 4.</span> {{ (doc.article_4_content or "") | e }}</p>
+
+  <p class="art">Quyết định này có hiệu lực kể từ ngày {{ effective_date.strftime("%d/%m/%Y") }}{% if doc.effective_until_text %} {{ doc.effective_until_text | e }}{% endif %}.</p>
+
+  {# ---------- Nơi nhận / Chữ ký ---------- #}
+  <table class="sign">
+    <tbody>
+      <tr>
+        <td class="s1">
+          <p class="lead-12">&nbsp;</p>
+          <p class="recv-title">Nơi nhận:</p>
+          {%- for line in recv_lines %}{% if line | trim %}
+            <p class="recv">- {{ line | trim | e }}</p>
+          {%- endif %}{% endfor %}
+        </td>
+        <td class="s2">
+          <p class="lead-13">&nbsp;</p>
+          <p class="signer-title">{{ doc.desination | e }}</p>
+          <div class="sign-space"></div>
+          <p class="signer-name">{{ doc.signer_name | e }}</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>

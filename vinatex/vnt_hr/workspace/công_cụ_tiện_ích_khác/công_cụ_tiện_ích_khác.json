@@ -10,10 +10,10 @@
  "icon": "table",
  "idx": 0,
  "indicator_color": "",
- "is_hidden": 0,
+ "is_hidden": 1,
  "label": "C\u00f4ng c\u1ee5-Ti\u1ec7n \u00edch kh\u00e1c",
  "links": [],
- "modified": "2025-11-19 15:53:22.610816",
+ "modified": "2026-09-22 11:03:53.010207",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "C\u00f4ng c\u1ee5-Ti\u1ec7n \u00edch kh\u00e1c",
@@ -23,7 +23,7 @@
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 56.0,
+ "sequence_id": 42.0,
  "shortcuts": [],
  "title": "C\u00f4ng c\u1ee5-Ti\u1ec7n \u00edch kh\u00e1c"
 }

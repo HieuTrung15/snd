@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "employee",
+  "salutation",
   "cur_company",
   "cur_department",
   "cur_designation",
@@ -26,6 +27,13 @@
    "in_list_view": 1,
    "label": "Nh\u00e2n s\u1ef1",
    "options": "Employee"
+  },
+  {
+   "default": "\u00d4ng",
+   "fieldname": "salutation",
+   "fieldtype": "Select",
+   "label": "X\u01b0ng h\u00f4",
+   "options": "\u00d4ng\nB\u00e0"
   },
   {
    "fetch_from": "employee.employee_name",

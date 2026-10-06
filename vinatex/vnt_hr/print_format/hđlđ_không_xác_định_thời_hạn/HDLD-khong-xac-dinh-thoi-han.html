@@ -1,270 +1,275 @@
 <style>
-    @media print {
-        .print-format, .print-format * {
-        font-family: "Times New Roman", Times, serif !important;
-        }
-        @page {
-            size: A4;
-            margin-top: 20mm;     /* trên 2cm */
-            margin-right: 20mm;   /* phải 2cm */
-            margin-bottom: 20mm;  /* dưới 2cm */
-            margin-left: 30mm;    /* trái 3cm */
-        }
-        .print-format {
-            padding-top: 0;       /* không cộng thêm padding */
-            padding-bottom: 0;
-        }
-    }
-
-    body .print-format, 
+    body .print-format,
     body .print-format * { font-family: "Times New Roman", Times, serif !important; }
-    .print-format, .print-format * { box-sizing: border-box; }
 
-    .print-format {
-        width: 210mm;
-        min-height: 297mm;
-        padding: 0;                 /* không cộng dồn với @page */
-        font-size: 16pt;
+    .hdld, .hdld * { box-sizing: border-box; }
+
+    .hdld {
+        font-size: 13pt;          /* thân bài: sz 26 half-points trong bản .docx */
+        line-height: 1.32;
         color: #000;
-        line-height: 1;
+        text-align: justify;
     }
 
-    .center { text-align: center; }
-    .right  { text-align: right;  }
-    .bold   { font-weight: bold;  }
-    .row    { display: flex; justify-content: space-between; }
-    .content{ flex: 1; }
-    .mb-2   { margin-bottom: 2mm; }
+    .hdld p { margin: 0 0 2pt 0; }
 
-    table   { width: 100%; border-collapse: collapse; }
-    td      { vertical-align: top; padding: 0 0 2mm 0; border: none; }
+    .hdld table { width: 100%; border-collapse: collapse; }
+    .hdld td    { border: none; padding: 0; vertical-align: top; }
 
-    .page-break { page-break-before: always; }
+    .hdld .c { text-align: center; }
+    .hdld .l { text-align: left; }
+    .hdld .b { font-weight: bold; }
+    .hdld .i { font-style: italic; }
+    .hdld .u { text-decoration: underline; }
 
-    .print-format table {
-        border-collapse: collapse;
-        line-height: 0.1;       /* thu nhỏ chiều cao dòng */
-    }
+    /* Khối quốc hiệu - tiêu ngữ: 12pt (sz 24) */
+    .hdld .hdr, .hdld .hdr td, .hdld .hdr p { font-size: 12pt; }
 
-    .print-format td, 
-    .print-format th {
-        padding-top: 0.5mm;     /* giảm padding dọc */
-        padding-bottom: 0.5mm;
-        font-size: 16pt;        /* nếu cần gọn chữ hơn 17px */
-        line-height: 1.0;       /* kiểm soát thêm trong ô */
-        vertical-align: top;
-    }
+    .hdld .title { font-size: 16pt; font-weight: bold; text-align: center; }
+
+    /* Gạch đầu dòng: ind left=720, hanging=360 twips */
+    .hdld .dash { margin-left: 1.27cm; text-indent: -0.635cm; }
+    /* Mục đánh số 1./2./3.: ind left=284, hanging=284 twips */
+    .hdld .num  { margin-left: 0.5cm; text-indent: -0.5cm; font-weight: bold; }
+    /* Dòng thụt đầu dòng: firstLine=720 twips */
+    .hdld .ind  { text-indent: 1.27cm; }
+
+    .hdld .party td { padding: 1.2pt 0; }
+    .hdld .party .lbl { width: 30.3%; }
+    .hdld .party .sep { width: 3.1%; }
+
+    .hdld .sign { page-break-inside: avoid; margin-top: 10pt; }
+    .hdld .sign td { text-align: center; }
+    .hdld .sign .space { height: 2.8cm; }
 </style>
 
-{# === GOM TRUY VẤN, TỐI ƯU HIỆU NĂNG === #}
+{# ============ TRUY VẤN DỮ LIỆU ============ #}
 {% set contract = frappe.db.get_value(
   "VNT Contract",
-  {"parent": doc.name, "validity": 1},
-  ["from_date","to_date","location","place_of_contract","contract_term","employee","designation","salutation", "salary_coefficient", "salary_step", "salary_grade"],
+  {"parent": doc.name, "parenttype": "Employee", "validity": 1},
+  ["contract_no","contract_date","from_date","to_date","location","place_of_contract",
+   "job_title","designation","salary_scale_name","salary_step","salary_coefficient",
+   "salary_grade","basic_salary","concurrent_allowance"],
   as_dict=True
 ) or {} %}
 
-{% set edu = frappe.db.get_value(
-  "Employee Education",
-  {"parent": doc.name, "custom_check": 1},
-  ["qualification","school_univ"],
-  as_dict=True
-) or {} %}
+{# ---- Hằng số của Chi nhánh / Nhà máy (theo bản HĐ mẫu) ---- #}
+{% set BRANCH_NAME     = "CHI NHÁNH TẬP ĐOÀN DỆT MAY VIỆT NAM" %}
+{% set FACTORY_NAME    = (doc.company or "Nhà máy Sợi Vinatex Nam Định")|upper %}
+{% set REP_SALUTATION  = "Ông" %}
+{% set REP_NAME        = "Phạm Ngọc Bình" %}
+{% set REP_DESIGNATION = "Giám đốc Chi nhánh" %}
+{% set BRANCH_ADDRESS  = "Đường N7A – Lô T&S, KCN Hòa Xá, P.Thành Nam Tỉnh Ninh Bình" %}
+{% set BRANCH_PHONE    = "0228.6272.666" %}
+{% set BRANCH_TAX      = "0100100008-050" %}
+{% set WORK_PLACE      = "Chi nhánh Tập đoàn Dệt may Việt Nam - Nhà máy Sợi Vinatex Nam Định - Khu Công Nghiệp Hòa Xá, Phường Thành Nam, Tỉnh Ninh Bình" %}
+{% set MIN_WAGE        = 4730000 %}   {# Mức lương tối thiểu Vùng II #}
 
-{% set company = frappe.db.get_value(
-  "Company", doc.company,
-  ["custom_company_full_name","phone_no"],
-  as_dict=True
-) or {} %}
+{# ---- Ngày tháng ---- #}
+{% set fd  = contract.from_date and frappe.utils.getdate(contract.from_date) or None %}
+{% set cd  = contract.contract_date and frappe.utils.getdate(contract.contract_date) or fd %}
+{% set dob = doc.date_of_birth and frappe.utils.getdate(doc.date_of_birth) or None %}
+{% set idd = doc.custom_id_issue_date and frappe.utils.getdate(doc.custom_id_issue_date) or None %}
 
-{% set dept_name = frappe.db.get_value("Department", doc.department, "department_name") or "" %}
+{# ---- Thông tin người lao động ---- #}
+{% set gender_vn = {"Male": "Nam", "Female": "Nữ"}.get(doc.gender, doc.gender or "") %}
+{% set salut = doc.salutation or ("Ông" if doc.gender == "Male" else ("Bà" if doc.gender == "Female" else "")) %}
+{% set emp_name = doc.employee_name or "" %}
+{% set job_title = contract.job_title or contract.designation or doc.designation or "" %}
+{% set poi = (doc.custom_place_of_issue or "")|trim %}
+{% set place = contract.location or contract.place_of_contract or "Ninh Bình" %}
+{% set contract_no = (contract.contract_no or "")|trim %}
 
-{# Ép kiểu ngày để dùng strftime an toàn #}
-{% set fd = contract.from_date and frappe.utils.getdate(contract.from_date) or None %}
-{% set td = contract.to_date   and frappe.utils.getdate(contract.to_date)   or None %}
+{# ---- Lương ---- #}
+{% set coeff = frappe.utils.flt(contract.salary_coefficient) or frappe.utils.flt(doc.custom_basic_salary_coefficient) %}
+{% set basic = frappe.utils.flt(contract.basic_salary) or (coeff * MIN_WAGE) %}
+{% set allowance = (contract.concurrent_allowance or "")|trim %}
+{% set coeff_txt = "{:.2f}".format(coeff) if coeff else ".........." %}
+{% set basic_txt = "{:,.0f}".format(basic) if basic else ".................." %}
 
-<div>
-  <p class="center" style="font-size:15pt;"><b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b></p>
-  <p class="center" style="font-size:14pt;"><b>Độc lập - Tự do - Hạnh phúc</b></p>
-  <p class="center" style="font-size:14px;"><b>---------------------------</b></p>
+{% macro dmy(d) -%}
+{%- if d %}ngày {{ d.strftime("%d") }} tháng {{ d.strftime("%m") }} năm {{ d.strftime("%Y") }}{% else %}ngày ...... tháng ...... năm ......{% endif -%}
+{%- endmacro %}
 
-  <p class="right" style="font-weight:normal;">
-    {{ contract.location or "" }}, ngày {{ fd and fd.strftime("%d") or "" }} tháng {{ fd and fd.strftime("%m") or "" }} năm {{ fd and fd.strftime("%Y") or "" }}
-  </p>
+<div class="hdld">
 
-  <br>
-  <p class="center" style="font-size: 17pt;"><b>HỢP ĐỒNG LAO ĐỘNG</b></p>
-  <p class="center"><i>(Căn cứ Bộ luật Lao động ngày 20 tháng 11 năm 2019 và các văn bản hướng dẫn)</i></p> 
-  <br>
-  <p style="margin:8px; text-align:left;">Chúng tôi một bên là:</p>
+  {# ================= QUỐC HIỆU – TIÊU NGỮ ================= #}
+  <table class="hdr">
+    <tbody>
+      <tr>
+        <td style="width:48.5%;">
+          <p class="c">{{ BRANCH_NAME }}</p>
+          <p class="c b">{{ FACTORY_NAME }}</p>
+          <p class="c">Số: {% if contract_no %}{{ contract_no if "HĐLĐ" in contract_no else contract_no ~ "/HĐLĐ-SNĐ" }}{% else %}……/HĐLĐ-SNĐ{% endif %}</p>
+        </td>
+        <td style="width:3%;"></td>
+        <td style="width:48.5%;">
+          <p class="c b">CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+          <p class="c b">Độc lập - Tự do - Hạnh phúc</p>
+          <p class="c i">{{ place }}, {{ dmy(cd) }}</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>&nbsp;</p>
+  <p class="title">HỢP ĐỒNG LAO ĐỘNG</p>
+  <p>&nbsp;</p>
+
+  <p class="c b">NGƯỜI SỬ DỤNG LAO ĐỘNG: {{ BRANCH_NAME }} - {{ FACTORY_NAME }}</p>
+
+  {# ================= CÁC BÊN ================= #}
+  <table class="party">
+    <tbody>
+      <tr>
+        <td class="lbl">Đại diện</td>
+        <td class="sep">:</td>
+        <td class="b">{{ REP_SALUTATION }} {{ REP_NAME }} , Quốc tịch : Việt Nam</td>
+      </tr>
+      <tr>
+        <td class="lbl">Chức vụ</td>
+        <td class="sep">:</td>
+        <td>{{ REP_DESIGNATION }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Địa chỉ</td>
+        <td class="sep">:</td>
+        <td>{{ BRANCH_ADDRESS }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Điện thoại</td>
+        <td class="sep">:</td>
+        <td>{{ BRANCH_PHONE }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Mã số thuế</td>
+        <td class="sep">:</td>
+        <td>{{ BRANCH_TAX }}</td>
+      </tr>
+      <tr>
+        <td colspan="3" class="b i">Sau đây gọi tắt là “Chi nhánh”</td>
+      </tr>
+
+      <tr>
+        <td class="lbl b">NGƯỜI LAO ĐỘNG</td>
+        <td class="sep">:</td>
+        <td class="b">{{ salut }} {{ emp_name }}, Quốc tịch : Việt Nam</td>
+      </tr>
+      <tr>
+        <td class="lbl">Ngày tháng năm sinh</td>
+        <td class="sep">:</td>
+        <td>{{ dob and dob.strftime("%d/%m/%Y") or "" }} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Giới tính: {{ gender_vn }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Địa chỉ thường trú</td>
+        <td class="sep">:</td>
+        <td>{{ doc.permanent_address or doc.current_address or "" }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Số CMTND</td>
+        <td class="sep">:</td>
+        <td>{{ doc.custom_id_card or "" }}{% if idd %} cấp {{ dmy(idd) }}{% endif %}{% if poi %} {{ poi if poi.lower().startswith("tại") else "tại " ~ poi }}{% endif %}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Điện thoại</td>
+        <td class="sep">:</td>
+        <td>{{ doc.cell_number or "" }}</td>
+      </tr>
+      <tr>
+        <td colspan="3" class="b i">Sau đây gọi tắt là “Người lao động”</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>&nbsp;</p>
+  <p>Thoả thuận ký kết hợp đồng lao động (HĐLĐ) và cam kết làm đúng những điều khoản sau đây:</p>
+
+  {# ================= ĐIỀU 1 ================= #}
+  <p class="b u">Điều 1: {{ salut }} {{ emp_name }} làm việc theo HĐLĐ:</p>
+  <p class="dash">- Thời hạn: không xác định thời hạn từ {{ dmy(fd) }}</p>
+  <p class="dash">- Địa điểm làm việc: {{ WORK_PLACE }};</p>
+  <p class="dash">- Công việc phải làm: {{ job_title or "................................................" }}.</p>
+
+  {# ================= ĐIỀU 2 ================= #}
+  <p class="b u">Điều 2: Chế độ làm việc:</p>
+  <p class="dash">- Thời giờ làm việc: 8 giờ/ ngày, 1 tuần làm việc 6 ngày và theo sự điều động của Chi nhánh. Trường hợp tăng ca, làm thêm giờ hay làm việc vào ngày nghỉ, ngày lễ thì Chi nhánh sẽ thỏa thuận với Người lao động và thực hiện theo Quy định của Pháp luật.</p>
+  <p class="dash">- Thiết bị và dụng cụ làm việc được chi nhánh cấp phát tùy theo nhu cầu của công việc.</p>
+  <p class="dash">- Được Chi nhánh trang bị trang phục bảo hộ lao động: áo, mũ, dép, găng tay, khẩu trang...vv theo từng vị trí sản xuất.</p>
+  <p class="dash">- Được đảm bảo an toàn lao động, vệ sinh nơi làm việc theo Quy định của Pháp luật.</p>
+
+  {# ================= ĐIỀU 3 ================= #}
+  <p class="b u">Điều 3: Nghĩa vụ, quyền hạn và các quyền lợi người lao động:</p>
+
+  <p class="num">1. Nghĩa vụ:</p>
+  <p class="dash">- Trong công việc, chịu sự quản lý và điều hành trực tiếp của Giám đốc Chi nhánh và người được Giám đốc Chi nhánh ủy quyền theo quy chế của Chi nhánh.</p>
+  <p class="dash">- Chịu trách nhiệm hoàn thành những công việc được giao.</p>
+  <p class="dash">- Chấp hành nghiêm túc nội quy, quy chế, kỷ luật lao động, an toàn lao động vệ sinh công nghiệp, an toàn phòng chống cháy nổ và các quy định khác (nếu có) của Chi nhánh.</p>
+  <p class="dash">- Tham gia đầy đủ, nhiệt tình các buổi huấn luyện đào tạo, hội thảo do Chi nhánh tổ chức.</p>
+  <p class="dash">- Bồi thường vi phạm vật chất: Trong thời gian thực hiện Hợp đồng, nếu Người lao động đơn phương chấm dứt HĐLĐ thì phải báo trước ít nhất 30 ngày đối với HĐLĐ có thời hạn xác định và 45 ngày đối với HĐLĐ không xác định thời hạn, hoàn lại chi phí đào tạo (nếu có), bàn giao các công việc liên quan và hoàn tất các thủ tục theo quy định. Nếu vi phạm về thời hạn báo trước theo quy định của Luật Lao động sẽ phải bồi thường cho Chi nhánh tiền lương cơ bản của những ngày không báo trước.</p>
+  <p class="dash">- Trước khi nghỉ việc, có trách nhiệm bàn giao công việc, hoàn trả cho Người sử dụng lao động đồ bảo hộ, thẻ BHYT, công cụ dụng cụ đã được cấp phát.</p>
+
+  <p class="num">2. Quyền hạn:</p>
+  <p class="dash">- Người lao động có quyền đề xuất, khiếu nại, thay đổi, tạm hoãn, chấm dứt HĐLĐ theo quy định hiện hành.</p>
+  <p class="dash">- Nắm rõ và chấp hành nghiêm túc kỷ luật lao động, an toàn lao động, vệ sinh lao động, phòng cháy chữa cháy, nội quy lao động và các chủ trương chính sách của Chi nhánh.</p>
+  <p class="dash">- Người lao động có quyền tham gia đóng góp ý kiến trong việc xây dựng Chi nhánh ngày càng phát triển.</p>
+
+  <p class="num">3. Quyền lợi:</p>
+  <p class="dash">- Phương tiện đi lại làm việc: Người lao động tự túc phương tiện đi đến Nhà máy.</p>
+  <p class="dash">- Mức lương chính hoặc tiền công: Theo hệ thống thang bảng lương của Chi nhánh, cụ thể: Hệ số lương cấp bậc bản thân là {{ coeff_txt }} (Bậc {{ contract.salary_step or "........" }}{% if contract.salary_scale_name %} - {{ contract.salary_scale_name }}{% endif %}) Tiền lương = Hệ số cấp bậc bản thân x Mức lương tối thiểu vùng được áp dụng đối với Doanh nghiệp hoạt động tại Khu vực KCN. Hòa Xá, Thành phố Nam Định, tỉnh Nam Định tại thời điểm ký kết HĐLĐ (Vùng II).</p>
+  <p class="ind">Mức lương chính: {{ coeff_txt }} x {{ "{:,.0f}".format(MIN_WAGE) }} = {{ basic_txt }} đồng/tháng.</p>
+  <p class="ind i">(Mức đóng BHXH bắt buộc hàng tháng = mức lương chính x tỷ lệ % đóng BHXH bắt buộc người sử dụng lao động (21,5%) + mức lương chính x tỷ lệ % đóng BHXH bắt buộc người lao động (10,5%).</p>
+  <p class="ind">Phụ cấp chức vụ: {{ allowance or "Không" }}.</p>
+  <p class="ind">Hình thức trả lương: Lương thời gian</p>
+  <p class="ind">Hình thức thanh toán: chuyển khoản hoặc tiền mặt</p>
+  <p class="ind">Thời gian trả lương vào ngày: Từ 06 đến 12 hàng tháng.</p>
+  <p>Chế độ nâng lương theo quy định của Chi nhánh, khi có sự thay đổi về mức lương tối thiểu vùng (do Chính phủ quy định) thì mức lương chính sẽ thay đổi theo tương ứng với Hệ số lương (Quy định tại Hệ thống thang bảng lương của Chi nhánh).</p>
+  <p class="dash">- Trường hợp Người lao động được điều động làm tăng ca, làm thêm giờ hay làm việc vào ngày nghỉ, ngày lễ thì sẽ được Chi nhánh trả thêm lương theo Quy định của Pháp luật.</p>
+  <p class="dash">- Người lao động làm việc vào ca đêm (từ 22 giờ đêm đến 6 giờ sáng hôm sau) thì sẽ được hưởng thêm mức phụ cấp bằng 60% mức lương chính lương đang được nhận vào thời điểm đó.</p>
+  <p class="dash">- Bảo hiểm xã hội, Bảo hiểm y tế, Bảo hiểm thất nghiệp và các chế độ khác được Chi nhánh trích lập và đóng đầy đủ theo quy định Pháp luật Việt Nam hiện hành.</p>
+  <p class="dash">- Tiền ăn giữa ca: Người lao động được đài thọ bữa ăn giữa ca theo quy định của Nhà máy.</p>
+  <p class="dash">- Chế độ nghỉ ngơi các ngày lễ, tết, phép năm theo quy định của pháp luật hiện hành.</p>
+  <p class="dash">- Các khoản bổ sung phúc lợi khác: Đi thăm quan, nghỉ mát… theo quy định của Chi nhánh.</p>
+  <p class="dash">- Trong thời gian được Công ty cử đi học tập, đào tạo người lao động sẽ được hưởng lương theo quy chế lương của Nhà máy.</p>
+  <p class="dash">- Hưởng các khoản phụ cấp khác theo quy định của Chi nhánh.</p>
+
+  {# ================= ĐIỀU 4 ================= #}
+  <p class="b u">Điều 4: Nghĩa vụ và quyền hạn của người sử dụng lao động:</p>
+
+  <p class="num">1. Nghĩa vụ:</p>
+  <p class="dash">- Thực hiện đầy đủ những điều kiện cần thiết đã cam kết trong HĐLĐ để người lao động làm việc có hiệu quả. Bảo đảm việc làm cho người lao động theo hợp đồng đã ký.</p>
+  <p class="dash">- Thanh toán đầy đủ, dứt điểm các chế độ và quyền lợi của người lao động đã cam kết trong HĐLĐ.</p>
+  <p class="dash">- Tạo điều kiện thuận lợi cho người lao động tích cực học tập, nâng cao trình độ tay nghề, phát huy hết khả năng trong công việc.</p>
+
+  <p class="num">2. Quyền hạn:</p>
+  <p class="dash">- Có quyền điều chuyển tạm thời người lao động, tạm ngừng việc, thay đổi, tạm hoãn, chấm dứt HĐLĐ và áp dụng các biện pháp kỷ luật theo quy định của pháp luật hiện hành, thỏa ước lao động tập thể và quy định của người sử dụng lao động.</p>
+
+  {# ================= ĐIỀU 5 ================= #}
+  <p class="b u">Điều 5: Điều khoản khác:</p>
+  <p class="dash">- Trong quá trình làm việc, nếu có khó khăn vướng mắc hay trở ngại gì có thể đề xuất và bàn bạc với lãnh đạo Chi nhánh.</p>
+  <p class="dash">- Người lao động do thiếu tinh thần trách nhiệm hoặc vi phạm quy chế, qui trình làm việc gây hư hỏng, mất mát máy móc, thiết bị, phương tiện, dụng cụ làm việc, hàng hoá, vật tư chuyên dùng, tiền, tài sản khác…. gây thiệt hại cho Chi nhánh phải chịu trách nhiệm cá nhân về chế độ bồi thường vật chất theo quy định của Chi nhánh và pháp luật.</p>
+  <p class="dash">- Những vấn đề về lao động không ghi trong Hợp đồng lao động này thì áp dụng theo quy định của Nội quy lao động, thỏa ước tập thể và các quy định của pháp luật về lao động.</p>
+
+  {# ================= ĐIỀU 6 ================= #}
+  <p class="b u">Điều 6: Hợp đồng này được lập thành 02 bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản và có hiệu lực kể từ ngày {{ fd and fd.strftime("%d/%m/%Y") or "......../......../............" }}.</p>
+
+  {# ================= KÝ TÊN ================= #}
+  <table class="sign">
+    <tbody>
+      <tr>
+        <td style="width:46%;">
+          <p class="c b">NGƯỜI LAO ĐỘNG</p>
+          <p class="c i" style="font-size:12pt;">(Ký và ghi rõ họ tên)</p>
+        </td>
+        <td style="width:54%;">
+          <p class="c b">GIÁM ĐỐC</p>
+          <p class="c i" style="font-size:12pt;">(Ký, ghi rõ họ tên, đóng dấu)</p>
+        </td>
+      </tr>
+      <tr>
+        <td class="space"></td>
+        <td class="space"></td>
+      </tr>
+    </tbody>
+  </table>
+
 </div>
-
-<br>
-
-<table>
-  <tbody>
-    <tr>
-      <td style="width:30%;">Người sử dụng lao động:</td>
-      <td><b>{{ (company.custom_company_full_name or doc.company)|upper }}</b></td>
-    </tr>
-    <tr>
-      <td>Đại diện:</td>
-      <td>
-        {{ contract.salutation or "" }}
-        <b>{{ (contract.employee or "")|upper }}</b>
-        <span style="float:right;">Quốc tịch: Việt Nam</span>
-      </td>
-    </tr>
-    <tr>
-      <td>Chức vụ:</td>
-      <td>{{ contract.designation or "" }}</td>
-    </tr>
-    <tr>
-      <td>Trụ sở:</td>
-      <td>41A Lý Thái Tổ, Hoàn Kiếm, Hà Nội</td>
-    </tr>
-    <tr>
-      <td>Điện thoại:</td>
-      <td>{{ company.phone_no or "" }}</td>
-    </tr>
-  </tbody>
-</table>
-
-<br>
-<p style="margin:8px; text-align:left;">Và một bên là:</p>
-<br>
-
-<table>
-  <tbody>
-    <tr>
-      <td style="width:30%;">Người lao động:</td>
-      <td>
-        {{ doc.salutation or "" }} <b>{{ (doc.employee_name or "")|upper }}</b>
-        <span style="float:right;">Quốc tịch: Việt Nam</span>
-      </td>
-    </tr>
-    <tr>
-      <td>Sinh ngày:</td>
-      <td>{{ frappe.utils.formatdate(doc.date_of_birth, "dd/MM/yyyy") if doc.date_of_birth else "" }}</td>
-    </tr>
-    <tr>
-      <td>Trình độ chuyên môn:</td>
-      <td style="padding: 8px; text-align: justify;">{{ (edu.qualification or "") ~ (edu.school_univ and (" - " ~ edu.school_univ) or "") }}</td>
-    </tr>
-    <tr>
-      <td>Địa chỉ thường trú:</td>
-      <td style="padding: 8px; text-align: justify;">{{ doc.permanent_address or "" }}</td>
-    </tr>
-    <tr>
-      <td>CCCD/Hộ chiếu số:</td>
-      <td style="padding: 8px; text-align: justify;">
-        {{ doc.custom_id_card or "" }};
-        &nbsp;&nbsp;&nbsp; Cấp ngày: {{ frappe.utils.formatdate(doc.custom_id_issue_date, "dd/MM/yyyy") if doc.custom_id_issue_date else "" }}<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br> Nơi cấp: {{ doc.custom_place_of_issue or "" }}
-      </td>
-    </tr>
-  </tbody>
-</table>
-<br>
-<div>
-  <td style="padding: 8px; text-align: justify;">
-  Thỏa thuận ký kết hợp đồng xác định thời hạn và cam kết làm đúng những điều khoản sau đây:
-</td>
-</div>
-<br>
-<table>
-    <tbody> 
-  <p style="margin:8px; text-align:left;"><b><u>Điều 1:</u> Thời hạn và công việc theo hợp đồng</b></p>
-  <p style="margin:8px; text-align:left;">- Loại hợp đồng lao động: Hợp đồng không xác định thời hạn kể từ ngày {{ contract.contract_term or "" }}; </p>
-  
-  <p style="margin:8px; text-align:justify;">
-    - Địa điểm làm việc: Cơ quan Văn Phòng Tập đoàn Dệt May Việt Nam - 41A Lý Thái Tổ, phường Hoàn Kiếm, thành phố Hà Nội;
-  </p>
-  <p style="margin:8px; text-align:left;">
-    - Chức danh chuyên môn: {{ doc.designation or "" }} {{ dept_name }};
-  </p>
-  <p style="margin:8px; text-align:justify;">
-    - Nhiệm vụ công việc: Thực hiện công việc theo đúng chức danh chuyên môn đảm nhiệm và các công việc khác theo yêu cầu dưới sự quản lý, điều hành của người quản lý trực tiếp và của các cá nhân được bổ nhiệm hoặc Lãnh đạo Tập đoàn ủy quyền phụ trách;
-  </p>
-
-  <p style="margin:8px; text-align:left;"><b><u>Điều 2:</u> Chế độ làm việc</b></p>
-  <p style="margin:8px; text-align:justify;">
-    - Thời giờ làm việc: 8 giờ/ngày; không quá 48 giờ/tuần, nghỉ chủ nhật hàng tuần, tùy theo tình hình thực tế từng thời kỳ, Cơ quan có thể bố trí để người lao động được nghỉ ngày thứ bảy hàng tuần;
-  </p>
-  <p style="margin:8px; text-align:justify;">
-    - Do tính chất công việc, hoạt động của Tập đoàn, {{ dept_name }} và các ban/bộ phận có liên quan, Tập đoàn có thể áp dụng thời gian làm việc linh hoạt theo yêu cầu đột xuất của công việc và người lao động sẵn sàng đáp ứng thời gian làm việc linh hoạt theo yêu cầu đột xuất trong phạm vi đủ số giờ làm việc quy định;
-  </p>
-
-  <p style="margin:8px; text-align:justify;">
-    - Được cấp phát dụng cụ, phương tiện làm việc theo yêu cầu công việc và theo quy định của Tập đoàn;
-  </p>
-  <p style="margin:8px; text-align:justify;">
-    - Điều kiện an toàn lao động và vệ sinh lao động tại nơi làm việc theo quy định hiện hành của Nhà nước.
-  </p>
-  </tbody>
-</table>
-    <p style="margin:8px; text-align:justify;"><b><u>Điều 3:</u> Quyền lợi và nghĩa vụ của người lao động:</b></p>
-    <p style="margin:8px; text-align:justify; text-indent: 1.20cm;"><b><i>1. Quyền lợi</i></b></p>
-    <p style="margin:8px; text-align:justify;">- Phương tiện đi lại làm việc: Tự túc hoặc sắp xếp của Tập đoàn;</p>
-    <p style="margin:8px; text-align:justify;">- Lương cơ bản: {{ "{:,.0f}".format(doc.custom_basic_salary or 0) }} <b>đồng, </b>hệ số {{contract.salary_coefficient or 0}}; bậc {{contract.salary_step or 0 }}
-    (ngạch {{contract.salary_grade or 0}} - Thang bảng lương cơ bản - Cơ quan Tập đoàn DMVN);
-    </p>
-    <p style="margin:8px; text-align:justify;">- Các khoản phụ cấp: theo quy định của Tập đoàn;</p>
-    <p style="margin:8px; text-align:justify;">- Tiền ăn ca: theo quy định của Tập đoàn;</p>
-    <p style="margin:8px; text-align:justify;">- Ngoài tiền lương cơ bản và các khoản phụ cấp, người lao động được hưởng tiền lương theo hiệu quả sản xuất kinh doanh: thực hiện theo Quy chế phân phối thu nhập của Tập đoàn;</p>
-    <p style="margin:8px; text-align:justify;">- Các khoản trên đã bao gồm thuế thu nhập cá nhân theo quy định của pháp luật;</p>
-    <p style="margin:8px; text-align:justify;">- Hình thức trả lương: tính trên ngày công thực tế từng tháng và trả vào ngày 05 hàng tháng;</p>
-    <p style="margin:8px; text-align:justify;">- Tiền thưởng: theo Quy định và theo kết quả hoạt động kinh doanh của Tập đoàn;</p>
-    <p style="margin:8px; text-align:justify;">- Chế độ nâng lương: theo Quy định của Tập đoàn;</p>
-    <p style="margin:8px; text-align:justify;">- Được cấp phát dụng cụ làm việc: trang bị theo yêu cầu công việc được giao, tùy theo tính chất công việc;</p>
-    <p style="margin:8px; text-align:justify;">- Chế độ nghỉ ngơi (nghỉ hàng tuần, nghỉ phép hàng năm, nghỉ lễ, Tết...): theo Quy định của Tập đoàn và Quy định của Pháp luật;</p>
-    <p style="margin:8px; text-align:justify;">- Bảo hiểm xã hội, bảo hiểm y tế, bảo hiểm thất nghiệp: theo Quy định của Pháp luật hiện hành và Quy định của Tập đoàn;</p>
-    <p style="margin:8px; text-align:justify;">- Chế độ đào tạo: theo yêu cầu công việc;</p>
-    <p style="margin:8px; text-align:justify;">- Các quyền lợi khác theo quy định của Tập đoàn, quy định của Pháp luật lao động.</p>
-
-  <p style="margin:8px; text-align:justify; text-indent: 1.20cm;"><b><i>2. Nghĩa vụ</i></b></p>
-  <p style="margin:8px; text-align:justify;">- Thực hiện công việc với sự tận tâm, đảm bảo hoàn thành với hiệu quả cao nhất những công việc đã cam kết trong Hợp đồng lao động và theo sự phân công, điều hành (bằng văn bản hoặc bằng miệng) của người quản lý trực tiếp hoặc các cá nhân được Lãnh đạo Tập đoàn phân công hoặc ủy quyền phụ trách;</p>
-  <p style="margin:8px; text-align:justify;">- Phối hợp với các bộ phận, phòng ban khác trong Tập đoàn để phát huy tối đa hiệu quả công việc;</p>
-  <p style="margin:8px; text-align:justify;">- Điều động, luân chuyển công việc theo yêu cầu của cấp trên và các mệnh lệnh điều hành sản xuất kinh doanh của Tập đoàn (nếu có) thực hiện theo đúng quy định của Pháp luật lao động hiện hành;</p>
-  <p style="margin:8px; text-align:justify;">- Nắm rõ và chấp hành nghiêm túc kỷ luật lao động, Nội quy lao động, các quy định và quy chế nội bộ của Tập đoàn, kỷ luật lao động, an toàn lao động và các quy định trong Thỏa ước lao động tập thể;</p>
-  <p style="margin:8px; text-align:justify;">- Đảm bảo duy trì liên lạc trong và ngoài giờ làm việc theo yêu cầu và đặc thù của công việc;</p>
-  <p style="margin:8px; text-align:justify;">- Tham dự đầy đủ, nhiệt tình các buổi huấn luyện, đào tạo, hội thảo khi Tập đoàn triệu tập;</p>
-  <p style="margin:8px; text-align:justify;">- Bồi thường vi phạm vật chất: theo Pháp luật lao động và quy định của Tập đoàn;</p>
-  <p style="margin:8px; text-align:justify;">- Các nghĩa vụ khác theo quy định của Tập đoàn, quy định của Pháp luật lao động.</p>
-
-  <p style="margin:8px; text-align:left;"><b><u>Điều 4:</u> Nghĩa vụ và quyền hạn của người sử dụng lao động</b></p>
-  <p style="margin:8px; text-align:justify;  text-indent: 1.20cm;"><b><i>1. Nghĩa vụ</i></b></p>
-  <p style="margin:8px; text-align:justify;">- Đảm bảo việc làm và thực hiện đầy đủ những điều đã cam kết trong Hợp đồng lao động;</p>
-  <p style="margin:8px; text-align:justify;">- Thanh toán đầy đủ, đúng thời hạn các chế độ và quyền lợi cho Người lao động theo Hợp đồng lao động, Thỏa ước lao động tập thể.</p>
-  <p style="margin:8px; text-align:justify;  text-indent: 1.20cm;"><b><i>2. Quyền hạn</i></b></p>
-  <p style="margin:8px; text-align:justify;">- Điều hành người lao động hoàn thành công việc theo quy định tại Hợp đồng lao động (bố trí, điều chuyển, tạm ngưng việc…) theo quy định của Pháp luật lao động và quy định của Tập đoàn;</p>
-  <p style="margin:8px; text-align:justify;">- Tạm hoãn, chấm dứt Hợp đồng lao động, kỷ luật người lao động theo quy định của Pháp luật, Thỏa ước lao động tập thể, Nội quy lao động và các quy định khác của Tập đoàn.</p>
-
-  <p style="margin:8px; text-align:justify;">
-    <b><u>Điều 5:</u> Điều khoản thi hành</b>
-  </p>
-  <p style="margin:8px; text-align:justify;">
-    - Những vấn đề về lao động không được ghi trong Hợp đồng này sẽ được áp dụng thực hiện theo Nội quy Tập đoàn, Thỏa ước lao động tập thể và các quy định khác của Tập đoàn đã được gửi cho người lao động khi tiếp nhận công việc; các quy định của Pháp luật lao động hiện hành;
-  </p>
-  <p style="margin:8px; text-align:justify;">
-    - Hợp đồng lao động được lập thành ba (03) bản có giá trị như nhau (Người lao động giữ một (01) bản, Ban Quản lý Nguồn nhân lực lưu một (01) bản, lưu hồ sơ một (01) bản).
-  </p>
-  <p style="margin:8px; text-align:justify;">
-    - Hợp đồng này làm tại {{ contract.place_of_contract or "" }} tại {{ contract.location or "" }} và có hiệu lực kể từ ngày {{ fd and fd.strftime("%d") or "" }} tháng {{ fd and fd.strftime("%m") or "" }} năm {{ fd and fd.strftime("%Y") or "" }}./.
-  </p>
-<br>
-<table style="width:100%;">
-  <tbody>
-    <tr>
-      <td style="text-align:center; width:50%; vertical-align:bottom; min-height:200px;">
-        <b>NGƯỜI LAO ĐỘNG</b>
-        <div style="margin-top:20px;"><i>(Ký và ghi rõ họ tên)</i></div>
-      </td>
-      <td style="text-align:center; width:50%; vertical-align:bottom; min-height:200px;">
-        <b>NGƯỜI SỬ DỤNG LAO ĐỘNG</b>
-        <div style="margin-top:20px;"><i>(Ký tên, đóng dấu)</i></div>
-        <div style="margin-top:120px;"><b>{{ contract.employee or "" }}</b></div>
-      </td>
-    </tr>
-  </tbody>
-</table>
