@@ -1,31 +1,17 @@
 <main class="executive-dashboard" aria-label="Bảng tin lãnh đạo">
   <section class="executive-filter" aria-labelledby="executive-filter-title">
     <div class="executive-filter__intro">
-      <span class="executive-filter__icon" aria-hidden="true"><i class="fa fa-home"></i></span>
+      <span class="executive-filter__icon" aria-hidden="true"><i class="fa fa-sun-o"></i></span>
       <div>
-        <h2 id="executive-filter-title">Phạm vi điều hành</h2>
-        <p>Bộ lọc áp dụng đồng nhất cho toàn bộ bảng tin</p>
+        <h2 id="executive-filter-title">Bản tin điều hành buổi sáng</h2>
+        <p>Hiện diện hôm nay và các vấn đề chấm công của ngày hôm qua</p>
       </div>
     </div>
     <div class="executive-filter__controls">
-      <label for="executive-data-date">Ngày dữ liệu</label>
+      <label for="executive-data-date">Ngày theo dõi</label>
       <div class="executive-filter__date-wrap">
-        <input id="executive-data-date" type="date" data-date-input aria-label="Ngày dữ liệu">
+        <input id="executive-data-date" type="date" data-date-input aria-label="Ngày theo dõi">
       </div>
-      <span class="executive-filter__field-label" id="executive-branch-label">Chi nhánh</span>
-      <div class="executive-filter__select-wrap" data-branch-picker>
-        <button class="executive-filter__trigger" type="button" data-branch-trigger aria-haspopup="true" aria-expanded="false" aria-labelledby="executive-branch-label">
-          <span data-branch-summary>Tất cả chi nhánh</span>
-          <i class="fa fa-chevron-down" aria-hidden="true"></i>
-        </button>
-        <div class="executive-filter__menu" data-branch-menu hidden>
-          <label class="executive-filter__option executive-filter__option--all">
-            <input type="checkbox" data-all-branches checked><span>Tất cả chi nhánh</span>
-          </label>
-          <div class="executive-filter__options" data-branch-options></div>
-        </div>
-      </div>
-      <button type="button" class="executive-filter__clear" data-clear hidden>Xóa lọc</button>
     </div>
   </section>
 
@@ -34,10 +20,11 @@
   <section class="executive-section executive-section--overview" aria-labelledby="executive-overview-title">
     <header class="executive-section__header">
       <div>
-        <h2 id="executive-overview-title">Tổng quan buổi sáng</h2>
-        <p>Quy mô, hiện diện và biến động tại ngày được chọn</p>
+        <h2 id="executive-overview-title">Tình hình cần nắm ngay</h2>
+        <p data-period-copy>Số liệu hôm nay và đối soát ngày hôm qua</p>
       </div>
       <div class="executive-section__actions">
+        <span class="executive-live"><i class="fa fa-circle" aria-hidden="true"></i> Dữ liệu trực tiếp</span>
         <span class="executive-meta" data-updated>Đang cập nhật…</span>
         <button class="executive-refresh" type="button" data-refresh aria-label="Tải lại dữ liệu" title="Tải lại dữ liệu">
           <img src="/assets/vinatex/images/refresh.svg" alt="" aria-hidden="true">
@@ -47,87 +34,115 @@
     <div class="executive-kpis" data-kpis aria-live="polite"></div>
   </section>
 
-  <section class="executive-section" aria-labelledby="executive-attention-title">
-    <header class="executive-section__header">
-      <div>
-        <h2 id="executive-attention-title">Việc cần lưu ý</h2>
-        <p>Các mốc nhân sự cần theo dõi hoặc xử lý</p>
-      </div>
-      <span class="executive-pill">Theo ngày đã chọn</span>
-    </header>
-    <div class="executive-attention" data-attention></div>
-  </section>
+  <header class="executive-detail-heading">
+    <div>
+      <h2>Chi tiết nhân sự</h2>
+      <p>Danh sách phục vụ kiểm tra và xử lý sau phần tổng quan</p>
+    </div>
+  </header>
 
-  <div class="executive-grid executive-grid--two">
-    <section class="executive-section executive-panel" aria-labelledby="executive-attendance-title">
-      <header class="executive-section__header">
+  <div class="executive-main-grid">
+    <section class="executive-section executive-arrivals" id="arrivals" aria-labelledby="executive-arrivals-title">
+      <header class="executive-section__header executive-section__header--wrap">
         <div>
-          <h2 id="executive-attendance-title">Tình hình nhân sự trong ngày</h2>
-          <p>Trạng thái ghi nhận theo ngày dữ liệu</p>
+          <h2 id="executive-arrivals-title">Ai đã đến công ty hôm nay?</h2>
+          <p><strong data-arrival-total>–</strong> người đã có giờ vào · <strong data-arrival-expected>–</strong> người có lịch cần chấm công</p>
         </div>
-        <span class="executive-pill executive-pill--blue"><strong data-coverage>–</strong>% đã có trạng thái</span>
+        <div class="executive-tabs" role="group" aria-label="Lọc danh sách đã đến">
+          <button type="button" class="is-active" data-arrival-filter="all">Tất cả <span data-arrival-all>0</span></button>
+          <button type="button" data-arrival-filter="manager">Quản lý <span data-arrival-manager>0</span></button>
+          <button type="button" data-arrival-filter="employee">Nhân viên <span data-arrival-employee>0</span></button>
+        </div>
       </header>
-      <div class="executive-status-list" data-attendance></div>
-      <p class="executive-note">“Chưa ghi nhận” là số nhân sự chưa có chấm công, nghỉ phép hoặc lịch công tác tại thời điểm tải dữ liệu.</p>
+      <div class="executive-table-wrap">
+        <table class="executive-table">
+          <thead>
+            <tr><th>Nhân sự</th><th>Đơn vị</th><th>Ca kế hoạch</th><th>Giờ vào</th></tr>
+          </thead>
+          <tbody data-arrival-rows></tbody>
+        </table>
+        <div class="executive-state" data-arrival-empty hidden>Chưa ghi nhận nhân sự đến công ty trong phạm vi đã chọn.</div>
+      </div>
     </section>
 
-    <section class="executive-section executive-panel" aria-labelledby="executive-branches-title">
+    <section class="executive-section executive-birthdays" id="birthdays" aria-labelledby="executive-birthdays-title">
       <header class="executive-section__header">
         <div>
-          <h2 id="executive-branches-title">Quy mô theo chi nhánh</h2>
-          <p>Phân bổ nhân sự đang làm việc</p>
+          <h2 id="executive-birthdays-title">Sinh nhật hôm nay</h2>
+          <p>Tách riêng quản lý và nhân viên</p>
         </div>
-        <span class="executive-pill executive-pill--violet"><strong data-branch-count>–</strong> chi nhánh</span>
+        <span class="executive-pill executive-pill--blue"><strong data-birthday-total>–</strong> người</span>
       </header>
-      <div class="executive-branch-list" data-branches></div>
+      <div class="executive-birthday-groups">
+        <section aria-labelledby="birthday-manager-title">
+          <h3 id="birthday-manager-title"><span class="executive-role-dot executive-role-dot--manager"></span>Quản lý <strong data-birthday-manager-count>0</strong></h3>
+          <div class="executive-people-list" data-birthday-managers></div>
+        </section>
+        <section aria-labelledby="birthday-employee-title">
+          <h3 id="birthday-employee-title"><span class="executive-role-dot"></span>Nhân viên <strong data-birthday-employee-count>0</strong></h3>
+          <div class="executive-people-list" data-birthday-employees></div>
+        </section>
+      </div>
     </section>
   </div>
 
-  <div class="executive-grid executive-grid--two">
-    <section class="executive-section executive-panel" aria-labelledby="executive-turnover-title">
-      <header class="executive-section__header">
-        <div>
-          <h2 id="executive-turnover-title">Tuyển mới và nghỉ việc</h2>
-          <p>Biến động nhân sự trong 12 tháng gần nhất</p>
-        </div>
-        <div class="executive-turnover-summary">
-          <span><strong data-hiring-total>–</strong> tuyển mới</span>
-          <span class="is-violet"><strong data-attrition-total>–</strong> nghỉ việc</span>
-        </div>
-      </header>
-      <div class="executive-chart" data-turnover-chart></div>
-      <div class="executive-state" data-turnover-state>Đang tải dữ liệu…</div>
-    </section>
-
-    <section class="executive-section executive-panel" aria-labelledby="executive-leaders-title">
-      <header class="executive-section__header">
-        <div>
-          <h2 id="executive-leaders-title">Lãnh đạo và quản lý trong ngày</h2>
-          <p>Tình trạng có mặt, nghỉ hoặc công tác</p>
-        </div>
-        <span class="executive-pill"><strong data-leader-count>–</strong> người</span>
-      </header>
-      <div class="executive-leader-list" data-leaders></div>
-    </section>
-  </div>
-
-  <section class="executive-section executive-finance" data-finance-section aria-labelledby="executive-finance-title">
+  <section class="executive-section" aria-labelledby="executive-yesterday-title">
     <header class="executive-section__header">
       <div>
-        <h2 id="executive-finance-title">Tình hình quỹ lương</h2>
-        <p>Số liệu từ các bảng lương đã chốt trong năm</p>
+        <h2 id="executive-yesterday-title">Đối soát chấm công hôm qua <span data-yesterday-date></span></h2>
+        <p><strong data-scheduled-yesterday>–</strong> người có lịch làm việc; danh sách dưới đây có thể giao nhau giữa các nhóm vấn đề</p>
       </div>
-      <span class="executive-pill executive-pill--green">Dữ liệu phân quyền</span>
+      <a class="executive-link" href="/app/query-report/VNT Daily Attendance" target="_blank" rel="noopener">Mở báo cáo chấm công <i class="fa fa-external-link" aria-hidden="true"></i></a>
     </header>
-    <div class="executive-finance__state" data-finance-state hidden></div>
-    <div class="executive-finance__content" data-finance-content>
-      <div class="executive-finance__kpis" data-finance-kpis></div>
-      <div class="executive-chart executive-chart--salary" data-salary-chart></div>
+
+    <div class="executive-exception-grid">
+      <article class="executive-exception-card executive-exception-card--red" id="yesterday-absent">
+        <header>
+          <div><h3>Vắng</h3><p><span data-absent-finalized>0</span> đã chốt · <span data-absent-provisional>0</span> tạm tính</p></div>
+          <strong data-absent-count>0</strong>
+        </header>
+        <div class="executive-issue-list" data-absent-list></div>
+      </article>
+
+      <article class="executive-exception-card executive-exception-card--amber" id="yesterday-explanation">
+        <header>
+          <div><h3>Cần giải trình</h3><p><span data-awaiting-hr>0</span> người đang chờ HR xác nhận</p></div>
+          <strong data-explanation-count>0</strong>
+        </header>
+        <div class="executive-issue-list" data-explanation-list></div>
+        <a class="executive-card-link" href="/app/vnt-attendance-confirm" target="_blank" rel="noopener">Mở danh sách giải trình</a>
+      </article>
+
+      <article class="executive-exception-card executive-exception-card--violet" id="yesterday-late">
+        <header>
+          <div><h3>Đi muộn</h3><p>TB <span data-late-average>0</span> phút · cao nhất <span data-late-maximum>0</span> phút</p></div>
+          <strong data-late-count>0</strong>
+        </header>
+        <div class="executive-issue-list" data-late-list></div>
+      </article>
+
+      <article class="executive-exception-card executive-exception-card--pink" id="yesterday-early">
+        <header>
+          <div><h3>Về sớm cần đối soát</h3><p>TB <span data-early-average>0</span> phút · cao nhất <span data-early-maximum>0</span> phút</p></div>
+          <strong data-early-count>0</strong>
+        </header>
+        <div class="executive-issue-list" data-early-list></div>
+      </article>
     </div>
   </section>
 
+  <details class="executive-method">
+    <summary>Cách đọc số liệu</summary>
+    <div>
+      <p><strong>Đã đến:</strong> có giờ vào trong ca hoặc có log IN ngoài ca của ngày theo dõi.</p>
+      <p><strong>Vắng:</strong> ưu tiên Attendance đã chốt; khi chưa chốt, tạm tính từ lịch kíp/ca và log máy, loại trừ nghỉ phép và công tác đã duyệt.</p>
+      <p><strong>Cần giải trình:</strong> số người có dòng bất thường của hôm qua nhưng chưa nhập nội dung giải trình. Đi muộn/về sớm được so với giờ ca và thời gian ân hạn đang cấu hình; OUT nằm ngoài cửa sổ ca được nêu riêng để đối soát, không tự động thay thế giờ ra hợp lệ.</p>
+      <p data-manager-definition>Quản lý được xác định theo nhóm chức danh hoặc chức danh quản lý đã cấu hình.</p>
+    </div>
+  </details>
+
   <footer class="executive-footer">
-    <span><i class="fa fa-database" aria-hidden="true"></i> Nguồn dữ liệu trực tiếp từ hồ sơ nhân sự, chấm công, nghỉ phép, hợp đồng và bảng lương.</span>
-    <span data-scope-label>Tất cả chi nhánh</span>
+    <span><i class="fa fa-database" aria-hidden="true"></i> Employee · Kíp/ca · Checkin · Attendance · Giải trình chấm công</span>
+    <span><span data-scope-label>Tất cả chi nhánh</span> · <span data-timezone>Asia/Ho_Chi_Minh</span></span>
   </footer>
 </main>

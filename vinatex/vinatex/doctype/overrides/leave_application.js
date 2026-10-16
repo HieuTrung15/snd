@@ -1,70 +1,12 @@
 frappe.ui.form.on("Leave Application", {
-	validate (frm) {
-		// Khi chuyển về Rejected thì bắt buộc phải có lý do
-		if (["Rejected", "Từ chối"].includes(frm.doc.workflow_state) && !frm.doc.custom_reject_reason) {
-		frappe.throw(__('Vui lòng nhập "Lý do từ chối" trước khi từ chối.'));
-		}
-	},
-	before_workflow_action(frm) {
-		if (frm.selected_workflow_action !== "Từ chối") return;
-		// Workflow mặc định freeze trước khi trigger event, cần mở ra để thao tác popup
-		frappe.dom.unfreeze();
-
-		return new Promise((resolve, reject) => {
-			let confirmed = false;
-			const dialog = new frappe.ui.Dialog({
-				title: __("Lý do từ chối"),
-				fields: [
-					{
-						fieldname: "reject_reason",
-						fieldtype: "Small Text",
-						label: __("Lý do"),
-						reqd: 1,
-						default: frm.doc.custom_reject_reason || "",
-					},
-				],
-				primary_action_label: __("Từ chối"),
-				primary_action(values) {
-					const reject_reason = (values.reject_reason || "").trim();
-					if (!reject_reason) {
-						frappe.msgprint(__("Vui lòng nhập lý do từ chối."));
-						return;
-					}
-
-					// Freeze lại để tránh bấm lặp trong lúc ghi dữ liệu
-					frappe.dom.freeze();
-					frappe.db
-						.set_value(frm.doctype, frm.doc.name, "custom_reject_reason", reject_reason)
-						.then(() => {
-							confirmed = true;
-							frm.set_value("custom_reject_reason", reject_reason);
-							dialog.hide();
-							resolve();
-						})
-						.catch(() => {
-							frappe.dom.unfreeze();
-							frappe.msgprint(__("Không thể lưu lý do từ chối. Vui lòng thử lại."));
-						});
-					},
-				secondary_action_label: __("Quay lại"),
-				secondary_action() {
-					dialog.hide();
-				},
-			});
-
-			dialog.onhide = () => {
-				if (confirmed) return;
-				frm.selected_workflow_action = null;
-				reject();
-			};
-
-			dialog.show();
-		});
-	},
 	before_save (frm) {
-		// Set status cho document mới trước khi save
-		if (frm.is_new() && !frm.doc.status) {
+		// Máy chủ sẽ submit ngay trong cùng giao dịch; các giá trị này giúp giao
+		// diện phản ánh đúng trạng thái trước khi gửi dữ liệu.
+		if (frm.is_new()) {
 			frm.set_value("status", "Approved");
+			if (frappe.meta.has_field(frm.doctype, "workflow_state")) {
+				frm.set_value("workflow_state", "Đã duyệt");
+			}
 		}
 	},
 	
@@ -139,97 +81,13 @@ frappe.ui.form.on("Leave Application", {
 		}
 	},
 
-	after_save (frm) {
-		if (frm.doc.workflow_state === "Mới tạo") {
-			// Ensure document is persisted (not a temporary `new-...` name) before applying workflow
-			const apply = () => {
-				frappe.xcall("frappe.model.workflow.apply_workflow", {
-					doc: frm.doc,
-					action: "Chuyển duyệt",
-				}).then(() => frm.reload_doc());
-			};
-
-			if ((frm.doc.name || "").startsWith("new-")) {
-				frm.reload_doc().then(apply).catch(() => apply());
-			} else {
-				apply();
-			}
-		}
-	},
 	half_day(frm) {
 		if (frm.doc.from_date && !frm.doc.to_date) {
 			frm.set_value("to_date", frm.doc.from_date);
 		}
 	},
-	// lấy ra người duyệt cấp 2 và cập nhật dashboard
 	employee (frm) {
-		frappe.call({
-			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver_from_employee",
-			args: {
-				employee: frm.doc.employee
-			},
-			callback: function (r) {
-				if (r.message) {
-					frm.set_value("custom_approver", r.message[0]);
-					frm.set_value("custom_approver_name", r.message[1]);
-				}
-			}
-		});
-		// Cập nhật dashboard khi thay đổi employee
 		frm.trigger("make_dashboard");
-		
-		if (frm.doc.total_leave_days >= 3) {
-			frappe.call({
-			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver_level_2",
-			args: {
-				employee: frm.doc.employee,
-			},
-			callback (r) {
-				if (r.message) {
-					frm.set_value("custom_second_approver", r.message);
-				}}
-			});
-		}
-		if (frm.doc.total_leave_days < 3) {
-			frappe.call({
-			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver",
-			args: {
-				employee: frm.doc.employee,
-			},
-			callback (r) {
-				if (r.message) {
-					frm.set_value("leave_approver", r.message);
-				}}
-			});
-		}
-	},
-	// hiển thị người duyệt cấp 2 nếu nghỉ trên 3 ngày
-	total_leave_days(frm) {
-		if (frm.doc.total_leave_days >= 3) {
-			frappe.call({
-			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver_level_2",
-			args: {
-				employee: frm.doc.employee,
-			},
-			callback (r) {
-				if (r.message) {
-					frm.set_value("custom_second_approver", r.message.name);
-					frm.set_value("custom_second_approver_name", r.message.employee_name);
-				}}
-			});
-		}
-		if (frm.doc.total_leave_days < 3) {
-			frappe.call({
-			method: "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver",
-			args: {
-				employee: frm.doc.employee,
-			},
-			callback (r) {
-				if (r.message) {
-					frm.set_value("leave_approver", r.message);
-				}}
-			});
-		}
 	},
 
 	onload(frm) {
@@ -244,6 +102,21 @@ frappe.ui.form.on("Leave Application", {
 	},
 
 	refresh(frm) {
+		[
+			"custom_reject_reason",
+			"custom_approver",
+			"custom_approver_name",
+			"leave_approver",
+			"leave_approver_name",
+			"custom_second_approver",
+			"custom_second_approver_name",
+		].forEach((fieldname) => frm.toggle_display(fieldname, false));
+
+		frm.set_intro(
+			__("Phiếu nghỉ sẽ được tự động duyệt và tạo chấm công ngay khi lưu."),
+			"green"
+		);
+
 		if (frm.is_new()) {
 			frm.set_value("custom_leave_group", "Nghỉ phép");
 			frm.set_value("leave_type", "Nghỉ phép năm");
@@ -268,6 +141,8 @@ frappe.ui.form.on("Leave Application", {
 		setTimeout(() => {
 		frm.remove_custom_button(__('View Ledger'), __('View'));
 		frm.remove_custom_button(__('View Ledger'));
+		frm.remove_custom_button(__("Từ chối"));
+		frm.remove_custom_button(__("Chuyển duyệt"));
 		}, 0);
 
 		// Hiển thị dashboard phép năm theo năm (override)
@@ -382,7 +257,7 @@ frappe.ui.form.on("Leave Application", {
 					half_day_date: frm.doc.half_day_date,
 				},
 				callback(r) {
-					if (r && r.message) {
+					if (r && r.message !== undefined && r.message !== null) {
 						frm.set_value("total_leave_days", r.message);
 						// frm.trigger("get_leave_balance");
 						frm.trigger("cal_extra_leave");

@@ -3,10 +3,17 @@ import frappe
 from frappe import _
 from frappe.utils import get_first_day, get_last_day, getdate, today, add_days
 
+from vinatex.vnt_hr.shift_management.work_schedule_filter import (
+    WORK_SCHEDULE_FILTERS,
+    matches_work_schedule_filter,
+)
+
 PRIV_ROLES = {"HR User", "System Manager"}
 
 def execute(filters=None):
     filters = filters or {}
+    if filters.get("work_schedule_filter") not in (None, "", *WORK_SCHEDULE_FILTERS):
+        frappe.throw(_("Invalid work schedule filter."))
     _restrict_scope(filters)
     columns = get_columns()
     data = get_data(filters)
@@ -79,10 +86,23 @@ def get_data(filters):
             emp.employee_name,
             emp.department,
             emp.company,
-            ec.time
+            ec.time,
+            emp.default_shift,
+            emp.custom_working_schedule_type,
+            emp.custom_shift_group
         FROM `tabEmployee Checkin` ec
         INNER JOIN `tabEmployee` emp ON emp.name = ec.employee
         WHERE {where_clause}
         ORDER BY ec.time DESC
     """
-    return frappe.db.sql(sql, params, as_dict=True)
+    rows = frappe.db.sql(sql, params, as_dict=True)
+    rows = [
+        row
+        for row in rows
+        if matches_work_schedule_filter(row, filters.get("work_schedule_filter"))
+    ]
+    for row in rows:
+        row.pop("default_shift", None)
+        row.pop("custom_working_schedule_type", None)
+        row.pop("custom_shift_group", None)
+    return rows

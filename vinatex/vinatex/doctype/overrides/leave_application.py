@@ -13,7 +13,7 @@ import frappe
 from frappe import _
 from frappe.model.workflow import get_workflow
 from frappe.query_builder import DocType
-from frappe.utils import date_diff, flt, getdate, get_link_to_form, formatdate, nowdate
+from frappe.utils import add_days, cint, date_diff, flt, getdate, get_link_to_form, formatdate, nowdate
 
 from frappe.model.document import Document
 
@@ -23,17 +23,30 @@ from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employe
 from hrms.hr.doctype.leave_application.leave_application import (
 	LeaveApplication,
 	get_allocation_expiry_for_cf_leaves,
-	get_leave_balance_on,
-	get_number_of_leave_days,
+	get_leave_allocation_records,
+	get_leave_entries,
+	get_manually_expired_leaves,
+	get_number_of_leave_days as hrms_get_number_of_leave_days,
 	is_lwp,
 )
-from hrms.hr.doctype.leave_ledger_entry.leave_ledger_entry import delete_ledger_entry
+from hrms.hr.doctype.leave_ledger_entry.leave_ledger_entry import (
+	create_leave_ledger_entry,
+	delete_ledger_entry,
+)
 from hrms.hr.utils import get_holiday_dates_for_employee
 from frappe.utils.data import get_url_to_form
 from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.model.workflow import get_workflow_name
 from vinatex.patches.utils.rocket_chat import send_rocket_message
 from vinatex.vinatex.doctype.utils.todo_notification_sync import close_todos_and_mark_notifications
+from vinatex.vnt_hr.attendance_processing import (
+	build_shift_windows,
+	classify_work_date,
+	get_active_employees,
+	load_holiday_context,
+	process_attendance,
+)
+from vinatex.vnt_hr.shift_management.constants import MAX_MANUAL_GENERATION_DAYS
 
 # from eupapp.eup_hr.doctype.xac_nhan_cham_cong.xac_nhan_cham_cong import update_event
 # from eupapp.eupapp.doctype.overrides.workflow import gen_approve_channel
@@ -45,15 +58,88 @@ class AttendanceAlreadyMarkedError(frappe.ValidationError):
 
 class VntLeaveApplication(LeaveApplication):
 	LEAVE_TYPE = "Công tác"
-	
-	# def save(self):
-	# 	super().save()
-		# notify(self, self.employee_name, self.leave_approver)
-			
-			
-	def before_submit(self):
-		self.status = "Approved"
+	AUTO_APPROVED_WORKFLOW_STATE = "Đã duyệt"
+	HR_ROLES = {"HR User", "HR Manager", "System Manager"}
 
+	def insert(
+		self,
+		ignore_permissions=None,
+		ignore_links=None,
+		ignore_if_duplicate=False,
+		ignore_mandatory=None,
+		set_name=None,
+		set_child_names=True,
+	):
+		"""Create every new leave request as an approved, submitted document.
+
+		Employees still need Create permission and may only apply for their own
+		Employee record.  The internal permission bypass is deliberately limited to
+		the Submit step, which standard Employees do not have permission to perform.
+		"""
+		caller_ignores_permissions = bool(ignore_permissions)
+		if not caller_ignores_permissions:
+			# Never trust an ``ignore_permissions`` flag received in document JSON.
+			previous_ignore_permissions = self.flags.ignore_permissions
+			self.flags.ignore_permissions = False
+			try:
+				self.check_permission("create")
+				self._validate_employee_scope()
+			finally:
+				self.flags.ignore_permissions = previous_ignore_permissions
+
+		self._set_auto_approved_values()
+		self.docstatus = 1
+		self.flags.vnt_auto_approved = True
+		return super().insert(
+			ignore_permissions=True,
+			ignore_links=ignore_links,
+			ignore_if_duplicate=ignore_if_duplicate,
+			ignore_mandatory=ignore_mandatory,
+			set_name=set_name,
+			set_child_names=set_child_names,
+		)
+
+	def _validate_employee_scope(self):
+		if frappe.session.user == "Administrator" or self.HR_ROLES.intersection(frappe.get_roles()):
+			return
+
+		employee_user = frappe.db.get_value("Employee", self.employee, "user_id")
+		if not employee_user or employee_user != frappe.session.user:
+			frappe.throw(
+				_("Bạn chỉ có thể tạo phiếu nghỉ cho hồ sơ nhân viên của chính mình."),
+				frappe.PermissionError,
+			)
+
+	def _set_auto_approved_values(self):
+		self.status = "Approved"
+		if self.meta.has_field("workflow_state"):
+			self.workflow_state = self.AUTO_APPROVED_WORKFLOW_STATE
+
+		# These legacy fields belonged to the removed approval flow. Clearing them
+		# prevents old client values from creating approval notifications or ToDos.
+		for fieldname in (
+			"leave_approver",
+			"leave_approver_name",
+			"custom_approver",
+			"custom_approver_name",
+			"custom_second_approver",
+			"custom_second_approver_name",
+			"custom_reject_reason",
+		):
+			if self.meta.has_field(fieldname):
+				self.set(fieldname, None)
+
+	def before_submit(self):
+		self._set_auto_approved_values()
+
+	def after_insert(self):
+		# No approval request is sent because the document is already approved.
+		pass
+
+	def before_cancel(self):
+		super().before_cancel()
+		if self.meta.has_field("workflow_state"):
+			self.workflow_state = "Đã hủy"
 
 	def on_cancel(self):
 		super().on_cancel()
@@ -61,9 +147,245 @@ class VntLeaveApplication(LeaveApplication):
 
 
 	def on_update(self):
+		if self.flags.get("vnt_auto_approved"):
+			return
 		# chuyển sang theo dõi workflow_state
 		if self.has_value_changed("workflow_state"):
 			_handle_state_transition(self)
+
+	def validate_for_self_approval(self):
+		# Self approval is the explicit business rule for this installation.
+		return
+
+	def validate_balance_leaves(self):
+		"""Use the same resolved ca/kíp calendar as attendance reports."""
+		shift_days = _get_shift_aware_leave_days(
+			self.employee,
+			self.leave_type,
+			self.from_date,
+			self.to_date,
+			self.half_day,
+			self.half_day_date,
+		)
+		if shift_days is None:
+			return super().validate_balance_leaves()
+
+		self.flags.vnt_leave_windows = shift_days.windows
+		precision = cint(frappe.db.get_single_value("System Settings", "float_precision")) or 2
+		self.total_leave_days = shift_days.total_days
+		if self.total_leave_days <= 0:
+			frappe.throw(
+				_("Các ngày đã chọn đều là ngày nghỉ hoặc ngày không được xếp ca; không cần tạo phiếu nghỉ."),
+			)
+
+		if not is_lwp(self.leave_type):
+			leave_balance = get_leave_balance_on(
+				self.employee,
+				self.leave_type,
+				self.from_date,
+				self.to_date,
+				consider_all_leaves_in_the_allocation_period=True,
+				for_consumption=True,
+			)
+			leave_balance_for_consumption = flt(
+				leave_balance.get("leave_balance_for_consumption"), precision
+			)
+			if leave_balance_for_consumption < self.total_leave_days or not leave_balance_for_consumption:
+				self.show_insufficient_balance_message(leave_balance_for_consumption)
+
+	def update_attendance(self):
+		if self.status != "Approved":
+			return
+
+		shift_days = _get_shift_aware_leave_days(
+			self.employee,
+			self.leave_type,
+			self.from_date,
+			self.to_date,
+			self.half_day,
+			self.half_day_date,
+		)
+		if shift_days is None:
+			return super().update_attendance()
+
+		self.flags.vnt_leave_windows = shift_days.windows
+		for attendance_date in _date_range(self.from_date, self.to_date):
+			date_string = attendance_date.strftime("%Y-%m-%d")
+			attendance_name = frappe.db.exists(
+				"Attendance",
+				{
+					"employee": self.employee,
+					"attendance_date": date_string,
+					"docstatus": ("!=", 2),
+				},
+			)
+			if attendance_date not in shift_days.counted_dates:
+				if attendance_name:
+					attendance = frappe.get_doc("Attendance", attendance_name)
+					attendance.flags.ignore_permissions = True
+					if attendance.docstatus == 1:
+						attendance.cancel()
+					frappe.delete_doc("Attendance", attendance_name, force=1)
+				continue
+
+			self.create_or_update_attendance(attendance_name, date_string)
+
+	def create_or_update_attendance(self, attendance_name, date):
+		super().create_or_update_attendance(attendance_name, date)
+		window = (self.flags.get("vnt_leave_windows") or {}).get(getdate(date))
+		if not window:
+			window = _get_shift_window(self.employee, date)
+		if not window or not window.get("shift_type"):
+			return
+
+		attendance_name = attendance_name or frappe.db.get_value(
+			"Attendance",
+			{
+				"employee": self.employee,
+				"attendance_date": getdate(date),
+				"leave_application": self.name,
+				"docstatus": ("<", 2),
+			},
+			"name",
+		)
+		if attendance_name and not frappe.db.get_value("Attendance", attendance_name, "shift"):
+			frappe.db.set_value(
+				"Attendance", attendance_name, "shift", window.shift_type, update_modified=False
+			)
+
+	def _get_ledger_holiday_list(self, raise_exception=True):
+		# Kíp/ca kế hoạch is the authoritative calendar. A conventional Employee
+		# Holiday List is optional and may not exist for factory workers.
+		if _get_shift_context(self.employee, self.from_date, self.to_date):
+			return get_holiday_list_for_employee(self.employee, raise_exception=False) or ""
+		return get_holiday_list_for_employee(
+			self.employee, raise_exception=raise_exception
+		) or ""
+
+	def create_leave_ledger_entry(self, submit=True):
+		"""Create the ledger without requiring a duplicate office holiday calendar."""
+		if self.status != "Approved" and submit:
+			return
+
+		expiry_date = get_allocation_expiry_for_cf_leaves(
+			self.employee, self.leave_type, self.to_date, self.from_date
+		)
+		lwp = frappe.db.get_value("Leave Type", self.leave_type, "is_lwp")
+		if expiry_date:
+			self.create_ledger_entry_for_intermediate_allocation_expiry(expiry_date, submit, lwp)
+			return
+
+		alloc_on_from_date, alloc_on_to_date = self.get_allocation_based_on_application_dates()
+		if self.is_separate_ledger_entry_required(alloc_on_from_date, alloc_on_to_date):
+			self.create_separate_ledger_entries(alloc_on_from_date, alloc_on_to_date, submit, lwp)
+			return
+
+		raise_exception = False if frappe.flags.in_patch else True
+		args = {
+			"leaves": self.total_leave_days * -1,
+			"from_date": self.from_date,
+			"to_date": self.to_date,
+			"is_lwp": lwp,
+			"holiday_list": self._get_ledger_holiday_list(raise_exception),
+		}
+		create_leave_ledger_entry(self, args, submit)
+
+	def create_separate_ledger_entries(self, alloc_on_from_date, alloc_on_to_date, submit, lwp):
+		"""Split ledger entries with the same shift-aware day calculation."""
+		if (
+			submit
+			and alloc_on_from_date
+			and alloc_on_to_date
+			and add_days(alloc_on_from_date.to_date, 1) != alloc_on_to_date.from_date
+		):
+			frappe.throw(
+				_(
+					"Leave Application period cannot be across two non-consecutive leave allocations {0} and {1}."
+				).format(
+					get_link_to_form("Leave Allocation", alloc_on_from_date.name),
+					get_link_to_form("Leave Allocation", alloc_on_to_date),
+				)
+			)
+
+		raise_exception = False if frappe.flags.in_patch else True
+		if alloc_on_from_date:
+			first_alloc_end = alloc_on_from_date.to_date
+			second_alloc_start = add_days(alloc_on_from_date.to_date, 1)
+		else:
+			first_alloc_end = add_days(alloc_on_to_date.from_date, -1)
+			second_alloc_start = alloc_on_to_date.from_date
+
+		leaves_in_first_alloc = get_number_of_leave_days(
+			self.employee,
+			self.leave_type,
+			self.from_date,
+			first_alloc_end,
+			self.half_day,
+			self.half_day_date,
+		)
+		leaves_in_second_alloc = get_number_of_leave_days(
+			self.employee,
+			self.leave_type,
+			second_alloc_start,
+			self.to_date,
+			self.half_day,
+			self.half_day_date,
+		)
+		args = {
+			"is_lwp": lwp,
+			"holiday_list": self._get_ledger_holiday_list(raise_exception),
+		}
+		if leaves_in_first_alloc:
+			args.update(
+				from_date=self.from_date,
+				to_date=first_alloc_end,
+				leaves=leaves_in_first_alloc * -1,
+			)
+			create_leave_ledger_entry(self, args, submit)
+		if leaves_in_second_alloc:
+			args.update(
+				from_date=second_alloc_start,
+				to_date=self.to_date,
+				leaves=leaves_in_second_alloc * -1,
+			)
+			create_leave_ledger_entry(self, args, submit)
+
+	def create_ledger_entry_for_intermediate_allocation_expiry(self, expiry_date, submit, lwp):
+		"""Split an expiring allocation without reverting to the office calendar."""
+		raise_exception = False if frappe.flags.in_patch else True
+		leaves = get_number_of_leave_days(
+			self.employee,
+			self.leave_type,
+			self.from_date,
+			expiry_date,
+			self.half_day,
+			self.half_day_date,
+		)
+		args = {
+			"is_lwp": lwp,
+			"holiday_list": self._get_ledger_holiday_list(raise_exception),
+		}
+		if leaves:
+			args.update(
+				from_date=self.from_date,
+				to_date=expiry_date,
+				leaves=leaves * -1,
+			)
+			create_leave_ledger_entry(self, args, submit)
+
+		if getdate(expiry_date) != getdate(self.to_date):
+			start_date = add_days(expiry_date, 1)
+			leaves = get_number_of_leave_days(
+				self.employee,
+				self.leave_type,
+				start_date,
+				self.to_date,
+				self.half_day,
+				self.half_day_date,
+			)
+			if leaves:
+				args.update(from_date=start_date, to_date=self.to_date, leaves=leaves * -1)
+				create_leave_ledger_entry(self, args, submit)
 
 
 	def validate_attendance(self):
@@ -72,7 +394,7 @@ class VntLeaveApplication(LeaveApplication):
 			filters={
 				"employee": self.employee,
 				"attendance_date": ("between", [self.from_date, self.to_date]),
-				"status": ("in", ["Work From Home"]),
+				"status": ("in", ["Present", "Work From Home"]),
 				"docstatus": 1,
 				"half_day_status": ("!=", "Absent"),
 			},
@@ -97,7 +419,6 @@ class VntLeaveApplication(LeaveApplication):
 
 
 	def validate(self):
-		self.validate_attendance()
 		super().validate()
 		# kiểm tra gửi đơn nghỉ phép năm, nghỉ không hưởng lương, lao động nam nghỉ do có vợ sinh con trước bao nhiêu ngày
 		if getattr(self, "leave_type", None) == 'Nghỉ phép năm' and getattr(self, "from_date", None) and getattr(self, "to_date", None):
@@ -135,6 +456,287 @@ class VntLeaveApplication(LeaveApplication):
 				days_notice = 14
 			if days_notice > 0 and date_diff(self.from_date, frappe.utils.nowdate()) < days_notice:
 				frappe.msgprint(_("Đơn nghỉ lao động nam do có vợ sinh con {0} ngày phải gửi trước ít nhất {1} ngày. Vui lòng kiểm tra lại.").format(days_diff, days_notice), alert=True, indicator='orange')
+
+
+def _date_range(from_date, to_date):
+	current_date = getdate(from_date)
+	to_date = getdate(to_date)
+	while current_date <= to_date:
+		yield current_date
+		current_date = add_days(current_date, 1)
+
+
+def _get_shift_context(employee, from_date, to_date):
+	"""Resolve the employee calendar using the shared attendance engine."""
+	from_date, to_date = getdate(from_date), getdate(to_date)
+	cache = getattr(frappe.local, "vnt_leave_shift_context", None)
+	if cache is None:
+		cache = frappe.local.vnt_leave_shift_context = {}
+	cache_key = (employee, from_date, to_date)
+	if cache_key in cache:
+		return cache[cache_key]
+
+	employees = get_active_employees(from_date, to_date, [employee])
+	if not employees:
+		cache[cache_key] = None
+		return None
+
+	employee_row = employees[0]
+	all_windows = build_shift_windows(employees, from_date, to_date)
+	windows = {
+		work_date: all_windows.get((employee, work_date))
+		for work_date in _date_range(from_date, to_date)
+	}
+	uses_shift_calendar = bool(
+		employee_row.get("default_shift")
+		or employee_row.get("custom_shift_group")
+		or any(
+			window
+			and (window.get("shift_type") or window.get("shift_group") or window.get("assignment_source"))
+			for window in windows.values()
+		)
+	)
+	if not uses_shift_calendar:
+		cache[cache_key] = None
+		return None
+
+	for work_date, window in windows.items():
+		if window and window.get("plan_action") == "ERROR":
+			frappe.throw(
+				_("Không thể xác định ca kế hoạch ngày {0}: {1}").format(
+					formatdate(work_date), window.get("plan_error") or _("cấu hình ca/kíp không hợp lệ")
+				)
+			)
+
+	holiday_context = load_holiday_context(employees, all_windows, from_date, to_date)
+	context = frappe._dict(
+		employee=employee_row,
+		windows=windows,
+		holiday_context=holiday_context,
+	)
+	cache[cache_key] = context
+	return context
+
+
+def _get_shift_window(employee, work_date):
+	context = _get_shift_context(employee, work_date, work_date)
+	return context and context.windows.get(getdate(work_date))
+
+
+def _get_shift_aware_leave_days(
+	employee,
+	leave_type,
+	from_date,
+	to_date,
+	half_day=None,
+	half_day_date=None,
+):
+	if not (employee and leave_type and from_date and to_date):
+		return None
+
+	context = _get_shift_context(employee, from_date, to_date)
+	if not context:
+		return None
+
+	include_holiday = cint(frappe.db.get_value("Leave Type", leave_type, "include_holiday"))
+	counted_dates = set()
+	for work_date in _date_range(from_date, to_date):
+		if include_holiday:
+			counted_dates.add(work_date)
+			continue
+		window = context.windows.get(work_date)
+		if classify_work_date(context.employee, window, context.holiday_context) == "work":
+			counted_dates.add(work_date)
+
+	total_days = flt(len(counted_dates))
+	half_day_date = getdate(half_day_date) if half_day_date else None
+	if cint(half_day):
+		if not half_day_date and getdate(from_date) == getdate(to_date):
+			half_day_date = getdate(from_date)
+		if half_day_date in counted_dates:
+			total_days -= 0.5
+
+	return frappe._dict(
+		total_days=total_days,
+		counted_dates=counted_dates,
+		windows=context.windows,
+	)
+
+
+@frappe.whitelist()
+def get_number_of_leave_days(
+	employee,
+	leave_type,
+	from_date,
+	to_date,
+	half_day=None,
+	half_day_date=None,
+	holiday_list=None,
+):
+	"""Return leave days from ca/kíp; fall back to the standard HRMS calendar."""
+	shift_days = _get_shift_aware_leave_days(
+		employee, leave_type, from_date, to_date, half_day, half_day_date
+	)
+	if shift_days is not None:
+		return shift_days.total_days
+	return hrms_get_number_of_leave_days(
+		employee,
+		leave_type,
+		from_date,
+		to_date,
+		half_day,
+		half_day_date,
+		holiday_list,
+	)
+
+
+def _get_leaves_for_period(employee, leave_type, from_date, to_date, skip_expired_leaves=True):
+	"""Read leave consumption using the same calendar that created the ledger."""
+	leave_entries = get_leave_entries(employee, leave_type, from_date, to_date)
+	leave_days = 0.0
+	for leave_entry in leave_entries:
+		inclusive_period = (
+			leave_entry.from_date >= getdate(from_date)
+			and leave_entry.to_date <= getdate(to_date)
+		)
+		if inclusive_period and leave_entry.transaction_type == "Leave Encashment":
+			leave_days += leave_entry.leaves
+		elif (
+			inclusive_period
+			and leave_entry.transaction_type == "Leave Allocation"
+			and leave_entry.is_expired
+			and not skip_expired_leaves
+		):
+			leave_days += leave_entry.leaves
+		elif leave_entry.transaction_type == "Leave Application":
+			# The persisted quantity is authoritative when the whole application is
+			# inside the requested period. Recalculate only the intersecting part.
+			if inclusive_period:
+				leave_days += leave_entry.leaves
+				continue
+
+			entry_from = max(getdate(leave_entry.from_date), getdate(from_date))
+			entry_to = min(getdate(leave_entry.to_date), getdate(to_date))
+			half_day = 0
+			half_day_date = None
+			if leave_entry.leaves % 1:
+				half_day = 1
+				half_day_date = frappe.db.get_value(
+					"Leave Application", leave_entry.transaction_name, "half_day_date"
+				)
+			leave_days -= get_number_of_leave_days(
+				employee,
+				leave_type,
+				entry_from,
+				entry_to,
+				half_day,
+				half_day_date,
+				holiday_list=leave_entry.holiday_list,
+			)
+	return leave_days
+
+
+def _get_new_and_cf_leaves_taken(allocation, cf_expiry):
+	cf_leaves_taken = _get_leaves_for_period(
+		allocation.employee, allocation.leave_type, allocation.from_date, cf_expiry
+	)
+	new_leaves_taken = _get_leaves_for_period(
+		allocation.employee,
+		allocation.leave_type,
+		add_days(cf_expiry, 1),
+		allocation.to_date,
+	)
+	if abs(cf_leaves_taken) > allocation.unused_leaves:
+		new_leaves_taken += -(abs(cf_leaves_taken) - allocation.unused_leaves)
+		cf_leaves_taken = -allocation.unused_leaves
+	return new_leaves_taken, cf_leaves_taken
+
+
+def _get_remaining_leaves(
+	employee,
+	leave_type,
+	allocation,
+	leaves_taken,
+	date,
+	cf_expiry,
+	manually_expired_leaves,
+):
+	def limit_to_remaining_period(remaining_leaves, end_date):
+		if remaining_leaves > 0:
+			remaining_days = get_number_of_leave_days(employee, leave_type, date, end_date)
+			remaining_leaves = min(remaining_days, remaining_leaves)
+		return remaining_leaves
+
+	if cf_expiry and allocation.unused_leaves:
+		new_leaves_taken, cf_leaves_taken = _get_new_and_cf_leaves_taken(allocation, cf_expiry)
+		if getdate(date) > getdate(cf_expiry):
+			cf_leaves = remaining_cf_leaves = 0
+		else:
+			cf_leaves = flt(allocation.unused_leaves) + flt(cf_leaves_taken)
+			remaining_cf_leaves = limit_to_remaining_period(cf_leaves, cf_expiry)
+		leave_balance = (
+			flt(allocation.new_leaves_allocated)
+			+ flt(new_leaves_taken)
+			+ flt(cf_leaves)
+			+ flt(manually_expired_leaves)
+		)
+		leave_balance_for_consumption = (
+			flt(allocation.new_leaves_allocated)
+			+ flt(new_leaves_taken)
+			+ flt(remaining_cf_leaves)
+			+ flt(manually_expired_leaves)
+		)
+	else:
+		leave_balance = leave_balance_for_consumption = (
+			flt(allocation.total_leaves_allocated)
+			+ flt(leaves_taken)
+			+ flt(manually_expired_leaves)
+		)
+
+	return frappe._dict(
+		leave_balance=leave_balance,
+		leave_balance_for_consumption=limit_to_remaining_period(
+			leave_balance_for_consumption, allocation.to_date
+		),
+	)
+
+
+@frappe.whitelist()
+def get_leave_balance_on(
+	employee,
+	leave_type,
+	date,
+	to_date=None,
+	consider_all_leaves_in_the_allocation_period=False,
+	for_consumption=False,
+):
+	"""Return a leave balance consistent with shift-aware ledger quantities."""
+	to_date = to_date or nowdate()
+	allocation_records = get_leave_allocation_records(employee, date, leave_type)
+	allocation = allocation_records.get(leave_type, frappe._dict())
+	if not allocation:
+		return frappe._dict(leave_balance=0, leave_balance_for_consumption=0) if cint(
+			for_consumption
+		) else 0
+
+	end_date = allocation.to_date if cint(consider_all_leaves_in_the_allocation_period) else date
+	cf_expiry = get_allocation_expiry_for_cf_leaves(
+		employee, leave_type, to_date, allocation.from_date
+	)
+	leaves_taken = _get_leaves_for_period(employee, leave_type, allocation.from_date, end_date)
+	manually_expired_leaves = get_manually_expired_leaves(
+		employee, leave_type, allocation.from_date, end_date
+	)
+	remaining_leaves = _get_remaining_leaves(
+		employee,
+		leave_type,
+		allocation,
+		leaves_taken,
+		date,
+		cf_expiry,
+		manually_expired_leaves,
+	)
+	return remaining_leaves if cint(for_consumption) else remaining_leaves.leave_balance
 
 
 def _handle_state_transition(doc: Document):
@@ -441,50 +1043,38 @@ def _notify_to_general_manager(doc: Document):
 
 
 def _check_emp_checkin_after_cancel(doc: Document):
-	"""kiểm tra nếu nhân viên đã có dữ liệu Employee Checkin trong khoảng nghỉ phép đã duyệt thì tạo attendance tương ứng."""
-	# kiểm tra dữ liệu Attendance
-	from frappe.utils import getdate
-	attendance_records = frappe.get_all(
+	"""Recalculate past work from checkins after HR cancels a leave request."""
+	cancelled_attendance_names = frappe.get_all(
 		"Attendance",
 		filters={
 			"employee": doc.employee,
+			"leave_application": doc.name,
 			"attendance_date": ("between", [doc.from_date, doc.to_date]),
-			"docstatus": 1,
-			"status": ("in", ["Present", "Work From Home"]),
+			"docstatus": 2,
 		},
-		fields=["name", "attendance_date", "status"],
-		order_by="attendance_date",
+		pluck="name",
 	)
-	if attendance_records:
-		return  # đã có attendance thì không tạo nữa
-	# kiểm tra dữ liệu Employee Checkin
-	employee_checkins = frappe.get_all(
-		"Employee Checkin",
-		filters={
-			"employee": doc.employee,
-			"time": ("between", [str(doc.from_date) + " 00:00:00", str(doc.to_date) + " 23:59:59"]),
-		},
-		fields=["name", "time"],
-		order_by="time",
-	)
-	if not employee_checkins:
-		return  # không có dữ liệu checkin thì không làm gì
-	# tạo attendance cho các ngày có checkin
-	attendance_dates = set()
-	for checkin in employee_checkins:
-		checkin_date = getdate(checkin.time)
-		attendance_dates.add(checkin_date)
-	for att_date in attendance_dates:
-		new_attendance = frappe.new_doc("Attendance")
-		new_attendance.employee = doc.employee
-		new_attendance.employee_name = doc.employee_name
-		new_attendance.company = doc.company
-		new_attendance.department = doc.department
-		new_attendance.attendance_date = att_date
-		new_attendance.status = "Present"
-		new_attendance.docstatus = 1
-		new_attendance.insert(ignore_permissions=True)
-		frappe.db.commit()
+	if cancelled_attendance_names:
+		checkin_names = frappe.get_all(
+			"Employee Checkin",
+			filters={"attendance": ("in", cancelled_attendance_names)},
+			pluck="name",
+		)
+		for checkin_name in checkin_names:
+			frappe.db.set_value(
+				"Employee Checkin", checkin_name, "attendance", None, update_modified=False
+			)
+
+	chunk_start = getdate(doc.from_date)
+	to_date = getdate(doc.to_date)
+	while chunk_start <= to_date:
+		chunk_end = min(add_days(chunk_start, MAX_MANUAL_GENERATION_DAYS - 1), to_date)
+		process_attendance(
+			chunk_start,
+			chunk_end,
+			employee_names=[doc.employee],
+		)
+		chunk_start = add_days(chunk_end, 1)
 
 
 def _notify_to_approver(doc: Document):
@@ -679,16 +1269,9 @@ def get_leave_approver_from_employee(employee: str):
 
 @frappe.whitelist()
 def get_leave_approver(employee: str):
-	# lấy approver trên Employee trước
-	emp = frappe.db.get_value("Employee", employee, ["reports_to", "user_id"], as_dict=True)
-	if not emp.reports_to:
-		approver = emp.user_id
-	if emp.reports_to:
-		report_to = frappe.db.get_value("Employee", emp.reports_to, ["user_id"], as_dict=True)
-		if not report_to.user_id:
-			frappe.throw("Chưa có người duyệt cho nhân viên này.Cần cập nhật trong Employee.")
-		approver = report_to.user_id
-	return approver
+	# Leave Application is auto-approved; the standard client may still call this
+	# endpoint, but no approver should be assigned or notified.
+	return None
 
 
 @frappe.whitelist()

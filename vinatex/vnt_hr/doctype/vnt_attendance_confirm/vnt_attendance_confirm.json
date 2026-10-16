@@ -1,44 +1,50 @@
 {
  "actions": [],
- "allow_rename": 1,
- "autoname": "format:XNCC-T{MM}-{employee_name}",
+ "allow_rename": 0,
+ "autoname": "format:GTCC-{employee}-{year}-{month}",
  "creation": "2025-09-18 21:12:44.660032",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_zun9",
+  "section_break_header",
   "amended_from",
   "company",
   "department",
-  "column_break_qvgh",
+  "column_break_dates",
   "from_date",
   "to_date",
   "status",
-  "section_break_kkv3",
+  "section_break_employee",
   "employee",
   "employee_name",
   "designation",
-  "column_break_l43u",
-  "approver",
+  "column_break_review",
+  "reviewed_by",
+  "reviewed_on",
   "email",
-  "section_break_tuyt",
-  "confirm",
+  "approver",
   "approver_name",
-  "column_break_wijp",
-  "chi_ti\u1ebft_section",
+  "section_break_guidance",
+  "guidance_html",
+  "section_break_bulk",
+  "bulk_explanation",
+  "column_break_bulk",
+  "confirm",
+  "section_break_details",
   "items",
   "month",
   "year"
  ],
  "fields": [
   {
-   "fieldname": "section_break_zun9",
-   "fieldtype": "Section Break"
+   "fieldname": "section_break_header",
+   "fieldtype": "Section Break",
+   "label": "Thông tin phiếu"
   },
   {
    "fieldname": "amended_from",
    "fieldtype": "Link",
-   "label": "Amended From",
+   "label": "Điều chỉnh từ",
    "no_copy": 1,
    "options": "VNT Attendance Confirm",
    "print_hide": 1,
@@ -48,7 +54,7 @@
   {
    "fieldname": "company",
    "fieldtype": "Link",
-   "label": "C\u00f4ng ty",
+   "label": "Công ty",
    "options": "Company",
    "read_only": 1
   },
@@ -58,49 +64,81 @@
    "ignore_user_permissions": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Ph\u00f2ng ban",
+   "label": "Phòng ban",
    "options": "Department",
    "read_only": 1
   },
   {
-   "fieldname": "column_break_qvgh",
+   "fieldname": "column_break_dates",
    "fieldtype": "Column Break"
   },
   {
    "fieldname": "from_date",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "label": "T\u1eeb ng\u00e0y"
+   "label": "Từ ngày",
+   "read_only": 1
   },
   {
-   "allow_on_submit": 1,
    "fieldname": "to_date",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "label": "\u0110\u1ebfn ng\u00e0y"
+   "label": "Đến ngày",
+   "read_only": 1
   },
   {
-   "fieldname": "section_break_kkv3",
-   "fieldtype": "Section Break"
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Trạng thái",
+   "options": "Chờ giải trình\nChờ xác nhận\nĐã xác nhận",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_employee",
+   "fieldtype": "Section Break",
+   "label": "Nhân sự"
   },
   {
    "fieldname": "employee",
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Nh\u00e2n s\u1ef1",
+   "label": "Nhân sự",
    "options": "Employee",
    "read_only": 1
   },
   {
    "fieldname": "employee_name",
    "fieldtype": "Data",
-   "hidden": 1,
-   "label": "T\u00ean nh\u00e2n vi\u00ean"
+   "label": "Tên nhân viên",
+   "read_only": 1
   },
   {
-   "fieldname": "column_break_l43u",
+   "fetch_from": "employee.designation",
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Chức danh",
+   "options": "Designation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_review",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reviewed_by",
+   "fieldtype": "Link",
+   "label": "Người xác nhận",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reviewed_on",
+   "fieldtype": "Datetime",
+   "label": "Thời điểm xác nhận",
+   "read_only": 1
   },
   {
    "fieldname": "email",
@@ -110,15 +148,10 @@
    "read_only": 1
   },
   {
-   "fieldname": "section_break_tuyt",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fetch_if_empty": 1,
    "fieldname": "approver",
    "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "label": "Ng\u01b0\u1eddi ph\u00ea duy\u1ec7t",
+   "hidden": 1,
+   "label": "Người phê duyệt cũ",
    "options": "Employee",
    "read_only": 1
   },
@@ -126,69 +159,72 @@
    "fieldname": "approver_name",
    "fieldtype": "Data",
    "hidden": 1,
-   "ignore_user_permissions": 1,
-   "label": "T\u00ean ng\u01b0\u1eddi ph\u00ea duy\u1ec7t"
+   "label": "Tên người phê duyệt cũ",
+   "read_only": 1
   },
   {
-   "fieldname": "column_break_wijp",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "chi_ti\u1ebft_section",
+   "fieldname": "section_break_guidance",
    "fieldtype": "Section Break"
   },
   {
-   "allow_on_submit": 1,
-   "fieldname": "items",
-   "fieldtype": "Table",
-   "label": "Chi ti\u1ebft ch\u1ea5m c\u00f4ng",
-   "options": "VNT Attendance Confirm Item"
+   "fieldname": "guidance_html",
+   "fieldtype": "HTML"
   },
   {
-   "description": "Ch\u1ecdn \u0111\u1ec3 ph\u00ea duy\u1ec7t ho\u1eb7c t\u1eeb ch\u1ed1i t\u1ea5t c\u1ea3.",
+   "fieldname": "section_break_bulk",
+   "fieldtype": "Section Break",
+   "label": "Xử lý nhanh"
+  },
+  {
+   "description": "Nhập nội dung rồi chọn Áp dụng giải trình chung để điền cho các dòng chưa có giải trình.",
+   "fieldname": "bulk_explanation",
+   "fieldtype": "Small Text",
+   "label": "Giải trình chung"
+  },
+  {
+   "fieldname": "column_break_bulk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Chỉ áp dụng cho các dòng đã có giải trình/căn cứ.",
    "fieldname": "confirm",
    "fieldtype": "Select",
-   "label": "Ph\u00ea duy\u1ec7t/T\u1eeb ch\u1ed1i t\u1ea5t c\u1ea3",
-   "options": "\n\u0110\u1ed3ng \u00fd\nT\u1eeb ch\u1ed1i",
-   "permlevel": 1
+   "label": "Kết quả xác nhận tất cả",
+   "options": "\nĐồng ý\nTừ chối"
   },
   {
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "hidden": 1,
-   "in_list_view": 1,
-   "label": "Tr\u1ea1ng th\u00e1i",
-   "options": "Ch\u1edd gi\u1ea3i tr\u00ecnh\nCh\u1edd ph\u00ea duy\u1ec7t\n\u0110\u00e3 ph\u00ea duy\u1ec7t"
+   "fieldname": "section_break_details",
+   "fieldtype": "Section Break",
+   "label": "Các ngày cần xác nhận"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Chi tiết giải trình chấm công",
+   "options": "VNT Attendance Confirm Item"
   },
   {
    "fieldname": "month",
    "fieldtype": "Select",
    "hidden": 1,
    "in_standard_filter": 1,
-   "label": "Th\u00e1ng",
-   "options": "\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12"
+   "label": "Tháng",
+   "options": "\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12",
+   "read_only": 1
   },
   {
    "fieldname": "year",
    "fieldtype": "Int",
    "hidden": 1,
    "in_standard_filter": 1,
-   "label": "N\u0103m"
-  },
-  {
-   "fetch_from": "employee.designation",
-   "fieldname": "designation",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "in_list_view": 1,
-   "label": "Designation",
-   "options": "Designation"
+   "label": "Năm",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-03 13:36:26.657629",
+ "modified": "2026-10-09 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Attendance Confirm",
@@ -208,17 +244,6 @@
    "write": 1
   },
   {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Employee",
-   "select": 1,
-   "share": 1,
-   "write": 1
-  },
-  {
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -232,12 +257,13 @@
   },
   {
    "create": 1,
+   "delete": 1,
    "email": 1,
    "export": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Leave Approver",
+   "role": "HR User",
    "share": 1,
    "write": 1
   }
@@ -247,17 +273,17 @@
  "sort_order": "DESC",
  "states": [
   {
-   "color": "Red",
-   "title": "Ch\u1edd gi\u1ea3i tr\u00ecnh"
+   "color": "Orange",
+   "title": "Chờ giải trình"
   },
   {
    "color": "Blue",
-   "title": "Ch\u1edd ph\u00ea duy\u1ec7t"
+   "title": "Chờ xác nhận"
   },
   {
    "color": "Green",
-   "title": "\u0110\u00e3 ph\u00ea duy\u1ec7t"
+   "title": "Đã xác nhận"
   }
  ],
- "title_field": "employee"
+ "title_field": "employee_name"
 }

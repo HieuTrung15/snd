@@ -1163,6 +1163,7 @@ def notify_leadership_dashboard_update(doc, method: str | None = None):
 		"VNT Salary Slip": {"dashboard"},
 		"VNT Business Trip Request": {"dashboard"},
 		"VNT Leader Weekly Trip": {"dashboard"},
+		"VNT Attendance Confirm": {"dashboard"},
 	}
 	sections = section_map.get(getattr(doc, "doctype", ""), set())
 	if not sections:

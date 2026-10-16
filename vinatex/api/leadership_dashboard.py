@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 from collections import Counter
+from datetime import timedelta
+from math import ceil
 
 import frappe
 from frappe import _
@@ -18,6 +20,13 @@ from vinatex.api.hr_dashboard import (
 )
 from vinatex.api.hr_reminders import get_hr_reminders
 from vinatex.vnt_hr.doctype.vnt_salary_slip.vnt_salary_slip import VNTSalarySlip, _needs_decryption
+from vinatex.vnt_hr.attendance_processing import (
+	build_shift_windows,
+	calculate_attendance_details,
+	classify_work_date,
+	load_checkins_for_windows,
+	load_holiday_context,
+)
 from vinatex.vnt_hr.report.ns_tuyển_mới_với_nghỉ_việc.ns_tuyển_mới_với_nghỉ_việc import (
 	execute as get_turnover_report,
 )
@@ -101,7 +110,9 @@ def _get_scoped_employees(as_of_date, company: str, branches: tuple[str, ...]) -
 	return frappe.db.sql(
 		f"""
 		SELECT e.name, e.employee_name, e.company, e.branch, e.department,
-		       e.designation, e.custom_designation_group
+		       e.designation, e.custom_designation_group, e.date_of_birth,
+		       e.date_of_joining, e.relieving_date, e.holiday_list,
+		       e.default_shift, e.custom_shift_group, e.custom_need_check
 		FROM `tabEmployee` e
 		WHERE {' AND '.join(conditions)}
 		ORDER BY e.employee_name
@@ -579,18 +590,413 @@ def _build_branch_rows(snapshot: dict) -> list[dict]:
 	return sorted(rows, key=lambda row: row["value"], reverse=True)
 
 
-def _build_snapshot(as_of_date, company: str, branches: tuple[str, ...], branch_options: tuple[str, ...]) -> dict:
-	hr_snapshot = get_hr_dashboard_snapshot(
-		as_of_date=str(as_of_date),
-		branches=list(branches),
-		company=company,
+def _is_manager(employee: dict) -> bool:
+	"""Use the governed designation group first, then the site's designation convention."""
+	designation = (employee.get("designation") or "").casefold()
+	return employee.get("custom_designation_group") in LEADERSHIP_GROUPS or any(
+		marker in designation for marker in LEADERSHIP_DESIGNATION_MARKERS
 	)
-	employees = _get_scoped_employees(as_of_date, company, branches)
-	attendance = _build_attendance(as_of_date, employees)
-	kpis = hr_snapshot.get("kpis") or {}
-	new_count = cint(kpis.get("new"))
-	left_count = cint(kpis.get("left"))
-	net = new_count - left_count
+
+
+def _person_row(employee: dict, **values) -> dict:
+	row = {
+		"employee": employee.get("name"),
+		"employee_name": employee.get("employee_name") or employee.get("name"),
+		"designation": employee.get("designation") or "",
+		"department": employee.get("department") or "",
+		"branch": employee.get("branch") or "",
+		"group": "manager" if _is_manager(employee) else "employee",
+		"group_label": _("Quản lý") if _is_manager(employee) else _("Nhân viên"),
+	}
+	row.update(values)
+	return row
+
+
+def _split_people(rows: list[dict]) -> dict:
+	managers = [row for row in rows if row.get("group") == "manager"]
+	employees = [row for row in rows if row.get("group") != "manager"]
+	return {
+		"total": len(rows),
+		"manager_count": len(managers),
+		"employee_count": len(employees),
+		"managers": managers,
+		"employees": employees,
+	}
+
+
+def _get_attendance_map_for_date(the_date, employee_ids: tuple[str, ...]) -> dict:
+	if not employee_ids:
+		return {}
+	rows = frappe.get_all(
+		"Attendance",
+		filters={
+			"employee": ("in", list(employee_ids)),
+			"attendance_date": the_date,
+			"docstatus": ("<", 2),
+		},
+		fields=[
+			"name",
+			"employee",
+			"status",
+			"docstatus",
+			"shift",
+			"in_time",
+			"out_time",
+			"late_entry",
+			"early_exit",
+			"working_hours",
+		],
+		order_by="docstatus desc, modified desc",
+		ignore_permissions=True,
+	)
+	result = {}
+	for row in rows:
+		result.setdefault(row.employee, row)
+	return result
+
+
+def _get_confirmation_people(the_date, employee_map: dict[str, dict]) -> dict:
+	if not employee_map:
+		return {
+			"all": [],
+			"needs_explanation": [],
+			"awaiting_hr": [],
+			"resolved": [],
+			"item_count": 0,
+		}
+	rows = frappe.db.sql(
+		"""
+		SELECT p.employee, p.name AS confirmation, p.status AS confirmation_status,
+		       i.name AS item, i.issue_code, i.issue_type, i.type AS explanation,
+		       i.confirm, i.planned_shift, i.time_in, i.time_out
+		FROM `tabVNT Attendance Confirm Item` i
+		INNER JOIN `tabVNT Attendance Confirm` p ON p.name = i.parent
+		WHERE p.docstatus < 2
+		  AND i.date = %(date)s
+		  AND p.employee IN %(employees)s
+		ORDER BY p.employee_name, i.idx
+		""",
+		{"date": the_date, "employees": tuple(employee_map)},
+		as_dict=True,
+	)
+
+	state_priority = {"needs_explanation": 0, "awaiting_hr": 1, "resolved": 2}
+	grouped: dict[str, dict] = {}
+	for source in rows:
+		explanation = (source.get("explanation") or "").strip()
+		decision = (source.get("confirm") or "").strip()
+		state = "needs_explanation" if not explanation else ("awaiting_hr" if not decision else "resolved")
+		current = grouped.get(source.employee)
+		if not current:
+			current = _person_row(
+				employee_map[source.employee],
+				state=state,
+				confirmation=source.confirmation,
+				issues=[],
+			)
+			grouped[source.employee] = current
+		elif state_priority[state] < state_priority[current["state"]]:
+			current["state"] = state
+		current["issues"].append(
+			{
+				"item": source.item,
+				"issue_code": source.issue_code or "",
+				"issue_type": source.issue_type or _("Bất thường chấm công"),
+				"planned_shift": source.planned_shift or "",
+				"time_in": _format_time(source.time_in),
+				"time_out": _format_time(source.time_out),
+			}
+		)
+
+	all_people = list(grouped.values())
+	all_people.sort(key=lambda row: (row["group"] != "manager", row["employee_name"]))
+	return {
+		"all": all_people,
+		"needs_explanation": [row for row in all_people if row["state"] == "needs_explanation"],
+		"awaiting_hr": [row for row in all_people if row["state"] == "awaiting_hr"],
+		"resolved": [row for row in all_people if row["state"] == "resolved"],
+		"item_count": len(rows),
+	}
+
+
+def _minutes_between(later, earlier) -> int:
+	if not later or not earlier:
+		return 0
+	return max(int(ceil((get_datetime(later) - get_datetime(earlier)).total_seconds() / 60)), 0)
+
+
+def _timing_summary(rows: list[dict]) -> dict:
+	minutes = [cint(row.get("minutes")) for row in rows]
+	return {
+		"count": len(rows),
+		"average_minutes": round(sum(minutes) / len(minutes)) if minutes else 0,
+		"maximum_minutes": max(minutes, default=0),
+	}
+
+
+def _build_morning_briefing(as_of_date, employees_today: list[dict], employees_previous: list[dict]) -> dict:
+	previous_date = as_of_date - timedelta(days=1)
+	today_map = {row.name: row for row in employees_today}
+	previous_map = {row.name: row for row in employees_previous}
+	all_employee_map = {**previous_map, **today_map}
+	all_employees = list(all_employee_map.values())
+
+	windows = build_shift_windows(all_employees, previous_date, as_of_date) if all_employees else {}
+	checkin_map, outside_map = load_checkins_for_windows(
+		all_employees, windows, previous_date, as_of_date
+	) if all_employees else ({}, {})
+	holiday_context = load_holiday_context(
+		all_employees, windows, previous_date, as_of_date
+	) if all_employees else frappe._dict(company_lists={}, holidays={})
+	observed_today = [
+		get_datetime(row.time)
+		for rows in [*checkin_map.values(), *outside_map.values()]
+		for row in rows
+		if get_datetime(row.time).date() == as_of_date
+	]
+	latest_checkin_at = max(observed_today, default=None)
+
+	today_leave = _leave_map(as_of_date, tuple(today_map))
+	today_trip = _trip_map(as_of_date, tuple(today_map))
+	arrivals = []
+	expected_today = 0
+	for employee_id, employee in today_map.items():
+		window = windows.get((employee_id, as_of_date))
+		day_type = classify_work_date(employee, window, holiday_context)
+		if (
+			day_type == "work"
+			and employee_id not in today_leave
+			and employee_id not in today_trip
+			and not cint(employee.get("custom_need_check"))
+		):
+			expected_today += 1
+
+		planned_logs = sorted(
+			checkin_map.get((employee_id, as_of_date), []), key=lambda row: get_datetime(row.time)
+		)
+		unplanned_logs = sorted(
+			outside_map.get((employee_id, as_of_date), []), key=lambda row: get_datetime(row.time)
+		)
+		arrival_time = None
+		arrival_source = ""
+		if window and not window.is_off and planned_logs:
+			details = calculate_attendance_details(window, planned_logs, respect_marking_flags=False)
+			if details.has_in:
+				arrival_time = details.in_time or planned_logs[0].time
+				arrival_source = _("Trong ca")
+		if not arrival_time:
+			candidate = next(
+				(row for row in unplanned_logs if (row.get("log_type") or "IN") != "OUT"),
+				None,
+			)
+			if candidate:
+				arrival_time = candidate.time
+				arrival_source = _("Ngoài ca")
+		if arrival_time:
+			arrivals.append(
+				_person_row(
+					employee,
+					first_in=_format_time(arrival_time),
+					planned_shift=(window.shift_type if window and not window.is_off else ""),
+					arrival_source=arrival_source,
+				)
+			)
+	arrivals.sort(key=lambda row: (row["group"] != "manager", row.get("first_in") or "", row["employee_name"]))
+	arrival_data = _split_people(arrivals)
+	arrival_data["expected"] = expected_today
+
+	previous_leave = _leave_map(previous_date, tuple(previous_map))
+	previous_trip = _trip_map(previous_date, tuple(previous_map))
+	attendance_map = _get_attendance_map_for_date(previous_date, tuple(previous_map))
+	absent_rows = []
+	late_rows = []
+	early_rows = []
+	scheduled_count = 0
+	for employee_id, employee in previous_map.items():
+		window = windows.get((employee_id, previous_date))
+		if classify_work_date(employee, window, holiday_context) != "work" or not window or window.is_off:
+			continue
+		scheduled_count += 1
+		if employee_id in previous_leave or employee_id in previous_trip:
+			continue
+
+		logs = sorted(
+			checkin_map.get((employee_id, previous_date), []), key=lambda row: get_datetime(row.time)
+		)
+		outside_logs = sorted(
+			outside_map.get((employee_id, previous_date), []), key=lambda row: get_datetime(row.time)
+		)
+		details = calculate_attendance_details(window, logs, respect_marking_flags=False) if logs else None
+		attendance = attendance_map.get(employee_id)
+		is_absent = False
+		absence_source = ""
+		if attendance and attendance.docstatus == 1:
+			is_absent = attendance.status == "Absent"
+			absence_source = _("Attendance đã chốt")
+		elif attendance:
+			is_absent = attendance.status == "Absent"
+			absence_source = _("Attendance nháp")
+		elif not cint(employee.get("custom_need_check")):
+			is_absent = not details or details.status == "Absent"
+			absence_source = _("Tạm tính từ ca và log máy")
+		if is_absent:
+			absent_rows.append(
+				_person_row(
+					employee,
+					planned_shift=window.shift_type or "",
+					in_time=_format_time(details.in_time if details else None),
+					out_time=_format_time(details.out_time if details else None),
+					source=absence_source,
+					finalized=bool(attendance and attendance.docstatus == 1),
+				)
+			)
+
+		if details and details.has_in and details.late_entry:
+			late_rows.append(
+				_person_row(
+					employee,
+					planned_shift=window.shift_type or "",
+					actual_time=_format_time(details.in_time),
+					planned_time=_format_time(window.start_datetime),
+					minutes=_minutes_between(details.in_time, window.start_datetime),
+				)
+			)
+		if details and details.has_in and details.has_out and details.status == "Present" and details.early_exit:
+			later_outside_out = next(
+				(
+					row
+					for row in reversed(outside_logs)
+					if (row.get("log_type") or "").upper() == "OUT"
+					and get_datetime(row.time) > get_datetime(details.out_time)
+				),
+				None,
+			)
+			early_rows.append(
+				_person_row(
+					employee,
+					planned_shift=window.shift_type or "",
+					actual_time=_format_time(details.out_time),
+					planned_time=_format_time(window.end_datetime),
+					minutes=_minutes_between(window.end_datetime, details.out_time),
+					outside_out_time=_format_time(later_outside_out.time) if later_outside_out else "",
+				)
+			)
+
+	absent_rows.sort(key=lambda row: (not row["finalized"], row["group"] != "manager", row["employee_name"]))
+	late_rows.sort(key=lambda row: (-row["minutes"], row["group"] != "manager", row["employee_name"]))
+	early_rows.sort(key=lambda row: (-row["minutes"], row["group"] != "manager", row["employee_name"]))
+	confirmations = _get_confirmation_people(previous_date, previous_map)
+
+	birthdays = []
+	for employee in employees_today:
+		date_of_birth = employee.get("date_of_birth")
+		if date_of_birth and (getdate(date_of_birth).month, getdate(date_of_birth).day) == (as_of_date.month, as_of_date.day):
+			birthdays.append(_person_row(employee))
+	birthdays.sort(key=lambda row: (row["group"] != "manager", row["employee_name"]))
+	birthday_data = _split_people(birthdays)
+
+	finalized_absent = sum(1 for row in absent_rows if row["finalized"])
+	provisional_absent = len(absent_rows) - finalized_absent
+	late_summary = _timing_summary(late_rows)
+	early_summary = _timing_summary(early_rows)
+	early_summary["outside_out_count"] = sum(
+		1 for row in early_rows if row.get("outside_out_time")
+	)
+	needs_explanation = confirmations["needs_explanation"]
+
+	return {
+		"as_of_date": str(as_of_date),
+		"previous_date": str(previous_date),
+		"latest_checkin_at": str(latest_checkin_at) if latest_checkin_at else "",
+		"kpis": [
+			{
+				"id": "arrived_today",
+				"title": _("Đã đến công ty hôm nay"),
+				"value": arrival_data["total"],
+				"caption": _("{0} quản lý · {1} nhân viên").format(
+					arrival_data["manager_count"], arrival_data["employee_count"]
+				),
+				"tone": "green",
+				"target": "arrivals",
+			},
+			{
+				"id": "absent_yesterday",
+				"title": _("Vắng hôm qua"),
+				"value": len(absent_rows),
+				"caption": _("{0} đã chốt · {1} tạm tính").format(finalized_absent, provisional_absent),
+				"tone": "red",
+				"target": "yesterday-absent",
+			},
+			{
+				"id": "explanation_yesterday",
+				"title": _("Cần giải trình hôm qua"),
+				"value": len(needs_explanation),
+				"caption": _("{0} chờ HR xác nhận").format(len(confirmations["awaiting_hr"])),
+				"tone": "amber",
+				"target": "yesterday-explanation",
+			},
+			{
+				"id": "late_yesterday",
+				"title": _("Đi muộn hôm qua"),
+				"value": late_summary["count"],
+				"caption": _("TB {0} phút · cao nhất {1} phút").format(
+					late_summary["average_minutes"], late_summary["maximum_minutes"]
+				),
+				"tone": "violet",
+				"target": "yesterday-late",
+			},
+			{
+				"id": "early_yesterday",
+				"title": _("Về sớm cần đối soát hôm qua"),
+				"value": early_summary["count"],
+				"caption": (
+					_("TB {0} phút · {1} có OUT ngoài ca").format(
+						early_summary["average_minutes"], early_summary["outside_out_count"]
+					)
+					if early_summary["outside_out_count"]
+					else _("TB {0} phút · cao nhất {1} phút").format(
+						early_summary["average_minutes"], early_summary["maximum_minutes"]
+					)
+				),
+				"tone": "pink",
+				"target": "yesterday-early",
+			},
+			{
+				"id": "birthdays_today",
+				"title": _("Sinh nhật hôm nay"),
+				"value": birthday_data["total"],
+				"caption": _("{0} quản lý · {1} nhân viên").format(
+					birthday_data["manager_count"], birthday_data["employee_count"]
+				),
+				"tone": "blue",
+				"target": "birthdays",
+			},
+		],
+		"arrivals": arrival_data,
+		"birthdays": birthday_data,
+		"yesterday": {
+			"date": str(previous_date),
+			"scheduled": scheduled_count,
+			"absent": absent_rows,
+			"absent_finalized": finalized_absent,
+			"absent_provisional": provisional_absent,
+			"explanations": needs_explanation,
+			"awaiting_hr": confirmations["awaiting_hr"],
+			"resolved_explanations": confirmations["resolved"],
+			"explanation_item_count": confirmations["item_count"],
+			"late": late_rows,
+			"early": early_rows,
+			"late_summary": late_summary,
+			"early_summary": early_summary,
+		},
+	}
+
+
+def _build_snapshot(as_of_date, company: str, branches: tuple[str, ...], branch_options: tuple[str, ...]) -> dict:
+	previous_date = as_of_date - timedelta(days=1)
+	employees_today = _get_scoped_employees(as_of_date, company, branches)
+	employees_previous = _get_scoped_employees(previous_date, company, branches)
+	morning = _build_morning_briefing(as_of_date, employees_today, employees_previous)
 
 	return {
 		"scope": {
@@ -600,61 +1006,30 @@ def _build_snapshot(as_of_date, company: str, branches: tuple[str, ...], branch_
 			"branch_options": list(branch_options),
 			"label": _("Tất cả chi nhánh") if not branches else ", ".join(branches),
 		},
-		"kpis": [
-			{
-				"id": "active",
-				"title": _("Nhân sự đang làm việc"),
-				"value": cint(kpis.get("active")),
-				"display_type": "number",
-				"caption": _("Tại ngày dữ liệu đã chọn"),
-				"tone": "indigo",
-			},
-			{
-				"id": "present",
-				"title": _("Đã ghi nhận có mặt"),
-				"value": attendance["present"],
-				"display_type": "number",
-				"caption": _("{0}% trong {1} người cần chấm công").format(attendance["present_rate"], attendance["expected"]),
-				"tone": "green",
-			},
-			{
-				"id": "planned_absence",
-				"title": _("Vắng có kế hoạch"),
-				"value": attendance["leave"] + attendance["trip"],
-				"display_type": "number",
-				"caption": _("{0} nghỉ · {1} công tác").format(attendance["leave"], attendance["trip"]),
-				"tone": "amber",
-			},
-			{
-				"id": "net_movement",
-				"title": _("Biến động trong tháng"),
-				"value": net,
-				"display_type": "signed",
-				"caption": _("{0} tuyển mới · {1} nghỉ việc").format(new_count, left_count),
-				"tone": "pink" if net < 0 else "violet",
-			},
-		],
-		"attendance": attendance,
-		"attention": _build_attention(as_of_date, company, branches),
-		"branches": _build_branch_rows(hr_snapshot),
-		"turnover": _build_turnover(as_of_date, company, branches),
-		"finance": _build_finance(as_of_date, company, branches),
+		"kpis": morning["kpis"],
+		"morning": morning,
 		"context": {
-			"average_age": _number(kpis.get("average_age")),
 			"generated_at": str(now_datetime()),
+			"latest_checkin_at": morning["latest_checkin_at"],
+			"timezone": frappe.utils.get_system_timezone(),
+			"manager_definition": _(
+				"Quản lý được xác định theo Nhóm chức danh hoặc chức danh quản lý đã cấu hình."
+			),
 			"sources": [
 				"Employee",
+				"Shift Assignment",
+				"VNT Shift Group",
 				"Employee Checkin",
 				"Attendance",
 				"Leave Application",
-				"VNT Contract",
-				"VNT Salary Slip",
+				"VNT Business Trip Request",
+				"VNT Attendance Confirm",
 			],
 		},
 	}
 
 
-@redis_cache(ttl=60)
+@redis_cache(ttl=30)
 def _cached_snapshot(user: str, as_of_date: str, company: str, branches_json: str, options_json: str) -> dict:
 	# ``user`` is part of the key because salary visibility is permission-sensitive.
 	return _build_snapshot(

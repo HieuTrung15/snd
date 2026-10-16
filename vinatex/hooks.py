@@ -38,7 +38,7 @@ app_include_js = [
 	f"/assets/vinatex/js/report_actions_override.js?v={version}",
 	f"/assets/vinatex/js/fullWidth.js?v={version}",
     f"/assets/vinatex/js/workspace_redirects.js?v={version}",
-    f"/assets/vinatex/js/workspace_hub.js?v={version}",
+    f"/assets/vinatex/js/workspace_hub.js?v={version}-work-hub-20261008",
     f"/assets/vinatex/js/custom_notification.js?v={version}",
     f"/assets/vinatex/js/hide_id_column.js?v={version}",
     f"/assets/vinatex/js/hide_connections.js?v={version}",
@@ -68,7 +68,11 @@ page_js = {
 override_whitelisted_methods = {
     # method gốc của HRMS → method của bạn
     "hrms.hr.doctype.leave_application.leave_application.get_leave_approver":
-    "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver"
+    "vinatex.vinatex.doctype.overrides.leave_application.get_leave_approver",
+    "hrms.hr.doctype.leave_application.leave_application.get_number_of_leave_days":
+    "vinatex.vinatex.doctype.overrides.leave_application.get_number_of_leave_days",
+    "hrms.hr.doctype.leave_application.leave_application.get_leave_balance_on":
+    "vinatex.vinatex.doctype.overrides.leave_application.get_leave_balance_on",
 }
 
 override_doctype_class = {
@@ -96,6 +100,7 @@ doctype_js = {
 	"VNT CVE": "vinatex/public/js/vnt_itsec/vnt_cve.js",
 }
 doctype_list_js = {
+	"Employee": "vnt_hr/shift_management/employee_list.js",
     "VNT Salary Slip": "vinatex/vnt_hr/doctype/vnt_salary_slip/vnt_salary_slip_list.js",
     "VNT 13th Month Salary": "vinatex/vnt_hr/doctype/vnt_13th_month_salary/vnt_13th_month_salary_list.js",
 }
@@ -253,6 +258,10 @@ doc_events = {
 		"on_update": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
 		"on_trash": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
 	},
+	"VNT Attendance Confirm": {
+		"on_update": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+		"on_trash": "vinatex.vnt_hr.page.leadership_dashboard_backend.notify_leadership_dashboard_update",
+	},
 	"Job Applicant": {
 		"validate": "vinatex.vnt_hr.job_applicant_rating.validate_job_applicant_rating",
 	},
@@ -290,12 +299,13 @@ scheduler_events = {
         "0 0-3 * * *": [
             "vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_evening_second",
         ],
-        # Chạy lúc 4h15 hàng ngày để tạo attendance trong ngày.
-		"15 4 * * *": [
+		# Chạy sau lượt đồng bộ máy 10:30 để ca Đêm (kết thúc 06:00)
+		# đã có đủ log vào/ra trước khi tạo Attendance.
+		"45 10 * * *": [
 			"vinatex.vinatex.doctype.utils.job_monitor.monitor_create_attendance",
 		],
-        # chạy lúc 09:00 hàng ngày để monitor việc confirm attendance
-        "0 9 * * *": [
+		# Phiếu xác nhận bất thường phải chạy sau bước tạo Attendance.
+		"0 11 * * *": [
             "vinatex.vinatex.doctype.utils.job_monitor.monitor_attendance_confirm",
         ],
 		# Nhắc hạn điền opinion items6/items7 (D-1 và D0) mỗi ngày.
@@ -313,7 +323,10 @@ scheduler_events = {
         "0 5 6 * *": [
             "vinatex.vnt_hr.doctype.vnt_monthly_payroll.vnt_monthly_payroll.auto_mark_salary_transferred",
         ],
-    }
+    },
+    "daily": [
+        "vinatex.vnt_hr.shift_management.scheduler.run_daily_shift_assignment_generation",
+    ],
 
 	# "all": [
 	# 	"vinatex.tasks.all"

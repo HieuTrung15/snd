@@ -8,46 +8,29 @@
   const today = frappe.datetime.get_today();
   const company = frappe.defaults.get_user_default("Company") || "";
   const formatter = new Intl.NumberFormat("vi-VN");
-  const currencyFormatter = new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0
-  });
+  const dateFormatter = new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 
   const dateInput = dashboard.querySelector("[data-date-input]");
-  const picker = dashboard.querySelector("[data-branch-picker]");
-  const trigger = dashboard.querySelector("[data-branch-trigger]");
-  const summary = dashboard.querySelector("[data-branch-summary]");
-  const menu = dashboard.querySelector("[data-branch-menu]");
-  const allCheckbox = dashboard.querySelector("[data-all-branches]");
-  const branchOptionsElement = dashboard.querySelector("[data-branch-options]");
-  const clearButton = dashboard.querySelector("[data-clear]");
   const errorElement = dashboard.querySelector("[data-error]");
   const refreshButtons = dashboard.querySelectorAll("[data-refresh]");
   const host = root_element.host || root_element;
 
-  let selectedBranches = [];
+  const selectedBranches = [];
   let selectedDate = today;
-  let branchNames = [];
-  let activeRequest = null;
   let requestSequence = 0;
   let pollHandle = null;
-  let turnoverChart = null;
-  let salaryChart = null;
+  let arrivalFilter = "all";
+  let arrivalRows = [];
 
   try {
-    const stored = window.sessionStorage.getItem(BRANCHES_STORAGE_KEY);
-    const legacy = window.sessionStorage.getItem(LEGACY_BRANCH_STORAGE_KEY);
-    const parsed = stored ? JSON.parse(stored) : [];
-    selectedBranches = Array.isArray(parsed) ? parsed.map(String) : [];
-    if (!selectedBranches.length && legacy) selectedBranches = [legacy];
+    window.sessionStorage.removeItem(BRANCHES_STORAGE_KEY);
+    window.sessionStorage.removeItem(LEGACY_BRANCH_STORAGE_KEY);
     selectedDate = window.sessionStorage.getItem(DATE_STORAGE_KEY) || today;
   } catch (error) {
-    selectedBranches = Array.isArray(window.__vntHrWorkspaceBranches)
-      ? [...window.__vntHrWorkspaceBranches]
-      : (window.__vntHrWorkspaceBranch ? [window.__vntHrWorkspaceBranch] : []);
     selectedDate = window.__vntHrWorkspaceDate || today;
   }
+  window.__vntHrWorkspaceBranches = [];
+  window.__vntHrWorkspaceBranch = "";
   if (!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate) || selectedDate > today) selectedDate = today;
   dateInput.max = today;
   dateInput.value = selectedDate;
@@ -58,57 +41,20 @@
     })[character]);
   }
 
-  function closeMenu() {
-    menu.hidden = true;
-    trigger.setAttribute("aria-expanded", "false");
-    picker.classList.remove("is-open");
+  function formatDate(value) {
+    if (!value) return "";
+    const parts = String(value).split("-").map(Number);
+    if (parts.length !== 3 || parts.some((part) => !part)) return String(value);
+    return dateFormatter.format(new Date(parts[0], parts[1] - 1, parts[2]));
   }
 
-  function renderSelection() {
-    const selectedSet = new Set(selectedBranches);
-    allCheckbox.checked = selectedBranches.length === 0;
-    branchOptionsElement.querySelectorAll("input[data-branch]").forEach((input) => {
-      input.checked = selectedSet.has(input.value);
-    });
-    if (!selectedBranches.length) summary.textContent = "Tất cả chi nhánh";
-    else if (selectedBranches.length === 1) summary.textContent = selectedBranches[0];
-    else summary.textContent = `${selectedBranches.length} chi nhánh đã chọn`;
-    clearButton.hidden = selectedBranches.length === 0;
-  }
-
-  function persistFilters() {
-    window.__vntHrWorkspaceBranches = [...selectedBranches];
-    window.__vntHrWorkspaceBranch = selectedBranches.length === 1 ? selectedBranches[0] : "";
+  function persistDate() {
     window.__vntHrWorkspaceDate = selectedDate;
     try {
-      if (selectedBranches.length) {
-        window.sessionStorage.setItem(BRANCHES_STORAGE_KEY, JSON.stringify(selectedBranches));
-      } else {
-        window.sessionStorage.removeItem(BRANCHES_STORAGE_KEY);
-      }
-      window.sessionStorage.removeItem(LEGACY_BRANCH_STORAGE_KEY);
       window.sessionStorage.setItem(DATE_STORAGE_KEY, selectedDate);
     } catch (error) {
-      console.debug("Không thể lưu bộ lọc bảng tin lãnh đạo", error);
+      console.debug("Không thể lưu ngày theo dõi của bảng tin lãnh đạo", error);
     }
-    renderSelection();
-  }
-
-  function buildBranchOptions() {
-    branchOptionsElement.textContent = "";
-    branchNames.forEach((name) => {
-      const label = document.createElement("label");
-      label.className = "executive-filter__option";
-      const input = document.createElement("input");
-      input.type = "checkbox";
-      input.value = name;
-      input.setAttribute("data-branch", "");
-      const text = document.createElement("span");
-      text.textContent = name;
-      label.append(input, text);
-      branchOptionsElement.appendChild(label);
-    });
-    renderSelection();
   }
 
   function showError(message) {
@@ -121,202 +67,180 @@
     refreshButtons.forEach((button) => { button.disabled = loading; });
   }
 
-  function formatKpiValue(item) {
-    const value = Number(item.value) || 0;
-    if (item.display_type === "signed") return `${value > 0 ? "+" : ""}${formatter.format(value)}`;
-    return formatter.format(value);
+  function kpiTitle(item, morning) {
+    if (selectedDate === today) return item.title;
+    const selectedLabel = formatDate(morning.as_of_date);
+    const previousLabel = formatDate(morning.previous_date);
+    const titles = {
+      arrived_today: `Đã đến ngày ${selectedLabel}`,
+      absent_yesterday: `Vắng ngày ${previousLabel}`,
+      explanation_yesterday: `Cần giải trình ngày ${previousLabel}`,
+      late_yesterday: `Đi muộn ngày ${previousLabel}`,
+      early_yesterday: `Về sớm cần đối soát ngày ${previousLabel}`,
+      birthdays_today: `Sinh nhật ngày ${selectedLabel}`
+    };
+    return titles[item.id] || item.title;
   }
 
-  function renderKpis(items) {
+  function renderKpis(items, morning) {
     const element = dashboard.querySelector("[data-kpis]");
     element.innerHTML = (items || []).map((item) => `
-      <article class="executive-kpi executive-kpi--${escapeHtml(item.tone || "indigo")}">
-        <div class="executive-kpi__title">${escapeHtml(item.title)}</div>
-        <div class="executive-kpi__value">${escapeHtml(formatKpiValue(item))}</div>
-        <div class="executive-kpi__caption">${escapeHtml(item.caption || "")}</div>
-      </article>
+      <button type="button" class="executive-kpi executive-kpi--${escapeHtml(item.tone || "blue")}" data-target="${escapeHtml(item.target || "")}">
+        <span class="executive-kpi__title">${escapeHtml(kpiTitle(item, morning))}</span>
+        <strong class="executive-kpi__value">${formatter.format(Number(item.value) || 0)}</strong>
+        <span class="executive-kpi__caption">${escapeHtml(item.caption || "")}</span>
+      </button>
     `).join("");
   }
 
-  function renderAttention(items) {
-    const element = dashboard.querySelector("[data-attention]");
-    element.innerHTML = (items || []).map((item) => {
-      const first = (item.items || [])[0];
-      const preview = first
-        ? `${first.label}${first.date ? ` · ${first.date}` : ""}`
-        : (Number(item.value) ? "Mở danh sách để xem chi tiết" : "Không có nội dung cần xử lý");
-      return `
-        <button type="button" class="executive-attention-card executive-attention-card--${escapeHtml(item.tone || "blue")}" data-route="${escapeHtml(item.route || "")}">
-          <div class="executive-attention-card__top">
-            <span class="executive-attention-card__title">${escapeHtml(item.title)}</span>
-            <i class="fa fa-arrow-right executive-attention-card__arrow" aria-hidden="true"></i>
-          </div>
-          <div class="executive-attention-card__value">${formatter.format(Number(item.value) || 0)}</div>
-          <div class="executive-attention-card__caption">${escapeHtml(item.caption || "")}</div>
-          <div class="executive-attention-card__preview" title="${escapeHtml(preview)}">${escapeHtml(preview)}</div>
-        </button>
-      `;
-    }).join("");
+  function personMeta(row) {
+    return [row.designation, row.department].filter(Boolean).join(" · ") || "Chưa cập nhật đơn vị";
   }
 
-  function renderAttendance(data) {
-    const rows = [
-      { label: "Có mặt", value: data.present, color: "#10b981" },
-      { label: "Nghỉ phép", value: data.leave, color: "#ec4899" },
-      { label: "Công tác", value: data.trip, color: "#3b82f6" },
-      { label: "Chưa ghi nhận", value: data.unrecorded, color: "#94a3b8" }
-    ];
-    const total = Number(data.total) || 0;
-    dashboard.querySelector("[data-coverage]").textContent = Number(data.coverage_rate || 0).toLocaleString("vi-VN");
-    dashboard.querySelector("[data-attendance]").innerHTML = rows.map((row) => {
-      const percentage = total ? Math.round((Number(row.value) || 0) / total * 100) : 0;
-      return `
-        <div class="executive-status-row">
-          <span class="executive-status-row__label">${escapeHtml(row.label)}</span>
-          <div class="executive-status-row__track" aria-hidden="true">
-            <div class="executive-status-row__bar" style="width:${percentage}%;background:${row.color}"></div>
-          </div>
-          <span class="executive-status-row__value">${formatter.format(Number(row.value) || 0)}<small>${percentage}%</small></span>
-        </div>
-      `;
-    }).join("");
+  function renderArrivalRows() {
+    const filtered = arrivalFilter === "all"
+      ? arrivalRows
+      : arrivalRows.filter((row) => row.group === arrivalFilter);
+    const body = dashboard.querySelector("[data-arrival-rows]");
+    const empty = dashboard.querySelector("[data-arrival-empty]");
+    body.innerHTML = filtered.map((row) => `
+      <tr>
+        <td>
+          <div class="executive-person-name">${escapeHtml(row.employee_name)}</div>
+          <span class="executive-role executive-role--${escapeHtml(row.group)}">${escapeHtml(row.group_label)}</span>
+        </td>
+        <td><span title="${escapeHtml(row.department)}">${escapeHtml(row.department || "—")}</span></td>
+        <td>${escapeHtml(row.planned_shift || row.arrival_source || "Ngoài ca")}</td>
+        <td><strong>${escapeHtml(row.first_in || "—")}</strong>${row.arrival_source === "Ngoài ca" ? '<small class="executive-outside">Ngoài ca</small>' : ""}</td>
+      </tr>
+    `).join("");
+    empty.hidden = filtered.length > 0;
+    dashboard.querySelector(".executive-table").hidden = filtered.length === 0;
   }
 
-  function renderBranches(rows) {
-    const element = dashboard.querySelector("[data-branches]");
-    dashboard.querySelector("[data-branch-count]").textContent = formatter.format((rows || []).length);
+  function renderArrivals(data) {
+    arrivalRows = [...(data.managers || []), ...(data.employees || [])];
+    dashboard.querySelector("[data-arrival-total]").textContent = formatter.format(Number(data.total) || 0);
+    dashboard.querySelector("[data-arrival-expected]").textContent = formatter.format(Number(data.expected) || 0);
+    dashboard.querySelector("[data-arrival-all]").textContent = formatter.format(Number(data.total) || 0);
+    dashboard.querySelector("[data-arrival-manager]").textContent = formatter.format(Number(data.manager_count) || 0);
+    dashboard.querySelector("[data-arrival-employee]").textContent = formatter.format(Number(data.employee_count) || 0);
+    renderArrivalRows();
+  }
+
+  function renderBirthdayGroup(selector, rows, emptyLabel) {
+    const element = dashboard.querySelector(selector);
     if (!rows || !rows.length) {
-      element.innerHTML = '<div class="executive-state">Chưa có dữ liệu chi nhánh.</div>';
+      element.innerHTML = `<div class="executive-mini-empty">${escapeHtml(emptyLabel)}</div>`;
       return;
     }
-    const colors = ["#4f46e5", "#3b82f6", "#14b8a6", "#f59e0b", "#8b5cf6", "#ec4899"];
-    const maxValue = Math.max(...rows.map((row) => Number(row.value) || 0), 1);
-    element.innerHTML = rows.map((row, index) => `
-      <div class="executive-branch-row">
-        <span class="executive-branch-row__label" title="${escapeHtml(row.label)}">${escapeHtml(row.label)}</span>
-        <div class="executive-branch-row__track" aria-hidden="true">
-          <div class="executive-branch-row__bar" style="width:${Math.round((Number(row.value) || 0) / maxValue * 100)}%;background:${colors[index % colors.length]}"></div>
-        </div>
-        <span class="executive-branch-row__value">${formatter.format(Number(row.value) || 0)}<small>${Number(row.percentage || 0).toLocaleString("vi-VN")}%</small></span>
+    element.innerHTML = rows.map((row) => `
+      <div class="executive-person-row">
+        <span class="executive-avatar" aria-hidden="true">${escapeHtml((row.employee_name || "?").trim().charAt(0))}</span>
+        <div><strong>${escapeHtml(row.employee_name)}</strong><small>${escapeHtml(personMeta(row))}</small></div>
       </div>
     `).join("");
   }
 
-  function renderLeaders(rows) {
-    const element = dashboard.querySelector("[data-leaders]");
-    dashboard.querySelector("[data-leader-count]").textContent = formatter.format((rows || []).length);
-    if (!rows || !rows.length) {
-      element.innerHTML = '<div class="executive-state">Chưa có dữ liệu lãnh đạo và quản lý trong phạm vi đã chọn.</div>';
-      return;
-    }
-    element.innerHTML = rows.map((row) => {
-      const meta = [row.designation, row.department, row.detail].filter(Boolean).join(" · ");
-      return `
-        <div class="executive-leader-row">
-          <div>
-            <div class="executive-leader-row__name" title="${escapeHtml(row.employee_name)}">${escapeHtml(row.employee_name)}</div>
-            <div class="executive-leader-row__meta" title="${escapeHtml(meta)}">${escapeHtml(meta || "Chưa cập nhật chức danh")}</div>
-          </div>
-          <span class="executive-status-chip executive-status-chip--${escapeHtml(row.status)}">${escapeHtml(row.status_label)}</span>
+  function renderBirthdays(data) {
+    dashboard.querySelector("[data-birthday-total]").textContent = formatter.format(Number(data.total) || 0);
+    dashboard.querySelector("[data-birthday-manager-count]").textContent = formatter.format(Number(data.manager_count) || 0);
+    dashboard.querySelector("[data-birthday-employee-count]").textContent = formatter.format(Number(data.employee_count) || 0);
+    renderBirthdayGroup("[data-birthday-managers]", data.managers || [], "Không có sinh nhật quản lý hôm nay");
+    renderBirthdayGroup("[data-birthday-employees]", data.employees || [], "Không có sinh nhật nhân viên hôm nay");
+  }
+
+  function issueRow(row, detail, metric, metricClass = "") {
+    return `
+      <div class="executive-issue-row">
+        <div>
+          <div class="executive-person-name">${escapeHtml(row.employee_name)}</div>
+          <div class="executive-issue-meta"><span class="executive-role-dot ${row.group === "manager" ? "executive-role-dot--manager" : ""}"></span>${escapeHtml(detail || personMeta(row))}</div>
+          ${row.outside_out_time ? `<div class="executive-issue-evidence">Có OUT ngoài ca ${escapeHtml(row.outside_out_time)} chưa được tính</div>` : ""}
         </div>
-      `;
-    }).join("");
+        <strong class="${escapeHtml(metricClass)}">${escapeHtml(metric || "")}</strong>
+      </div>
+    `;
   }
 
-  function renderTurnover(data) {
-    const chartElement = dashboard.querySelector("[data-turnover-chart]");
-    const stateElement = dashboard.querySelector("[data-turnover-state]");
-    const summaryData = data.summary || {};
-    dashboard.querySelector("[data-hiring-total]").textContent = formatter.format(Number(summaryData.hiring) || 0);
-    dashboard.querySelector("[data-attrition-total]").textContent = formatter.format(Number(summaryData.attrition) || 0);
-
-    if (!data.labels || !data.labels.length || typeof frappe.Chart !== "function") {
-      if (turnoverChart && typeof turnoverChart.destroy === "function") turnoverChart.destroy();
-      turnoverChart = null;
-      chartElement.hidden = true;
-      stateElement.hidden = false;
-      stateElement.textContent = data.labels && data.labels.length
-        ? "Thư viện biểu đồ chưa sẵn sàng."
-        : "Chưa có dữ liệu biến động nhân sự.";
+  function renderIssueList(selector, rows, detailBuilder, metricBuilder, emptyText) {
+    const element = dashboard.querySelector(selector);
+    if (!rows || !rows.length) {
+      element.innerHTML = `<div class="executive-mini-empty">${escapeHtml(emptyText)}</div>`;
       return;
     }
-    if (turnoverChart && typeof turnoverChart.destroy === "function") turnoverChart.destroy();
-    chartElement.textContent = "";
-    chartElement.hidden = false;
-    stateElement.hidden = true;
-    turnoverChart = new frappe.Chart(chartElement, {
-      data: { labels: data.labels, datasets: data.datasets || [] },
-      type: "line",
-      height: 228,
-      colors: ["#60a5fa", "#8b5cf6"],
-      axisOptions: { xAxisMode: "tick", yAxisMode: "span", xIsSeries: 1 },
-      lineOptions: { regionFill: 1, hideDots: 0, dotSize: 4 },
-      tooltipOptions: { formatTooltipY: (value) => formatter.format(value) + " nhân sự" },
-      animate: 1
-    });
+    element.innerHTML = rows.map((row) => issueRow(row, detailBuilder(row), metricBuilder(row))).join("");
   }
 
-  function renderFinance(finance) {
-    const stateElement = dashboard.querySelector("[data-finance-state]");
-    const contentElement = dashboard.querySelector("[data-finance-content]");
-    const kpisElement = dashboard.querySelector("[data-finance-kpis]");
-    const chartElement = dashboard.querySelector("[data-salary-chart]");
+  function renderYesterday(data) {
+    dashboard.querySelector("[data-yesterday-date]").textContent = `(${formatDate(data.date)})`;
+    dashboard.querySelector("[data-scheduled-yesterday]").textContent = formatter.format(Number(data.scheduled) || 0);
+    dashboard.querySelector("[data-absent-count]").textContent = formatter.format((data.absent || []).length);
+    dashboard.querySelector("[data-absent-finalized]").textContent = formatter.format(Number(data.absent_finalized) || 0);
+    dashboard.querySelector("[data-absent-provisional]").textContent = formatter.format(Number(data.absent_provisional) || 0);
+    dashboard.querySelector("[data-explanation-count]").textContent = formatter.format((data.explanations || []).length);
+    dashboard.querySelector("[data-awaiting-hr]").textContent = formatter.format((data.awaiting_hr || []).length);
+    dashboard.querySelector("[data-late-count]").textContent = formatter.format((data.late || []).length);
+    dashboard.querySelector("[data-late-average]").textContent = formatter.format(Number((data.late_summary || {}).average_minutes) || 0);
+    dashboard.querySelector("[data-late-maximum]").textContent = formatter.format(Number((data.late_summary || {}).maximum_minutes) || 0);
+    dashboard.querySelector("[data-early-count]").textContent = formatter.format((data.early || []).length);
+    dashboard.querySelector("[data-early-average]").textContent = formatter.format(Number((data.early_summary || {}).average_minutes) || 0);
+    dashboard.querySelector("[data-early-maximum]").textContent = formatter.format(Number((data.early_summary || {}).maximum_minutes) || 0);
 
-    if (!finance.available || !finance.has_data) {
-      if (salaryChart && typeof salaryChart.destroy === "function") salaryChart.destroy();
-      salaryChart = null;
-      contentElement.hidden = true;
-      stateElement.hidden = false;
-      stateElement.classList.toggle("is-restricted", !finance.available);
-      stateElement.textContent = finance.message || "Chưa có dữ liệu bảng lương.";
-      return;
-    }
-
-    stateElement.hidden = true;
-    contentElement.hidden = false;
-    kpisElement.innerHTML = (finance.kpis || []).map((item) => `
-      <article class="executive-finance-card">
-        <div class="executive-finance-card__title">${escapeHtml(item.title)}</div>
-        <div class="executive-finance-card__value">${escapeHtml(currencyFormatter.format(Number(item.value) || 0))}</div>
-        <div class="executive-finance-card__caption">${escapeHtml(item.caption || "")}</div>
-      </article>
-    `).join("");
-
-    const chart = finance.chart || {};
-    if (!chart.labels || !chart.labels.length || typeof frappe.Chart !== "function") {
-      if (salaryChart && typeof salaryChart.destroy === "function") salaryChart.destroy();
-      salaryChart = null;
-      chartElement.innerHTML = '<div class="executive-state">Chưa có dữ liệu biểu đồ lương.</div>';
-      return;
-    }
-    if (salaryChart && typeof salaryChart.destroy === "function") salaryChart.destroy();
-    chartElement.textContent = "";
-    salaryChart = new frappe.Chart(chartElement, {
-      data: { labels: chart.labels, datasets: chart.datasets || [] },
-      type: "line",
-      height: 242,
-      colors: ["#4f46e5", "#10b981"],
-      axisOptions: { xAxisMode: "tick", yAxisMode: "span", xIsSeries: 1 },
-      lineOptions: { regionFill: 0, hideDots: 0, dotSize: 4 },
-      tooltipOptions: { formatTooltipY: (value) => currencyFormatter.format(value) },
-      animate: 1
-    });
+    renderIssueList(
+      "[data-absent-list]", data.absent || [],
+      (row) => [row.department, row.planned_shift, row.source].filter(Boolean).join(" · "),
+      (row) => row.finalized ? "Đã chốt" : "Tạm tính",
+      "Không ghi nhận trường hợp vắng"
+    );
+    renderIssueList(
+      "[data-explanation-list]", data.explanations || [],
+      (row) => (row.issues || []).map((issue) => issue.issue_type).join(" · ") || personMeta(row),
+      (row) => `${(row.issues || []).length} vấn đề`,
+      "Không có trường hợp đang chờ giải trình"
+    );
+    renderIssueList(
+      "[data-late-list]", data.late || [],
+      (row) => `${row.department || "—"} · ${row.planned_shift || "—"} · ${row.planned_time || "—"} → ${row.actual_time || "—"}`,
+      (row) => `+${formatter.format(Number(row.minutes) || 0)} phút`,
+      "Không ghi nhận trường hợp đi muộn"
+    );
+    renderIssueList(
+      "[data-early-list]", data.early || [],
+      (row) => `${row.department || "—"} · ${row.planned_shift || "—"} · ${row.actual_time || "—"} / ${row.planned_time || "—"}`,
+      (row) => `-${formatter.format(Number(row.minutes) || 0)} phút`,
+      "Không ghi nhận trường hợp về sớm"
+    );
   }
 
   function renderSnapshot(data) {
-    renderKpis(data.kpis || []);
-    renderAttention(data.attention || []);
-    renderAttendance(data.attendance || {});
-    renderBranches(data.branches || []);
-    renderLeaders((data.attendance || {}).leaders || []);
-    renderTurnover(data.turnover || {});
-    renderFinance(data.finance || {});
+    const morning = data.morning || {};
+    renderKpis(data.kpis || morning.kpis || [], morning);
+    renderArrivals(morning.arrivals || {});
+    renderBirthdays(morning.birthdays || {});
+    renderYesterday(morning.yesterday || {});
 
-    const scope = data.scope || {};
-    dashboard.querySelector("[data-scope-label]").textContent = scope.label || "Tất cả chi nhánh";
+    const selectedLabel = formatDate(morning.as_of_date);
+    const previousLabel = formatDate(morning.previous_date);
+    const isCurrentDay = selectedDate === today;
+    dashboard.querySelector("#executive-arrivals-title").textContent = isCurrentDay
+      ? "Ai đã đến công ty hôm nay?"
+      : `Ai đã đến công ty ngày ${selectedLabel}?`;
+    dashboard.querySelector("#executive-birthdays-title").textContent = isCurrentDay
+      ? "Sinh nhật hôm nay"
+      : `Sinh nhật ngày ${selectedLabel}`;
+    dashboard.querySelector("[data-period-copy]").textContent = selectedDate === today
+      ? `Hiện diện hôm nay ${selectedLabel} · đối soát hôm qua ${previousLabel}`
+      : `Hiện diện ngày ${selectedLabel} · đối soát ngày ${previousLabel}`;
+    const reportLink = dashboard.querySelector(".executive-link");
+    reportLink.href = `/app/query-report/VNT%20Daily%20Attendance?from_date=${encodeURIComponent(morning.previous_date || "")}&to_date=${encodeURIComponent(morning.previous_date || "")}&company=${encodeURIComponent((data.scope || {}).company || "")}`;
+    dashboard.querySelector("[data-scope-label]").textContent = (data.scope || {}).label || "Tất cả chi nhánh";
+    dashboard.querySelector("[data-timezone]").textContent = (data.context || {}).timezone || "Asia/Ho_Chi_Minh";
+    dashboard.querySelector("[data-manager-definition]").textContent = (data.context || {}).manager_definition || "";
     const generatedAt = (data.context || {}).generated_at;
+    const latestCheckinAt = (data.context || {}).latest_checkin_at;
     dashboard.querySelector("[data-updated]").textContent = generatedAt
-      ? `Cập nhật ${String(generatedAt).slice(11, 16)}`
+      ? `Tính lúc ${String(generatedAt).slice(11, 16)}${latestCheckinAt ? ` · log mới nhất ${String(latestCheckinAt).slice(11, 16)}` : ""}`
       : "Đã cập nhật";
   }
 
@@ -324,127 +248,61 @@
     const sequence = ++requestSequence;
     errorElement.hidden = true;
     setLoading(true);
-    const request = frappe.xcall("vinatex.api.leadership_dashboard.get_leadership_snapshot", {
-      as_of_date: selectedDate,
-      branches: selectedBranches,
-      company,
-      force: force ? 1 : 0
-    });
-    activeRequest = request;
     try {
-      const data = await request;
+      const data = await frappe.xcall("vinatex.api.leadership_dashboard.get_leadership_snapshot", {
+        as_of_date: selectedDate,
+        branches: selectedBranches,
+        company,
+        force: force ? 1 : 0
+      });
       if (sequence !== requestSequence) return;
       renderSnapshot(data || {});
     } catch (error) {
       if (sequence !== requestSequence) return;
       console.error("Không thể tải bảng tin lãnh đạo", error);
-      const message = error && (error.message || error.exc_type)
+      showError(error && (error.message || error.exc_type)
         ? String(error.message || error.exc_type)
-        : "Không thể tải bảng tin lãnh đạo. Vui lòng thử lại.";
-      showError(message);
+        : "Không thể tải bảng tin lãnh đạo. Vui lòng thử lại.");
     } finally {
-      if (sequence === requestSequence) {
-        activeRequest = null;
-        setLoading(false);
-      }
+      if (sequence === requestSequence) setLoading(false);
     }
   }
 
-  async function loadBranches() {
-    trigger.disabled = true;
-    summary.textContent = "Đang tải danh sách…";
-    try {
-      const rows = await frappe.xcall("vinatex.api.hr_dashboard.get_employee_branches", { company });
-      branchNames = (Array.isArray(rows) ? rows : []).map(String).filter(Boolean);
-      const validNames = new Set(branchNames);
-      selectedBranches = selectedBranches.filter((name) => validNames.has(name));
-      buildBranchOptions();
-      persistFilters();
-      await load();
-    } catch (error) {
-      console.error("Không thể tải danh sách chi nhánh", error);
-      summary.textContent = "Không thể tải danh sách";
-      showError("Không thể tải phạm vi chi nhánh được phép xem.");
-    } finally {
-      trigger.disabled = false;
-    }
-  }
-
-  function applyFilters() {
-    persistFilters();
-    closeMenu();
-    load(false);
-  }
-
-  trigger.addEventListener("click", () => {
-    if (menu.hidden) {
-      menu.hidden = false;
-      trigger.setAttribute("aria-expanded", "true");
-      picker.classList.add("is-open");
-    } else closeMenu();
-  });
-  allCheckbox.addEventListener("change", () => { selectedBranches = []; applyFilters(); });
-  branchOptionsElement.addEventListener("change", (event) => {
-    const input = event.target.closest("input[data-branch]");
-    if (!input) return;
-    const selectedSet = new Set(selectedBranches);
-    if (input.checked) selectedSet.add(input.value); else selectedSet.delete(input.value);
-    selectedBranches = branchNames.filter((name) => selectedSet.has(name));
-    applyFilters();
-  });
   dateInput.addEventListener("change", () => {
     selectedDate = dateInput.value || today;
     if (selectedDate > today) selectedDate = today;
     dateInput.value = selectedDate;
-    applyFilters();
-  });
-  clearButton.addEventListener("click", () => {
-    selectedBranches = [];
-    applyFilters();
-    trigger.focus();
+    persistDate();
+    load(false);
   });
   refreshButtons.forEach((button) => button.addEventListener("click", () => load(true)));
-  dashboard.querySelector("[data-attention]").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-route]");
-    const route = button && button.dataset.route;
-    if (!route) return;
-    const path = route.replace(/^\/app\/?/, "");
-    frappe.set_route(...path.split("/").map((part) => decodeURIComponent(part)));
+  dashboard.querySelector("[data-kpis]").addEventListener("click", (event) => {
+    const card = event.target.closest("[data-target]");
+    const targetId = card && card.dataset.target;
+    const target = targetId ? dashboard.querySelector(`#${targetId}`) : null;
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
   });
-
-  const outsideClickHandler = (event) => {
-    if (!host.isConnected) {
-      document.removeEventListener("click", outsideClickHandler, true);
-      return;
-    }
-    if (!event.composedPath().includes(host)) closeMenu();
-  };
-  document.addEventListener("click", outsideClickHandler, true);
-  root_element.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") { closeMenu(); trigger.focus(); }
+  dashboard.querySelector(".executive-tabs").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-arrival-filter]");
+    if (!button) return;
+    arrivalFilter = button.dataset.arrivalFilter;
+    dashboard.querySelectorAll("[data-arrival-filter]").forEach((item) => item.classList.toggle("is-active", item === button));
+    renderArrivalRows();
   });
 
   const realtimeHandler = () => {
-    if (!host.isConnected) return;
-    load(true);
+    if (host.isConnected) load(true);
   };
-  if (frappe.realtime && frappe.realtime.on) {
-    frappe.realtime.on("leadership_dashboard_update", realtimeHandler);
-  }
+  if (frappe.realtime && frappe.realtime.on) frappe.realtime.on("leadership_dashboard_update", realtimeHandler);
 
   pollHandle = window.setInterval(() => {
     if (!host.isConnected) {
       window.clearInterval(pollHandle);
-      document.removeEventListener("click", outsideClickHandler, true);
-      if (turnoverChart && typeof turnoverChart.destroy === "function") turnoverChart.destroy();
-      if (salaryChart && typeof salaryChart.destroy === "function") salaryChart.destroy();
-      if (frappe.realtime && frappe.realtime.off) {
-        frappe.realtime.off("leadership_dashboard_update", realtimeHandler);
-      }
+      if (frappe.realtime && frappe.realtime.off) frappe.realtime.off("leadership_dashboard_update", realtimeHandler);
       return;
     }
     if (!document.hidden && selectedDate === today) load(false);
   }, 60000);
 
-  loadBranches();
+  load();
 })();

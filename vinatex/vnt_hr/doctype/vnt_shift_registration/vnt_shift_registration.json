@@ -1,0 +1,168 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:DKC-{employee}-{from_date}",
+ "creation": "2026-10-05 09:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "employee_name",
+  "department",
+  "column_break_emp",
+  "designation",
+  "default_shift",
+  "section_break_period",
+  "from_date",
+  "to_date",
+  "column_break_period",
+  "from_time",
+  "to_time",
+  "section_break_kip",
+  "kip"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Mã nhân viên",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tên nhân viên",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "in_standard_filter": 1,
+   "label": "Phòng ban",
+   "options": "Department"
+  },
+  {
+   "fieldname": "column_break_emp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.designation",
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Chức vụ",
+   "options": "Designation"
+  },
+  {
+   "fetch_from": "employee.default_shift",
+   "fieldname": "default_shift",
+   "fieldtype": "Link",
+   "label": "Ca mặc định",
+   "options": "Shift Type"
+  },
+  {
+   "fieldname": "section_break_period",
+   "fieldtype": "Section Break",
+   "label": "Thời gian đăng ký"
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Từ ngày",
+   "reqd": 1
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Đến ngày",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_period",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "from_time",
+   "fieldtype": "Time",
+   "label": "Từ giờ"
+  },
+  {
+   "fieldname": "to_time",
+   "fieldtype": "Time",
+   "label": "Đến giờ"
+  },
+  {
+   "fieldname": "section_break_kip",
+   "fieldtype": "Section Break",
+   "label": "Kíp"
+  },
+  {
+   "description": "Sáng: 06:00-14:00 | Chiều: 14:00-22:00 | Đêm: 22:00-06:00 | Hành chính: 07:30-16:30",
+   "fieldname": "kip",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Kíp",
+   "options": "\nSáng (06:00-14:00)\nChiều (14:00-22:00)\nĐêm (22:00-06:00)\nHC (07:30-16:30)",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-10-05 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "VNT HR",
+ "name": "VNT Shift Registration",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

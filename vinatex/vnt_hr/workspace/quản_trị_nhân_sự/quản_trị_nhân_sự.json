@@ -1,51 +1,51 @@
 {
  "charts": [],
- "content": "[{\"id\":\"VNTBRANCH1\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bộ lọc Chi nhánh - Quản trị nhân sự\",\"col\":12}},{\"id\":\"qfd88DmQ2W\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Tổng quan nhân sự - KPI\",\"col\":12}},{\"id\":\"Qlhppytezp\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"HR Reminders\",\"col\":12}},{\"id\":\"iDyaHNHIEa\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Nhân sự tuyển mới và nghỉ việc - Đường\",\"col\":6}},{\"id\":\"Q7TQwv4FFC\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Biểu đồ nhân sự theo trình độ học vấn - Thanh ngang\",\"col\":6}},{\"id\":\"r0tjZOCRnQ\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Biểu đồ nhân sự theo giới tính - Donut cân đối\",\"col\":6}},{\"id\":\"fjxagn5t2F\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Biểu đồ nhân sự theo chi nhánh - Thanh ngang\",\"col\":6}},{\"id\":\"A5WcDhogbU\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Biểu đồ nhân sự theo nhóm chức danh - Thanh ngang\",\"col\":6}},{\"id\":\"j_FL_u5GeL\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Biểu đồ nhân sự theo loại hợp đồng - Thanh ngang\",\"col\":6}},{\"id\":\"lV14FKunpc\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Biểu đồ nhân sự theo độ tuổi - Donut cân đối\",\"col\":6}},{\"id\":\"oSD2Uga9Z3\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Biểu đồ nhân sự theo thâm niên - Waffle\",\"col\":6}}]",
- "creation": "2025-09-18 14:06:49.771864",
+ "content": "[{\"id\":\"VNTBRANCH1\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"B\u1ed9 l\u1ecdc Chi nh\u00e1nh - Qu\u1ea3n tr\u1ecb nh\u00e2n s\u1ef1\",\"col\":12}},{\"id\":\"qfd88DmQ2W\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"T\u1ed5ng quan nh\u00e2n s\u1ef1 - KPI\",\"col\":12}},{\"id\":\"Qlhppytezp\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"HR Reminders\",\"col\":12}},{\"id\":\"iDyaHNHIEa\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Nh\u00e2n s\u1ef1 tuy\u1ec3n m\u1edbi v\u00e0 ngh\u1ec9 vi\u1ec7c - \u0110\u01b0\u1eddng\",\"col\":6}},{\"id\":\"Q7TQwv4FFC\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo tr\u00ecnh \u0111\u1ed9 h\u1ecdc v\u1ea5n - Thanh ngang\",\"col\":6}},{\"id\":\"r0tjZOCRnQ\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo gi\u1edbi t\u00ednh - Donut c\u00e2n \u0111\u1ed1i\",\"col\":6}},{\"id\":\"fjxagn5t2F\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo chi nh\u00e1nh - Thanh ngang\",\"col\":6}},{\"id\":\"A5WcDhogbU\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo nh\u00f3m ch\u1ee9c danh - Thanh ngang\",\"col\":6}},{\"id\":\"j_FL_u5GeL\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo lo\u1ea1i h\u1ee3p \u0111\u1ed3ng - Thanh ngang\",\"col\":6}},{\"id\":\"lV14FKunpc\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo \u0111\u1ed9 tu\u1ed5i - Donut c\u00e2n \u0111\u1ed1i\",\"col\":6}},{\"id\":\"oSD2Uga9Z3\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo th\u00e2m ni\u00ean - Waffle\",\"col\":6}}]",
+ "creation": "2026-09-24 09:31:18.123638",
  "custom_blocks": [
   {
-   "custom_block_name": "Bộ lọc Chi nhánh - Quản trị nhân sự",
-   "label": "Bộ lọc Chi nhánh - Quản trị nhân sự"
+   "custom_block_name": "B\u1ed9 l\u1ecdc Chi nh\u00e1nh - Qu\u1ea3n tr\u1ecb nh\u00e2n s\u1ef1",
+   "label": "B\u1ed9 l\u1ecdc Chi nh\u00e1nh - Qu\u1ea3n tr\u1ecb nh\u00e2n s\u1ef1"
   },
   {
-   "custom_block_name": "Tổng quan nhân sự - KPI",
-   "label": "Tổng quan nhân sự - KPI"
+   "custom_block_name": "T\u1ed5ng quan nh\u00e2n s\u1ef1 - KPI",
+   "label": "T\u1ed5ng quan nh\u00e2n s\u1ef1 - KPI"
   },
   {
    "custom_block_name": "HR Reminders",
    "label": "HR Reminders"
   },
   {
-   "custom_block_name": "Nhân sự tuyển mới và nghỉ việc - Đường",
-   "label": "Nhân sự tuyển mới và nghỉ việc - Đường"
+   "custom_block_name": "Nh\u00e2n s\u1ef1 tuy\u1ec3n m\u1edbi v\u00e0 ngh\u1ec9 vi\u1ec7c - \u0110\u01b0\u1eddng",
+   "label": "Nh\u00e2n s\u1ef1 tuy\u1ec3n m\u1edbi v\u00e0 ngh\u1ec9 vi\u1ec7c - \u0110\u01b0\u1eddng"
   },
   {
-   "custom_block_name": "Biểu đồ nhân sự theo chi nhánh - Thanh ngang",
-   "label": "Biểu đồ nhân sự theo chi nhánh - Thanh ngang"
+   "custom_block_name": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo chi nh\u00e1nh - Thanh ngang",
+   "label": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo chi nh\u00e1nh - Thanh ngang"
   },
   {
-   "custom_block_name": "Biểu đồ nhân sự theo nhóm chức danh - Thanh ngang",
-   "label": "Biểu đồ nhân sự theo nhóm chức danh - Thanh ngang"
+   "custom_block_name": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo nh\u00f3m ch\u1ee9c danh - Thanh ngang",
+   "label": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo nh\u00f3m ch\u1ee9c danh - Thanh ngang"
   },
   {
-   "custom_block_name": "Biểu đồ nhân sự theo loại hợp đồng - Thanh ngang",
-   "label": "Biểu đồ nhân sự theo loại hợp đồng - Thanh ngang"
+   "custom_block_name": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo lo\u1ea1i h\u1ee3p \u0111\u1ed3ng - Thanh ngang",
+   "label": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo lo\u1ea1i h\u1ee3p \u0111\u1ed3ng - Thanh ngang"
   },
   {
-   "custom_block_name": "Biểu đồ nhân sự theo độ tuổi - Donut cân đối",
-   "label": "Biểu đồ nhân sự theo độ tuổi - Donut cân đối"
+   "custom_block_name": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo \u0111\u1ed9 tu\u1ed5i - Donut c\u00e2n \u0111\u1ed1i",
+   "label": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo \u0111\u1ed9 tu\u1ed5i - Donut c\u00e2n \u0111\u1ed1i"
   },
   {
-   "custom_block_name": "Biểu đồ nhân sự theo thâm niên - Waffle",
-   "label": "Biểu đồ nhân sự theo thâm niên - Waffle"
+   "custom_block_name": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo th\u00e2m ni\u00ean - Waffle",
+   "label": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo th\u00e2m ni\u00ean - Waffle"
   },
   {
-   "custom_block_name": "Biểu đồ nhân sự theo trình độ học vấn - Thanh ngang",
-   "label": "Biểu đồ nhân sự theo trình độ học vấn - Thanh ngang"
+   "custom_block_name": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo tr\u00ecnh \u0111\u1ed9 h\u1ecdc v\u1ea5n - Thanh ngang",
+   "label": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo tr\u00ecnh \u0111\u1ed9 h\u1ecdc v\u1ea5n - Thanh ngang"
   },
   {
-   "custom_block_name": "Biểu đồ nhân sự theo giới tính - Donut cân đối",
-   "label": "Biểu đồ nhân sự theo giới tính - Donut cân đối"
+   "custom_block_name": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo gi\u1edbi t\u00ednh - Donut c\u00e2n \u0111\u1ed1i",
+   "label": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo gi\u1edbi t\u00ednh - Donut c\u00e2n \u0111\u1ed1i"
   }
  ],
  "docstatus": 0,
@@ -56,19 +56,19 @@
  "idx": 0,
  "indicator_color": "",
  "is_hidden": 0,
- "label": "Quản trị nhân sự",
+ "label": "Qu\u1ea3n tr\u1ecb nh\u00e2n s\u1ef1",
  "links": [],
- "modified": "2026-09-24 02:31:00.000000",
+ "modified": "2026-10-07 17:31:51.252599",
  "modified_by": "Administrator",
  "module": "VNT HR",
- "name": "Quản trị nhân sự",
+ "name": "Qu\u1ea3n tr\u1ecb nh\u00e2n s\u1ef1",
  "number_cards": [],
  "owner": "Administrator",
  "parent_page": "",
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 36,
+ "sequence_id": 36.0,
  "shortcuts": [],
- "title": "Quản trị nhân sự"
+ "title": "Qu\u1ea3n tr\u1ecb nh\u00e2n s\u1ef1"
 }

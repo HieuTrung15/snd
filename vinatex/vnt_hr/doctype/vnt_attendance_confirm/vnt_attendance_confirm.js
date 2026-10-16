@@ -1,181 +1,163 @@
 // Copyright (c) 2025, vinatex and contributors
 // For license information, please see license.txt
-// VGT00065
+
 frappe.ui.form.on("VNT Attendance Confirm", {
-	onload (frm) {
-		if (frm.doc.items && frm.doc.items.length == 0) {
-			frappe.msgprint(__('Không có dữ liệu để xác nhận.'));
-		}
-		set_self_approver(frm);
+	onload(frm) {
 		_update_parent_status(frm);
-		// xóa những dòng trong items mà có employee có đủ checkin và checkout
-		// frappe.call({
-		// 	method: "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.remove_rows_with_complete_checkin_checkout",
-		// 	args: {
-		// 		docname: frm.doc.name,
-		// 	},
-		// 	callback(res) {
-		// 		if (res && res.message) {
-		// 			frm.reload_doc();
-		// 		}
-		// 	},
-		// });
 	},
-	before_save (frm) {
-		frm.doc.confirm = '';
-	},
+
 	refresh(frm) {
-		// frm.add_custom_button(__('Lấy dữ liệu chấm công'), () => {
-		// 	frappe.call({
-		// 		method: "vinatex.vinatex.doctype.overrides.attendance.create_attendance_from_checkin",
-		// 		args: {
-		// 		},
-		// 		callback(res) {
-					
-		// 		},
-		// 	});
-		// });
 		frm.set_df_property("items", "cannot_delete_rows", true);
 		frm.set_df_property("items", "cannot_add_rows", true);
-		if (frm.doc && frm.doc.employee) {
-			frappe.call({
-				method: "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.is_employee_leave_approver_l1",
-				args: { employee: frm.doc.employee },
-				callback(res) {
-					frm.set_df_property("approver", "hidden", Boolean(res && res.message));
-				},
-			});
-		}
-		const isSelfL1 = frm.doc && frm.doc.email && frappe.session.user === frm.doc.email && frappe.user.has_role('Leave Approver L1');
-		// If current session user is the employee's mapped user and has role Leave Approver L1,
-		// auto-set status to 'Đã phê duyệt' so Save will proceed even with no other changes.
-		if (isSelfL1) {
-			frm.doc.status = 'Đã phê duyệt';
-			refresh_field('status');
-		}
+		_render_guidance(frm);
 		_update_parent_status(frm);
-		_toggle_save_button(frm);
-		// const grid = frm.get_field('items').grid;
-		// grid.wrapper.find('.grid-static-col .icon-sm').hide();
-		// grid.on('refresh', () => {
-		// 	grid.wrapper.find('.grid-static-col .icon-sm').hide();
-		// });
-	},
-	confirm (frm) {
-		// If current session user is the employee's mapped user and has role Leave Approver L1,
-		// assign confirm to ALL item rows (not only those with type)
-		if (frm.doc && frm.doc.email && frappe.session.user === frm.doc.email && frappe.user.has_role('Leave Approver L1')) {
-			(frm.doc.items || []).forEach(row => {
-				frappe.model.set_value(row.doctype, row.name, "confirm", frm.doc.confirm);
+
+		if (!frm.is_new()) {
+			frm.add_custom_button(__("Cập nhật dữ liệu bất thường"), () => {
+				frappe.call({
+					method: "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.refresh_attendance_confirm",
+					args: { docname: frm.doc.name },
+					freeze: true,
+					freeze_message: __("Đang đối chiếu ca kế hoạch và dữ liệu chấm công..."),
+					callback() {
+						frappe.show_alert({
+							message: __("Đã cập nhật dữ liệu bất thường."),
+							indicator: "green",
+						});
+						frm.reload_doc();
+					},
+				});
+			}, __("Thao tác"));
+		}
+
+		frm.add_custom_button(__("Áp dụng giải trình chung"), () => {
+			const explanation = (frm.doc.bulk_explanation || "").trim();
+			if (!explanation) {
+				frappe.msgprint(__("Vui lòng nhập Giải trình chung trước."));
+				return;
+			}
+			(frm.doc.items || []).forEach((row) => {
+				if (!row.type) {
+					frappe.model.set_value(row.doctype, row.name, "type", explanation);
+				}
 			});
 			refresh_field("items");
 			_update_parent_status(frm);
-			_toggle_save_button(frm);
-			return;
-		}
+		}, __("Thao tác"));
 
-		// Check if the employee (mapped user) is a Leave Approver (existing logic)
-		frappe.call({
-			method: "vinatex.vnt_hr.doctype.vnt_attendance_confirm.vnt_attendance_confirm.is_employee_leave_approver",
-			args: {
-				employee: frm.doc.employee,
-			},
-			callback(res) {
-				const skip_alert = res && res.message === true;
-				let missing_type = false;
-				(frm.doc.items || []).forEach(row => {
-					if (row.type) {
-						frappe.model.set_value(row.doctype, row.name, "confirm", frm.doc.confirm);
-					}
-					else {
-						missing_type = true;
-					}
-				});
-				if (missing_type && !skip_alert) {
-					frappe.show_alert({ message: __('Anh/chị vui lòng điền giải trình cho tất cả các ngày.'), indicator: "orange" }, 5);
+		if ((frm.doc.items || []).some((row) => row.issue_code === "EARLY_EXIT")) {
+			frm.add_custom_button(__("Xử lý các ngày Sm"), () => {
+				const pending_rows = (frm.doc.items || []).filter(
+					(row) => row.issue_code === "EARLY_EXIT" && !row.confirm
+				);
+				if (!pending_rows.length) {
+					frappe.show_alert({
+						message: __("Không còn ngày Sm nào đang chờ HR."),
+						indicator: "blue",
+					});
+					return;
 				}
-				refresh_field("items");
-				_update_parent_status(frm);
-				_toggle_save_button(frm);
-			},
+
+				frappe.prompt([
+					{
+						fieldname: "explanation",
+						fieldtype: "Small Text",
+						label: __("Giải trình / Căn cứ"),
+						reqd: 1,
+					},
+					{
+						fieldname: "decision",
+						fieldtype: "Select",
+						label: __("Kết quả HR"),
+						options: "Đồng ý\nTừ chối",
+						reqd: 1,
+						default: "Đồng ý",
+					},
+				], (values) => {
+					pending_rows.forEach((row) => {
+						row.type = values.explanation;
+						row.confirm = values.decision;
+						row.__unsaved = 1;
+					});
+					frm.dirty();
+					refresh_field("items");
+					_update_parent_status(frm);
+					frm.save().then(() => {
+						frappe.show_alert({
+							message: __("Đã xử lý {0} ngày Sm.", [pending_rows.length]),
+							indicator: "green",
+						}, 6);
+					});
+				}, __("Xử lý các ngày về sớm"), __("Áp dụng"));
+			}, __("Thao tác"));
+		}
+	},
+
+	confirm(frm) {
+		if (!frm.doc.confirm) return;
+		let missing_explanation = 0;
+		(frm.doc.items || []).forEach((row) => {
+			if (!row.type) {
+				missing_explanation += 1;
+				return;
+			}
+			frappe.model.set_value(row.doctype, row.name, "confirm", frm.doc.confirm);
 		});
-	}
+		if (missing_explanation) {
+			frappe.show_alert({
+				message: __(
+					"Có {0} dòng chưa có giải trình nên chưa được xác nhận.",
+					[missing_explanation]
+				),
+				indicator: "orange",
+			}, 6);
+		}
+		refresh_field("items");
+		_update_parent_status(frm);
+	},
+
+	validate(frm) {
+		_update_parent_status(frm);
+	},
+});
+
+
+frappe.ui.form.on("VNT Attendance Confirm Item", {
+	type(frm) {
+		_update_parent_status(frm);
+	},
+	confirm(frm) {
+		_update_parent_status(frm);
+	},
 });
 
 
 function _update_parent_status(frm) {
 	const items = frm.doc.items || [];
-	if (!items || items.length === 0) {
-		frm.doc.status = 'Chờ giải trình';
-		refresh_field('status');
-		return;
+	let status = "Chờ giải trình";
+	if (items.length && items.every((row) => Boolean(row.type))) {
+		status = items.every((row) => Boolean(row.confirm))
+			? "Đã xác nhận"
+			: "Chờ xác nhận";
 	}
-	const allType = items.every(r => Boolean(r.type));
-	const allConfirm = items.every(r => Boolean(r.confirm));
-	if (allConfirm) {
-		frm.doc.status = 'Đã phê duyệt';
-		refresh_field('status');
-		return;
-	}
-	if (allType) {
-		frm.doc.status = 'Chờ phê duyệt';
-		refresh_field('status');
-		return;
-	}
-	frm.doc.status = 'Chờ giải trình';
-	refresh_field('status');
-}
-
-function _toggle_save_button(frm) {
-	const items = frm.doc.items || [];
-	const allType = items.length > 0 && items.every(r => Boolean(r.type));
-	const allConfirm = items.length > 0 && items.every(r => Boolean(r.confirm));
-	const isEmployeeUser = frm.doc && frm.doc.email && frappe.session.user === frm.doc.email;
-	const hasL1 = frappe.user.has_role('Leave Approver L1');
-	const saved = !frm.is_dirty();
-
-	const shouldHide = saved && (
-		(isEmployeeUser && !hasL1 && allType) ||
-		(isEmployeeUser && hasL1 && allConfirm) ||
-		(!isEmployeeUser && hasL1 && allType && allConfirm)
-	);
-
-	if (shouldHide) {
-		frm.disable_save();
-	} else {
-		frm.enable_save();
+	if (frm.doc.status !== status) {
+		frm.doc.status = status;
+		refresh_field("status");
 	}
 }
 
-// Nếu user hiện tại có role Leave Approver L1 thì tự gán họ làm người duyệt
-function set_self_approver(frm) {
-	// if (frm.doc.docstatus !== 0) return;
-	if (!frappe.user.has_role("Leave Approver L1")) return;
 
-	frappe.db
-		.get_value("Employee", { user_id: frappe.session.user }, ["name", "employee_name"])
-		.then(r => {
-			const emp = r && r.message;
-			if (!emp || !emp.name) return;
-			if (frm.doc.approver === emp.name) return;
-			frm.set_value("approver", emp.name);
-			if (emp.employee_name) {
-				frm.set_value("approver_name", emp.employee_name);
-			}
-		});
+function _render_guidance(frm) {
+	const field = frm.fields_dict.guidance_html;
+	if (!field || !field.$wrapper) return;
+	field.$wrapper.html(`
+		<div class="alert alert-info mb-0">
+			<div><strong>${__("Cách xử lý")}</strong></div>
+			<div>${__("1. Mở từng dòng để xem ca kế hoạch, các lần chấm trong ca và ngoài ca.")}</div>
+			<div>${__("2. Nhập Giải trình/Căn cứ, sau đó chọn Đồng ý hoặc Từ chối. Chỉ cần lưu một lần, không có cấp duyệt tiếp theo.")}</div>
+			<div>${__("3. Dấu + là có từ hai lần chấm ngoài ca; +1 là chỉ có một lần chấm ngoài ca và chưa đủ để kết luận một ca làm việc.")}</div>
+			<div>${__("4. Với Về sớm (Sm): Đồng ý sẽ chuyển kết quả bảng công thành X; Từ chối sẽ giữ Sm. Nếu vừa Tr/Sm thì Đồng ý chỉ bỏ Sm và vẫn giữ Tr.")}</div>
+			<div class="mt-2 text-muted">${__("Phiếu này chỉ lưu kết quả kiểm tra của HR, không tự tạo hoặc sửa Checkin/Attendance.")}</div>
+		</div>
+	`);
 }
-
-frappe.ui.form.on('VNT Attendance Confirm Item', {
-	type(frm, cdt, cdn) {
-		_update_parent_status(frm);
-		_toggle_save_button(frm);
-	},
-	confirm(frm, cdt, cdn) {
-		_update_parent_status(frm);
-		_toggle_save_button(frm);
-	}
-});
-
-frappe.ui.form.on("VNT Attendance Confirm", "validate", function(frm) {
-
-});

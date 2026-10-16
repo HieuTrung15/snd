@@ -47,7 +47,7 @@ Job Applicant, Ứng viên tuyển dụng
 Offer Date, Ngày gửi thư mời
 Contract End Date, Ngày hết hạn hợp đồng
 Attendance & Leaves, Chấm công & Nghỉ
-Attendance Device ID (Biometric/RF tag ID), Mã thiêt bị chấm công (Biometric/RF tag ID)
+Attendance Device ID (Biometric/RF tag ID), Mã chấm công
 Applicable Holiday List, Danh sách ngày nghỉ lễ áp dụng
 Default Shift, Ca làm việc mặc định,
 Shift, Ca
@@ -300,7 +300,7 @@ Delete Transactions, Xóa giao dịch
 VNT Desgination Group, Nhóm chức danh
 VNT Decision, Quyết định
 VNT Decision Type, Loại quyết định
-VNT Attendance Confirm, Xác nhận chấm công
+VNT Attendance Confirm,Giải trình chấm công
 VNT Organizational Structure, Cơ cấu tổ chức
 VNT Type Or Explain, Loại giải trình
 VNT Labor Utillzation Report, Tình hình sử dụng lao động
@@ -325,6 +325,7 @@ Interview Feedback,Phản hồi kết quả phỏng vấn
 No of. Positions,Số lượng cần tuyển dụng
 Expected Compensation,Mức lương dự kiến
 Pending,Tạm dừng
+Approved,Đã duyệt
 Open & Approved,Đang mở & Đã duyệt
 Rejected,Từ chối
 Filled,Đã tuyển đủ
@@ -573,3 +574,95 @@ VNT Fabric Technology, Mã công nghệ vải
 VNT Leader Weekly Trip, Lịch tuần của Lãnh đạo
 Actions, Phê duyệt
 Advance Payment Made, Đã thanh toán/tạm ứng
+VNT Shift Registration, Đăng ký ca
+VNT Shift Group, Kíp làm việc
+VNT Daily Attendance, Bảng công ngày
+Bulk Shift Group Transfer,Phân / chuyển kíp hàng loạt
+Bulk Shift Group Transfer ({0} Employees),Phân / chuyển kíp hàng loạt ({0} nhân sự)
+Bulk Shift Group Transfer Preview,Xem trước phân / chuyển kíp hàng loạt
+Confirm Transfer,Xác nhận chuyển Kíp
+Target Shift Group,Kíp mới
+Membership End Date,Ngày kết thúc thuộc kíp
+Generate Shift Assignments Until,Tạo ca kế hoạch đến ngày
+Reason / Note,Lý do / Ghi chú
+Current Group,Kíp hiện tại
+Target Group,Kíp mới
+Automatic assignments to cancel,Số ca tự động sẽ hủy
+Manual assignments preserved,Số ca thủ công được giữ nguyên
+Ready,Sẵn sàng
+Blocked,Bị chặn
+Select at least one Employee.,Hãy chọn ít nhất một nhân sự.
+Checking memberships and future assignments...,Đang kiểm tra kíp và ca kế hoạch tương lai...
+Starting bulk Shift Group transfer...,Đang bắt đầu phân / chuyển kíp hàng loạt...
+Showing the first 100 rows.,Chỉ hiển thị 100 dòng đầu tiên.
+"Transfer {0} Employee(s), cancel {1} safe automatic assignment(s), preserve all manual assignments, and regenerate the target schedule?","Chuyển {0} nhân sự, hủy {1} ca tự động an toàn, giữ nguyên toàn bộ ca thủ công và tạo lại lịch của kíp mới?"
+Create target membership,Tạo thông tin thuộc Kíp mới
+Keep current target membership,Giữ thông tin Kíp đích hiện có
+Extend target membership,Gia hạn thông tin Kíp đích
+Close old membership and create target membership,Kết thúc Kíp cũ và tạo Kíp mới
+Inactivate same-day membership and create target membership,Vô hiệu thông tin Kíp cùng ngày và tạo Kíp mới
+The transfer was queued. You will be notified when it finishes.,Yêu cầu chuyển Kíp đã được đưa vào hàng đợi. Hệ thống sẽ thông báo khi hoàn tất.
+Shift Assignment {0} is no longer an eligible automatic assignment.,Ca kế hoạch {0} không còn là ca tự động đủ điều kiện xử lý.
+Shift generation reported errors. The bulk transfer was rolled back; review Error Log.,Quá trình sinh ca có lỗi. Toàn bộ giao dịch chuyển Kíp đã được hoàn tác; hãy kiểm tra Error Log.
+Multiple active Shift Group Assignments overlap the effective date.,Có nhiều thông tin Kíp đang hiệu lực trùng tại ngày áp dụng.
+Future/overlapping membership must be resolved first: {0},Phải xử lý thông tin Kíp tương lai hoặc bị trùng trước: {0}
+Employee Company differs from the target Shift Group Company.,Công ty của nhân sự khác với Công ty của Kíp mới.
+Manual Shift Assignment {0} is linked to the current Shift Group and must be reviewed first.,Ca kế hoạch thủ công {0} đang gắn với Kíp hiện tại và phải được kiểm tra trước.
+Automatic Shift Assignment {0} has Checkin/Attendance on {1}.,Ca kế hoạch tự động {0} đã có Checkin/Attendance vào {1}.
+Employee not found: {0},Không tìm thấy nhân sự: {0}
+Only active Employees can be transferred: {0},Chỉ được chuyển Kíp cho nhân sự đang làm việc: {0}
+Shift management schema is not installed.,Cấu trúc dữ liệu quản lý ca/Kíp chưa được cài đặt.
+Employees must be a list.,Danh sách nhân sự không hợp lệ.
+A single transfer cannot exceed {0} Employees.,Mỗi lần không được chuyển quá {0} nhân sự.
+Bulk transfer cannot be backdated. Use today or a future date.,Không được chuyển Kíp lùi ngày. Hãy chọn hôm nay hoặc một ngày tương lai.
+Effective Date cannot be after Membership End Date.,Ngày hiệu lực không được sau ngày kết thúc thuộc Kíp.
+Membership period cannot exceed {0} days.,Khoảng thuộc Kíp không được vượt quá {0} ngày.
+Generate Until must be within the membership period.,Ngày sinh ca đến phải nằm trong khoảng thuộc Kíp.
+Generate Until was adjusted to stay within the membership period.,Ngày sinh ca đến đã được điều chỉnh để nằm trong khoảng thuộc Kíp.
+Generation period cannot exceed {0} days.,Khoảng sinh ca không được vượt quá {0} ngày.
+Target Shift Group does not exist.,Kíp mới không tồn tại.
+Target Shift Group is disabled.,Kíp mới đang bị vô hiệu hóa.
+Effective Date is before the target Shift Group period.,Ngày hiệu lực nằm trước thời gian áp dụng của Kíp mới.
+Membership End Date is after the target Shift Group period.,Ngày kết thúc thuộc Kíp nằm sau thời gian áp dụng của Kíp mới.
+Reason/Note is required for audit.,Bắt buộc nhập lý do/ghi chú để kiểm tra lịch sử.
+Bulk transfer has {0} blocked Employee(s):<br>{1},Có {0} nhân sự bị chặn khi chuyển Kíp:<br>{1}
+You do not have permission to transfer these Employees: {0},Bạn không có quyền chuyển Kíp các nhân sự sau: {0}
+New Checkin/Attendance data appeared during the transfer. The whole batch was rolled back: {0},Có dữ liệu Checkin/Attendance mới phát sinh trong lúc chuyển Kíp. Toàn bộ giao dịch đã được hoàn tác: {0}
+Employee already has Checkin/Attendance in the transfer period: {0}.,Nhân sự đã có Checkin/Attendance trong khoảng chuyển Kíp: {0}.
+ and {0} more, và thêm {0} ngày khác
+Transfer failed.,Chuyển Kíp không thành công.
+The transfer was queued.,Yêu cầu chuyển Kíp đã được đưa vào hàng đợi.
+Transfer completed for {0} Employee(s).,Đã chuyển Kíp thành công cho {0} nhân sự.
+Automatic assignments cancelled,Ca tự động đã hủy
+New automatic assignments created,Ca tự động mới đã tạo
+Off days,Ngày nghỉ Kíp
+Technical details,Chi tiết kỹ thuật
+Not Created,Chưa tạo Attendance
+Not Required (Shift OFF),Không yêu cầu (Nghỉ Kíp)
+Submitted Attendance status. Not Created means Checkins may exist but no Attendance record exists yet.,Trạng thái từ Attendance đã trình. Chưa tạo Attendance nghĩa là có thể đã có Checkin nhưng chưa có bản ghi Attendance.
+Present,Có mặt,VNT Daily Attendance
+Absent,Vắng mặt,VNT Daily Attendance
+On Leave,Nghỉ phép,VNT Daily Attendance
+Half Day,Nửa ngày,VNT Daily Attendance
+Work From Home,Làm việc tại nhà,VNT Daily Attendance
+Work Trip,Đi công tác,VNT Daily Attendance
+Not Created,Chưa tạo Attendance,VNT Daily Attendance
+Not Required (Shift OFF),Không yêu cầu (Nghỉ Kíp),VNT Daily Attendance
+Draft Attendance,Attendance nháp,VNT Daily Attendance
+VNT Shift Group Assignment,Lịch sử phân kíp
+VNT Shift Group Schedule,Lịch tuần của kíp
+Shift Management,Quản lý ca/kíp
+Preview Shift Assignments,Xem trước ca kế hoạch
+Generate Shift Assignments,Tạo ca kế hoạch
+Sync Holiday List,Đồng bộ danh sách ngày nghỉ
+Review and Sync,Kiểm tra và đồng bộ
+Shift Assignment Result,Kết quả tạo ca kế hoạch
+Monday,Thứ Hai
+Tuesday,Thứ Ba
+Wednesday,Thứ Tư
+Thursday,Thứ Năm
+Friday,Thứ Sáu
+Saturday,Thứ Bảy
+Sunday,Chủ Nhật
+Inactive,Ngừng hiệu lực
+Legacy,Dữ liệu cũ

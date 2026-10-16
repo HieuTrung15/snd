@@ -221,6 +221,86 @@
 			],
 		},
 
+		"1.2 Công": {
+			hero: {
+				icon: "calendar-check",
+				title: "Trung tâm Ca/Kíp & Chấm công",
+				subtitle:
+					"Thiết lập ca, phân/chuyển kíp, tạo ca kế hoạch và đối chiếu bảng công tại một nơi.",
+			},
+			items: {
+				"Kíp làm việc": {
+					i: "users-round",
+					s: "Khai báo lịch tuần của từng kíp",
+				},
+				"Loại ca làm việc": {
+					i: "calendar",
+					s: "Khai báo giờ vào, giờ ra của ca",
+				},
+				"Danh sách ngày nghỉ": {
+					i: "calendar-check",
+					s: "Ngày nghỉ dùng khi sinh ca kế hoạch",
+				},
+				"Phân / chuyển kíp hàng loạt": {
+					i: "shuffle",
+					s: "Chọn nhiều nhân sự để phân hoặc đổi kíp",
+				},
+				"Lịch sử phân kíp": {
+					i: "share-2",
+					s: "Khoảng thời gian nhân sự thuộc từng kíp",
+				},
+				"Ca kế hoạch": {
+					i: "clipboard-list",
+					s: "Ca làm cụ thể của nhân sự theo ngày",
+				},
+				"Dữ liệu máy chấm công": {
+					i: "contact-card",
+					s: "Các lượt vào/ra nhận từ máy chấm công",
+				},
+				"Xác nhận chấm công bất thường": {
+					i: "shield-alert",
+					s: "Xử lý ngày công cần giải trình hoặc phê duyệt",
+				},
+				"Bảng công ngày": {
+					i: "calendar-check",
+					s: "Đối chiếu ca, giờ vào/ra và trạng thái từng ngày",
+				},
+				"Chi tiết chấm công không theo ca": {
+					i: "clipboard-list",
+					s: "Chi tiết các lượt vào/ra và số giờ theo ngày",
+				},
+				"Tổng hợp chấm công tháng": {
+					i: "file-chart",
+					s: "Bảng ký hiệu công theo từng nhân sự trong tháng",
+				},
+				"Kết quả chấm công": {
+					i: "circle-check-big",
+					s: "Các bản ghi Attendance đã được tạo",
+				},
+			},
+			panels: {
+				"Thiết lập ca/kíp": {
+					eyebrow: "Danh mục nền tảng",
+					desc: "Khai báo loại ca, lịch tuần của kíp và ngày nghỉ áp dụng.",
+					layout: "split",
+					cols: 2,
+				},
+				"Phân và chuyển kíp": {
+					eyebrow: "Vận hành ca/kíp",
+					desc: "Phân/chuyển kíp hàng loạt, quản lý lịch sử và ca kế hoạch theo ngày.",
+					layout: "split",
+					cols: 2,
+				},
+				"Bảng công & đối chiếu": {
+					eyebrow: "Dữ liệu chấm công",
+					desc: "Kiểm tra dữ liệu máy chấm công, xác nhận bất thường và tổng hợp ngày/tháng.",
+					layout: "split",
+					cols: 2,
+				},
+			},
+			rows: [["Thiết lập ca/kíp"], ["Phân và chuyển kíp"], ["Bảng công & đối chiếu"]],
+		},
+
 		"1.3 Hồ sơ": {
 			hero: {
 				icon: "id-card",

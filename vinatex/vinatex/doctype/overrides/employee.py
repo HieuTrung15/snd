@@ -13,6 +13,7 @@ from erpnext.setup.doctype.employee.employee import (
 
 # sửa lấy abbr theo company
 EMPLOYEE_NAME_PADDING = 5
+CURRENT_DIRECTOR_DESIGNATION = "Giám đốc"
 
 
 def _get_custom_abbr(doc) -> str:
@@ -104,6 +105,9 @@ class VntEmployee(Employee):
     def after_insert(self):
         super().after_insert()
 
+    def before_save(self):
+        self._append_contract_when_employment_type_changes()
+
     def validate_date(self):
         """Validate Employee dates without comparing joining and retirement dates."""
         if self.date_of_birth and getdate(self.date_of_birth) > getdate(today()):
@@ -141,7 +145,6 @@ class VntEmployee(Employee):
 
         self.date_of_retirement = get_retirement_date(self.date_of_birth, self.gender)
 
-
     def _validate_contract_terms(self):
         """Chỉ cho nhập số trong trường 'Thời hạn HĐ (tháng)' của bảng custom_vnt_contract."""
         for row in self.get("custom_vnt_contract") or []:
@@ -155,7 +158,67 @@ class VntEmployee(Employee):
                     frappe._("Dòng {0}: Thời hạn HĐ (tháng) phải là số nguyên.").format(row.idx),
                     title=frappe._("Lỗi dữ liệu"),
                 )
-        
+
+    def _append_contract_when_employment_type_changes(self):
+        """Append the current contract snapshot when Employment Type changes."""
+        previous = self.get_doc_before_save()
+        previous_employment_type = previous.get("employment_type") if previous else None
+        employment_type = self.get("employment_type")
+
+        if not employment_type or employment_type == previous_employment_type:
+            return
+
+        director_name = _get_current_director_name(self.get("company"))
+
+        # The form and contract reports expect at most one current contract.
+        for row in self.get("custom_vnt_contract") or []:
+            if row.get("validity"):
+                row.validity = 0
+
+        self.append(
+            "custom_vnt_contract",
+            {
+                "type": employment_type,
+                "from_date": self.get("custom_appointment_date"),
+                "to_date": self.get("contract_end_date"),
+                "job_title": self.get("designation"),
+                "employee_name": director_name,
+                "validity": 1,
+            },
+        )
+
+
+def _get_current_director_name(company: str | None) -> str:
+    """Return the active director's display name for the Employee company."""
+    if not company:
+        frappe.throw(frappe._("Vui lòng chọn Công ty trước khi lưu Loại HĐ."))
+
+    directors = frappe.get_all(
+        "Employee",
+        filters={
+            "company": company,
+            "status": "Active",
+            "designation": CURRENT_DIRECTOR_DESIGNATION,
+        },
+        fields=["name", "employee_name"],
+        order_by="name asc",
+        limit=2,
+    )
+    if not directors:
+        frappe.throw(
+            frappe._("Không tìm thấy Giám đốc đang hoạt động của công ty {0}.").format(
+                frappe.bold(company)
+            )
+        )
+    if len(directors) > 1:
+        frappe.throw(
+            frappe._("Công ty {0} có nhiều hơn một Giám đốc đang hoạt động.").format(
+                frappe.bold(company)
+            )
+        )
+
+    return directors[0].employee_name
+
 
 @frappe.whitelist()
 def get_approver_by_department(department):
