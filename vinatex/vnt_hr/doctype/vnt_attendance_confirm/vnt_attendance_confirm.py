@@ -111,9 +111,12 @@ def make_attendance_confirm(
 		"Số ngày bất thường": 0,
 		"Ngày OFF có chấm công": 0,
 		"Ngày làm việc chỉ có chấm công ngoài ca": 0,
+		"Ngày làm việc không có chấm công": 0,
+		"Ngày làm việc có chấm nhưng không xác định được vào/ra": 0,
 		"Ngày làm việc thiếu giờ vào": 0,
 		"Ngày làm việc thiếu giờ ra": 0,
 		"Ngày làm việc về sớm": 0,
+		"Ngày làm việc có chấm ngoài ca": 0,
 		"Số phiếu tạo mới": 0,
 		"Số phiếu cập nhật": 0,
 	}
@@ -235,13 +238,31 @@ def _detect_confirmation_issue(*, window, planned_logs, outside_logs, day_type):
 		)
 
 	if not planned_logs:
-		return None
+		return _issue_payload(
+			code="WORKDAY_NO_CHECKIN",
+			label="Ngày làm việc không có chấm công",
+			question="Xác nhận lý do nhân sự không có dữ liệu chấm công trong ngày?",
+			counter_key="Ngày làm việc không có chấm công",
+			window=window,
+			planned_logs=planned_logs,
+			outside_logs=outside_logs,
+		)
 
 	has_in, has_out = get_log_presence(window, planned_logs)
 	if has_in and has_out:
 		details = calculate_attendance_details(
 			window, planned_logs, respect_marking_flags=False
 		)
+		if outside_logs:
+			return _issue_payload(
+				code="WORKDAY_OVERTIME",
+				label="Ngày làm việc có chấm công ngoài ca",
+				question="Xác nhận thời gian chấm ngoài ca có được công nhận làm tăng ca?",
+				counter_key="Ngày làm việc có chấm ngoài ca",
+				window=window,
+				planned_logs=planned_logs,
+				outside_logs=outside_logs,
+			)
 		# Sm is a complete work pair whose OUT punch is earlier than the
 		# planned end minus the Shift Type grace period.  It is different from
 		# a missing punch: HR may waive only the early-exit exception while the
@@ -261,9 +282,15 @@ def _detect_confirmation_issue(*, window, planned_logs, outside_logs, day_type):
 			)
 		return None
 	if not has_in and not has_out:
-		# Strict shifts can receive logs without IN/OUT. Keep that separate from
-		# the three approved business cases until HR defines its handling.
-		return None
+		return _issue_payload(
+			code="WORKDAY_INVALID_CHECKINS",
+			label="Có chấm trong ca nhưng không xác định được giờ vào/ra",
+			question="Xác nhận nhân sự có thực sự đi làm trong ngày này?",
+			counter_key="Ngày làm việc có chấm nhưng không xác định được vào/ra",
+			window=window,
+			planned_logs=planned_logs,
+			outside_logs=outside_logs,
+		)
 	if not has_in:
 		return _issue_payload(
 			code="MISSING_IN",

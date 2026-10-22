@@ -25,6 +25,22 @@ SENIORITY_BUCKETS = (
 	"Trên 10 năm",
 )
 GENERAL_EDUCATION_MISSING_LABEL = "Chưa cập nhật"
+DESIGNATION_GROUP_FALLBACKS = {
+	"Giám đốc": "Lãnh đạo Chi nhánh",
+	"Phó giám đốc": "Lãnh đạo Chi nhánh",
+	"Trưởng phòng": "Quản lý cấp trung",
+	"Phó phòng": "Quản lý cấp trung",
+	"Trưởng ca": "Quản lý cấp cơ sở",
+	"Phó trưởng ca": "Quản lý cấp cơ sở",
+	"Trưởng công đoạn": "Quản lý cấp cơ sở",
+	"Phó công đoạn": "Quản lý cấp cơ sở",
+	"Nhân viên văn phòng": "Nhân viên",
+	"Thủ kho": "Nhân viên",
+	"Lái xe": "Nhân viên",
+	"Nhân viên bếp ăn": "Nhân viên",
+	"Công nhân công đoạn": "Công nhân",
+	"Công nhân đi ca": "Công nhân",
+}
 
 
 def _resolve_as_of_date(value=None):
@@ -177,12 +193,18 @@ def get_hr_dashboard_snapshot(as_of_date=None, branches=None, branch=None, compa
 			SELECT
 				e.name,
 				e.branch,
+				COALESCE(
+					NULLIF(TRIM(d.department_name), ''),
+					NULLIF(TRIM(e.department), '')
+				) AS department,
 				e.gender,
 				e.employment_type,
 				e.custom_designation_group,
+				e.designation,
 				TIMESTAMPDIFF(YEAR, e.date_of_birth, %(as_of_date)s) AS age,
 				TIMESTAMPDIFF(MONTH, e.date_of_joining, %(as_of_date)s) AS seniority_months
 			FROM `tabEmployee` e
+			LEFT JOIN `tabDepartment` d ON d.name = e.department
 			WHERE {" AND ".join(conditions)}
 		""",
 		params,
@@ -191,6 +213,8 @@ def get_hr_dashboard_snapshot(as_of_date=None, branches=None, branch=None, compa
 
 	counts = {
 		"designation": Counter(),
+		"designation_group": Counter(),
+		"department": Counter(),
 		"age": Counter(),
 		"seniority": Counter(),
 		"employment_type": Counter(),
@@ -199,7 +223,16 @@ def get_hr_dashboard_snapshot(as_of_date=None, branches=None, branch=None, compa
 	}
 	ages = []
 	for employee in employees:
-		counts["designation"][employee.custom_designation_group or "Chưa xác định"] += 1
+		designation = str(employee.designation or "").strip() or "Chưa xác định"
+		designation_group = (
+			str(employee.custom_designation_group or "").strip()
+			or DESIGNATION_GROUP_FALLBACKS.get(designation)
+			or "Chưa xác định"
+		)
+		department = str(employee.department or "").strip() or "Chưa xác định"
+		counts["designation"][designation] += 1
+		counts["designation_group"][designation_group] += 1
+		counts["department"][department] += 1
 		counts["employment_type"][employee.employment_type or "Chưa xác định"] += 1
 		counts["branch"][employee.branch or "Chưa xác định"] += 1
 		counts["gender"][employee.gender or "Chưa xác định"] += 1
@@ -234,6 +267,8 @@ def get_hr_dashboard_snapshot(as_of_date=None, branches=None, branch=None, compa
 		},
 		"dimensions": {
 			"designation": _chart_data(counts["designation"]),
+			"designation_group": _chart_data(counts["designation_group"]),
+			"department": _chart_data(counts["department"]),
 			"age": _chart_data(counts["age"], AGE_BUCKETS),
 			"seniority": _chart_data(counts["seniority"], SENIORITY_BUCKETS),
 			"education": _chart_data(general_education_counts),

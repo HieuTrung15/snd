@@ -18,6 +18,11 @@ from vinatex.vnt_hr.shift_management.shift_group_transfer_service import (
 COMPANY = "Nhà máy Sợi Vinatex Nam Định"
 EFFECTIVE_FROM = getdate("2026-10-14")
 EFFECTIVE_TO = getdate("2026-12-31")
+# Masters are valid for the whole year; memberships start on EFFECTIVE_FROM.
+GROUP_EFFECTIVE_FROM = getdate("2026-01-01")
+# Employees whose schedule was replaced by special_shift_correction_2026 from this date.
+CORRECTION_EFFECTIVE_FROM = getdate("2026-10-21")
+SUPERSEDED_EMPLOYEES = {"NMSVNĐ00159"}
 
 SPECIAL_SHIFT_GROUPS = {
 	"ĐB Điện - Nghỉ T3": {
@@ -99,7 +104,7 @@ def setup_special_shift_groups() -> dict:
 				"shift_group_name": group_name,
 				"company": COMPANY,
 				"holiday_list": definition["holiday_list"],
-				"effective_from": EFFECTIVE_FROM,
+				"effective_from": GROUP_EFFECTIVE_FROM,
 				"effective_to": EFFECTIVE_TO,
 				"description": "Lịch đặc biệt 2026 đã được đối chiếu với bảng phân kíp của HR.",
 				"schedule": expected_schedule,
@@ -115,7 +120,7 @@ def preview_special_shift_rollout() -> dict:
 	"""Preview every one-person transfer without changing employee data."""
 	_validate_dependencies(require_groups=True)
 	previews = []
-	for employee, (employee_name, shift_group) in SPECIAL_EMPLOYEES.items():
+	for employee, (employee_name, shift_group) in _pending_employees().items():
 		_validate_employee(employee, employee_name)
 		request = _request(employee, shift_group)
 		preview = _build_preview(request)
@@ -140,13 +145,13 @@ def execute_special_shift_rollout() -> dict:
 		frappe.throw(_("Special shift rollout preview is blocked; nothing was changed."))
 
 	results = []
-	for employee, (employee_name, shift_group) in SPECIAL_EMPLOYEES.items():
+	for employee, (employee_name, shift_group) in _pending_employees().items():
 		result = _run_bulk_shift_group_transfer(
 			_request(employee, shift_group), requested_by=frappe.session.user
 		)
 		results.append({"employee": employee, "employee_name": employee_name, **result})
 
-	for employee, (_employee_name, shift_group) in SPECIAL_EMPLOYEES.items():
+	for employee, (_employee_name, shift_group) in _pending_employees().items():
 		frappe.db.set_value(
 			"Employee",
 			employee,
@@ -189,7 +194,12 @@ def verify_special_shift_rollout() -> dict:
 			["custom_working_schedule_type", "custom_shift_group"],
 			as_dict=True,
 		)
-		if employee_row.custom_working_schedule_type != "Lịch đặc biệt" or employee_row.custom_shift_group != shift_group:
+		superseded = employee in SUPERSEDED_EMPLOYEES
+		period_end = CORRECTION_EFFECTIVE_FROM - timedelta(days=1) if superseded else EFFECTIVE_TO
+		if not superseded and (
+			employee_row.custom_working_schedule_type != "Lịch đặc biệt"
+			or employee_row.custom_shift_group != shift_group
+		):
 			mismatches.append(
 				{
 					"employee": employee,
@@ -204,7 +214,7 @@ def verify_special_shift_rollout() -> dict:
 				"employee": employee,
 				"shift_group": shift_group,
 				"from_date": EFFECTIVE_FROM,
-				"to_date": EFFECTIVE_TO,
+				"to_date": period_end,
 				"status": "Active",
 			},
 			pluck="name",
@@ -218,7 +228,7 @@ def verify_special_shift_rollout() -> dict:
 			"Shift Assignment",
 			filters={
 				"employee": employee,
-				"start_date": ["between", [EFFECTIVE_FROM, EFFECTIVE_TO]],
+				"start_date": ["between", [EFFECTIVE_FROM, period_end]],
 				"docstatus": ["<", 2],
 			},
 			fields=[
@@ -237,7 +247,7 @@ def verify_special_shift_rollout() -> dict:
 			by_date.setdefault(row.start_date, []).append(row)
 
 		work_date = EFFECTIVE_FROM
-		while work_date <= EFFECTIVE_TO:
+		while work_date <= period_end:
 			expected_shift = definition["schedule"][work_date.weekday()]
 			actual_rows = by_date.get(work_date, [])
 			if expected_shift is None:
@@ -289,6 +299,10 @@ def verify_special_shift_rollout() -> dict:
 		"mismatch_count": len(mismatches),
 		"mismatches": mismatches[:100],
 	}
+
+
+def _pending_employees():
+	return {key: value for key, value in SPECIAL_EMPLOYEES.items() if key not in SUPERSEDED_EMPLOYEES}
 
 
 def _request(employee, shift_group):
@@ -347,7 +361,7 @@ def _compare_group(group_name, definition, expected_schedule):
 	for fieldname, expected in (
 		("company", COMPANY),
 		("holiday_list", definition["holiday_list"]),
-		("effective_from", EFFECTIVE_FROM),
+		("effective_from", GROUP_EFFECTIVE_FROM),
 		("effective_to", EFFECTIVE_TO),
 	):
 		value = group.get(fieldname)

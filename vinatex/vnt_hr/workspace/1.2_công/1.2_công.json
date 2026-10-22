@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"vnt-work-setup\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Thi\u1ebft l\u1eadp ca/k\u00edp</span>\",\"col\":12}},{\"id\":\"vnt-work-group\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"K\u00edp l\u00e0m vi\u1ec7c\",\"col\":4}},{\"id\":\"vnt-work-shift-type\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Lo\u1ea1i ca l\u00e0m vi\u1ec7c\",\"col\":4}},{\"id\":\"vnt-work-holiday\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Danh s\u00e1ch ng\u00e0y ngh\u1ec9\",\"col\":4}},{\"id\":\"vnt-work-operate\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Ph\u00e2n v\u00e0 chuy\u1ec3n k\u00edp</span>\",\"col\":12}},{\"id\":\"vnt-work-bulk-transfer\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Ph\u00e2n / chuy\u1ec3n k\u00edp h\u00e0ng lo\u1ea1t\",\"col\":4}},{\"id\":\"vnt-work-membership\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"L\u1ecbch s\u1eed ph\u00e2n k\u00edp\",\"col\":4}},{\"id\":\"vnt-work-plan\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Ca k\u1ebf ho\u1ea1ch\",\"col\":4}},{\"id\":\"vnt-work-attendance\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">B\u1ea3ng c\u00f4ng &amp; \u0111\u1ed1i chi\u1ebfu</span>\",\"col\":12}},{\"id\":\"vnt-work-checkin\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"D\u1eef li\u1ec7u m\u00e1y ch\u1ea5m c\u00f4ng\",\"col\":4}},{\"id\":\"vnt-work-confirm\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"X\u00e1c nh\u1eadn ch\u1ea5m c\u00f4ng b\u1ea5t th\u01b0\u1eddng\",\"col\":4}},{\"id\":\"vnt-work-detail\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Chi ti\u1ebft ch\u1ea5m c\u00f4ng kh\u00f4ng theo ca\",\"col\":4}},{\"id\":\"vnt-work-monthly\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"T\u1ed5ng h\u1ee3p ch\u1ea5m c\u00f4ng th\u00e1ng\",\"col\":4}},{\"id\":\"vnt-work-result\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"K\u1ebft qu\u1ea3 ch\u1ea5m c\u00f4ng\",\"col\":4}}]",
+ "content": "[{\"id\":\"vnt-work-setup\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Thi\u1ebft l\u1eadp ca/k\u00edp</span>\",\"col\":12}},{\"id\":\"vnt-work-group\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"K\u00edp l\u00e0m vi\u1ec7c\",\"col\":4}},{\"id\":\"vnt-work-shift-type\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Lo\u1ea1i ca l\u00e0m vi\u1ec7c\",\"col\":4}},{\"id\":\"vnt-work-holiday\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Danh s\u00e1ch ng\u00e0y ngh\u1ec9\",\"col\":4}},{\"id\":\"vnt-work-operate\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Ph\u00e2n v\u00e0 chuy\u1ec3n k\u00edp</span>\",\"col\":12}},{\"id\":\"vnt-work-bulk-transfer\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Ph\u00e2n / chuy\u1ec3n k\u00edp h\u00e0ng lo\u1ea1t\",\"col\":4}},{\"id\":\"vnt-work-membership\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"L\u1ecbch s\u1eed ph\u00e2n k\u00edp\",\"col\":4}},{\"id\":\"vnt-work-plan\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Ca k\u1ebf ho\u1ea1ch\",\"col\":4}},{\"id\":\"vnt-work-attendance\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">B\u1ea3ng c\u00f4ng &amp; \u0111\u1ed1i chi\u1ebfu</span>\",\"col\":12}},{\"id\":\"vnt-work-checkin\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"D\u1eef li\u1ec7u m\u00e1y ch\u1ea5m c\u00f4ng\",\"col\":4}},{\"id\":\"vnt-work-confirm\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"X\u00e1c nh\u1eadn ch\u1ea5m c\u00f4ng b\u1ea5t th\u01b0\u1eddng\",\"col\":4}},{\"id\":\"vnt-work-detail\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Chi ti\u1ebft ch\u1ea5m c\u00f4ng kh\u00f4ng theo ca\",\"col\":4}},{\"id\":\"vnt-work-monthly\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"T\u1ed5ng h\u1ee3p ch\u1ea5m c\u00f4ng th\u00e1ng\",\"col\":4}},{\"id\":\"vnt-work-monthly-attendance\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"B\u00e1o c\u00e1o c\u00f4ng h\u00e0ng th\u00e1ng\",\"col\":4}},{\"id\":\"vnt-work-monthly-overtime\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"B\u00e1o c\u00e1o t\u0103ng ca h\u00e0ng th\u00e1ng\",\"col\":4}},{\"id\":\"vnt-work-result\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"K\u1ebft qu\u1ea3 ch\u1ea5m c\u00f4ng\",\"col\":4}}]",
  "creation": "2026-10-08 13:27:56.375055",
  "custom_blocks": [],
  "docstatus": 0,
@@ -94,6 +94,22 @@
    "doc_view": "List",
    "label": "T\u1ed5ng h\u1ee3p ch\u1ea5m c\u00f4ng th\u00e1ng",
    "link_to": "T\u1ed5ng h\u1ee3p ch\u1ea5m c\u00f4ng th\u00e1ng",
+   "report_ref_doctype": "Attendance",
+   "type": "Report"
+  },
+  {
+   "color": "Cyan",
+   "doc_view": "List",
+   "label": "B\u00e1o c\u00e1o c\u00f4ng h\u00e0ng th\u00e1ng",
+   "link_to": "B\u00e1o c\u00e1o c\u00f4ng h\u00e0ng th\u00e1ng",
+   "report_ref_doctype": "Attendance",
+   "type": "Report"
+  },
+  {
+   "color": "Cyan",
+   "doc_view": "List",
+   "label": "B\u00e1o c\u00e1o t\u0103ng ca h\u00e0ng th\u00e1ng",
+   "link_to": "B\u00e1o c\u00e1o t\u0103ng ca h\u00e0ng th\u00e1ng",
    "report_ref_doctype": "Attendance",
    "type": "Report"
   },

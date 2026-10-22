@@ -1,8 +1,8 @@
 {
  "actions": [],
- "allow_rename": 0,
+ "allow_rename": 1,
  "autoname": "field:shift_group_name",
- "creation": "2026-10-06 00:00:00.000000",
+ "creation": "2026-10-06 00:00:00",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -23,7 +23,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Tên kíp",
+   "label": "T\u00ean k\u00edp",
    "reqd": 1,
    "unique": 1
   },
@@ -32,14 +32,14 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Công ty",
+   "label": "C\u00f4ng ty",
    "options": "Company",
    "reqd": 1
   },
   {
    "fieldname": "holiday_list",
    "fieldtype": "Link",
-   "label": "Danh sách ngày nghỉ",
+   "label": "Danh s\u00e1ch ng\u00e0y ngh\u1ec9",
    "options": "Holiday List"
   },
   {
@@ -50,35 +50,35 @@
    "fieldname": "effective_from",
    "fieldtype": "Date",
    "in_standard_filter": 1,
-   "label": "Hiệu lực từ"
+   "label": "Hi\u1ec7u l\u1ef1c t\u1eeb"
   },
   {
    "fieldname": "effective_to",
    "fieldtype": "Date",
    "in_standard_filter": 1,
-   "label": "Hiệu lực đến"
+   "label": "Hi\u1ec7u l\u1ef1c \u0111\u1ebfn"
   },
   {
    "default": "0",
    "fieldname": "disabled",
    "fieldtype": "Check",
    "in_list_view": 1,
-   "label": "Ngừng sử dụng"
+   "label": "Ng\u1eebng s\u1eed d\u1ee5ng"
   },
   {
    "fieldname": "description",
    "fieldtype": "Small Text",
-   "label": "Mô tả"
+   "label": "M\u00f4 t\u1ea3"
   },
   {
    "fieldname": "schedule_section",
    "fieldtype": "Section Break",
-   "label": "Lịch tuần"
+   "label": "L\u1ecbch tu\u1ea7n"
   },
   {
    "fieldname": "schedule",
    "fieldtype": "Table",
-   "label": "Lịch kíp",
+   "label": "L\u1ecbch k\u00edp",
    "options": "VNT Shift Group Schedule",
    "reqd": 1
   }
@@ -90,7 +90,7 @@
    "link_fieldname": "shift_group"
   }
  ],
- "modified": "2026-10-06 00:00:00.000000",
+ "modified": "2026-10-19 21:40:42.053327",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "VNT Shift Group",

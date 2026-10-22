@@ -140,6 +140,13 @@ class TestMonthlyAttendanceSymbols(TestCase):
 		self.assertEqual(row["tot_missing_out"], 1)
 		self.assertEqual(row["tot_pending_confirmation"], 1)
 
+	def test_no_checkin_confirmation_applies_to_plain_workday_absence(self):
+		review = _build_confirmation_review(
+			frappe._dict(issue_code="WORKDAY_NO_CHECKIN", evidence_code="", confirm="")
+		)
+		self.assertTrue(_confirmation_applies("V", "work", review))
+		self.assertFalse(_confirmation_applies("V/+", "work", review))
+
 	def test_hr_approval_decides_workday_as_present(self):
 		row = _totals_row()
 		review = _build_confirmation_review(
@@ -199,6 +206,22 @@ class TestMonthlyAttendanceSymbols(TestCase):
 		self.assertEqual(row["tot_present"], 1)
 		self.assertEqual(row["tot_early"], 1)
 		self.assertEqual(row["tot_pending_confirmation"], 1)
+
+	def test_pending_workday_overtime_keeps_normal_presence(self):
+		review = _build_confirmation_review(
+			frappe._dict(
+				issue_code="WORKDAY_OVERTIME",
+				evidence_code="+",
+				confirm="",
+			)
+		)
+		self.assertTrue(_confirmation_applies("X/+", "work", review))
+		row = _totals_row()
+		_apply_totals(row, "X/+", review)
+		self.assertEqual(row["tot_present"], 1)
+		self.assertEqual(row["tot_overtime"], 1)
+		self.assertEqual(row["tot_pending_confirmation"], 1)
+		self.assertEqual(row["tot_absent"], 0)
 
 	def test_approved_early_exit_becomes_on_time(self):
 		review = _build_confirmation_review(

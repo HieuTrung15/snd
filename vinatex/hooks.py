@@ -5,7 +5,7 @@ app_description = "vinatex"
 app_email = "sonph@vinatex.com.vn"
 app_license = "mit"
 from frappe import conf
-version = conf.get("asset_version") or 1
+version = conf.get("asset_version") or 2
 # Apps
 # ------------------
 
@@ -38,7 +38,7 @@ app_include_js = [
 	f"/assets/vinatex/js/report_actions_override.js?v={version}",
 	f"/assets/vinatex/js/fullWidth.js?v={version}",
     f"/assets/vinatex/js/workspace_redirects.js?v={version}",
-    f"/assets/vinatex/js/workspace_hub.js?v={version}-work-hub-20261008",
+    f"/assets/vinatex/js/workspace_hub.js?v={version}-work-hub-20261022-no-ownership",
     f"/assets/vinatex/js/custom_notification.js?v={version}",
     f"/assets/vinatex/js/hide_id_column.js?v={version}",
     f"/assets/vinatex/js/hide_connections.js?v={version}",
@@ -288,9 +288,12 @@ scheduler_events = {
             "vinatex.vinatex.doctype.overrides.allocate_leave.allocate_leave"
         ],
 		# Đồng bộ dữ liệu chấm công (Chạy định kỳ sáng và đêm)
-		"*/30 9-10 * * *": [
+		"*/10 7 * * *": [
 			"vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_morning",
 		],
+		# "0 8 * * *": [
+		# 	"vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_morning",
+		# ],
         # Chạy từ 21:00 đến 23:00, mỗi 1 tiếng.
         "0 21-23 * * *": [
             "vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_evening_first",

@@ -85,6 +85,17 @@ class TestVNTAttendanceConfirm(TestCase):
 		)
 		self.assertEqual(issue.issue_code, "WORKDAY_OUTSIDE_ONLY")
 
+	def test_workday_without_any_punch_requires_confirmation(self):
+		issue = _detect_confirmation_issue(
+			window=_window(),
+			planned_logs=[],
+			outside_logs=[],
+			day_type="work",
+		)
+		self.assertEqual(issue.issue_code, "WORKDAY_NO_CHECKIN")
+		self.assertEqual(issue.outside_checkin_count, 0)
+		self.assertEqual(issue.planned_checkin_count, 0)
+
 	def test_one_valid_start_punch_is_missing_out(self):
 		issue = _detect_confirmation_issue(
 			window=_window(),
@@ -93,6 +104,20 @@ class TestVNTAttendanceConfirm(TestCase):
 			day_type="work",
 		)
 		self.assertEqual(issue.issue_code, "MISSING_OUT")
+
+	def test_untyped_checkins_that_cannot_form_in_out_require_confirmation(self):
+		window = _window()
+		window.shift_doc.determine_check_in_and_check_out = (
+			"Strictly based on Log Type in Employee Checkin"
+		)
+		issue = _detect_confirmation_issue(
+			window=window,
+			planned_logs=[_log(8), _log(13)],
+			outside_logs=[],
+			day_type="work",
+		)
+		self.assertEqual(issue.issue_code, "WORKDAY_INVALID_CHECKINS")
+		self.assertEqual(issue.planned_checkin_count, 2)
 
 	def test_one_valid_end_punch_is_missing_in(self):
 		issue = _detect_confirmation_issue(
@@ -111,6 +136,17 @@ class TestVNTAttendanceConfirm(TestCase):
 			day_type="work",
 		)
 		self.assertIsNone(issue)
+
+	def test_complete_pair_with_outside_punches_requires_overtime_confirmation(self):
+		issue = _detect_confirmation_issue(
+			window=_window(),
+			planned_logs=[_log(5, 58), _log(14, 2)],
+			outside_logs=[_log(17), _log(19)],
+			day_type="work",
+		)
+		self.assertEqual(issue.issue_code, "WORKDAY_OVERTIME")
+		self.assertEqual(issue.evidence_code, "+")
+		self.assertEqual(issue.outside_checkin_count, 2)
 
 	def test_complete_pair_with_early_exit_requires_confirmation(self):
 		issue = _detect_confirmation_issue(

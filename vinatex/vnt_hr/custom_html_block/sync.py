@@ -19,6 +19,8 @@ DOCTYPE = "Custom HTML Block"
 BLOCKS = {
 	"Bảng tin chỉ đạo điều hành": "leadership_board",
 	"Trang chủ tổng hợp": "home_dashboard",
+	"Cơ cấu NLĐ theo nhóm chức danh - Donut": "designation_group_structure",
+	"Cơ cấu NLĐ theo phòng bộ phận - Thanh ngang": "department_structure",
 }
 
 

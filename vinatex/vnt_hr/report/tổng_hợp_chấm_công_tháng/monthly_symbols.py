@@ -345,12 +345,14 @@ def _get_symbol(
 	late = details.late_entry
 	early = details.early_exit
 	if late and early:
-		return f"{SYMBOLS['late']}/{SYMBOLS['early']}"
-	if late:
-		return SYMBOLS["late"]
-	if early:
-		return SYMBOLS["early"]
-	return SYMBOLS["overnight"] if window.is_overnight else SYMBOLS["on_time"]
+		base_symbol = f"{SYMBOLS['late']}/{SYMBOLS['early']}"
+	elif late:
+		base_symbol = SYMBOLS["late"]
+	elif early:
+		base_symbol = SYMBOLS["early"]
+	else:
+		base_symbol = SYMBOLS["overnight"] if window.is_overnight else SYMBOLS["on_time"]
+	return _combine_with_outside(base_symbol, outside_symbol)
 
 
 def _outside_evidence_symbol(unplanned_logs):
@@ -386,12 +388,16 @@ def _confirmation_applies(symbol, day_type, confirmation):
 		return day_type == "off" and bool(parts & {"+", "+1"})
 	if issue_code == "WORKDAY_OUTSIDE_ONLY":
 		return "V" in parts and bool(parts & {"+", "+1"})
+	if issue_code in ("WORKDAY_NO_CHECKIN", "WORKDAY_INVALID_CHECKINS"):
+		return day_type == "work" and parts == {"V"}
 	if issue_code == "MISSING_IN":
 		return "KV" in parts
 	if issue_code == "MISSING_OUT":
 		return "KR" in parts
 	if issue_code == "EARLY_EXIT":
 		return day_type == "work" and "Sm" in parts
+	if issue_code == "WORKDAY_OVERTIME":
+		return day_type == "work" and bool(parts & {"+", "+1"})
 	return False
 
 
@@ -482,6 +488,25 @@ def _apply_totals(row, symbol, review=None):
 	# Present/Absent/Off totals are held until HR makes the one-level decision.
 	if review:
 		state = review.get("state")
+		if review.get("issue_code") == "WORKDAY_OVERTIME":
+			# The planned IN/OUT pair establishes the normal workday.  HR only
+			# decides whether the additional outside punches count as overtime.
+			row["tot_present"] += 1
+			if "Tr" in parts:
+				row["tot_late"] += 1
+			if "Sm" in parts:
+				row["tot_early"] += 1
+			if parts & {"+", "+1"}:
+				row["tot_overtime"] += 1
+			if state == "pending":
+				row["tot_pending_confirmation"] += 1
+			elif state in ("approved", "approved_incomplete"):
+				row["tot_approved_confirmation"] += 1
+				if state == "approved_incomplete":
+					row["tot_incomplete_approved_time"] += 1
+			elif state == "rejected":
+				row["tot_rejected_confirmation"] += 1
+			return
 		if review.get("issue_code") == "EARLY_EXIT":
 			# A complete punch pair is present work regardless of the decision.
 			# Approval waives only the early-exit violation; rejection keeps Sm.

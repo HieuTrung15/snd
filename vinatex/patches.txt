@@ -7,3 +7,8 @@
 vinatex.patches.vnt_document_management_convert_link_to_multiselect
 vinatex.patches.create_leadership_board_block
 vinatex.patches.create_home_dashboard_block
+vinatex.patches.setup_designation_groups
+vinatex.patches.create_nam_dinh_organizational_structure
+vinatex.patches.expand_nam_dinh_organization_roles
+vinatex.patches.restructure_nam_dinh_production_chart
+vinatex.patches.create_hr_structure_dashboard_blocks

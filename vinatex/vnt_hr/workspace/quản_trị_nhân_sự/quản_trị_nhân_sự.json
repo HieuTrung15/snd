@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"VNTBRANCH1\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"B\u1ed9 l\u1ecdc Chi nh\u00e1nh - Qu\u1ea3n tr\u1ecb nh\u00e2n s\u1ef1\",\"col\":12}},{\"id\":\"qfd88DmQ2W\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"T\u1ed5ng quan nh\u00e2n s\u1ef1 - KPI\",\"col\":12}},{\"id\":\"Qlhppytezp\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"HR Reminders\",\"col\":12}},{\"id\":\"iDyaHNHIEa\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Nh\u00e2n s\u1ef1 tuy\u1ec3n m\u1edbi v\u00e0 ngh\u1ec9 vi\u1ec7c - \u0110\u01b0\u1eddng\",\"col\":6}},{\"id\":\"Q7TQwv4FFC\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo tr\u00ecnh \u0111\u1ed9 h\u1ecdc v\u1ea5n - Thanh ngang\",\"col\":6}},{\"id\":\"r0tjZOCRnQ\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo gi\u1edbi t\u00ednh - Donut c\u00e2n \u0111\u1ed1i\",\"col\":6}},{\"id\":\"fjxagn5t2F\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo chi nh\u00e1nh - Thanh ngang\",\"col\":6}},{\"id\":\"A5WcDhogbU\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo nh\u00f3m ch\u1ee9c danh - Thanh ngang\",\"col\":6}},{\"id\":\"j_FL_u5GeL\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo lo\u1ea1i h\u1ee3p \u0111\u1ed3ng - Thanh ngang\",\"col\":6}},{\"id\":\"lV14FKunpc\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo \u0111\u1ed9 tu\u1ed5i - Donut c\u00e2n \u0111\u1ed1i\",\"col\":6}},{\"id\":\"oSD2Uga9Z3\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo th\u00e2m ni\u00ean - Waffle\",\"col\":6}}]",
+ "content": "[{\"id\":\"VNTBRANCH1\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"B\u1ed9 l\u1ecdc Chi nh\u00e1nh - Qu\u1ea3n tr\u1ecb nh\u00e2n s\u1ef1\",\"col\":12}},{\"id\":\"qfd88DmQ2W\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"T\u1ed5ng quan nh\u00e2n s\u1ef1 - KPI\",\"col\":12}},{\"id\":\"Qlhppytezp\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"HR Reminders\",\"col\":12}},{\"id\":\"VNTDESGROUP1\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"C\u01a1 c\u1ea5u NL\u0110 theo nh\u00f3m ch\u1ee9c danh - Donut\",\"col\":6}},{\"id\":\"lV14FKunpc\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo \u0111\u1ed9 tu\u1ed5i - Donut c\u00e2n \u0111\u1ed1i\",\"col\":6}},{\"id\":\"j_FL_u5GeL\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo lo\u1ea1i h\u1ee3p \u0111\u1ed3ng - Thanh ngang\",\"col\":6}},{\"id\":\"A5WcDhogbU\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo nh\u00f3m ch\u1ee9c danh - Thanh ngang\",\"col\":6}},{\"id\":\"iDyaHNHIEa\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Nh\u00e2n s\u1ef1 tuy\u1ec3n m\u1edbi v\u00e0 ngh\u1ec9 vi\u1ec7c - \u0110\u01b0\u1eddng\",\"col\":6}},{\"id\":\"VNTDEPARTMENT1\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"C\u01a1 c\u1ea5u NL\u0110 theo ph\u00f2ng b\u1ed9 ph\u1eadn - Thanh ngang\",\"col\":6}},{\"id\":\"oSD2Uga9Z3\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo th\u00e2m ni\u00ean - Waffle\",\"col\":6}},{\"id\":\"Q7TQwv4FFC\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo tr\u00ecnh \u0111\u1ed9 h\u1ecdc v\u1ea5n - Thanh ngang\",\"col\":6}},{\"id\":\"r0tjZOCRnQ\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo gi\u1edbi t\u00ednh - Donut c\u00e2n \u0111\u1ed1i\",\"col\":6}},{\"id\":\"fjxagn5t2F\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo chi nh\u00e1nh - Thanh ngang\",\"col\":6}}]",
  "creation": "2026-09-24 09:31:18.123638",
  "custom_blocks": [
   {
@@ -46,6 +46,14 @@
   {
    "custom_block_name": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo gi\u1edbi t\u00ednh - Donut c\u00e2n \u0111\u1ed1i",
    "label": "Bi\u1ec3u \u0111\u1ed3 nh\u00e2n s\u1ef1 theo gi\u1edbi t\u00ednh - Donut c\u00e2n \u0111\u1ed1i"
+  },
+  {
+   "custom_block_name": "C\u01a1 c\u1ea5u NL\u0110 theo nh\u00f3m ch\u1ee9c danh - Donut",
+   "label": "C\u01a1 c\u1ea5u NL\u0110 theo nh\u00f3m ch\u1ee9c danh - Donut"
+  },
+  {
+   "custom_block_name": "C\u01a1 c\u1ea5u NL\u0110 theo ph\u00f2ng b\u1ed9 ph\u1eadn - Thanh ngang",
+   "label": "C\u01a1 c\u1ea5u NL\u0110 theo ph\u00f2ng b\u1ed9 ph\u1eadn - Thanh ngang"
   }
  ],
  "docstatus": 0,
@@ -58,7 +66,7 @@
  "is_hidden": 0,
  "label": "Qu\u1ea3n tr\u1ecb nh\u00e2n s\u1ef1",
  "links": [],
- "modified": "2026-10-07 17:31:51.252599",
+ "modified": "2026-10-20 13:52:40.825306",
  "modified_by": "Administrator",
  "module": "VNT HR",
  "name": "Qu\u1ea3n tr\u1ecb nh\u00e2n s\u1ef1",

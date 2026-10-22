@@ -8,7 +8,8 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_p14q",
-  "designation_group"
+  "designation_group",
+  "is_active"
  ],
  "fields": [
   {
@@ -18,7 +19,19 @@
   {
    "fieldname": "designation_group",
    "fieldtype": "Data",
-   "label": "Nh\u00f3m ch\u1ee9c danh"
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Nh\u00f3m ch\u1ee9c danh",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "C\u00f3 hi\u1ec7u l\u1ef1c"
   }
  ],
  "grid_page_length": 50,
@@ -44,6 +57,11 @@
    "write": 1
   },
   {
+   "read": 1,
+   "role": "Employee",
+   "select": 1
+  },
+  {
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -51,14 +69,55 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Employee",
+   "role": "HR Manager",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Salary",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Headhunters",
    "select": 1,
    "share": 1,
    "write": 1
   }
  ],
  "row_format": "Dynamic",
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": []
+ "sort_field": "designation_group",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "designation_group",
+ "track_changes": 1
 }

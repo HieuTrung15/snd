@@ -115,11 +115,14 @@
 		"Danh sách Phòng/Ban": { i: "network" },
 		"Danh sách Công ty/ ĐVTV": { i: "building-2" },
 		"Danh sách chi nhánh": { i: "network" },
-		"Sơ đồ tổ chức": { i: "network" },
+		"Sơ đồ tổ chức": { i: "network", route: "/app/vnt-organization-chart" },
 		"Danh mục chức danh": { i: "id-card" },
 		"Danh mục nhóm chức danh": { i: "layers" },
 		"Quản lý định biên": { i: "target" },
-		"Tình hình sử dụng lao động": { i: "users" },
+		"Tình hình sử dụng lao động": {
+			i: "users",
+			route: "/app/query-report/BÁO CÁO TÌNH HÌNH SỬ DỤNG LAO ĐỘNG",
+		},
 		// --- Báo cáo ---
 		"Báo cáo tình hình sử dụng lao động": { t: "Tình hình sử dụng lao động", i: "chart-column" },
 		"Báo cáo định biên - thực tế": { t: "Định biên - thực tế", i: "target" },
@@ -169,15 +172,6 @@
 				title: "Trung tâm Tổ chức & Cán bộ",
 				subtitle: "Cơ cấu tổ chức, quyết định nhân sự và báo cáo lao động tại một nơi.",
 			},
-			stat: {
-				eyebrow: "Cơ cấu sở hữu",
-				title: "Đơn vị thành viên theo loại sở hữu",
-				doctype: "Company",
-				field: "custom_ownership_type",
-				unit: "đơn vị thành viên",
-				group_unit: "loại hình sở hữu",
-				action: { label: "Xem chi tiết", route: "/app/company/view/list" },
-			},
 			panels: {
 				"Cấu trúc": {
 					eyebrow: "Quyết định đã ký",
@@ -189,7 +183,7 @@
 					eyebrow: "Danh mục nền tảng",
 					desc: "Khai báo và chuẩn hóa dữ liệu gốc về đơn vị, chức danh, định biên.",
 					layout: "split",
-					cols: 2,
+					cols: 1,
 				},
 				"Báo cáo quy mô - định biên lao động": {
 					eyebrow: "Theo dõi & đối soát",
@@ -273,6 +267,14 @@
 					i: "file-chart",
 					s: "Bảng ký hiệu công theo từng nhân sự trong tháng",
 				},
+				"Báo cáo công hàng tháng": {
+					t: "Báo cáo Công hàng tháng",
+					i: "chart-column",
+				},
+				"Báo cáo tăng ca hàng tháng": {
+					t: "Báo cáo Tăng ca hàng tháng",
+					i: "chart-column",
+				},
 				"Kết quả chấm công": {
 					i: "circle-check-big",
 					s: "Các bản ghi Attendance đã được tạo",
@@ -325,7 +327,10 @@
 					i: "building",
 				},
 				"Danh sách cán bộ sắp nghỉ hưu": { t: "Cán bộ sắp nghỉ hưu", i: "calendar" },
-				"Tình hình sử dụng lao động": { i: "chart-column" },
+				"Tình hình sử dụng lao động": {
+					i: "chart-column",
+					route: "/app/query-report/BÁO CÁO TÌNH HÌNH SỬ DỤNG LAO ĐỘNG",
+				},
 
 				"Hợp đồng lao động": { i: "file-text", s: "Danh mục loại hợp đồng" },
 				"Báo cáo HĐLĐ các loại": { t: "Báo cáo HĐLĐ các loại", i: "file-chart" },
@@ -510,9 +515,11 @@
 	};
 
 	/** Dựng href giống hệt widget gốc của Frappe để điều hướng không đổi hành vi. */
-	const build_href = (item) => {
+	const build_href = (item, cfg) => {
 		if (!window.frappe || !frappe.utils || !frappe.utils.generate_route) return "";
 		try {
+			const meta = item_meta(item.label || item.name || "", cfg);
+			if (meta && meta.route) return meta.route;
 			if (item.type === "URL") return item.url || "";
 
 			const opts = {
@@ -709,7 +716,7 @@
 		const title = display_title(label, cfg);
 		const soon = is_soon(item);
 		const blocked = soon || (item.dependencies && item.incomplete_dependencies);
-		const href = blocked ? "" : build_href(item);
+		const href = blocked ? "" : build_href(item, cfg);
 		const external = !blocked && item.type === "URL";
 
 		const attrs = [

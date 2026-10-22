@@ -1,0 +1,809 @@
+.vnt-org-page-main {
+	background: #f4f7fb;
+	padding: 0 !important;
+}
+
+.vnt-org-page {
+	padding: 12px 18px 22px;
+	color: #12335c;
+}
+
+.vnt-org-panel {
+	background: #f8fbff;
+	border: 1px solid #d8e4f2;
+	border-radius: 14px;
+	box-shadow: 0 10px 28px rgba(55, 85, 125, 0.07);
+	padding: 12px 14px 14px;
+}
+
+.vnt-org-toolbar,
+.vnt-org-actions,
+.vnt-org-footer,
+.vnt-org-legend,
+.vnt-org-legend span {
+	display: flex;
+	align-items: center;
+}
+
+.vnt-org-toolbar {
+	justify-content: space-between;
+	gap: 20px;
+	padding: 0 0 9px;
+}
+
+.vnt-org-search-wrap {
+	position: relative;
+	width: min(340px, 100%);
+}
+
+.vnt-org-search-icon {
+	color: #7890ad;
+	left: 12px;
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	z-index: 1;
+}
+
+.vnt-org-search {
+	background: #fff !important;
+	border-color: #ced9e7 !important;
+	border-radius: 8px !important;
+	height: 34px !important;
+	padding-left: 36px !important;
+}
+
+.vnt-org-actions {
+	flex-wrap: wrap;
+	gap: 7px;
+	justify-content: flex-end;
+}
+
+.vnt-org-actions .btn,
+.vnt-org-total {
+	background: #fff;
+	border: 0;
+	border-radius: 8px;
+	box-shadow: 0 6px 16px rgba(43, 77, 119, 0.09);
+	color: #12617f;
+	font-size: 12px;
+	font-weight: 700;
+	height: 32px;
+	line-height: 32px;
+	padding: 0 11px;
+}
+
+.vnt-org-total strong {
+	color: #154b85;
+	font-size: 15px;
+}
+
+.vnt-org-zoom-value {
+	min-width: 54px;
+	pointer-events: none;
+}
+
+.vnt-org-status {
+	color: #72839d;
+	font-size: 11px;
+	margin: 0 2px 7px;
+}
+
+.vnt-org-viewport {
+	background: #fff;
+	border: 1px solid #d4e0ec;
+	border-radius: 10px;
+	height: clamp(540px, 67vh, 780px);
+	overflow: auto;
+	position: relative;
+}
+
+.vnt-org-loading,
+.vnt-org-empty {
+	align-items: center;
+	color: #73839a;
+	display: flex;
+	font-size: 14px;
+	justify-content: center;
+	min-height: 420px;
+	width: 100%;
+}
+
+.vnt-org-canvas {
+	display: inline-block;
+	min-width: 100%;
+	transform-origin: top center;
+}
+
+/* Poster layout based on the supplied organization chart. */
+.vnt-org-diagram {
+	box-sizing: border-box;
+	min-height: 780px;
+	min-width: 2040px;
+	padding: 18px 24px 34px;
+	position: relative;
+}
+
+.vnt-org-diagram-title {
+	border-bottom: 1px solid #e1e6ec;
+	padding: 0 0 12px;
+	text-align: center;
+}
+
+.vnt-org-diagram-title h1 {
+	color: #123f78;
+	font-size: 32px;
+	font-weight: 800;
+	letter-spacing: 0.02em;
+	line-height: 1.05;
+	margin: 0;
+}
+
+.vnt-org-diagram-title p {
+	color: #173f72;
+	font-size: 16px;
+	font-weight: 800;
+	letter-spacing: 0.025em;
+	margin: 7px 0 0;
+	text-transform: uppercase;
+}
+
+.vnt-org-leadership {
+	height: 154px;
+	position: relative;
+}
+
+.vnt-org-leadership::before {
+	border-left: 2px solid #2481bd;
+	bottom: -2px;
+	content: "";
+	left: calc(50% - 1px);
+	position: absolute;
+	top: 56px;
+}
+
+.vnt-org-leadership::after {
+	border-top: 2px solid #2481bd;
+	content: "";
+	left: calc(50% - 1px);
+	position: absolute;
+	right: 420px;
+	top: 89px;
+}
+
+.vnt-org-director-wrap {
+	left: 50%;
+	position: absolute;
+	top: 16px;
+	transform: translateX(-50%);
+	z-index: 2;
+}
+
+.vnt-org-deputies {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	position: absolute;
+	right: 24px;
+	top: 66px;
+	z-index: 2;
+}
+
+.vnt-org-node-card {
+	box-sizing: border-box;
+	position: relative;
+	z-index: 2;
+}
+
+.vnt-org-node-name {
+	color: #15365f;
+	display: block;
+	font-size: 12px;
+	font-weight: 800;
+	line-height: 1.2;
+	overflow-wrap: anywhere;
+	text-align: center;
+	text-decoration: none !important;
+	text-transform: uppercase;
+}
+
+.vnt-org-leader-card {
+	align-items: center;
+	border-radius: 8px;
+	display: flex;
+	justify-content: center;
+	min-height: 48px;
+	padding: 8px 18px;
+}
+
+.vnt-org-leader-card.is-director {
+	background: #114d91;
+	border: 1px solid #0d71ad;
+	box-shadow: 0 4px 10px rgba(14, 62, 119, 0.18);
+	width: 390px;
+}
+
+.vnt-org-leader-card.is-director .vnt-org-node-name {
+	color: #fff;
+	font-size: 17px;
+}
+
+.vnt-org-leader-card.is-deputy {
+	background: #e9f3fd;
+	border: 1px solid #3187be;
+	width: 380px;
+}
+
+.vnt-org-leader-card.is-deputy::before {
+	border-top: 2px solid #2481bd;
+	content: "";
+	left: -24px;
+	position: absolute;
+	top: calc(50% - 1px);
+	width: 20px;
+}
+
+.vnt-org-leader-card.is-deputy::after {
+	border-bottom: 5px solid transparent;
+	border-left: 8px solid #2481bd;
+	border-top: 5px solid transparent;
+	content: "";
+	left: -9px;
+	position: absolute;
+	top: calc(50% - 5px);
+}
+
+.vnt-org-leader-card.is-deputy .vnt-org-node-name {
+	font-size: 15px;
+}
+
+.vnt-org-departments {
+	display: flex;
+	gap: 72px;
+	padding: 34px 68px 0;
+	position: relative;
+}
+
+
+.vnt-org-department-cell {
+	display: flex;
+	flex: 1 1 0;
+	min-width: 0;
+	position: relative;
+}
+
+.vnt-org-department-cell::before {
+	border-left: 2px solid #2481bd;
+	content: "";
+	height: 30px;
+	left: calc(50% - 1px);
+	position: absolute;
+	top: -34px;
+}
+
+.vnt-org-department-cell::after {
+	border-top: 2px solid #2481bd;
+	content: "";
+	left: -37px;
+	position: absolute;
+	right: -37px;
+	top: -34px;
+}
+
+.vnt-org-department-cell:first-child::after {
+	left: calc(50% - 1px);
+}
+
+.vnt-org-department-cell:last-child::after {
+	right: calc(50% - 1px);
+}
+
+/* Vertical line from the operating department down to the division bar. */
+.vnt-org-department-cell.is-operating .vnt-org-department-card::after {
+	border-left: 2px solid #2481bd;
+	content: "";
+	height: 70px;
+	left: calc(50% - 1px);
+	position: absolute;
+	top: 100%;
+}
+
+.vnt-org-department-card {
+	align-items: center;
+	background: #eaf4fd;
+	border: 1px solid #54a3d2;
+	border-radius: 7px;
+	box-shadow: 0 3px 7px rgba(42, 91, 133, 0.1);
+	display: flex;
+	justify-content: center;
+	min-height: 42px;
+	padding: 6px 30px;
+	width: 100%;
+}
+
+.vnt-org-department-card::before {
+	border-left: 5px solid transparent;
+	border-right: 5px solid transparent;
+	border-top: 7px solid #2481bd;
+	content: "";
+	left: calc(50% - 5px);
+	position: absolute;
+	top: -8px;
+}
+
+.vnt-org-department-card .vnt-org-node-name {
+	font-size: 14px;
+}
+
+.vnt-org-node-toggle {
+	background: rgba(255, 255, 255, 0.9);
+	border: 1px solid currentColor;
+	border-radius: 10px;
+	color: #35678d;
+	cursor: pointer;
+	font-size: 9px;
+	font-weight: 700;
+	line-height: 17px;
+	padding: 0 7px;
+}
+
+.vnt-org-department-card .vnt-org-node-toggle {
+	position: absolute;
+	right: 7px;
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+.vnt-org-department-details {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 7px;
+	justify-content: center;
+	padding-top: 18px;
+	position: relative;
+}
+
+.vnt-org-department-details::before {
+	border-left: 1.5px solid #65a1d2;
+	content: "";
+	height: 18px;
+	left: 50%;
+	position: absolute;
+	top: 0;
+}
+
+.vnt-org-support-card {
+	align-items: center;
+	background: #eef6fd;
+	border: 1px solid #8cb9dc;
+	border-radius: 5px;
+	display: flex;
+	justify-content: center;
+	min-height: 34px;
+	padding: 5px 8px;
+	width: 104px;
+}
+
+.vnt-org-support-card.is-subordinate {
+	background: #fff9e6;
+	border-color: #e7c66d;
+}
+
+.vnt-org-support-card .vnt-org-node-name {
+	font-size: 9px;
+}
+
+.vnt-org-divisions {
+	display: flex;
+	gap: 24px;
+	margin-top: 68px;
+	padding-top: 32px;
+	position: relative;
+}
+
+
+.vnt-org-division {
+	--vnt-org-connector: #2481bd;
+	flex: var(--branch-count) 1 0;
+	min-width: calc(var(--branch-count) * 92px);
+	position: relative;
+}
+
+.vnt-org-division::before {
+	border-left: 2px solid var(--vnt-org-connector);
+	content: "";
+	height: 28px;
+	left: calc(50% - 1px);
+	position: absolute;
+	top: -32px;
+}
+
+.vnt-org-division::after {
+	border-top: 2px solid var(--vnt-org-connector);
+	content: "";
+	left: -13px;
+	position: absolute;
+	right: -13px;
+	top: -32px;
+}
+
+.vnt-org-division:first-child::after {
+	left: calc(50% - 1px);
+}
+
+.vnt-org-division:last-child::after {
+	right: calc(50% - 1px);
+}
+
+.vnt-org-division.is-maintenance {
+	--vnt-org-connector: #db6e27;
+}
+
+.vnt-org-division.is-production {
+	--vnt-org-connector: #218550;
+}
+
+.vnt-org-division-title {
+	align-items: center;
+	border-radius: 7px;
+	box-shadow: 0 3px 8px rgba(88, 71, 30, 0.12);
+	display: flex;
+	justify-content: center;
+	min-height: 44px;
+	padding: 6px 70px;
+	width: 100%;
+}
+
+.vnt-org-division-title::before,
+.vnt-org-supervisor-card::before,
+.vnt-org-process-card::before,
+.vnt-org-role-card::before {
+	border-left: 4px solid transparent;
+	border-right: 4px solid transparent;
+	border-top: 6px solid var(--vnt-org-connector);
+	content: "";
+	left: calc(50% - 4px);
+	position: absolute;
+	top: -7px;
+}
+
+.vnt-org-division-title .vnt-org-node-name {
+	font-size: 17px;
+}
+
+.vnt-org-division-title .vnt-org-node-toggle {
+	position: absolute;
+	right: 12px;
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+.vnt-org-division.is-maintenance .vnt-org-division-title {
+	background: #ffa568;
+	border: 1px solid #dc782b;
+}
+
+.vnt-org-division.is-production .vnt-org-division-title {
+	background: #9fddb5;
+	border: 1px solid #2f9d64;
+}
+
+.vnt-org-division-supervisor {
+	display: flex;
+	justify-content: center;
+	padding-top: 28px;
+	position: relative;
+}
+
+.vnt-org-division-supervisor::before {
+	border-left: 2px solid var(--vnt-org-connector);
+	content: "";
+	height: 26px;
+	left: calc(50% - 1px);
+	position: absolute;
+	top: -2px;
+}
+
+.vnt-org-supervisor-card {
+	align-items: center;
+	background: #eefaf1;
+	border: 1px solid #69c28a;
+	border-radius: 5px;
+	display: flex;
+	justify-content: center;
+	min-height: 40px;
+	padding: 5px 20px;
+	width: 170px;
+}
+
+.vnt-org-supervisor-card::after {
+	border-left: 2px solid var(--vnt-org-connector);
+	bottom: -30px;
+	content: "";
+	height: 30px;
+	left: calc(50% - 1px);
+	position: absolute;
+}
+
+.vnt-org-supervisor-card .vnt-org-node-name {
+	font-size: 11px;
+}
+
+.vnt-org-division-branches {
+	display: flex;
+	padding-top: 28px;
+	position: relative;
+}
+
+.vnt-org-division-branches.has-supervisor {
+	padding-top: 42px;
+}
+
+.vnt-org-division-branches::before {
+	border-top: 2px solid var(--vnt-org-connector);
+	content: "";
+	left: calc(var(--edge-offset) - 1px);
+	position: absolute;
+	right: calc(var(--edge-offset) - 1px);
+	top: 14px;
+}
+
+.vnt-org-division-branches.has-supervisor::before {
+	top: 28px;
+}
+
+.vnt-org-division-branches:not(.has-supervisor)::after {
+	border-left: 2px solid var(--vnt-org-connector);
+	content: "";
+	height: 18px;
+	left: calc(50% - 1px);
+	position: absolute;
+	top: -2px;
+}
+
+.vnt-org-division.is-maintenance .vnt-org-division-branches {
+	color: #db6e27;
+}
+
+.vnt-org-division.is-production .vnt-org-division-branches {
+	color: #218550;
+}
+
+.vnt-org-branch-column {
+	color: #15365f;
+	flex: 1 1 0;
+	min-width: 92px;
+	padding: 0 3px;
+	position: relative;
+}
+
+.vnt-org-branch-column::before {
+	border-left: 2px solid var(--vnt-org-connector);
+	content: "";
+	height: 10px;
+	left: calc(50% - 1px);
+	position: absolute;
+	top: -14px;
+}
+
+.vnt-org-process-card,
+.vnt-org-role-card {
+	align-items: center;
+	border-radius: 5px;
+	display: flex;
+	justify-content: center;
+	min-height: 40px;
+	padding: 5px 6px;
+	width: 100%;
+}
+
+.vnt-org-process-card.is-maintenance {
+	background: #fff5e9;
+	border: 1px solid #efbf94;
+}
+
+.vnt-org-process-card.is-production {
+	background: #eefaf1;
+	border: 1px solid #98d4ad;
+}
+
+.vnt-org-process-card .vnt-org-node-name,
+.vnt-org-role-card .vnt-org-node-name {
+	font-size: 9px;
+}
+
+.vnt-org-role-chain {
+	padding-top: 22px;
+	position: relative;
+}
+
+.vnt-org-role-chain::before {
+	border-left: 2px solid var(--vnt-org-connector);
+	content: "";
+	height: 36px;
+	left: calc(50% - 1px);
+	position: absolute;
+	top: -18px;
+}
+
+.vnt-org-role-card {
+	background: #e9f4fb;
+	border: 1px solid #83b6d8;
+	margin-bottom: 16px;
+	position: relative;
+}
+
+
+.vnt-org-node-card.is-match {
+	box-shadow: 0 0 0 4px rgba(250, 173, 20, 0.35), 0 7px 18px rgba(38, 80, 137, 0.22) !important;
+}
+
+.vnt-org-node-card:hover {
+	filter: brightness(0.985);
+	transform: translateY(-1px);
+}
+
+.vnt-org-footer {
+	color: #71839d;
+	font-size: 11px;
+	justify-content: space-between;
+	padding: 10px 2px 0;
+}
+
+.vnt-org-legend {
+	gap: 20px;
+}
+
+.vnt-org-legend span {
+	gap: 7px;
+}
+
+.vnt-org-legend i {
+	border: 1.5px solid #195996;
+	border-radius: 3px;
+	height: 11px;
+	width: 17px;
+}
+
+.vnt-org-legend i.is-leadership {
+	background: #114d91;
+}
+
+.vnt-org-legend i.is-maintenance {
+	background: #ffa568;
+	border-color: #dc782b;
+}
+
+.vnt-org-legend i.is-production {
+	background: #9fddb5;
+	border-color: #2f9d64;
+}
+
+/* Generic fallback when the stored hierarchy does not match the factory layout. */
+.vnt-org-tree,
+.vnt-org-tree ul {
+	display: flex;
+	justify-content: center;
+	list-style: none;
+	margin: 0;
+	min-width: 100%;
+	padding-left: 0;
+	padding-top: 34px;
+	position: relative;
+	width: max-content;
+}
+
+.vnt-org-tree {
+	padding: 28px;
+}
+
+.vnt-org-tree li {
+	list-style: none;
+	padding: 34px 10px 0;
+	position: relative;
+	text-align: center;
+}
+
+.vnt-org-tree > li {
+	padding-top: 0;
+}
+
+.vnt-org-tree li::before,
+.vnt-org-tree li::after {
+	border-top: 1.5px solid #76a5e7;
+	content: "";
+	height: 34px;
+	position: absolute;
+	right: 50%;
+	top: 0;
+	width: 50%;
+}
+
+.vnt-org-tree li::after {
+	border-left: 1.5px solid #76a5e7;
+	left: 50%;
+	right: auto;
+}
+
+.vnt-org-tree li:only-child::before,
+.vnt-org-tree li:only-child::after {
+	display: none;
+}
+
+.vnt-org-tree li:first-child::before,
+.vnt-org-tree li:last-child::after {
+	border: 0;
+}
+
+.vnt-org-tree li:last-child::before {
+	border-right: 1.5px solid #76a5e7;
+}
+
+.vnt-org-tree ul::before {
+	border-left: 1.5px solid #76a5e7;
+	content: "";
+	height: 34px;
+	left: 50%;
+	position: absolute;
+	top: 0;
+}
+
+.vnt-org-tree .vnt-org-node-card {
+	align-items: center;
+	background: #edf5ff;
+	border: 1.5px solid #72a4eb;
+	border-radius: 7px;
+	display: inline-flex;
+	flex-direction: column;
+	justify-content: center;
+	min-height: 78px;
+	padding: 8px 12px;
+	width: 166px;
+}
+
+.vnt-org-tree .vnt-org-node-card.is-root {
+	background: #114d91;
+	color: #fff;
+}
+
+.vnt-org-tree .vnt-org-node-card.is-subordinate {
+	background: #fff9dc;
+	border-color: #e0bf3e;
+}
+
+.vnt-org-node-type,
+.vnt-org-node-count {
+	font-size: 9px;
+}
+
+.vnt-org-tree .is-root .vnt-org-node-name {
+	color: #fff;
+}
+
+@media (max-width: 900px) {
+	.vnt-org-page {
+		padding: 8px;
+	}
+
+	.vnt-org-panel {
+		padding: 10px;
+	}
+
+	.vnt-org-toolbar,
+	.vnt-org-footer {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.vnt-org-search-wrap {
+		width: 100%;
+	}
+
+	.vnt-org-actions {
+		justify-content: flex-start;
+	}
+
+	.vnt-org-footer {
+		gap: 9px;
+	}
+}

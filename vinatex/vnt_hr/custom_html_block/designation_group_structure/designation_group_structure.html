@@ -1,0 +1,28 @@
+<section class="designation-group-donut" aria-labelledby="designation-group-donut-title">
+  <header class="designation-group-donut__header">
+    <div>
+      <h3 id="designation-group-donut-title">Cơ cấu NLĐ theo nhóm chức danh</h3>
+      <p>Tỷ lệ người lao động theo từng nhóm chức danh</p>
+    </div>
+    <div class="designation-group-donut__actions">
+      <span class="designation-group-donut__total"><strong data-total>–</strong> NLĐ</span>
+      <button class="designation-group-donut__refresh" type="button" aria-label="Tải lại dữ liệu" title="Tải lại dữ liệu">
+        <img src="/assets/vinatex/images/refresh.svg" alt="" aria-hidden="true">
+      </button>
+    </div>
+  </header>
+
+  <div class="designation-group-donut__body" data-body>
+    <div class="designation-group-donut__visual">
+      <svg viewBox="0 0 220 220" role="img" aria-label="Biểu đồ donut cơ cấu người lao động theo nhóm chức danh">
+        <circle class="designation-group-donut__track" cx="110" cy="110" r="74"></circle>
+        <g data-arcs></g>
+        <text class="designation-group-donut__center-value" x="110" y="105" text-anchor="middle" data-center-total>–</text>
+        <text class="designation-group-donut__center-label" x="110" y="127" text-anchor="middle">NLĐ</text>
+      </svg>
+    </div>
+    <div class="designation-group-donut__legend" data-legend role="list"></div>
+  </div>
+
+  <div class="designation-group-donut__state" data-state>Đang tải dữ liệu…</div>
+</section>
