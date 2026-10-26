@@ -287,13 +287,18 @@ scheduler_events = {
         "0 4 1 1 *": [
             "vinatex.vinatex.doctype.overrides.allocate_leave.allocate_leave"
         ],
-		# Đồng bộ dữ liệu chấm công (Chạy định kỳ sáng và đêm)
-		"*/10 7 * * *": [
+		# Đồng bộ dữ liệu chấm công buổi sáng lúc 07:30, 07:40, 07:50 và 08:00.
+		# Frappe chỉ lưu một cron_format cho mỗi method nên lượt 08:00 dùng wrapper riêng.
+		"30,40,50 7 * * *": [
 			"vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_morning",
 		],
-		# "0 8 * * *": [
-		# 	"vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_morning",
-		# ],
+		"0 8 * * *": [
+			"vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_morning_0800",
+		],
+		# Đồng bộ log OUT của ca đêm trước khi tạo Attendance và phiếu giải trình.
+		"0 7 * * *": [
+			"vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_night_shift",
+		],
         # Chạy từ 21:00 đến 23:00, mỗi 1 tiếng.
         "0 21-23 * * *": [
             "vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_evening_first",
@@ -302,13 +307,12 @@ scheduler_events = {
         "0 0-3 * * *": [
             "vinatex.vinatex.doctype.utils.job_monitor.monitor_sync_timekeeper_evening_second",
         ],
-		# Chạy sau lượt đồng bộ máy 10:30 để ca Đêm (kết thúc 06:00)
-		# đã có đủ log vào/ra trước khi tạo Attendance.
-		"45 10 * * *": [
+		# Tạo Attendance hằng ngày sau lượt đồng bộ ca đêm 10 phút.
+		"10 7 * * *": [
 			"vinatex.vinatex.doctype.utils.job_monitor.monitor_create_attendance",
 		],
-		# Phiếu xác nhận bất thường phải chạy sau bước tạo Attendance.
-		"0 11 * * *": [
+		# Tạo phiếu xác nhận bất thường sau bước tạo Attendance 10 phút.
+		"20 7 * * *": [
             "vinatex.vinatex.doctype.utils.job_monitor.monitor_attendance_confirm",
         ],
 		# Nhắc hạn điền opinion items6/items7 (D-1 và D0) mỗi ngày.

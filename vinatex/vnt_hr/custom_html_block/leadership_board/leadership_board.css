@@ -255,12 +255,19 @@
 
 .executive-main-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.8fr) minmax(300px, .9fr);
+  grid-template-columns: minmax(0, 1.35fr) minmax(420px, 1fr);
   gap: 18px;
   min-width: 0;
 }
 .executive-arrivals,
 .executive-birthdays { min-height: 470px; }
+.executive-birthdays {
+  background: linear-gradient(180deg, #fff 0%, #fbfdff 100%);
+}
+.executive-birthdays .executive-section__header {
+  padding-bottom: 14px;
+  border-bottom: 1px solid #eef2f7;
+}
 
 .executive-tabs {
   display: flex;
@@ -350,13 +357,20 @@
 }
 .executive-pill strong { font-size: 13px; font-variant-numeric: tabular-nums; }
 .executive-pill--blue { color: #1d4ed8; background: #eff6ff; }
-.executive-birthday-groups { display: grid; gap: 16px; }
-.executive-birthday-groups > section { min-width: 0; }
+.executive-birthday-groups { display: grid; gap: 14px; }
+.executive-birthday-group {
+  min-width: 0;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #e8eef6;
+  border-radius: 12px;
+}
+.executive-birthday-group--manager { background: #fdfcff; }
 .executive-birthday-groups h3 {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
   color: #475569;
   font-size: 12px;
   font-weight: 700;
@@ -374,36 +388,58 @@
 .executive-role-dot--manager { background: #8b5cf6; }
 .executive-people-list {
   display: grid;
-  gap: 5px;
-  max-height: 170px;
+  gap: 7px;
+  max-height: 190px;
   overflow: auto;
   scrollbar-width: thin;
 }
-.executive-person-row {
+.executive-birthdays .executive-person-row {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-columns: 42px minmax(0, 1fr);
   align-items: center;
-  gap: 8px;
-  min-height: 52px;
-  padding: 8px 9px;
+  gap: 11px;
+  min-height: 64px;
+  padding: 10px 12px;
   background: #f8fafc;
-  border-radius: 8px;
+  border: 1px solid #eef2f7;
+  border-radius: 10px;
 }
-.executive-avatar {
+.executive-birthdays .executive-avatar {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 42px;
+  height: 42px;
   color: #1d4ed8;
   background: #dbeafe;
   border-radius: 50%;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 750;
 }
-.executive-person-row strong,
-.executive-person-row small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.executive-person-row strong { color: #1e293b; font-size: 13px; }
-.executive-person-row small { margin-top: 3px; color: #64748b; font-size: 10px; }
+.executive-birthday-group--manager .executive-avatar { color: #6d28d9; background: #ede9fe; }
+.executive-birthdays .executive-person-row strong,
+.executive-birthdays .executive-person-row small { display: block; min-width: 0; }
+.executive-birthdays .executive-person-row strong {
+  overflow: hidden;
+  color: #1e293b;
+  font-size: 14px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.executive-birthdays .executive-person-row small {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: normal;
+}
+.executive-birthdays .executive-mini-empty {
+  display: grid;
+  place-items: center;
+  min-height: 58px;
+  padding: 12px;
+  border: 1px dashed #e2e8f0;
+}
 
 .executive-link,
 .executive-card-link { color: #2563eb; font-size: 12px; font-weight: 650; text-decoration: none; white-space: nowrap; }

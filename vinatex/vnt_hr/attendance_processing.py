@@ -80,6 +80,21 @@ def build_shift_windows(employees, from_date, to_date, context=None):
 
 	for employee in employees:
 		for work_date in _date_range(from_date, to_date):
+			if (
+				(employee.date_of_joining and work_date < getdate(employee.date_of_joining))
+				or (employee.relieving_date and work_date > getdate(employee.relieving_date))
+			):
+				windows[(employee.name, work_date)] = frappe._dict(
+					employee=employee.name,
+					work_date=work_date,
+					shift_group=None,
+					shift_type=None,
+					assignment_source="Employment period",
+					plan_action="OUTSIDE_EMPLOYMENT",
+					plan_error=None,
+					is_off=True,
+				)
+				continue
 			plan = frappe._dict(_plan_employee_date(employee, work_date, context))
 			if plan.action == "SKIP_NO_GROUP" and employee.default_shift:
 				plan.shift_type = employee.default_shift
@@ -117,10 +132,48 @@ def build_shift_windows(employees, from_date, to_date, context=None):
 
 
 def load_checkins_for_windows(employees, windows, from_date, to_date):
-	"""Load logs once and assign each one to the most suitable planned window."""
-	employee_names = [frappe._dict(row).name for row in employees]
+	"""Load logs once and assign each one to the employee's planned shift.
+
+	The Shift Type buffer remains useful metadata for standard HRMS screens, but
+	it is not an ownership boundary here. Each daytime shift owns its calendar
+	work date; an overnight shift owns noon-to-noon around its start date. In
+	overlapping cycles, a strict IN punch favours the upcoming shift, a strict
+	OUT punch favours the previous shift, and alternating devices use the closest
+	nominal shift. One log can therefore never be consumed by two work dates.
+	"""
+	from_date, to_date = getdate(from_date), getdate(to_date)
+	employees = [frappe._dict(row) for row in employees]
+	employee_names = [row.name for row in employees]
 	if not employee_names:
 		return defaultdict(list), defaultdict(list)
+
+	# The previous/next work date is required to resolve punches outside the
+	# nominal shift without a fixed minute buffer. Most callers intentionally
+	# build only their reporting range, so fill the one-day ownership context
+	# here and let the caller-supplied windows win inside the requested range.
+	context_start = from_date - timedelta(days=1)
+	context_end = to_date + timedelta(days=1)
+	ownership_windows = dict(windows)
+	if any(
+		(employee_name, boundary_date) not in ownership_windows
+		for employee_name in employee_names
+		for boundary_date in (context_start, context_end)
+	):
+		context_windows = build_shift_windows(employees, context_start, context_end)
+		context_windows.update(ownership_windows)
+		ownership_windows = context_windows
+
+	target_keys = {
+		key
+		for key in windows
+		if from_date <= getdate(key[1]) <= to_date
+	}
+	planned_by_employee = defaultdict(list)
+	for window in ownership_windows.values():
+		if not window.is_off:
+			planned_by_employee[window.employee].append(window)
+	for employee_windows in planned_by_employee.values():
+		employee_windows.sort(key=lambda window: window.start_datetime)
 
 	rows = frappe.get_all(
 		"Employee Checkin",
@@ -152,27 +205,48 @@ def load_checkins_for_windows(employees, windows, from_date, to_date):
 		],
 		order_by="employee asc, time asc",
 	)
+	linked_attendance_dates = {}
+	linked_attendance_names = list({row.attendance for row in rows if row.attendance})
+	if linked_attendance_names:
+		linked_attendance_dates = {
+			row.name: getdate(row.attendance_date)
+			for row in frappe.get_all(
+				"Attendance",
+				filters={"name": ["in", linked_attendance_names]},
+				fields=["name", "attendance_date"],
+			)
+		}
 
 	assigned = defaultdict(list)
 	unplanned = defaultdict(list)
 	for row in rows:
 		log_time = get_datetime(row.time)
-		candidate_windows = []
-		for offset in (-1, 0, 1):
-			work_date = log_time.date() + timedelta(days=offset)
-			window = windows.get((row.employee, work_date))
+		linked_work_date = linked_attendance_dates.get(row.attendance)
+		if linked_work_date:
+			window = ownership_windows.get((row.employee, linked_work_date))
 			if (
-				window
-				and not window.is_off
-				and window.actual_start <= log_time <= window.actual_end
+				not window
+				or window.is_off
+				or not _is_within_checkin_ownership(log_time, window)
 			):
-				candidate_windows.append(window)
+				if from_date <= log_time.date() <= to_date:
+					unplanned[(row.employee, log_time.date())].append(row)
+				continue
+		else:
+			window = _select_checkin_window(
+				row, planned_by_employee.get(row.employee, [])
+			)
 
-		if not candidate_windows:
-			unplanned[(row.employee, log_time.date())].append(row)
+		if window and _is_blocked_by_off_date(
+			row, window, ownership_windows, linked_work_date=linked_work_date
+		):
+			window = None
+
+		if not window or (window.employee, window.work_date) not in target_keys:
+			if from_date <= log_time.date() <= to_date:
+				unplanned[(row.employee, log_time.date())].append(row)
 			continue
 
-		window = _select_checkin_window(row, candidate_windows)
 		row.shift = window.shift_type
 		row.shift_start = window.start_datetime
 		row.shift_end = window.end_datetime
@@ -249,8 +323,8 @@ def get_log_presence(window, logs):
 	mode = window.shift_doc.determine_check_in_and_check_out
 	if mode == "Strictly based on Log Type in Employee Checkin":
 		return (
-			any(row.log_type == "IN" for row in logs),
-			any(row.log_type == "OUT" for row in logs),
+			any((row.log_type or "").upper() == "IN" for row in logs),
+			any((row.log_type or "").upper() == "OUT" for row in logs),
 		)
 
 	# Biometric devices are synchronized by calendar day, so their IN/OUT label
@@ -304,13 +378,19 @@ def calculate_attendance_details(window, logs, *, respect_marking_flags=True):
 		< window.end_datetime - timedelta(minutes=cint(shift_doc.early_exit_grace_period))
 	)
 
-	status = "Present"
-	if shift_doc.working_hours_threshold_for_absent and flt(working_hours) < flt(
-		shift_doc.working_hours_threshold_for_absent
+	status = "Absent" if not has_in or not has_out else "Present"
+	if (
+		has_in
+		and has_out
+		and shift_doc.working_hours_threshold_for_absent
+		and flt(working_hours) < flt(shift_doc.working_hours_threshold_for_absent)
 	):
 		status = "Absent"
-	elif shift_doc.working_hours_threshold_for_half_day and flt(working_hours) < flt(
-		shift_doc.working_hours_threshold_for_half_day
+	elif (
+		has_in
+		and has_out
+		and shift_doc.working_hours_threshold_for_half_day
+		and flt(working_hours) < flt(shift_doc.working_hours_threshold_for_half_day)
 	):
 		status = "Half Day"
 
@@ -379,7 +459,7 @@ def process_attendance(from_date, to_date, *, dry_run=False, employee_names=None
 		):
 			result["Số ngày nghỉ/không xếp ca bỏ qua"] += 1
 			continue
-		if not window.get("actual_end") or window.actual_end >= now:
+		if not window.get("end_datetime") or window.end_datetime >= now:
 			result["Số ca chưa kết thúc bỏ qua"] += 1
 			continue
 
@@ -388,7 +468,11 @@ def process_attendance(from_date, to_date, *, dry_run=False, employee_names=None
 		)
 		if attendance:
 			result["Số Attendance bổ sung giờ vào/ra"] += _repair_existing_attendance(
-				attendance, window, logs, dry_run=dry_run
+				attendance,
+				window,
+				logs,
+				punches_required=not cint(employee.custom_need_check),
+				dry_run=dry_run,
 			)
 			continue
 
@@ -453,13 +537,113 @@ def _nominal_shift_datetimes(work_date, shift_doc):
 
 
 def _select_checkin_window(row, windows):
-	stored_start = get_datetime(row.shift_start) if row.shift_start else None
-	if stored_start:
-		for window in windows:
-			if stored_start == window.start_datetime:
-				return window
+	"""Select one planned shift without using the Shift Type minute buffer."""
+	if not windows:
+		return None
+
 	log_time = get_datetime(row.time)
-	return min(windows, key=lambda window: abs(log_time - window.start_datetime))
+	windows = sorted(
+		(
+			window
+			for window in windows
+			if _is_within_checkin_ownership(log_time, window)
+		),
+		key=lambda window: window.start_datetime,
+	)
+	if not windows:
+		return None
+	nominal = [
+		window
+		for window in windows
+		if window.start_datetime <= log_time <= window.end_datetime
+	]
+	if nominal:
+		return min(
+			nominal,
+			key=lambda window: abs(
+				log_time
+				- (
+					window.start_datetime
+					+ (window.end_datetime - window.start_datetime) / 2
+				)
+			),
+		)
+
+	previous_window = next(
+		(window for window in reversed(windows) if window.end_datetime < log_time),
+		None,
+	)
+	next_window = next(
+		(window for window in windows if window.start_datetime > log_time),
+		None,
+	)
+	log_type = (row.log_type or "").upper()
+	strict_mode = "Strictly based on Log Type in Employee Checkin"
+	if (
+		log_type == "OUT"
+		and previous_window
+		and previous_window.shift_doc.determine_check_in_and_check_out == strict_mode
+	):
+		return previous_window
+	if (
+		log_type == "IN"
+		and next_window
+		and next_window.shift_doc.determine_check_in_and_check_out == strict_mode
+	):
+		return next_window
+
+	candidates = [window for window in (previous_window, next_window) if window]
+	return (
+		min(
+			candidates,
+			key=lambda window: (
+				_checkin_distance_from_window(log_time, window),
+				window.start_datetime,
+			),
+		)
+		if candidates
+		else None
+	)
+
+
+def _checkin_ownership_start(window):
+	start_of_work_date = get_datetime(window.work_date)
+	return (
+		start_of_work_date + timedelta(hours=12)
+		if window.is_overnight
+		else start_of_work_date
+	)
+
+
+def _checkin_ownership_end(window):
+	return _checkin_ownership_start(window) + timedelta(days=1)
+
+
+def _is_within_checkin_ownership(log_time, window):
+	return _checkin_ownership_start(window) <= log_time < _checkin_ownership_end(window)
+
+
+def _checkin_distance_from_window(log_time, window):
+	if log_time < window.start_datetime:
+		return window.start_datetime - log_time
+	if log_time > window.end_datetime:
+		return log_time - window.end_datetime
+	return timedelta(0)
+
+
+def _is_blocked_by_off_date(row, window, windows, *, linked_work_date=None):
+	"""Keep OFF-day punches unplanned, except the tail of an overnight shift."""
+	if linked_work_date:
+		return False
+	log_time = get_datetime(row.time)
+	calendar_window = windows.get((row.employee, log_time.date()))
+	if not calendar_window or not calendar_window.is_off:
+		return False
+	return not (
+		window.is_overnight
+		and window.end_datetime.date() == log_time.date()
+		and log_time >= window.start_datetime
+	)
 
 
 def _load_attendance_map(employees, from_date, to_date):
@@ -515,27 +699,40 @@ def _sync_checkin_shift_fields(window, logs, *, dry_run=False):
 	return updated
 
 
-def _repair_existing_attendance(attendance, window, logs, *, dry_run=False):
+def _repair_existing_attendance(
+	attendance, window, logs, *, punches_required=True, dry_run=False
+):
 	if not logs:
+		return 0
+	if attendance.leave_type or attendance.status not in {"Present", "Absent", "Half Day"}:
 		return 0
 	if attendance.shift and attendance.shift != window.shift_type:
 		# A non-empty different shift is an HR decision or legacy exception. Do
 		# not relink its logs automatically; surface it through reconciliation.
 		return 0
 	details = calculate_attendance_details(window, logs)
+	if not punches_required:
+		details.status = "Present"
 	updates = {}
 	if not attendance.shift:
 		updates["shift"] = window.shift_type
-	if not attendance.in_time and details.in_time:
+	if attendance.status != details.status:
+		updates["status"] = details.status
+	if details.has_in and details.has_out:
+		if attendance.in_time != details.in_time:
+			updates["in_time"] = details.in_time
+		if attendance.out_time != details.out_time:
+			updates["out_time"] = details.out_time
+	elif details.in_time and not attendance.in_time:
 		updates["in_time"] = details.in_time
-	if not attendance.out_time and details.out_time:
+	elif details.out_time and not attendance.out_time:
 		updates["out_time"] = details.out_time
-	if not flt(attendance.working_hours) and details.working_hours:
+	if abs(flt(attendance.working_hours) - flt(details.working_hours)) > 0.0001:
 		updates["working_hours"] = details.working_hours
-	if not cint(attendance.late_entry) and details.late_entry:
-		updates["late_entry"] = 1
-	if not cint(attendance.early_exit) and details.early_exit:
-		updates["early_exit"] = 1
+	if cint(attendance.late_entry) != cint(details.late_entry):
+		updates["late_entry"] = cint(details.late_entry)
+	if cint(attendance.early_exit) != cint(details.early_exit):
+		updates["early_exit"] = cint(details.early_exit)
 	linkable_logs = [row.name for row in logs if not row.attendance]
 	if not updates and not linkable_logs:
 		return 0

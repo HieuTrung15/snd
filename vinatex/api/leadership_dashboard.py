@@ -91,13 +91,12 @@ def _resolve_scope(as_of_date=None, branches=None, branch=None, company=None):
 
 def _employee_scope_conditions(as_of_date, company: str, branches: tuple[str, ...]):
 	params = {"as_of_date": as_of_date, "company": company, "branches": branches}
-	if as_of_date == getdate(today()):
-		conditions = ["e.status = 'Active'"]
-	else:
-		conditions = [
+	conditions = ["e.status = 'Active'"]
+	if as_of_date != getdate(today()):
+		conditions.extend([
 			"e.date_of_joining <= %(as_of_date)s",
 			"(e.relieving_date IS NULL OR e.relieving_date > %(as_of_date)s)",
-		]
+		])
 	if company:
 		conditions.append("e.company = %(company)s")
 	if branches:
