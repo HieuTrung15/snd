@@ -16,6 +16,7 @@ frappe.listview_settings["VNT Attendance Confirm"] = {
 							`${__("Ngày làm việc về sớm")}: ${result["Ngày làm việc về sớm"] || 0}`,
 							`${__("Số phiếu tạo mới")}: ${result["Số phiếu tạo mới"] || 0}`,
 							`${__("Số phiếu cập nhật")}: ${result["Số phiếu cập nhật"] || 0}`,
+							`${__("Số phiếu đã xóa")}: ${result["Số phiếu đã xóa"] || 0}`,
 						].join("<br>"),
 					});
 					listview.refresh();

@@ -7,13 +7,16 @@ final Attendance and Employee legacy fields are never changed.
 
 from __future__ import annotations
 
+import json
 from collections import Counter, defaultdict
 from datetime import datetime, time, timedelta
 from uuid import uuid4
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, cint, get_datetime, getdate, today
+from frappe.utils import add_days, cint, get_datetime, getdate, now_datetime, today
+
+from vinatex.vnt_hr.attendance_processing import sync_checkin_shift_fields_for_date
 
 from vinatex.vnt_hr.shift_management.constants import (
 	AUTO_ASSIGNMENT_SOURCE,
@@ -23,6 +26,9 @@ from vinatex.vnt_hr.shift_management.constants import (
 from vinatex.vnt_hr.shift_management.shift_assignment_service import (
 	_lock_employee_rows,
 	generate_shift_assignments,
+)
+from vinatex.vnt_hr.shift_management.current_shift_group_sync import (
+	sync_employee_current_shift_groups,
 )
 from vinatex.vnt_hr.shift_management.shift_group_service import shift_management_schema_is_ready
 
@@ -51,6 +57,7 @@ def preview_bulk_shift_group_transfer(
 	# Assignment names are an execution detail and can be numerous. Keep the
 	# browser response compact; only the locked execution path needs this list.
 	preview.pop("assignment_names_to_cancel", None)
+	preview.pop("assignment_names_to_replace_today", None)
 	return preview
 
 
@@ -172,6 +179,22 @@ def _run_bulk_shift_group_transfer(request: dict, requested_by: str | None = Non
 		assignment.cancel()
 		cancelled += 1
 
+	replaced_today = 0
+	for assignment_name in preview.get("assignment_names_to_replace_today") or []:
+		assignment = frappe.get_doc("Shift Assignment", assignment_name)
+		if not (
+			cint(assignment.custom_generated_by_shift_group)
+			and assignment.custom_assignment_source == AUTO_ASSIGNMENT_SOURCE
+			and assignment.custom_shift_group != request["target_shift_group"]
+		):
+			frappe.throw(
+				_("Shift Assignment {0} is no longer an eligible automatic assignment.").format(
+					assignment_name
+				)
+			)
+		_cancel_current_day_assignment(assignment, request)
+		replaced_today += 1
+
 	membership_counts = Counter()
 	for row in preview["rows"]:
 		_apply_membership_change(row, request)
@@ -193,6 +216,18 @@ def _run_bulk_shift_group_transfer(request: dict, requested_by: str | None = Non
 	# a log/Attendance committed while this batch was running forces a full
 	# rollback, and a new matching insert cannot slip in before our commit.
 	_assert_no_concurrent_usage(request["employees"], request)
+	current_day_employees = [
+		row["employee"] for row in preview["rows"] if row.get("has_current_day_checkins")
+	]
+	resynced = (
+		cint(sync_checkin_shift_fields_for_date(getdate(today()), current_day_employees))
+		if current_day_employees
+		else 0
+	)
+	cache_sync = sync_employee_current_shift_groups(
+		request["employees"],
+		getdate(today()),
+	)
 
 	return {
 		"status": "COMPLETED",
@@ -201,10 +236,64 @@ def _run_bulk_shift_group_transfer(request: dict, requested_by: str | None = Non
 		"effective_date": request["effective_date"],
 		"membership_end_date": request["membership_end_date"],
 		"cancelled_auto_assignments": cancelled,
+		"current_day_assignments_replaced": replaced_today,
+		"current_day_checkins_resynced": resynced,
 		"membership_actions": dict(membership_counts),
 		"generation_counts": generation.get("counts", {}),
+		"employee_cache_counts": cache_sync.get("counts", {}),
 		"requested_by": requested_by,
 	}
+
+
+def _cancel_current_day_assignment(assignment, request: dict):
+	"""Cancel today's automatic row without HRMS ``on_cancel``.
+
+	HRMS refuses to cancel an assignment while a same-day Checkin carries its
+	Shift Type. Today's punches stay raw logs and are re-pointed to the
+	regenerated target shift, so the Comment keeps the replaced plan for audit.
+	"""
+	before = {
+		fieldname: assignment.get(fieldname)
+		for fieldname in (
+			"name",
+			"employee",
+			"shift_type",
+			"start_date",
+			"end_date",
+			"status",
+			"docstatus",
+			"custom_assignment_source",
+			"custom_shift_group",
+			"custom_generated_by_shift_group",
+			"custom_schedule_date",
+		)
+	}
+	payload = {
+		"summary": "Current-day automatic assignment replaced by same-day Shift Group transfer",
+		"target_shift_group": request["target_shift_group"],
+		"note": request["note"],
+		"before": before,
+	}
+	frappe.get_doc(
+		{
+			"doctype": "Comment",
+			"comment_type": "Info",
+			"reference_doctype": "Shift Assignment",
+			"reference_name": assignment.name,
+			"content": f"<pre>{json.dumps(payload, ensure_ascii=False, default=str, sort_keys=True)}</pre>",
+		}
+	).insert(ignore_permissions=True)
+	frappe.db.set_value(
+		"Shift Assignment",
+		assignment.name,
+		{
+			"docstatus": 2,
+			"status": "Inactive",
+			"modified": now_datetime(),
+			"modified_by": frappe.session.user,
+		},
+		update_modified=False,
+	)
 
 
 def _apply_membership_change(row: dict, request: dict):
@@ -287,6 +376,7 @@ def _build_preview(request: dict) -> dict:
 
 	rows = []
 	assignment_names_to_cancel = []
+	assignment_names_to_replace_today = []
 	for employee in employees:
 		row = _preview_employee(
 			employee,
@@ -299,6 +389,7 @@ def _build_preview(request: dict) -> dict:
 		)
 		rows.append(row)
 		assignment_names_to_cancel.extend(row.pop("assignment_names_to_cancel"))
+		assignment_names_to_replace_today.extend(row.pop("assignment_names_to_replace_today"))
 
 	counts = Counter(row["status"] for row in rows)
 	return {
@@ -312,6 +403,7 @@ def _build_preview(request: dict) -> dict:
 		"manual_assignments_preserved": sum(row["manual_assignments_preserved"] for row in rows),
 		"rows": rows,
 		"assignment_names_to_cancel": assignment_names_to_cancel,
+		"assignment_names_to_replace_today": assignment_names_to_replace_today,
 	}
 
 
@@ -351,10 +443,19 @@ def _preview_employee(
 
 	current_group, group_source = _resolve_current_group(employee, current_membership, group_names)
 	membership_action = _membership_action(current_membership, request)
+	authoritative_group = current_membership.shift_group if current_membership else None
+	display_group = employee.get("custom_shift_group")
 
 	if employee.company != request["target_company"]:
 		blockers.append(_("Employee Company differs from the target Shift Group Company."))
-	used_dates = attendance_dates | checkin_dates
+	# Same-day transfer keeps today's raw punches: today's Attendance is built
+	# later by the daily pipeline from the replaced plan. Any Attendance, or a
+	# punch on a later date, still means the period is already in use.
+	current_date = getdate(today()) if checkin_dates else None
+	has_current_day_checkins = (
+		current_date in checkin_dates and current_date not in attendance_dates
+	)
+	used_dates = attendance_dates | (checkin_dates - {current_date})
 	if used_dates:
 		formatted_dates = ", ".join(str(value) for value in sorted(used_dates)[:10])
 		if len(used_dates) > 10:
@@ -364,6 +465,7 @@ def _preview_employee(
 		)
 
 	auto_to_cancel = []
+	replace_today = []
 	manual_preserved = 0
 	for assignment in assignments:
 		is_engine = bool(
@@ -391,6 +493,20 @@ def _preview_employee(
 			request["effective_date"],
 			request["membership_end_date"],
 		)
+		if has_current_day_checkins and current_date in covered_dates:
+			if (
+				getdate(assignment.start_date)
+				== current_date
+				== getdate(assignment.end_date or assignment.start_date)
+			):
+				replace_today.append(assignment.name)
+			else:
+				blockers.append(
+					_(
+						"Automatic Shift Assignment {0} covers several days and today already has Checkin."
+					).format(assignment.name)
+				)
+			continue
 		if not covered_dates & used_dates:
 			auto_to_cancel.append(assignment.name)
 
@@ -400,6 +516,11 @@ def _preview_employee(
 		"company": employee.company,
 		"current_shift_group": current_group,
 		"group_source": group_source,
+		"authoritative_shift_group": authoritative_group,
+		"display_shift_group": display_group,
+		"display_mismatch": bool(
+			authoritative_group and display_group != authoritative_group
+		),
 		"target_shift_group": request["target_shift_group"],
 		"current_membership": current_membership.name if current_membership else None,
 		"membership_action": membership_action,
@@ -407,7 +528,9 @@ def _preview_employee(
 		"manual_assignments_preserved": manual_preserved,
 		"status": "BLOCKED" if blockers else "READY",
 		"blockers": blockers,
+		"has_current_day_checkins": has_current_day_checkins,
 		"assignment_names_to_cancel": auto_to_cancel,
+		"assignment_names_to_replace_today": replace_today,
 	}
 
 
@@ -558,9 +681,10 @@ def _assert_no_concurrent_usage(employee_names, request):
 		request["membership_end_date"],
 		for_update=True,
 	)
+	current_date = getdate(today())
 	conflicts = []
 	for employee in employee_names:
-		used_dates = attendance_dates[employee] | checkin_dates[employee]
+		used_dates = attendance_dates[employee] | (checkin_dates[employee] - {current_date})
 		if used_dates:
 			conflicts.append(f"{employee}: {', '.join(str(value) for value in sorted(used_dates))}")
 

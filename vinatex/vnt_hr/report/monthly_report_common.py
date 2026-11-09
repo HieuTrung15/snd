@@ -124,10 +124,13 @@ def build_monthly_context(filters=None):
 		frappe.session.user == "Administrator"
 	)
 	effective_end = min(to_date, getdate(add_days(today(), -1)))
+	confirmation_documents = _period_confirmation_documents(confirmation_map)
 
 	for employee in employees:
 		row = _new_employee_row(employee, from_date, to_date)
 		row.can_open_confirmation = can_open_confirmation
+		if can_open_confirmation:
+			row.confirm_document = confirmation_documents.get(employee.name)
 		for work_date in days:
 			day = _build_day_record(
 				employee=employee,
@@ -156,12 +159,29 @@ def build_monthly_context(filters=None):
 		context.rows.append(row)
 
 	return context
+def _period_confirmation_documents(confirmation_map):
+	"""Phiếu giải trình đại diện cho cả kỳ của từng nhân viên.
+
+	Bấm tên nhân viên chỉ mở thẳng phiếu khi cả kỳ có đúng một phiếu.  Nhân
+	viên có nhiều phiếu trong kỳ trả về None để client mở danh sách đã lọc sẵn
+	thay vì đoán nhầm phiếu.
+	"""
+	grouped = {}
+	for (employee_name, _work_date), confirmation in confirmation_map.items():
+		grouped.setdefault(employee_name, set()).add(confirmation.parent)
+	return {
+		employee_name: next(iter(documents)) if len(documents) == 1 else None
+		for employee_name, documents in grouped.items()
+	}
+
+
 @frappe.whitelist()
 def ensure_attendance_confirmation(employee, work_date):
 	"""Create/refresh the monthly confirmation and return the matching document.
 
-	This is used only when an HR user clicks a coloured cell whose anomaly did
-	not yet have a generated confirmation row.
+	Kept as an endpoint for one-off fixes: no report calls it any more since the
+	monthly reports open the confirmation from the employee name instead of from
+	a single day cell.
 	"""
 	validate_report_access()
 	if frappe.session.user != "Administrator" and not REPORT_ROLES.intersection(
@@ -274,6 +294,7 @@ def _new_employee_row(employee, from_date, to_date):
 		shift_label=_employee_shift_label(employee),
 		section=section,
 		subgroup=subgroup,
+		confirm_document=None,
 		from_date=from_date.isoformat(),
 		to_date=to_date.isoformat(),
 		tot_work_days=0.0,
@@ -330,10 +351,7 @@ def _build_day_record(
 	)
 	review = None
 	if _confirmation_applies(technical_symbol, day_type, confirmation):
-		review = _build_confirmation_review(
-			confirmation,
-			include_document_name=can_open_confirmation,
-		)
+		review = _build_confirmation_review(confirmation)
 
 	details = None
 	if window and planned_logs and not window.get("is_off"):
@@ -367,7 +385,9 @@ def _build_day_record(
 		symbol=symbol,
 		state=state,
 		label=ANOMALY_STATES.get(state, {}).get("label", ""),
-		confirmation_name=(review.document_name if review else None),
+		confirmation_name=(
+			confirmation.get("parent") if review and can_open_confirmation else None
+		),
 		review_state=(review.state if review else ""),
 		review_label=(review.label if review else ""),
 		technical_symbol=technical_symbol,

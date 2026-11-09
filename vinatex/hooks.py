@@ -33,6 +33,7 @@ app_include_css = [
     f"/assets/vinatex/css/workspace_hub.css?v={version}"
 ]
 app_include_js = [
+    f"/assets/vinatex/js/shift_group_transfer_dialog.js?v={version}-transfer-20261109-no-confirm",
     f"/assets/vinatex/js/global_header.js?v={version}",
 	f"/assets/vinatex/js/title-wrap.js?v={version}",
 	f"/assets/vinatex/js/report_actions_override.js?v={version}",
@@ -43,6 +44,7 @@ app_include_js = [
     f"/assets/vinatex/js/hide_id_column.js?v={version}",
     f"/assets/vinatex/js/hide_connections.js?v={version}",
     f"/assets/vinatex/js/hide_workflow_help.js?v={version}",
+    f"/assets/vinatex/js/report_ui_reset.js?v={version}",
 ]
 
 # include js, css files in header of web template

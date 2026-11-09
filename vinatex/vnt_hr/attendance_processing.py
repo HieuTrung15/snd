@@ -20,13 +20,23 @@ from hrms.hr.doctype.employee_checkin.employee_checkin import (
 	update_attendance_in_checkins,
 )
 
-from vinatex.vnt_hr.shift_management.constants import MAX_MANUAL_GENERATION_DAYS
+from vinatex.vnt_hr.shift_management.constants import (
+	MAX_MANUAL_GENERATION_DAYS,
+	SUNDAY_WORKDAY_DEPARTMENTS,
+)
 from vinatex.vnt_hr.shift_management.shift_assignment_service import (
 	_date_range,
 	_load_generation_context,
 	_plan_employee_date,
 	generate_shift_assignments,
 )
+
+
+# Lệch vài phút ở máy vân tay không phải chuyện phải giải trình. Ngưỡng này nằm
+# trong code để áp cho mọi ca: hai trường dung sai của Shift Type chỉ hiện ra khi
+# bật Enable Auto Attendance, mà bật nó là giao việc chấm công cho job của HRMS
+# chạy song song với process_attendance.
+GRACE_PERIOD_MINUTES = 3
 
 
 def get_active_employees(from_date, to_date, employee_names=None):
@@ -89,6 +99,7 @@ def build_shift_windows(employees, from_date, to_date, context=None):
 					work_date=work_date,
 					shift_group=None,
 					shift_type=None,
+					shift_assignment=None,
 					assignment_source="Employment period",
 					plan_action="OUTSIDE_EMPLOYMENT",
 					plan_error=None,
@@ -107,6 +118,7 @@ def build_shift_windows(employees, from_date, to_date, context=None):
 				work_date=work_date,
 				shift_group=plan.shift_group,
 				shift_type=plan.shift_type,
+				shift_assignment=plan.get("shift_assignment"),
 				assignment_source=plan.assignment_source,
 				plan_action=plan.action,
 				plan_error=plan.reason if plan.action == "ERROR" else None,
@@ -131,7 +143,15 @@ def build_shift_windows(employees, from_date, to_date, context=None):
 	return windows
 
 
-def load_checkins_for_windows(employees, windows, from_date, to_date):
+def load_checkins_for_windows(
+	employees,
+	windows,
+	from_date,
+	to_date,
+	*,
+	include_calendar_logs=False,
+	checkin_end_exclusive=None,
+):
 	"""Load logs once and assign each one to the employee's planned shift.
 
 	The Shift Type buffer remains useful metadata for standard HRMS screens, but
@@ -145,7 +165,11 @@ def load_checkins_for_windows(employees, windows, from_date, to_date):
 	employees = [frappe._dict(row) for row in employees]
 	employee_names = [row.name for row in employees]
 	if not employee_names:
-		return defaultdict(list), defaultdict(list)
+		empty = (defaultdict(list), defaultdict(list))
+		return (*empty, defaultdict(list)) if include_calendar_logs else empty
+	checkin_end_exclusive = (
+		get_datetime(checkin_end_exclusive) if checkin_end_exclusive else None
+	)
 
 	# The previous/next work date is required to resolve punches outside the
 	# nominal shift without a fixed minute buffer. Most callers intentionally
@@ -175,6 +199,11 @@ def load_checkins_for_windows(employees, windows, from_date, to_date):
 	for employee_windows in planned_by_employee.values():
 		employee_windows.sort(key=lambda window: window.start_datetime)
 
+	query_end = get_datetime(getdate(to_date) + timedelta(days=2))
+	if checkin_end_exclusive:
+		query_end = min(
+			query_end, checkin_end_exclusive - timedelta(microseconds=1)
+		)
 	rows = frappe.get_all(
 		"Employee Checkin",
 		filters={
@@ -184,7 +213,7 @@ def load_checkins_for_windows(employees, windows, from_date, to_date):
 				"between",
 				[
 					get_datetime(getdate(from_date) - timedelta(days=1)),
-					get_datetime(getdate(to_date) + timedelta(days=2)),
+					query_end,
 				],
 			],
 			"docstatus": ["<", 2],
@@ -219,8 +248,13 @@ def load_checkins_for_windows(employees, windows, from_date, to_date):
 
 	assigned = defaultdict(list)
 	unplanned = defaultdict(list)
+	calendar_logs = defaultdict(list)
 	for row in rows:
 		log_time = get_datetime(row.time)
+		if checkin_end_exclusive and log_time >= checkin_end_exclusive:
+			continue
+		if from_date <= log_time.date() <= to_date:
+			calendar_logs[(row.employee, log_time.date())].append(row)
 		linked_work_date = linked_attendance_dates.get(row.attendance)
 		if linked_work_date:
 			window = ownership_windows.get((row.employee, linked_work_date))
@@ -254,6 +288,8 @@ def load_checkins_for_windows(employees, windows, from_date, to_date):
 		row.shift_actual_end = window.actual_end
 		assigned[(row.employee, window.work_date)].append(row)
 
+	if include_calendar_logs:
+		return assigned, unplanned, calendar_logs
 	return assigned, unplanned
 
 
@@ -308,8 +344,14 @@ def classify_work_date(employee, window, holiday_context):
 		return "work"
 
 	# Rotating Kíp weekly OFF is defined by VNT Shift Group Schedule. A Sunday
-	# in the company Holiday List must not suppress a Kíp that is scheduled.
+	# in the company Holiday List must not suppress a Kíp that is scheduled or
+	# the two Departments whose approved plan treats Sunday as a workday.
 	if cint(holiday.weekly_off):
+		if (
+			getdate(window.work_date).weekday() == 6
+			and employee.get("department") in SUNDAY_WORKDAY_DEPARTMENTS
+		):
+			return "work"
 		return "work" if window.shift_group else "off"
 	return "holiday"
 
@@ -344,6 +386,10 @@ def calculate_attendance_details(window, logs, *, respect_marking_flags=True):
 	late/early fields are only populated when their Shift Type switches are on.
 	Reports can pass ``False`` to compare punches with the planned start/end time
 	directly, without enabling HRMS Auto Attendance.
+
+	Dung sai đi muộn/về sớm là ``max`` của giá trị trên Shift Type và sàn chung
+	``GRACE_PERIOD_MINUTES``, nên mọi ca đều được tối thiểu 3 phút trong khi ca
+	nào cần rộng hơn vẫn giữ được con số lớn hơn của mình.
 	"""
 	logs = sorted(logs or [], key=lambda row: get_datetime(row.time))
 	shift_doc = window.shift_doc
@@ -365,17 +411,17 @@ def calculate_attendance_details(window, logs, *, respect_marking_flags=True):
 		in_time = get_datetime(logs[0].time) if has_in else None
 		out_time = get_datetime(logs[-1].time) if has_out else None
 
+	late_grace = max(cint(shift_doc.late_entry_grace_period), GRACE_PERIOD_MINUTES)
+	early_grace = max(cint(shift_doc.early_exit_grace_period), GRACE_PERIOD_MINUTES)
 	late_entry = bool(
 		(not respect_marking_flags or cint(shift_doc.enable_late_entry_marking))
 		and in_time
-		and in_time
-		> window.start_datetime + timedelta(minutes=cint(shift_doc.late_entry_grace_period))
+		and in_time > window.start_datetime + timedelta(minutes=late_grace)
 	)
 	early_exit = bool(
 		(not respect_marking_flags or cint(shift_doc.enable_early_exit_marking))
 		and out_time
-		and out_time
-		< window.end_datetime - timedelta(minutes=cint(shift_doc.early_exit_grace_period))
+		and out_time < window.end_datetime - timedelta(minutes=early_grace)
 	)
 
 	status = "Absent" if not has_in or not has_out else "Present"
@@ -495,18 +541,7 @@ def process_attendance(from_date, to_date, *, dry_run=False, employee_names=None
 		frappe.db.savepoint("vnt_attendance_row")
 		try:
 			attendance_doc = frappe.get_doc(
-				{
-					"doctype": "Attendance",
-					"employee": employee.name,
-					"attendance_date": window.work_date,
-					"status": details.status,
-					"shift": window.shift_type,
-					"working_hours": details.working_hours,
-					"in_time": details.in_time,
-					"out_time": details.out_time,
-					"late_entry": details.late_entry,
-					"early_exit": details.early_exit,
-				}
+				_build_attendance_values(employee, window, details)
 			)
 			attendance_doc.flags.ignore_permissions = True
 			attendance_doc.insert(ignore_permissions=True)
@@ -524,6 +559,27 @@ def process_attendance(from_date, to_date, *, dry_run=False, employee_names=None
 			)
 
 	return result
+
+
+def _build_attendance_values(employee, window, details) -> dict:
+	values = {
+		"doctype": "Attendance",
+		"employee": employee.name,
+		"attendance_date": window.work_date,
+		"status": details.status,
+		"shift": window.shift_type,
+		"working_hours": details.working_hours,
+		"in_time": details.in_time,
+		"out_time": details.out_time,
+		"late_entry": details.late_entry,
+		"early_exit": details.early_exit,
+	}
+	if window.get("shift_assignment"):
+		values.update(
+			custom_vnt_generated_by_pipeline=1,
+			custom_vnt_source_shift_assignment=window.shift_assignment,
+		)
+	return values
 
 
 def _nominal_shift_datetimes(work_date, shift_doc):
@@ -604,6 +660,11 @@ def _select_checkin_window(row, windows):
 		if candidates
 		else None
 	)
+
+
+def select_checkin_window(row, windows):
+	"""Expose the canonical punch-ownership resolver to guarded planners."""
+	return _select_checkin_window(row, windows)
 
 
 def _checkin_ownership_start(window):
@@ -697,6 +758,29 @@ def _sync_checkin_shift_fields(window, logs, *, dry_run=False):
 				"Employee Checkin", row.name, values, update_modified=False
 			)
 	return updated
+
+
+def sync_checkin_shift_fields_for_date(work_date, employee_names):
+	"""Point unlinked punches of one work date at the shift planned right now.
+
+	``process_attendance`` only syncs shifts that have ended. A same-day Kíp
+	transfer rewrites today's plan while its punches still carry the shift HRMS
+	fetched at insert time, so they are re-pointed here without building
+	Attendance.
+	"""
+	work_date = getdate(work_date)
+	employees = get_active_employees(work_date, work_date, employee_names)
+	if not employees:
+		return 0
+	windows = build_shift_windows(employees, work_date, work_date)
+	checkin_map, _unplanned = load_checkins_for_windows(
+		employees, windows, work_date, work_date
+	)
+	return sum(
+		_sync_checkin_shift_fields(window, checkin_map.get(key, []))
+		for key, window in windows.items()
+		if not window.is_off
+	)
 
 
 def _repair_existing_attendance(

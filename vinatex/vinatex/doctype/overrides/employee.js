@@ -2,6 +2,7 @@ frappe.ui.form.on("Employee", {
   refresh(frm) {
     toggle_salary_tables_visibility(frm);
     add_contract_docx_buttons(frm);
+    rememberShiftGroupBaseline(frm);
   },
   first_name(frm) {
     update_employee_name(frm);
@@ -29,6 +30,13 @@ frappe.ui.form.on("Employee", {
       });
     }
   },
+  custom_shift_group(frm) {
+    return handleShiftGroupChange(
+      frm,
+      frappe,
+      globalThis.VNTShiftGroupTransferUI,
+    );
+  },
   validate(frm) {
     if (frm.doc.date_of_birth && frm.doc.gender) {
       frappe.call({
@@ -52,6 +60,140 @@ frappe.ui.form.on("Employee", {
     bind_contract_grid_events_once(frm);
   }
 });
+
+const SHIFT_GROUP_VOLATILE_KEYS = new Set([
+  "__last_sync_on",
+  "__onload",
+  "__unsaved",
+  "_liked_by",
+  "_seen",
+  "_user_tags",
+]);
+
+function captureShiftGroupBaseline(frm) {
+  return {
+    documentKey: shiftGroupDocumentKey(frm.doc),
+    shiftGroup: frm.doc.custom_shift_group || null,
+    wasUnsaved: Boolean(frm.doc.__unsaved),
+    document: normalizeShiftGroupDocument(frm.doc),
+  };
+}
+
+function rememberShiftGroupBaseline(frm) {
+  const key = shiftGroupDocumentKey(frm.doc);
+  frm.__vnt_shift_group_baselines ||= Object.create(null);
+  if (!frm.__vnt_shift_group_baselines[key] || !frm.doc.__unsaved) {
+    frm.__vnt_shift_group_baselines[key] = captureShiftGroupBaseline(frm);
+  }
+  frm.__vnt_shift_group_baseline = frm.__vnt_shift_group_baselines[key];
+  return frm.__vnt_shift_group_baseline;
+}
+
+function hasNonShiftGroupChanges(baseline, doc) {
+  if (!baseline?.document) return true;
+  const current = normalizeShiftGroupDocument(doc);
+  current.custom_shift_group = baseline.shiftGroup || null;
+  return stableShiftGroupJson(current) !== stableShiftGroupJson(baseline.document);
+}
+
+async function handleShiftGroupChange(
+  frm,
+  frappeInstance,
+  transferUI = globalThis.VNTShiftGroupTransferUI,
+) {
+  if (frm.__vnt_shift_group_change_in_progress) return;
+  const documentKey = shiftGroupDocumentKey(frm.doc);
+  const baseline =
+    frm.__vnt_shift_group_baselines?.[documentKey] ||
+    (frm.__vnt_shift_group_baseline?.documentKey === documentKey
+      ? frm.__vnt_shift_group_baseline
+      : null);
+  if (!baseline) return;
+
+  const targetShiftGroup = frm.doc.custom_shift_group || null;
+  const sourceShiftGroup = baseline.shiftGroup || null;
+  if (targetShiftGroup === sourceShiftGroup) return;
+
+  frm.__vnt_shift_group_change_in_progress = true;
+  try {
+    await frm.set_value("custom_shift_group", sourceShiftGroup);
+
+    const hasOtherChanges = hasNonShiftGroupChanges(baseline, frm.doc);
+    if (!hasOtherChanges) {
+      frm.doc.__unsaved = baseline.wasUnsaved ? 1 : 0;
+      frm.refresh_header?.();
+    }
+
+    if (!targetShiftGroup) return;
+    const translate = typeof __ === "function" ? __ : (value) => value;
+    if (frm.is_new()) {
+      frappeInstance.msgprint(
+        translate("Hãy lưu hồ sơ nhân sự trước khi phân hoặc chuyển kíp."),
+      );
+      return;
+    }
+    if (!hasShiftGroupTransferRole(frappeInstance)) {
+      frappeInstance.msgprint(
+        translate("Bạn không có quyền phân hoặc chuyển kíp cho nhân sự."),
+      );
+      return;
+    }
+    if (hasOtherChanges) {
+      frappeInstance.msgprint(
+        translate(
+          "Hãy lưu các thay đổi khác trên hồ sơ trước khi phân hoặc chuyển kíp.",
+        ),
+      );
+      return;
+    }
+    if (!transferUI?.openTransferDialog) {
+      frappeInstance.msgprint(
+        translate("Không tải được chức năng chuyển kíp. Hãy tải lại trang."),
+      );
+      return;
+    }
+
+    transferUI.openTransferDialog({
+      frappe: frappeInstance,
+      employees: [frm.doc.name],
+      initialTargetShiftGroup: targetShiftGroup,
+      title: translate("Phân / chuyển kíp cho {0}", [
+        frm.doc.employee_name || frm.doc.name,
+      ]),
+      onCompleted: async () => frm.reload_doc(),
+    });
+  } finally {
+    frm.__vnt_shift_group_change_in_progress = false;
+  }
+}
+
+function hasShiftGroupTransferRole(frappeInstance) {
+  return ["HR User", "HR Manager", "System Manager"].some((role) =>
+    frappeInstance.user.has_role(role),
+  );
+}
+
+function shiftGroupDocumentKey(doc) {
+  return `${doc?.doctype || "Employee"}:${doc?.name || "__new__"}`;
+}
+
+function normalizeShiftGroupDocument(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeShiftGroupDocument(item));
+  }
+  if (!value || typeof value !== "object") return value;
+
+  const normalized = {};
+  for (const key of Object.keys(value).sort()) {
+    if (SHIFT_GROUP_VOLATILE_KEYS.has(key) || key.startsWith("__")) continue;
+    normalized[key] = normalizeShiftGroupDocument(value[key]);
+  }
+  return normalized;
+}
+
+function stableShiftGroupJson(value) {
+  return JSON.stringify(value);
+}
 
 function update_employee_name(frm) {
   const employee_name = [frm.doc.first_name, frm.doc.middle_name, frm.doc.last_name]
@@ -244,4 +386,13 @@ async function download_contract_docx(frm, contract_type) {
   } finally {
     frappe.dom.unfreeze();
   }
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    captureShiftGroupBaseline,
+    handleShiftGroupChange,
+    hasNonShiftGroupChanges,
+    rememberShiftGroupBaseline,
+  };
 }

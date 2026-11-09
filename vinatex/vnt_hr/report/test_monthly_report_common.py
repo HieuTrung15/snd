@@ -13,8 +13,10 @@ from vinatex.vnt_hr.report.báo_cáo_tăng_ca_hàng_tháng.báo_cáo_tăng_ca_h�
 from vinatex.vnt_hr.report.monthly_report_common import (
 	_apply_attendance_totals,
 	_attendance_symbol,
+	_build_day_record,
 	_calculate_overtime_hours,
 	_leave_symbol,
+	_period_confirmation_documents,
 	_shift_symbol,
 )
 
@@ -136,6 +138,90 @@ class TestMonthlyReportCommon(TestCase):
 				),
 				("6", "short_work", 1.0),
 			)
+
+	def _missing_out_day(self, can_open_confirmation):
+		window = frappe._dict(
+			is_off=False,
+			shift_type="Hành chính",
+			shift_group=None,
+			shift_doc=frappe._dict(holiday_list=None),
+			work_date=date(2026, 10, 1),
+			start_datetime=datetime(2026, 10, 1, 7, 30),
+			end_datetime=datetime(2026, 10, 1, 17, 0),
+		)
+		return _build_day_record(
+			employee=frappe._dict(
+				name="HR-EMP-0001",
+				company="Test",
+				date_of_joining=date(2020, 1, 1),
+				default_shift="Hành chính",
+			),
+			work_date=date(2026, 10, 1),
+			window=window,
+			planned_logs=[frappe._dict(name="IN", time=datetime(2026, 10, 1, 7, 25))],
+			outside_logs=[],
+			holiday_context=frappe._dict(company_lists={}, holidays={}),
+			attendance=None,
+			leave=None,
+			confirmation=frappe._dict(
+				parent="VNT-AC-0001",
+				issue_code="MISSING_OUT",
+				issue_type="Thiếu giờ ra",
+				decision_question="Có công nhận đủ ngày công không?",
+				confirm="",
+				evidence_code="",
+			),
+			can_open_confirmation=can_open_confirmation,
+			effective_end=date(2026, 10, 31),
+		)
+
+	def test_day_record_links_to_the_confirmation_document_for_hr(self):
+		day = self._missing_out_day(True)
+		self.assertEqual(day.review_state, "pending")
+		self.assertEqual(day.confirmation_name, "VNT-AC-0001")
+
+	def test_day_record_hides_the_confirmation_document_without_permission(self):
+		day = self._missing_out_day(False)
+		self.assertEqual(day.review_state, "pending")
+		self.assertIsNone(day.confirmation_name)
+
+	def test_one_confirmation_per_period_is_opened_from_the_employee_name(self):
+		confirmation_map = {
+			("HR-EMP-0001", date(2026, 10, 1)): frappe._dict(parent="VNT-AC-0001"),
+			("HR-EMP-0001", date(2026, 10, 9)): frappe._dict(parent="VNT-AC-0001"),
+		}
+		self.assertEqual(
+			_period_confirmation_documents(confirmation_map),
+			{"HR-EMP-0001": "VNT-AC-0001"},
+		)
+
+	def test_several_confirmations_fall_back_to_the_filtered_list(self):
+		confirmation_map = {
+			("HR-EMP-0001", date(2026, 10, 1)): frappe._dict(parent="VNT-AC-0001"),
+			("HR-EMP-0001", date(2026, 10, 9)): frappe._dict(parent="VNT-AC-0002"),
+			("HR-EMP-0002", date(2026, 10, 9)): frappe._dict(parent="VNT-AC-0003"),
+		}
+		documents = _period_confirmation_documents(confirmation_map)
+		self.assertIsNone(documents["HR-EMP-0001"])
+		self.assertEqual(documents["HR-EMP-0002"], "VNT-AC-0003")
+
+	def test_monthly_excel_sheets_start_with_the_employee_code(self):
+		context = frappe._dict(
+			from_date=date(2026, 10, 1),
+			to_date=date(2026, 10, 31),
+			days=[date(2026, 10, day) for day in range(1, 32)],
+			rows=[],
+		)
+		sheet = make_attendance_workbook(context).active
+		self.assertEqual(
+			[sheet.cell(1, column).value for column in (1, 2, 3)],
+			["STT", "Mã nhân viên", "Tên nhân viên"],
+		)
+		overtime = make_overtime_workbook(context).active
+		self.assertEqual(
+			[overtime.cell(1, column).value for column in (1, 2, 3)],
+			["Stt", "Mã nhân viên", "Tên nhân viên"],
+		)
 
 	def test_excel_formats_do_not_recreate_hidden_template_columns(self):
 		days = [date(2026, 10, day) for day in range(1, 32)]

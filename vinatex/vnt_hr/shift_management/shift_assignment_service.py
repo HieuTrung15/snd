@@ -14,6 +14,8 @@ from vinatex.vnt_hr.shift_management.constants import (
 	AUTO_ASSIGNMENT_SOURCE,
 	MAX_MANUAL_GENERATION_DAYS,
 	MAX_PREVIEW_ROWS,
+	SUNDAY_WORKDAY_DEPARTMENTS,
+	SUNDAY_WORKDAY_SHIFT_GROUP,
 	WEEKDAYS,
 )
 from vinatex.vnt_hr.shift_management.shift_group_service import shift_management_schema_is_ready
@@ -148,6 +150,14 @@ def _plan_employee_date(employee, schedule_date, context, requested_group=None) 
 		return base
 
 	existing = context["existing_assignments"].get((employee.name, schedule_date))
+	if (
+		existing
+		and employee.get("department") not in SUNDAY_WORKDAY_DEPARTMENTS
+		and _is_department_sunday_policy_assignment(
+			existing, employee, schedule_date, context
+		)
+	):
+		existing = None
 	if existing:
 		base.update(
 			shift_type=existing.shift_type,
@@ -181,6 +191,19 @@ def _plan_employee_date(employee, schedule_date, context, requested_group=None) 
 		base.update(action="ERROR", reason=f"Missing schedule row for {weekday}.")
 		return base
 	if cint(schedule.is_off):
+		if (
+			weekday == "Sunday"
+			and resolution.shift_group == SUNDAY_WORKDAY_SHIFT_GROUP
+			and employee.get("department") in SUNDAY_WORKDAY_DEPARTMENTS
+			and employee.get("default_shift") in context["shift_types"]
+		):
+			base.update(
+				shift_type=employee.default_shift,
+				action="CREATE",
+				reason="Department Sunday workday policy.",
+				assignment_source=AUTO_ASSIGNMENT_SOURCE,
+			)
+			return base
 		base.update(action="OFF", reason="Shift Group weekly OFF day.")
 		return base
 	if not schedule.shift_type or schedule.shift_type not in context["shift_types"]:
@@ -345,6 +368,23 @@ def _is_engine_assignment(assignment) -> bool:
 	return bool(
 		cint(assignment.get("custom_generated_by_shift_group"))
 		and assignment.get("custom_assignment_source") == AUTO_ASSIGNMENT_SOURCE
+	)
+
+
+def _is_department_sunday_policy_assignment(
+	assignment, employee, schedule_date, context
+) -> bool:
+	"""Identify an engine row created only to override HC's weekly Sunday OFF."""
+	if schedule_date.weekday() != 6 or not _is_engine_assignment(assignment):
+		return False
+	shift_group = assignment.get("custom_shift_group")
+	if shift_group != SUNDAY_WORKDAY_SHIFT_GROUP:
+		return False
+	schedule = context["schedules"].get((shift_group, "Sunday"))
+	return bool(
+		schedule
+		and cint(schedule.is_off)
+		and assignment.get("shift_type") == employee.get("default_shift")
 	)
 
 

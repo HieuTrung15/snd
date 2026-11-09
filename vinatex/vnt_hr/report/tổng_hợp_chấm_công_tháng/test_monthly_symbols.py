@@ -10,6 +10,7 @@ from vinatex.vnt_hr.report.tổng_hợp_chấm_công_tháng.monthly_symbols impo
 	_build_confirmation_review,
 	_combine_with_outside,
 	_confirmation_applies,
+	_new_row,
 	get_legend,
 	_get_symbol,
 	_outside_evidence_symbol,
@@ -261,3 +262,75 @@ class TestMonthlyAttendanceSymbols(TestCase):
 		self.assertEqual(row["tot_early"], 1)
 		self.assertEqual(row["tot_absent"], 0)
 		self.assertEqual(row["tot_rejected_confirmation"], 1)
+
+	def test_employee_code_follows_app_wide_precedence(self):
+		self.assertEqual(
+			_new_row(
+				frappe._dict(
+					name="HR-EMP-00001",
+					employee_name="Lê Ngọc Thanh",
+					custom_employee_code="NV001",
+					employee_number="9999",
+					attendance_device_id="55",
+				)
+			)["employee_code"],
+			"NV001",
+		)
+		self.assertEqual(
+			_new_row(
+				frappe._dict(
+					name="HR-EMP-00002",
+					employee_name="Bùi Ngọc An",
+					employee_number="9999",
+					attendance_device_id="55",
+				)
+			)["employee_code"],
+			"9999",
+		)
+
+	def test_employee_code_falls_back_to_employee_id(self):
+		row = _new_row(frappe._dict(name="HR-EMP-00003", employee_name="Đỗ Mạnh Hùng"))
+		self.assertEqual(row["employee_code"], "HR-EMP-00003")
+		self.assertEqual(row["employee"], "HR-EMP-00003")
+
+	def test_pending_review_label_states_what_hr_must_decide(self):
+		review = _build_confirmation_review(
+			frappe._dict(
+				issue_code="MISSING_OUT",
+				issue_type="Chỉ có giờ vào hợp lệ trong ca",
+				decision_question="Xác nhận nhân sự có thực sự đi làm và bị thiếu giờ ra?",
+				evidence_code="",
+				confirm="",
+			)
+		)
+		self.assertEqual(review.state, "pending")
+		self.assertEqual(
+			review.label.split("\n"),
+			[
+				"Chờ HR xác nhận",
+				"Trường hợp: Chỉ có giờ vào hợp lệ trong ca",
+				"HR cần xác nhận: Xác nhận nhân sự có thực sự đi làm và bị thiếu giờ ra?",
+			],
+		)
+
+	def test_decided_review_label_drops_the_question(self):
+		review = _build_confirmation_review(
+			frappe._dict(
+				issue_code="EARLY_EXIT",
+				issue_type="Về sớm so với ca kế hoạch",
+				decision_question="Xác nhận có căn cứ hợp lệ để công nhận đủ công?",
+				evidence_code="",
+				confirm="Đồng ý",
+			)
+		)
+		self.assertEqual(
+			review.label.split("\n"),
+			["HR đồng ý: chuyển Sm thành X", "Trường hợp: Về sớm so với ca kế hoạch"],
+		)
+
+	def test_review_no_longer_links_to_a_confirmation_document(self):
+		review = _build_confirmation_review(
+			frappe._dict(parent="VNT-AC-0001", issue_code="MISSING_IN", evidence_code="", confirm="")
+		)
+		self.assertIsNone(review.get("document_name"))
+		self.assertEqual(review.label, "Chờ HR xác nhận")

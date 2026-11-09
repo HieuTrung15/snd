@@ -637,6 +637,21 @@ Automatic assignments cancelled,Ca tự động đã hủy
 New automatic assignments created,Ca tự động mới đã tạo
 Off days,Ngày nghỉ Kíp
 Technical details,Chi tiết kỹ thuật
+Backdated Shift Group Transfer,Chuyển Kíp hồi tố
+Only HR Manager or System Manager can perform a backdated Shift Group transfer.,Chỉ HR Manager hoặc System Manager được chuyển Kíp hồi tố.
+A backdated transfer cannot exceed {0} Employees.,Mỗi lần hồi tố không được vượt quá {0} nhân sự.
+Backdated Effective Date must be before today.,Ngày hiệu lực hồi tố phải trước hôm nay.
+Membership End Date cannot be before today.,Ngày kết thúc thuộc Kíp không được trước hôm nay.
+Backdated period cannot exceed {0} days.,Khoảng hồi tố không được vượt quá {0} ngày.
+Enter exactly XÁC NHẬN HỒI TỐ to execute this backdated transfer.,Nhập đúng XÁC NHẬN HỒI TỐ để thực hiện chuyển Kíp hồi tố.
+The backdated transfer preview is stale. Preview again before executing.,Dữ liệu đã thay đổi sau khi xem trước; hãy xem trước lại trước khi thực hiện.
+Backdated transfer is blocked: {0},Chuyển Kíp hồi tố bị chặn: {0}
+Current work date data,Dữ liệu thuộc ngày công hôm nay
+Ambiguous legacy Attendance,Attendance cũ không đủ bằng chứng nguồn
+Confirmed attendance explanation,Phiếu giải trình đã có kết quả HR
+Submitted Salary Slip,Phiếu lương đã submit
+Backdated transfer completed for {0} Employee(s).,Đã chuyển Kíp hồi tố cho {0} nhân sự.
+Already applied,Đã áp dụng trước đó
 Not Created,Chưa tạo Attendance
 Not Required (Shift OFF),Không yêu cầu (Nghỉ Kíp)
 Submitted Attendance status. Not Created means Checkins may exist but no Attendance record exists yet.,Trạng thái từ Attendance đã trình. Chưa tạo Attendance nghĩa là có thể đã có Checkin nhưng chưa có bản ghi Attendance.
@@ -666,3 +681,13 @@ Saturday,Thứ Bảy
 Sunday,Chủ Nhật
 Inactive,Ngừng hiệu lực
 Legacy,Dữ liệu cũ
+"Employee {0} has overlapping active Shift Group memberships on {1}: {2}.","Nhân sự {0} có nhiều lịch sử phân kíp đang hiệu lực trùng nhau vào ngày {1}: {2}."
+Hãy lưu hồ sơ nhân sự trước khi phân hoặc chuyển kíp.,Hãy lưu hồ sơ nhân sự trước khi phân hoặc chuyển kíp.
+Bạn không có quyền phân hoặc chuyển kíp cho nhân sự.,Bạn không có quyền phân hoặc chuyển kíp cho nhân sự.
+Hãy lưu các thay đổi khác trên hồ sơ trước khi phân hoặc chuyển kíp.,Hãy lưu các thay đổi khác trên hồ sơ trước khi phân hoặc chuyển kíp.
+Không tải được chức năng chuyển kíp. Hãy tải lại trang.,Không tải được chức năng chuyển kíp. Hãy tải lại trang.
+"Đã lên lịch chuyển kíp cho {0} nhân sự; Kíp hiện tại sẽ đổi vào ngày hiệu lực.","Đã lên lịch chuyển kíp cho {0} nhân sự; Kíp hiện tại sẽ đổi vào ngày hiệu lực."
+Kíp theo membership,Kíp theo lịch sử phân kíp
+Kíp đang hiển thị,Kíp đang hiển thị
+Kíp hiển thị đang lệch membership và sẽ được đồng bộ.,Kíp hiển thị đang lệch lịch sử phân kíp và sẽ được đồng bộ.
+Punch được giữ,Lần chấm công được giữ

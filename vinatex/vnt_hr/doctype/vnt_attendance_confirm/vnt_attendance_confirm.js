@@ -19,7 +19,16 @@ frappe.ui.form.on("VNT Attendance Confirm", {
 					args: { docname: frm.doc.name },
 					freeze: true,
 					freeze_message: __("Đang đối chiếu ca kế hoạch và dữ liệu chấm công..."),
-					callback() {
+					callback(response) {
+						const result = response.message || {};
+						if (result["Số phiếu đã xóa"]) {
+							frappe.show_alert({
+								message: __("Phiếu không còn ngày cần giải trình và đã được xóa."),
+								indicator: "blue",
+							});
+							frappe.set_route("List", frm.doctype);
+							return;
+						}
 						frappe.show_alert({
 							message: __("Đã cập nhật dữ liệu bất thường."),
 							indicator: "green",

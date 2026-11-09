@@ -7,11 +7,93 @@ be run by an administrator from ``bench execute`` after a database backup.
 from __future__ import annotations
 
 from collections import defaultdict
+from datetime import datetime, timedelta
 
 import frappe
 from frappe import _
+from frappe.utils import cint, get_datetime, get_time, getdate
 
 from vinatex.vnt_hr.shift_management.constants import AUTO_ASSIGNMENT_SOURCE
+
+
+def repair_administrative_shift_checkins(
+	effective_from="2026-10-01", dry_run=True
+) -> dict:
+	"""Align stored check-in shift metadata with the 07:30-16:30 master."""
+	shift = frappe.get_cached_doc("Shift Type", "Hành chính")
+	if (
+		get_time(shift.start_time) != get_time("07:30:00")
+		or get_time(shift.end_time) != get_time("16:30:00")
+		or cint(shift.begin_check_in_before_shift_start_time) != 60
+		or cint(shift.allow_check_out_after_shift_end_time) != 60
+	):
+		frappe.throw(
+			_(
+				"Shift Type Hành chính must be configured as 07:30-16:30 with 60-minute buffers before this repair can run."
+			)
+		)
+
+	effective_date = getdate(effective_from)
+	effective_datetime = datetime.combine(effective_date, datetime.min.time())
+	rows = frappe.get_all(
+		"Employee Checkin",
+		filters={
+			"shift": shift.name,
+			"time": [">=", effective_datetime],
+			"docstatus": ["<", 2],
+		},
+		fields=[
+			"name",
+			"time",
+			"shift_start",
+			"shift_end",
+			"shift_actual_start",
+			"shift_actual_end",
+			"offshift",
+			"attendance",
+		],
+		order_by="time asc, name asc",
+	)
+
+	rows_to_update = 0
+	updated_rows = 0
+	for row in rows:
+		work_date = getdate(row.shift_start or row.time)
+		shift_start = datetime.combine(work_date, get_time(shift.start_time))
+		shift_end = datetime.combine(work_date, get_time(shift.end_time))
+		values = {
+			"shift_start": shift_start,
+			"shift_end": shift_end,
+			"shift_actual_start": shift_start
+			- timedelta(minutes=cint(shift.begin_check_in_before_shift_start_time)),
+			"shift_actual_end": shift_end
+			+ timedelta(minutes=cint(shift.allow_check_out_after_shift_end_time)),
+			"offshift": 0,
+		}
+		if all(
+			(cint(row.get(fieldname)) == expected if fieldname == "offshift" else (
+				bool(row.get(fieldname)) and get_datetime(row.get(fieldname)) == expected
+			))
+			for fieldname, expected in values.items()
+		):
+			continue
+
+		rows_to_update += 1
+		if not cint(dry_run):
+			frappe.db.set_value(
+				"Employee Checkin", row.name, values, update_modified=False
+			)
+			updated_rows += 1
+
+	return {
+		"effective_from": effective_date,
+		"dry_run": bool(cint(dry_run)),
+		"matched_rows": len(rows),
+		"linked_rows": sum(bool(row.attendance) for row in rows),
+		"rows_to_update": rows_to_update,
+		"updated_rows": updated_rows,
+		"already_correct": len(rows) - rows_to_update,
+	}
 
 
 def audit_duplicate_auto_assignments() -> dict:

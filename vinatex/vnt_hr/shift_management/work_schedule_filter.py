@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from vinatex.vnt_hr.shift_management.constants import DEFAULT_SHIFT_GROUP_MATRIX
+from vinatex.vnt_hr.shift_management.constants import (
+	DEFAULT_SHIFT_GROUP_MATRIX,
+	SUNDAY_WORKDAY_SHIFT_GROUP,
+)
 
 
 ADMINISTRATIVE_FILTER = "Ca Hành chính"
@@ -19,7 +22,19 @@ _EXPLICIT_TYPE_TO_FILTER = {
 	"Theo kíp": SHIFT_FILTER,
 	"Lịch đặc biệt": SPECIAL_SHIFT_FILTER,
 }
-_STANDARD_SHIFT_GROUPS = frozenset(DEFAULT_SHIFT_GROUP_MATRIX)
+_STANDARD_SHIFT_GROUPS = frozenset(
+	{str(index) for index in range(1, 8)} | set(DEFAULT_SHIFT_GROUP_MATRIX)
+)
+
+
+def get_working_schedule_type_for_shift_group(shift_group) -> str:
+	"""Return the normalized Employee schedule type for a group membership."""
+	shift_group = str(shift_group or "").strip()
+	if shift_group == SUNDAY_WORKDAY_SHIFT_GROUP:
+		return "Hành chính"
+	if shift_group in _STANDARD_SHIFT_GROUPS:
+		return "Theo kíp"
+	return "Lịch đặc biệt"
 
 
 def get_work_schedule_filter_value(employee) -> str:

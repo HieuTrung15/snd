@@ -69,8 +69,8 @@ def _build_context(filters=None):
 
 def _get_columns(days):
 	columns = [
-		{"fieldname": "employee_name", "label": _("Tên nhân viên"), "fieldtype": "Data", "width": 180},
 		{"fieldname": "employee_code", "label": _("Mã nhân viên"), "fieldtype": "Data", "width": 110},
+		{"fieldname": "employee_name", "label": _("Tên nhân viên"), "fieldtype": "Data", "width": 180},
 		{"fieldname": "department", "label": _("Vị trí / Bộ phận"), "fieldtype": "Data", "width": 150},
 		{"fieldname": "shift_label", "label": _("Kíp"), "fieldtype": "Data", "width": 90},
 	]
@@ -105,19 +105,19 @@ def _make_workbook(context):
 	static_headers = (
 		("Stt", 6),
 		(
-			"Tên nhân viên",
-			excel_content_width(
-				["Tên nhân viên", *(row.employee_name for row in context.rows)],
-				minimum=18,
-				maximum=36,
-			),
-		),
-		(
 			"Mã nhân viên",
 			excel_content_width(
 				["Mã nhân viên", *(row.employee_code for row in context.rows)],
 				minimum=13,
 				maximum=20,
+			),
+		),
+		(
+			"Tên nhân viên",
+			excel_content_width(
+				["Tên nhân viên", *(row.employee_name for row in context.rows)],
+				minimum=18,
+				maximum=36,
 			),
 		),
 		(
@@ -194,14 +194,14 @@ def _make_workbook(context):
 				sequence += 1
 				values = [
 					sequence,
-					row.employee_name,
 					row.employee_code,
+					row.employee_name,
 					row.department_code,
 					row.shift_label,
 				]
 				for column, value in enumerate(values, start=1):
 					cell = worksheet.cell(current_row, column, value)
-					_style_data_cell(cell, styles, text=column == 2)
+					_style_data_cell(cell, styles, text=column == 3)
 				for offset, day in enumerate(context.days):
 					fieldname = f"d{day.day:02d}"
 					cell = worksheet.cell(current_row, day_start + offset, row.get(fieldname) or "")
@@ -340,6 +340,6 @@ def _append_signatures(worksheet, row, last_column, year, styles):
 def _message():
 	return (
 		"<div><strong>Giờ tăng ca</strong> được làm tròn theo dữ liệu "
-		"vân tay và ca kế hoạch. Ô có màu/huy hiệu HR có thể bấm để mở phiếu giải trình.</div>"
+		"vân tay và ca kế hoạch. Bấm tên nhân viên để mở phiếu giải trình của cả kỳ.</div>"
 	)
 

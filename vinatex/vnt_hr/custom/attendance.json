@@ -1,5 +1,28 @@
 {
- "custom_fields": [],
+ "custom_fields": [
+  {
+   "default": "0",
+   "dt": "Attendance",
+   "fieldname": "custom_vnt_generated_by_pipeline",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "insert_after": "early_exit",
+   "label": "VNT Pipeline Generated",
+   "name": "Attendance-custom_vnt_generated_by_pipeline",
+   "read_only": 1
+  },
+  {
+   "dt": "Attendance",
+   "fieldname": "custom_vnt_source_shift_assignment",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "insert_after": "custom_vnt_generated_by_pipeline",
+   "label": "VNT Source Shift Assignment",
+   "name": "Attendance-custom_vnt_source_shift_assignment",
+   "options": "Shift Assignment",
+   "read_only": 1
+  }
+ ],
  "custom_perms": [],
  "doctype": "Attendance",
  "links": [],

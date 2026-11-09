@@ -4,7 +4,7 @@ Tài liệu này là source of truth cho phase 1 của chức năng ca/kíp trê
 
 ## Nguyên tắc bất biến
 
-- Không update, delete, rename hoặc migrate tự động Employee, Default Shift, Shift Type, Holiday List, Employee Checkin, Attendance hay Shift Assignment hiện hữu. Ngoại lệ duy nhất là thao tác chuyển Kíp hàng loạt do HR xác nhận: chỉ cancel ca tương lai có đủ marker `Kíp tự động`, chưa có Checkin/Attendance, rồi sinh lại theo Kíp mới.
+- Không update, delete, rename hoặc migrate tự động Employee, Default Shift, Shift Type, Holiday List hay Employee Checkin hiện hữu. Workflow chuyển Kíp có ngày hiệu lực là ngoại lệ có kiểm soát: chỉ xử lý Attendance/Shift Assignment do pipeline tạo khi preview chứng minh an toàn; không bao giờ xóa hoặc sửa `time`/`log_type` của Checkin.
 - Không sửa source của `frappe`, `erpnext` hoặc `hrms`; mọi code nằm trong app `vinatex`.
 - Migration chỉ tạo schema/metadata. Master Kíp và Holiday List chỉ được tạo bởi thao tác chủ động của HR/System Manager.
 - Bản ghi đã tồn tại nhưng khác cấu hình mong đợi chỉ được báo diff; không overwrite.
@@ -29,7 +29,7 @@ Các khung giờ nghiệp vụ:
 
 Setup chỉ reuse Shift Type có thời gian khớp. Nếu đúng tên nhưng sai giờ, setup báo `CONFLICT` và không sửa. Nếu tên khác nhưng thời gian đúng, admin truyền mapping tên thực tế. Shift Type trả lời “làm từ mấy giờ đến mấy giờ”; Kíp trả lời “thuộc nhóm luân phiên nào”, vì vậy Kíp không phải Shift Type trong kiến trúc mới.
 
-Hiện trạng lúc thiết kế: `Sáng`, `Chiều`, `Đêm` khớp; `Hành chính` đang là 07:30–17:00 và phải được business xử lý riêng, không tự đổi thành 16:30.
+Ca `Hành chính` áp dụng từ 07:30–16:30 kể từ 01/10/2026. Khi đổi khung giờ phải refresh dữ liệu chấm công từ ngày hiệu lực; không sửa log Checkin thô.
 
 ## BƯỚC 3 - Xác định chính sách hành chính linh hoạt
 
@@ -75,13 +75,12 @@ Ma trận chuẩn:
 
 ## BƯỚC 7 - Mapping Employee vào Kíp
 
-Thứ tự resolve cho ngày D:
+Nguồn xác định Kíp cho ngày D:
 
 1. `VNT Shift Group Assignment` Active bao phủ D.
-2. `Employee.custom_shift_group` nếu có và Kíp có hiệu lực.
-3. Legacy read-only fallback: `Employee.default_shift` trùng tên một `VNT Shift Group` đang có hiệu lực.
+2. Legacy read-only fallback chỉ dành cho dữ liệu chưa được chuẩn hóa: `Employee.custom_shift_group` hoặc `Employee.default_shift` trùng tên một `VNT Shift Group` đang có hiệu lực.
 
-Assignment là nguồn lịch sử chính. `custom_shift_group` chỉ là fallback/hiển thị hiện tại. Legacy fallback không gọi `db_set`, không save Employee và không clear Default Shift. Nhân viên có Default Shift `Hành chính` hoặc Shift Type thường không trùng master Kíp sẽ không được engine xử lý.
+Assignment là source of truth theo ngày. `Employee.custom_shift_group` chỉ là cache “Kíp hiện tại” tại ngày server: workflow và scheduler đồng bộ cache từ đúng một membership đang hiệu lực; chuyển Kíp tương lai không đổi cache trước ngày hiệu lực. Không được Save trực tiếp field này để chuyển Kíp. Nhân viên có Default Shift `Hành chính` hoặc Shift Type thường không trùng master Kíp sẽ không được engine xử lý.
 
 ## BƯỚC 8 - Các lịch đặc biệt
 
@@ -123,19 +122,32 @@ Kiểm thử lần lượt: mapping device ID, timezone site, log trùng, log_ty
 - Điều động/làm thay: manual Shift Assignment, source `Điều động` hoặc `Phân ca thủ công`.
 - Đổi Kíp dài hạn: đóng hiệu lực assignment cũ và tạo `VNT Shift Group Assignment` mới, không sửa lịch sử cũ.
 
-### Phân / chuyển Kíp hàng loạt
+### Phân / chuyển Kíp có ngày hiệu lực
 
-HR User/HR Manager/System Manager mở danh sách Employee, lọc danh sách cần xử lý, tick một hoặc nhiều dòng rồi chọn **Actions → Phân / chuyển kíp hàng loạt**. Dialog yêu cầu Kíp mới, ngày hiệu lực, ngày kết thúc thuộc Kíp, ngày sinh ca kế hoạch đến và lý do. Nút Preview chỉ đọc dữ liệu và hiển thị riêng từng nhân sự trước khi xác nhận.
+Employee Form và Employee List dùng chung một dialog và cùng facade server. Với một nhân sự, HR đổi **Kíp hiện tại** trên hồ sơ; giao diện hoàn tác field ngay rồi mở dialog để HR chọn ngày hiệu lực. Nếu hồ sơ còn thay đổi khác chưa lưu, dialog không mở và các thay đổi đó được giữ nguyên. Với nhiều nhân sự, HR lọc/tick các dòng trên Employee List rồi chọn **Actions → Phân / chuyển kíp hàng loạt**. Không Save trực tiếp field Kíp để bỏ qua workflow.
 
-Khi thực hiện, service khóa các Employee theo thứ tự ổn định và chạy toàn bộ batch trong một transaction:
+Dialog yêu cầu Kíp mới, ngày hiệu lực, ngày kết thúc thuộc Kíp, ngày sinh ca kế hoạch đến và lý do. Nút **Xem trước** chỉ đọc dữ liệu, hiển thị Kíp theo membership, Kíp đang hiển thị, mismatch cần sửa, ca/Attendance sẽ xử lý, punch được giữ và blocker của từng nhân sự. Một blocker làm toàn batch không thể execute.
 
-1. Nếu Employee đang có membership Kíp cũ, kết thúc membership đó tại ngày liền trước ngày hiệu lực; nếu chưa có membership thì tạo mới trực tiếp. `Employee.default_shift`, `custom_shift_group` và `custom_working_schedule_type` không bị đổi.
-2. Chỉ cancel Shift Assignment đã submit mang đồng thời marker `custom_generated_by_shift_group = 1` và source `Kíp tự động`, thuộc Kíp khác, trong khoảng bị thay thế.
-3. Không cancel ca manual/legacy. Nếu ca manual gắn với Kíp cũ làm cho lịch sử không thể đóng an toàn, preview báo blocker để HR xử lý rõ ràng.
-4. Có Checkin hoặc Attendance trong ngày bị thay thế thì Employee đó bị chặn. Batch là all-or-nothing: còn một blocker thì không ghi dữ liệu cho bất kỳ Employee nào.
-5. Sau khi membership mới hợp lệ, generator sinh lại các ngày chưa có assignment theo Kíp mới. Manual Shift Assignment vẫn thắng lịch Kíp.
+Với **ngày hiệu lực là hôm nay hoặc tương lai**, HR User/HR Manager/System Manager có thể thao tác, tối đa 200 Employee và 366 ngày. Batch nhỏ chạy đồng bộ; batch trên 500 employee-days vào long queue. Chuyển tương lai tạo membership/kế hoạch ngay nhưng `Kíp hiện tại` vẫn là Kíp nguồn đến ngày hiệu lực; kết quả giao diện phải ghi rõ “đã lên lịch”.
 
-Không cho backdate, tối đa 200 Employee/lần và tối đa 366 ngày cho khoảng membership/sinh ca. Batch nhỏ chạy đồng bộ; batch trên 500 employee-days được đưa vào long queue và gửi kết quả realtime cho người thao tác.
+Nếu ngày hiệu lực là **hôm nay** và nhân sự đã có Checkin hôm nay (chưa có Attendance hôm nay), transfer không bị chặn: ca tự động của hôm nay được cancel ở mức DB kèm Comment audit (không qua `Shift Assignment.cancel()` vì HRMS chặn khi có Checkin cùng Shift Type), generator sinh ca đích cho hôm nay, rồi punch hôm nay được trỏ lại theo ca đích bằng `sync_checkin_shift_fields_for_date`. Attendance hôm nay, Checkin của ngày sau hôm nay, hoặc ca tự động trải nhiều ngày có Checkin hôm nay vẫn là blocker.
+
+Với **ngày hiệu lực trong quá khứ**, dialog tự chuyển sang nhánh hồi tố có kiểm soát:
+
+- Chỉ HR Manager/System Manager được preview và execute; tối đa 20 Employee, 366 ngày, chạy đồng bộ và all-or-nothing. `membership_end_date` phải từ hôm nay trở đi.
+- Preview hiển thị Attendance/ca kế hoạch sẽ xử lý, punch qua ranh giới được giữ, membership action và blocker theo từng Employee. Preview sinh `preview_token`; execute khóa Employee, nạp lại snapshot và từ chối token stale trước lần ghi đầu tiên.
+- Nút execute chỉ xuất hiện khi toàn batch `READY`. Người thao tác phải nhập đúng `XÁC NHẬN HỒI TỐ`.
+- Blocker gồm membership/assignment chồng lấn, ca manual/legacy, leave/Attendance Request, Attendance legacy không chứng minh được nguồn, dòng giải trình đã có quyết định HR và Salary Slip đã submit. Attendance thuộc work date hôm nay luôn block. Checkin hôm nay **không** block: punch thuộc work date hôm nay được giữ nguyên làm log thô (liệt kê trong `preserved_checkins`), còn punch đuôi ca Đêm của hôm qua được dùng khi rebuild hôm qua.
+
+Khi thực hiện hồi tố, service khóa các Employee theo thứ tự ổn định và chạy toàn bộ batch trong một transaction:
+
+1. Attendance đủ điều kiện trong các work date đã hoàn tất được cancel bằng Document API; Checkin thô không bị xóa hay sửa `time`/`log_type`. Punch đã link Attendance trước ngày hiệu lực được giữ nguyên.
+2. Chỉ Shift Assignment mang đủ marker `custom_generated_by_shift_group = 1` và source `Kíp tự động` được rewrite/cancel. Ca manual/legacy luôn là blocker. Mỗi thay đổi lịch sử có Comment chứa operation id và before snapshot.
+3. Membership Kíp cũ kết thúc tại ngày liền trước; membership Kíp mới được tạo cùng audit note. `Employee.default_shift` không đổi; cache `custom_shift_group`/`custom_working_schedule_type` được resolve lại từ membership có hiệu lực ở ngày hiện tại.
+4. Ca tự động của **hôm nay** được rewrite tại chỗ sang Kíp/Shift đích (`REWRITE_CURRENT_AUTO`), hoặc cancel ở mức DB nếu ngày đích OFF (`CANCEL_CURRENT_AUTO`), kèm Comment audit. Không dùng `Shift Assignment.cancel()` cho hôm nay vì HRMS chặn cancel khi đã có Checkin cùng Shift Type trong ngày. Ca từ ngày mai trở đi vẫn cancel bằng Document API rồi sinh lại.
+5. Generator sinh lại ca; pipeline chỉ tính Attendance từ ngày hiệu lực đến hôm qua. Đuôi ca Đêm kết thúc sáng nay có thể thuộc work date hôm qua. Không tạo/cancel/chốt Attendance cho work date hôm nay; Attendance hôm nay do job hằng ngày tạo sau đó theo ca mới.
+6. Punch chưa link Attendance của hôm nay được trỏ lại `shift`/`shift_start`/`shift_end`/`shift_actual_*` theo ca đích bằng `sync_checkin_shift_fields_for_date` (cùng quy tắc ownership của pipeline), để báo cáo trong ngày không còn hiển thị ca cũ.
+7. Phiếu `VNT Attendance Confirm` được refresh theo từng tháng. Một lỗi ở bất kỳ Employee nào rollback toàn batch; chạy lại trạng thái đích trả `ALREADY_APPLIED`.
 
 ## BƯỚC 15 - Payroll
 
@@ -173,7 +185,7 @@ Riêng báo cáo `Tổng hợp chấm công tháng`, `Tr`/`Sm` được đối c
 
 ## BƯỚC 23 - Lịch sử đổi Kíp
 
-`VNT Shift Group Assignment` lưu Employee, Company, Kíp, từ/đến ngày, status và note. Hai assignment Active của cùng Employee không được overlap. Company của Employee và Kíp phải trùng. Thay đổi làm ảnh hưởng Attendance đã có bị chặn; lịch sử phải được kết thúc bằng `to_date` và tạo bản ghi mới.
+`VNT Shift Group Assignment` lưu Employee, Company, Kíp, từ/đến ngày, status và note, đồng thời là nguồn xác định Kíp theo ngày. Hai assignment Active của cùng Employee không được overlap. Company của Employee và Kíp phải trùng. `Employee.custom_shift_group` chỉ là cache của membership đang hiệu lực hôm nay. Luồng thường không sửa lịch sử; luồng hồi tố chỉ được sửa dữ liệu pipeline khi preview chứng minh an toàn. Mỗi batch hồi tố có operation id, Comment trên Employee/Shift Assignment, membership note và before snapshot. Attendance bị cancel vẫn được giữ làm audit; Employee Checkin thô và punch thuộc ngày công trước ranh giới không bị viết lại.
 
 ## BƯỚC 24 - Bảng công ngày
 
@@ -337,7 +349,7 @@ Chỉ HR Manager/System Manager được chạy ghi thật; HR User được ch�
 
 ## Manual generation
 
-Form VNT Shift Group có Preview, Generate và Sync Holiday List. Employee List có action Phân / chuyển Kíp hàng loạt cho các dòng đang chọn. API chuyển Kíp yêu cầu HR User, HR Manager hoặc System Manager; các API setup/generate master vẫn giữ quyền quản trị hiện có. Tất cả API giới hạn ngày hợp lệ và không `allow_guest`. Preview không ghi dữ liệu; Generate/chuyển Kíp đều yêu cầu xác nhận từ UI.
+Form VNT Shift Group có Preview, Generate và Sync Holiday List. Employee List có action Phân / chuyển Kíp hàng loạt cho các dòng đang chọn. API chuyển hôm nay/tương lai cho phép HR User, HR Manager hoặc System Manager; API hồi tố chỉ cho HR Manager/System Manager. Các API setup/generate master vẫn giữ quyền quản trị hiện có. Tất cả API giới hạn ngày hợp lệ và không `allow_guest`. Preview không ghi dữ liệu; execute hồi tố cần token còn hiệu lực và phrase xác nhận chính xác.
 
 Khởi tạo master lần đầu là thao tác riêng, ví dụ trên staging:
 

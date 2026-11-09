@@ -65,10 +65,19 @@ def execute(filters):
 	can_open_confirmation = bool(
 		{"HR User", "HR Manager", "System Manager"}.intersection(frappe.get_roles())
 	)
+	confirmation_documents = {}
+	for (confirmed_employee, _confirmed_date), confirmation in confirmation_map.items():
+		confirmation_documents.setdefault(confirmed_employee, set()).add(confirmation.parent)
 
 	data = []
 	for employee in employees:
 		row = _new_row(employee)
+		# Bấm tên nhân viên mở thẳng phiếu giải trình khi cả kỳ chỉ có một phiếu;
+		# nhiều phiếu hoặc chưa có phiếu thì client mở danh sách đã lọc sẵn.
+		if can_open_confirmation:
+			documents = confirmation_documents.get(employee.name) or set()
+			if len(documents) == 1:
+				row["confirm_document"] = next(iter(documents))
 		resolved_groups = []
 		for work_date in days:
 			group = windows.get((employee.name, work_date), {}).get("shift_group")
@@ -107,10 +116,7 @@ def execute(filters):
 			)
 			row[fieldname] = symbol
 			if _confirmation_applies(symbol, day_type, confirmation):
-				review = _build_confirmation_review(
-					confirmation,
-					include_document_name=can_open_confirmation,
-				)
+				review = _build_confirmation_review(confirmation)
 				row[fieldname] = _symbol_after_confirmation(symbol, window, review)
 				row[f"{fieldname}__hr_review"] = review
 				_apply_totals(row, symbol, review)
@@ -124,8 +130,8 @@ def execute(filters):
 
 def get_columns(days):
 	columns = [
-		# {"fieldname": "employee", "label": _("Mã NV"), "fieldtype": "Link", "options": "Employee", "width": 105},
-		{"fieldname": "employee_name", "label": _("Tên nhân viên"), "fieldtype": "Data", "width": 170},
+		{"fieldname": "employee_code", "label": _("Mã nhân viên"), "fieldtype": "Data", "width": 110},
+		{"fieldname": "employee_name", "label": _("Tên nhân viên"), "fieldtype": "Data", "width": 190},
 		{"fieldname": "department", "label": _("Phòng ban"), "fieldtype": "Data", "width": 150},
 		{"fieldname": "shift_group", "label": _("Kíp"), "fieldtype": "Data", "width": 75},
 	]
@@ -239,7 +245,7 @@ def get_legend():
 	group_html = []
 	for style, title, items in groups:
 		items_html = "".join(
-			f"<div class='vnt-attendance-legend__item'>"
+			f"<div class='vnt-attendance-legend__item{' is-stacked' if len(code) > 8 else ''}'>"
 			f"<span class='vnt-attendance-legend__code'>{escape_html(code)}</span>"
 			f"<span class='vnt-attendance-legend__description'>{escape_html(label)}</span>"
 			f"</div>"
@@ -263,7 +269,7 @@ def get_legend():
 		"<br>"
 		f"{escape_html(_('Phần đứng trước dấu / là kết quả theo ca kế hoạch; + hoặc +1 phía sau là bằng chứng chấm ngoài ca cần HR kiểm tra trong Giải trình chấm công.'))}"
 		"<br>"
-		f"{escape_html(_('Bấm vào ô có huy hiệu HR để mở phiếu giải trình. Đồng ý với +1 chỉ xác nhận có làm, không tự tạo giờ vào/ra hoặc số giờ tăng ca.'))}"
+		f"{escape_html(_('Bấm tên nhân viên để mở phiếu giải trình của cả kỳ; di chuột vào ô có huy hiệu HR để xem HR cần quyết định điều gì. Đồng ý với +1 chỉ xác nhận có làm, không tự tạo giờ vào/ra hoặc số giờ tăng ca.'))}"
 		"<br>"
 		f"{escape_html(_('Với Sm: HR Đồng ý sẽ chuyển thành X; Từ chối giữ Sm. Nếu là Tr/Sm thì Đồng ý chỉ bỏ Sm và vẫn giữ Tr.'))}"
 		"</div></details>"
@@ -401,7 +407,7 @@ def _confirmation_applies(symbol, day_type, confirmation):
 	return False
 
 
-def _build_confirmation_review(confirmation, *, include_document_name=False):
+def _build_confirmation_review(confirmation):
 	decision = (confirmation.get("confirm") or "").strip()
 	evidence_code = (confirmation.get("evidence_code") or "").strip()
 	if decision == "Đồng ý":
@@ -411,7 +417,7 @@ def _build_confirmation_review(confirmation, *, include_document_name=False):
 	else:
 		state = "pending"
 	labels = {
-		"pending": "Chờ HR",
+		"pending": "Chờ HR xác nhận",
 		"approved": "HR đồng ý",
 		"approved_incomplete": "HR đồng ý - chưa đủ thời gian",
 		"rejected": "HR từ chối",
@@ -425,12 +431,23 @@ def _build_confirmation_review(confirmation, *, include_document_name=False):
 				"rejected": "HR từ chối: giữ Sm",
 			}
 		)
+	# issue_type và decision_question được phiếu giải trình lưu sẵn, nên tooltip
+	# nói thẳng HR đang phải quyết định điều gì thay vì chỉ "Chờ HR".
+	issue_type = (confirmation.get("issue_type") or "").strip()
+	question = (confirmation.get("decision_question") or "").strip()
+	detail_lines = []
+	if issue_type:
+		detail_lines.append(f"Trường hợp: {issue_type}")
+	if question and state == "pending":
+		detail_lines.append(f"HR cần xác nhận: {question}")
 	return frappe._dict(
 		state=state,
-		label=labels[state],
+		label="\n".join([labels[state], *detail_lines]),
+		headline=labels[state],
+		issue_type=issue_type,
+		decision_question=question,
 		issue_code=issue_code,
 		evidence_code=evidence_code,
-		document_name=confirmation.get("parent") if include_document_name else None,
 	)
 
 
@@ -582,6 +599,12 @@ def _apply_totals(row, symbol, review=None):
 def _new_row(employee):
 	return {
 		"employee": employee.name,
+		"employee_code": (
+			employee.get("custom_employee_code")
+			or employee.get("employee_number")
+			or employee.get("attendance_device_id")
+			or employee.name
+		),
 		"employee_name": employee.employee_name,
 		"department": employee.get("department_display") or employee.department,
 		"shift_group": employee.get("custom_shift_group")
@@ -636,7 +659,11 @@ def _get_employees(filters, from_date, to_date):
 		"holiday_list",
 		"default_shift",
 		"custom_need_check",
+		"employee_number",
+		"attendance_device_id",
 	]
+	if frappe.get_meta("Employee").has_field("custom_employee_code"):
+		fields.append("custom_employee_code")
 	if frappe.get_meta("Employee").has_field("custom_shift_group"):
 		fields.append("custom_shift_group")
 	if frappe.get_meta("Employee").has_field("custom_working_schedule_type"):
@@ -711,6 +738,8 @@ def _get_confirmation_map(employees, from_date, to_date):
 			p.employee,
 			i.date,
 			i.issue_code,
+			i.issue_type,
+			i.decision_question,
 			i.evidence_code,
 			i.confirm,
 			i.reviewed_on,

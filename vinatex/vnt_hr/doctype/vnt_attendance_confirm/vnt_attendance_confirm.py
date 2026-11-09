@@ -26,6 +26,12 @@ from vinatex.vnt_hr.attendance_processing import (
 
 
 HR_ROLES = {"HR User", "HR Manager", "System Manager"}
+PRESENCE_ONLY_ADMIN_DEPARTMENTS = frozenset(
+	{
+		"Vào bông - NMSVNĐ",
+		"Công đoạn Đóng gói - NMSVNĐ",
+	}
+)
 
 
 class VNTAttendanceConfirm(Document):
@@ -119,13 +125,20 @@ def make_attendance_confirm(
 		"Ngày làm việc có chấm ngoài ca": 0,
 		"Số phiếu tạo mới": 0,
 		"Số phiếu cập nhật": 0,
+		"Số phiếu đã xóa": 0,
 	}
 	if not employees:
 		return result
 
 	windows = build_shift_windows(employees, from_date, to_date)
-	planned_map, outside_map = load_checkins_for_windows(
-		employees, windows, from_date, to_date
+	completed_cutoff = get_datetime(to_date) + timedelta(days=1)
+	planned_map, outside_map, calendar_map = load_checkins_for_windows(
+		employees,
+		windows,
+		from_date,
+		to_date,
+		include_calendar_logs=True,
+		checkin_end_exclusive=completed_cutoff,
 	)
 	holiday_context = load_holiday_context(employees, windows, from_date, to_date)
 	excused_days = _load_excused_days(employees, from_date, to_date)
@@ -138,11 +151,19 @@ def make_attendance_confirm(
 			if key in excused_days:
 				continue
 			window = windows.get(key)
+			if (
+				window
+				and window.get("end_datetime")
+				and get_datetime(window.end_datetime) > completed_cutoff
+			):
+				continue
 			day_type = classify_work_date(employee_row, window, holiday_context)
 			issue = _detect_confirmation_issue(
+				employee=employee_row,
 				window=window,
 				planned_logs=planned_map.get(key, []),
 				outside_logs=outside_map.get(key, []),
+				calendar_logs=calendar_map.get(key, []),
 				day_type=day_type,
 			)
 			if not issue:
@@ -157,11 +178,12 @@ def make_attendance_confirm(
 
 	for employee_name, issues in issues_by_employee.items():
 		employee_row = employee_map[employee_name]
-		created, updated = _upsert_employee_confirmation(
+		created, updated, deleted = _upsert_employee_confirmation(
 			employee_row, from_date, to_date, issues
 		)
 		result["Số phiếu tạo mới"] += created
 		result["Số phiếu cập nhật"] += updated
+		result["Số phiếu đã xóa"] += deleted
 
 	return result
 
@@ -179,12 +201,14 @@ def refresh_attendance_confirm(docname):
 
 
 def _resolve_date_range(from_date=None, to_date=None):
+	current = getdate(today())
+	last_completed_date = current - timedelta(days=1)
 	if from_date or to_date:
 		if not from_date or not to_date:
 			frappe.throw(_("Phải nhập đồng thời Từ ngày và Đến ngày."))
 		from_date, to_date = getdate(from_date), getdate(to_date)
+		to_date = min(to_date, last_completed_date)
 	else:
-		current = getdate(today())
 		if current.day == 1:
 			previous_month_end = current - timedelta(days=1)
 			from_date = previous_month_end.replace(day=1)
@@ -192,6 +216,7 @@ def _resolve_date_range(from_date=None, to_date=None):
 		else:
 			from_date = current.replace(day=1)
 			to_date = current - timedelta(days=1)
+		to_date = min(to_date, last_completed_date)
 	if from_date > to_date:
 		frappe.throw(_("Từ ngày không được sau Đến ngày."))
 	if from_date.month != to_date.month or from_date.year != to_date.year:
@@ -199,7 +224,24 @@ def _resolve_date_range(from_date=None, to_date=None):
 	return from_date, to_date
 
 
-def _detect_confirmation_issue(*, window, planned_logs, outside_logs, day_type):
+def _uses_presence_only_admin_policy(employee, window) -> bool:
+	return bool(
+		employee
+		and window
+		and employee.get("department") in PRESENCE_ONLY_ADMIN_DEPARTMENTS
+		and window.get("shift_type") == "Hành chính"
+	)
+
+
+def _detect_confirmation_issue(
+	*,
+	window,
+	planned_logs,
+	outside_logs,
+	day_type,
+	employee=None,
+	calendar_logs=None,
+):
 	planned_logs = sorted(planned_logs or [], key=lambda row: get_datetime(row.time))
 	outside_logs = sorted(outside_logs or [], key=lambda row: get_datetime(row.time))
 
@@ -225,6 +267,46 @@ def _detect_confirmation_issue(*, window, planned_logs, outside_logs, day_type):
 	# Holiday handling and further anomaly types can be added independently.
 	if day_type != "work" or not window:
 		return None
+
+	if _uses_presence_only_admin_policy(employee, window):
+		all_logs = (
+			sorted(calendar_logs, key=lambda row: get_datetime(row.time))
+			if calendar_logs is not None
+			else [*planned_logs, *outside_logs]
+		)
+		has_in = any((row.get("log_type") or "").upper() == "IN" for row in all_logs)
+		has_out = any((row.get("log_type") or "").upper() == "OUT" for row in all_logs)
+		if has_in and has_out:
+			return None
+		if not has_in and not has_out:
+			return _issue_payload(
+				code="WORKDAY_NO_CHECKIN",
+				label="Ngày làm việc không có chấm công",
+				question="Xác nhận lý do nhân sự không có dữ liệu chấm công trong ngày?",
+				counter_key="Ngày làm việc không có chấm công",
+				window=window,
+				planned_logs=all_logs,
+				outside_logs=[],
+			)
+		if not has_in:
+			return _issue_payload(
+				code="MISSING_IN",
+				label="Chỉ có giờ ra hợp lệ trong ngày",
+				question="Xác nhận nhân sự có thực sự đi làm và bị thiếu giờ vào?",
+				counter_key="Ngày làm việc thiếu giờ vào",
+				window=window,
+				planned_logs=all_logs,
+				outside_logs=[],
+			)
+		return _issue_payload(
+			code="MISSING_OUT",
+			label="Chỉ có giờ vào hợp lệ trong ngày",
+			question="Xác nhận nhân sự có thực sự đi làm và bị thiếu giờ ra?",
+			counter_key="Ngày làm việc thiếu giờ ra",
+			window=window,
+			planned_logs=all_logs,
+			outside_logs=[],
+		)
 
 	if not planned_logs and outside_logs:
 		return _issue_payload(
@@ -357,7 +439,9 @@ def _format_checkin_summary(planned_logs, outside_logs):
 	)
 
 
-def _upsert_employee_confirmation(employee, from_date, to_date, issues):
+def _upsert_employee_confirmation(
+	employee, from_date, to_date, issues
+) -> tuple[int, int, int]:
 	name = frappe.db.get_value(
 		"VNT Attendance Confirm",
 		{
@@ -367,9 +451,13 @@ def _upsert_employee_confirmation(employee, from_date, to_date, issues):
 		},
 		"name",
 	)
-	doc = frappe.get_doc("VNT Attendance Confirm", name) if name else None
+	doc = (
+		frappe.get_doc("VNT Attendance Confirm", name, for_update=True)
+		if name
+		else None
+	)
 	if not doc and not issues:
-		return 0, 0
+		return 0, 0, 0
 	if not doc:
 		doc = frappe.new_doc("VNT Attendance Confirm")
 		doc.employee = employee.name
@@ -421,14 +509,20 @@ def _upsert_employee_confirmation(employee, from_date, to_date, issues):
 				row.set(fieldname, value)
 				changed = True
 
+	if name and not (doc.get("items") or []):
+		frappe.delete_doc(
+			"VNT Attendance Confirm", name, ignore_permissions=True
+		)
+		return 0, 0, 1
+
 	if not changed:
-		return 0, 0
+		return 0, 0, 0
 	doc.flags.ignore_permissions = True
 	if name:
 		doc.save(ignore_permissions=True)
-		return 0, 1
+		return 0, 1, 0
 	doc.insert(ignore_permissions=True)
-	return 1, 0
+	return 1, 0, 0
 
 
 def _load_excused_days(employees, from_date, to_date):

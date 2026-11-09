@@ -119,6 +119,7 @@ class VntEmployee(Employee):
 
     # hàm khi validate sẽ tính toán số lượng người phụ thuộc khi có tick is_dependent trong bảng custom_vnt_employee_tax, sau đó gán vào trường custom_relation_number
     def validate(self):
+        self._validate_shift_group_change_uses_transfer_workflow()
         # Employee chuẩn ghép employee_name và thực hiện các kiểm tra
         # trước khi document được ghi vào database.
         super().validate()
@@ -134,6 +135,18 @@ class VntEmployee(Employee):
             if row.is_dependent:
                 total_dependent += 1
         self.custom_relation_number = total_dependent
+
+    def _validate_shift_group_change_uses_transfer_workflow(self):
+        """Prevent effective-dated membership changes from becoming a raw field edit."""
+        previous = self.get_doc_before_save()
+        if not previous:
+            return
+        if previous.get("custom_shift_group") == self.get("custom_shift_group"):
+            return
+        raise frappe.ValidationError(
+            "Không thể lưu trực tiếp Kíp hiện tại. Hãy dùng chức năng chuyển kíp "
+            "và chọn ngày hiệu lực."
+        )
 
     def _set_retirement_date(self):
         if not self.date_of_birth or not self.gender:
